@@ -797,6 +797,8 @@ const overridesSchema = z
         termCoverTarget: money.nullable().optional(),
         highInterestThresholdPct: z.number().min(0).max(40).nullable().optional(),
         retirementBaselinePct: pct(0.5),
+        debtMethod: z.enum(["snowball", "avalanche"]).nullable().optional(),
+        debtAfterGoals: z.boolean().nullable().optional(),
       })
       .optional(),
     goals: z.object({ retirementAge: z.number().int().min(40).max(75).nullable().optional() }).optional(),

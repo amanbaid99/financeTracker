@@ -47,7 +47,7 @@ export function NextFocusCard({ focus, aiOn }: { focus: NextFocus | null; aiOn: 
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-primary">Next focus</p>
             <Badge variant="muted">
-              Step {focus.step.id} of 6 · {focus.step.name}
+              Step {focus.step.position ?? focus.step.id} of 6 · {focus.step.name}
             </Badge>
           </div>
           <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">{focus.title}</h1>
@@ -97,7 +97,7 @@ export function NextFocusCard({ focus, aiOn }: { focus: NextFocus | null; aiOn: 
 
         {focus.step.debts && focus.step.debts.length > 0 && (
           <div className="space-y-1">
-            <p className="text-sm font-medium">Pay in this order</p>
+            <p className="text-sm font-medium">Pay in this order (smallest balance first, unless changed in Settings)</p>
             <ol className="space-y-1 text-sm">
               {focus.step.debts.map((d, i) => (
                 <li key={d.id} className="flex justify-between gap-2">

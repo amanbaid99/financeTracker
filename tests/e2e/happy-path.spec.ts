@@ -241,6 +241,9 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await page.goto("/budget");
   await expect(page.getByText("Your money plan this month")).toBeVisible();
   await expect(page.getByRole("heading", { name: /Essentials/ })).toBeVisible();
+  // The 30k card debt added earlier gets a snowball payoff plan.
+  await expect(page.getByText("Debt payoff plan")).toBeVisible();
+  await expect(page.getByText(/Snowball method/)).toBeVisible();
   await page.screenshot({ path: "test-results/money-plan-375.png", fullPage: true });
 
   // Salary 0: between-incomes mode with runway.

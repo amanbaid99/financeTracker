@@ -52,6 +52,17 @@ export const defaultConfig = {
     /** Fixed term cover target in rupees. 0 means use the income multiple. */
     termCoverTarget: 0,
     highInterestThresholdPct: 10,
+    /**
+     * Which costly debt gets extra money first: "snowball" (smallest balance)
+     * or "avalanche" (highest rate).
+     */
+    debtMethod: "snowball" as "snowball" | "avalanche",
+    /** True: goals get their monthly amounts first, extra debt payments use what's left. */
+    debtAfterGoals: true,
+    /** Rates assumed when none is entered (% a year). */
+    assumedDebtRates: { credit_card: 36, personal_loan: 14 } as Record<string, number>,
+    /** Minimum payment on a card with no EMI entered, as a share of the balance. */
+    cardMinPaymentPct: 0.05,
     /** Debt kinds treated as high interest when no rate is entered. */
     assumeHighInterestKinds: ["credit_card", "personal_loan"],
     emergencyMonths: {

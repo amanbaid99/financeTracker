@@ -2,7 +2,8 @@ import { computeBudget, type BudgetResult } from "./budget";
 import { computeCompleteness, type CompletenessResult } from "./completeness";
 import { mergeConfig, type EngineConfig } from "./config";
 import { allocateToGoals, analyzeGoal, type GoalAnalysis } from "./goals";
-import { currentStep, evaluateLadder, liquidAssets, SECTION_LABELS, type LadderStep } from "./ladder";
+import { simulatePayoff, type DebtPayoffPlan } from "./debt";
+import { currentStep, evaluateLadder, isHighInterest, liquidAssets, SECTION_LABELS, type LadderStep } from "./ladder";
 import type { FinanceData } from "./types";
 
 export * from "./types";
@@ -40,6 +41,8 @@ export interface Analysis {
   noIncome: boolean;
   /** Liquid savings free for emergencies, and how many months of essentials they cover. */
   runway: { liquid: number; months: number | null };
+  /** Order and timeline for clearing debts, with the extra money available each month. */
+  debtPlan: DebtPayoffPlan;
 }
 
 const SECTION_HREF: Record<string, string> = {
@@ -92,17 +95,48 @@ export function analyze(data: FinanceData, overrides: unknown, todayISO: string)
     months: budget.essentials.total > 0 ? Math.floor((liquid / budget.essentials.total) * 10) / 10 : null,
   };
 
+  // Extra money for costly debt: all new savings when debt is the current
+  // step; otherwise only what's left after goals get their monthly amounts.
+  const costly = data.liabilities.filter((l) => isHighInterest(l, cfg));
+  let debtExtra = 0;
+  if (costly.length && !noIncome && budget.cashFlowOk) {
+    const available = Math.max(
+      0,
+      budget.split.savings + budget.monthlySurplus.ladder + budget.monthlySurplus.goals - existingSips,
+    );
+    if (step?.key === "high_interest_debt") {
+      debtExtra = Math.max(0, budget.split.savings - existingSips) + budget.monthlySurplus.ladder;
+    } else if (!step || step.key === "goals") {
+      const toGoals = allocateToGoals(goals, available, retirementBaseline).reduce((s, x) => s + x.amount, 0);
+      debtExtra = Math.max(0, available - toGoals);
+    }
+  }
+  const debtPlan = simulatePayoff({
+    debts: data.liabilities,
+    isCostly: (l) => isHighInterest(l, cfg),
+    extraMonthly: debtExtra,
+    method: cfg.ladder.debtMethod,
+    todayISO,
+    cfg,
+  });
+
+  const focus = step ? buildNextFocus(step, budget, goals, existingSips, retirementBaseline, runway) : null;
+  if (focus && step?.key === "goals" && debtExtra > 0) {
+    focus.reason += ` After your goals, ₹${debtExtra.toLocaleString("en-IN")} a month is left to clear costly debt.`;
+  }
+
   return {
     config: cfg,
     budget,
     ladder,
     goals,
     completeness: computeCompleteness(data, cfg),
-    nextFocus: step ? buildNextFocus(step, budget, goals, existingSips, retirementBaseline, runway) : null,
+    nextFocus: focus,
     existingSips,
     retirementBaseline,
     noIncome,
     runway,
+    debtPlan,
   };
 }
 
@@ -200,7 +234,7 @@ export function buildNextFocus(
   const monthly = newSavings + budget.monthlySurplus.ladder;
   const titles: Record<string, string> = {
     starter_buffer: "Build a 1-month starter buffer",
-    high_interest_debt: "Pay off high-interest debt",
+    high_interest_debt: "Clear costly debt",
     emergency_fund: "Complete your emergency fund",
   };
   const actions: Record<string, [string, string]> = {

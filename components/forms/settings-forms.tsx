@@ -96,6 +96,8 @@ export interface OverrideValues {
   termCoverTarget: number;
   highInterestThresholdPct: number;
   retirementAge: number;
+  debtMethod: "snowball" | "avalanche";
+  debtAfterGoals: boolean;
 }
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
@@ -105,9 +107,12 @@ export function AssumptionSettings({ values, defaults }: { values: OverrideValue
     Object.fromEntries(Object.entries(values).map(([k, x]) => [k, String(x)])) as Record<keyof OverrideValues, string>,
   );
   const [termTarget, setTermTarget] = useState<number | null>(values.termCoverTarget || null);
+  const [debtMethod, setDebtMethod] = useState(values.debtMethod);
+  const [debtAfterGoals, setDebtAfterGoals] = useState(values.debtAfterGoals);
   const { pending, run, status } = useAction();
-  const num = (k: keyof OverrideValues) => Number(v[k]);
-  const field = (k: keyof OverrideValues, label: string, fmt: (n: number) => string) => (
+  type NumKey = Exclude<keyof OverrideValues, "debtMethod" | "debtAfterGoals">;
+  const num = (k: NumKey) => Number(v[k]);
+  const field = (k: NumKey, label: string, fmt: (n: number) => string) => (
     <Field label={label} htmlFor={`ov-${k}`} hint={`Default ${fmt(defaults[k])}.`}>
       <Input
         id={`ov-${k}`}
@@ -119,7 +124,7 @@ export function AssumptionSettings({ values, defaults }: { values: OverrideValue
   );
   function save() {
     // Values equal to the default are cleared (null) so future default changes apply.
-    const diff = (k: keyof OverrideValues) => (num(k) !== defaults[k] ? num(k) : null);
+    const diff = (k: NumKey) => (num(k) !== defaults[k] ? num(k) : null);
     run(() =>
       saveOverrides({
         ladder: {
@@ -128,6 +133,8 @@ export function AssumptionSettings({ values, defaults }: { values: OverrideValue
           termIncomeMultiple: diff("termIncomeMultiple"),
           termCoverTarget: termTarget && termTarget > 0 ? termTarget : null,
           highInterestThresholdPct: diff("highInterestThresholdPct"),
+          debtMethod: debtMethod === defaults.debtMethod ? null : debtMethod,
+          debtAfterGoals: debtAfterGoals === defaults.debtAfterGoals ? null : debtAfterGoals,
         },
         goals: { retirementAge: diff("retirementAge") },
       }),
@@ -154,6 +161,45 @@ export function AssumptionSettings({ values, defaults }: { values: OverrideValue
         {field("highInterestThresholdPct", "High-interest debt above (%)", (n) => `${n}%`)}
         {field("retirementAge", "Retirement age", (n) => String(n))}
       </div>
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">Clearing debt</legend>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {(
+            [
+              ["snowball", "Snowball", "Smallest balance first. Quick wins keep you going."],
+              ["avalanche", "Avalanche", "Highest rate first. Pays the least interest."],
+            ] as const
+          ).map(([value, label, blurb]) => (
+            <label key={value} className="flex cursor-pointer items-start gap-2 rounded-lg border p-3 text-sm">
+              <input
+                type="radio"
+                name="debt-method"
+                className="mt-0.5 accent-[var(--primary)]"
+                checked={debtMethod === value}
+                onChange={() => setDebtMethod(value)}
+              />
+              <span>
+                <span className="font-medium">{label}</span>
+                <span className="block text-xs text-muted-foreground">{blurb}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+        <label className="flex items-start gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="mt-0.5 size-4 accent-[var(--primary)]"
+            checked={debtAfterGoals}
+            onChange={(e) => setDebtAfterGoals(e.target.checked)}
+          />
+          <span>
+            Fund my goals first
+            <span className="block text-xs text-muted-foreground">
+              Extra debt payments only use money left after goals. EMIs are always paid.
+            </span>
+          </span>
+        </label>
+      </fieldset>
       <p className="text-xs text-muted-foreground">Savings and income-split ratios are on the Budget page.</p>
       <div className="flex items-center gap-3">
         <Button type="button" onClick={save} disabled={pending}>

@@ -39,6 +39,8 @@ export default async function SettingsPage() {
     termCoverTarget: x.ladder.termCoverTarget,
     highInterestThresholdPct: x.ladder.highInterestThresholdPct,
     retirementAge: x.goals.retirementAge,
+    debtMethod: x.ladder.debtMethod,
+    debtAfterGoals: x.ladder.debtAfterGoals,
   });
 
 

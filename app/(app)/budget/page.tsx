@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BudgetChart } from "@/components/budget-chart";
+import { DebtPlanCard } from "@/components/debt-plan";
 import { MoneyPlanCard } from "@/components/money-plan";
 import { buildMoneyPlan } from "@/lib/engine/plan";
 import { BudgetRatios, type RatioValues } from "@/components/forms/settings-forms";
@@ -64,6 +65,8 @@ export default async function BudgetPage() {
       </div>
 
       <MoneyPlanCard plan={plan} />
+
+      <DebtPlanCard plan={analysis.debtPlan} afterGoals={analysis.config.ladder.debtAfterGoals} />
 
       <Card>
         <CardHeader>

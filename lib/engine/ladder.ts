@@ -1,4 +1,5 @@
 import type { BudgetResult } from "./budget";
+import { orderDebts } from "./debt";
 import { hasMultipleJobs } from "./budget";
 import { isLiquid } from "./categories";
 import type { EngineConfig } from "./config";
@@ -28,8 +29,10 @@ export interface LadderStep {
   askAbout?: Section;
   reason: string;
   detail?: string;
-  /** Extra data for the UI, e.g. debts in avalanche order. */
+  /** Extra data for the UI, e.g. costly debts in payoff order. */
   debts?: Liability[];
+  /** Position in the ladder as shown to the user (0 = cash flow). */
+  position?: number;
 }
 
 const sum = (xs: number[]) => xs.reduce((a, b) => a + b, 0);
@@ -250,13 +253,22 @@ export function evaluateLadder(
   }
 
   // Step 4: high-interest debt.
-  const highDebts = avalancheOrder(data.liabilities.filter((l) => isHighInterest(l, cfg)));
+  const method = L.debtMethod;
+  const highDebts = orderDebts(
+    data.liabilities.filter((l) => isHighInterest(l, cfg)),
+    method,
+    cfg,
+  );
+  const methodText =
+    method === "snowball"
+      ? "Clear the smallest balance first (the snowball method): each one you finish frees its payment for the next."
+      : "Pay the highest rate first (the avalanche method).";
   steps.push(
     liabilitiesKnown
       ? {
           id: 4,
           key: "high_interest_debt",
-          name: "Clear high-interest debt",
+          name: "Clear costly debt",
           kind: "money",
           status: highDebts.length === 0 ? "done" : "todo",
           target: 0,
@@ -266,9 +278,11 @@ export function evaluateLadder(
           reason:
             highDebts.length === 0
               ? `No debt above ${L.highInterestThresholdPct}% a year. Lower-rate home and education loans don't block you.`
-              : `Debt above ${L.highInterestThresholdPct}% costs more than investing earns. Pay the highest rate first (the avalanche method).`,
+              : `Debt above ${L.highInterestThresholdPct}% costs more than investing earns. ${methodText}${
+                  L.debtAfterGoals ? " Your goals get their monthly amounts first; extra payments use what's left." : ""
+                }`,
         }
-      : unknownStep(4, "high_interest_debt", "Clear high-interest debt", "money", "liabilities", 0),
+      : unknownStep(4, "high_interest_debt", "Clear costly debt", "money", "liabilities", 0),
   );
 
   // Step 5: full emergency fund.
@@ -313,6 +327,14 @@ export function evaluateLadder(
           : `Fund goals by priority, then by nearest date. ${behind.length} goal${behind.length > 1 ? "s are" : " is"} behind.`,
   });
 
+  // With debtAfterGoals, costly debt comes after goals: goals get their
+  // monthly amounts first and extra debt payments use what's left.
+  if (L.debtAfterGoals) {
+    const i = steps.findIndex((x) => x.key === "high_interest_debt");
+    const [debt] = steps.splice(i, 1);
+    steps.push(debt);
+  }
+  steps.forEach((x, i) => (x.position = i));
   return steps;
 }
 

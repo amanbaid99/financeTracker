@@ -148,9 +148,23 @@ export function buildMoneyPlan(data: FinanceData, analysis: Analysis): MoneyPlan
   }
 
   const step = nextFocus?.step;
+  // First costly debt still open in the payoff order (snowball by default).
+  const nextDebt = analysis.debtPlan.rows.find((r) => r.costly && r.clearedInMonths !== 0);
+  const debtLine = (amount: number, note?: string) => {
+    if (!nextDebt || amount <= 0) return false;
+    lines.push({
+      group: "debt",
+      label: `Extra payment: ${nextDebt.label || LIABILITY_NAMES[nextDebt.kind] || "debt"}`,
+      amount,
+      where: analysis.debtPlan.method === "snowball" ? "Smallest balance first (snowball)" : "Highest rate first (avalanche)",
+      note: note ?? `${nextDebt.ratePct}% a year`,
+    });
+    return true;
+  };
   const toGoals = (amount: number) => {
     if (amount <= 0) return;
     if (goals.length === 0) {
+      if (debtLine(amount, "Nothing else needs it yet")) return;
       lines.push({ group: "save", label: "Savings for your next goal", amount, where: LIQUID_HOME, note: "Add a goal to give it a job" });
       return;
     }
@@ -167,6 +181,7 @@ export function buildMoneyPlan(data: FinanceData, analysis: Analysis): MoneyPlan
       });
       given += s.amount;
     }
+    if (amount - given > 0 && debtLine(amount - given, "What's left after your goals")) return;
     if (amount - given > 0) {
       lines.push({
         group: "invest",
@@ -183,14 +198,7 @@ export function buildMoneyPlan(data: FinanceData, analysis: Analysis): MoneyPlan
   } else if (step.key === "cash_flow") {
     notes.push("Essentials cost more than your income, so there's nothing to save until that changes.");
   } else if (step.key === "high_interest_debt" && step.debts?.length) {
-    const d = step.debts[0];
-    lines.push({
-      group: "debt",
-      label: `Extra payment: ${d.label || LIABILITY_NAMES[d.kind] || "debt"}`,
-      amount: newMoney,
-      where: "Pay the highest-rate debt first",
-      note: d.interestRate !== null ? `${d.interestRate}% a year` : undefined,
-    });
+    debtLine(newMoney);
     toGoals(goalsPool);
   } else {
     const efDone = analysis.ladder.find((s) => s.key === "emergency_fund")?.status === "done";
@@ -210,7 +218,14 @@ export function buildMoneyPlan(data: FinanceData, analysis: Analysis): MoneyPlan
 
   if (wants > 0) lines.push({ group: "wants", label: "Spending money", amount: wants, note: "Eating out, shopping, fun" });
 
-  const kept = lines.filter((l) => l.amount > 0);
+  // Merge repeated lines (e.g. two extra payments to the same debt).
+  const merged: PlanLine[] = [];
+  for (const l of lines) {
+    const same = merged.find((m) => m.group === l.group && m.label === l.label && m.where === l.where);
+    if (same) same.amount += l.amount;
+    else merged.push({ ...l });
+  }
+  const kept = merged.filter((l) => l.amount > 0);
   const totals = sumGroups(kept);
   const assigned = Object.values(totals).reduce((s, x) => s + x, 0);
   if (budget.oneOff.total > 0) {

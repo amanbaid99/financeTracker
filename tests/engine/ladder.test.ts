@@ -132,7 +132,7 @@ describe("priority ladder", () => {
     expect(run(d).nextFocus?.title).toBe("Tell us about your household");
   });
 
-  it("step 4: high-interest debt in avalanche order; home loans don't block", () => {
+  it("step 4 (spec mode): avalanche order before goals; home loans don't block", () => {
     const d = solidBasics({
       liabilities: [
         { id: "pl", kind: "personal_loan", outstanding: 100_000, interestRate: 14, emi: 0 },
@@ -140,10 +140,42 @@ describe("priority ladder", () => {
         { id: "hl", kind: "home", outstanding: 3_000_000, interestRate: 8.5, emi: 0 },
       ],
     });
-    const a = run(d);
+    const a = run(d, { ladder: { debtAfterGoals: false, debtMethod: "avalanche" } });
     expect(a.nextFocus?.step.key).toBe("high_interest_debt");
     expect(a.nextFocus?.gap).toBe(150_000);
     expect(a.nextFocus?.step.debts?.map((x) => x.id)).toEqual(["cc", "pl"]);
+  });
+
+  it("default: snowball order (smallest balance first), after goals", () => {
+    const d = solidBasics({
+      liabilities: [
+        { id: "pl", kind: "personal_loan", outstanding: 100_000, interestRate: 14, emi: 0 },
+        { id: "cc", kind: "credit_card", outstanding: 50_000, interestRate: 36, emi: 0 },
+        { id: "cc2", kind: "credit_card", outstanding: 20_000, interestRate: 30, emi: 0 },
+      ],
+    });
+    const a = run(d);
+    // No goals yet, so "set your first goal" comes before debt.
+    expect(a.nextFocus?.title).toBe("Set your first goal");
+    const debtStep = a.ladder.find((s) => s.key === "high_interest_debt")!;
+    expect(debtStep.debts?.map((x) => x.id)).toEqual(["cc2", "cc", "pl"]);
+    expect(a.ladder.at(-1)?.key).toBe("high_interest_debt");
+    // Nothing else needs the savings yet, so they go to the smallest debt.
+    expect(a.debtPlan.extraMonthly).toBeGreaterThan(0);
+    expect(a.debtPlan.rows[0].id).toBe("cc2");
+  });
+
+  it("goals get their monthly amounts before extra debt payments", () => {
+    const d = solidBasics({
+      liabilities: [{ id: "cc", kind: "credit_card", outstanding: 50_000, interestRate: 36, emi: 2_000 }],
+      goals: [{ id: "g", name: "Car", type: "vehicle", targetToday: 2_000_000, targetDate: "2028-10-24", priority: 1, inflationRate: null, savedAmount: 0 }],
+    });
+    const a = run(d);
+    expect(a.nextFocus?.step.key).toBe("goals");
+    // This goal needs more than the savings available, so nothing is left for extra debt payments.
+    expect(a.debtPlan.extraMonthly).toBe(0);
+    // The card is still cleared by its EMI.
+    expect(a.debtPlan.rows[0].clearedInMonths).toBeGreaterThan(0);
   });
 
   it("step 4: a card with no rate entered counts as high interest", () => {
