@@ -15,7 +15,12 @@ export interface ExpenseRowState {
   amountMonthly: number | null;
   isEssential: boolean;
   preset?: boolean;
+  /** Stable React key, so typing a name doesn't remount the input. */
+  uid?: string;
 }
+
+let nextUid = 0;
+const newUid = () => `exp-${++nextUid}`;
 
 const PRESETS = ["Rent", "Groceries", "Utilities and phone", "Transport", "Family support", "Other fixed costs"];
 
@@ -33,12 +38,13 @@ export function ExpensesForm({
   const [rows, setRows] = useState<ExpenseRowState[]>(() => {
     const existing = new Set(initial.map((r) => r.category));
     return [
-      ...initial,
+      ...initial.map((r) => ({ ...r, uid: newUid() })),
       ...PRESETS.filter((p) => !existing.has(p)).map((p) => ({
         category: p,
         amountMonthly: null,
         isEssential: true,
         preset: true,
+        uid: newUid(),
       })),
     ];
   });
@@ -73,7 +79,7 @@ export function ExpensesForm({
       </p>
       <div className="space-y-2">
         {rows.map((r, i) => (
-          <div key={r.id ?? `${r.category}-${i}`} className="flex items-center gap-2">
+          <div key={r.uid} className="flex items-center gap-2">
             {r.preset ? (
               <span className="min-w-0 flex-1 text-sm">{r.category}</span>
             ) : (
@@ -107,7 +113,7 @@ export function ExpensesForm({
         <Button
           type="button"
           variant="outline"
-          onClick={() => setRows((rs) => [...rs, { category: "", amountMonthly: null, isEssential: true }])}
+          onClick={() => setRows((rs) => [...rs, { category: "", amountMonthly: null, isEssential: true, uid: newUid() }])}
         >
           <Plus /> Add a cost
         </Button>

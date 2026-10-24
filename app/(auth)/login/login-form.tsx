@@ -142,38 +142,6 @@ export function LoginForm({ initialError }: { initialError?: string }) {
 
   return (
     <div className="space-y-5">
-      <label className="flex items-start gap-3 rounded-lg border bg-muted/50 p-3 text-sm">
-        <Checkbox
-          checked={agreed}
-          onChange={(e) => setAgreed(e.target.checked)}
-          aria-describedby="consent-text"
-          name="consent"
-        />
-        <span id="consent-text">
-          I agree to the{" "}
-          <a href="/privacy" target="_blank" className="font-medium underline underline-offset-2">
-            privacy policy
-          </a>{" "}
-          and understand Tracker is a planning tool, not investment advice.
-        </span>
-      </label>
-
-      <Button type="button" variant="outline" className="w-full" onClick={google} disabled={busy}>
-        <svg viewBox="0 0 24 24" aria-hidden>
-          <path
-            fill="currentColor"
-            d="M21.35 11.1H12v2.98h5.35c-.23 1.5-1.68 4.4-5.35 4.4-3.22 0-5.85-2.67-5.85-5.96S8.78 6.56 12 6.56c1.83 0 3.06.78 3.76 1.45l2.56-2.47C16.68 4.01 14.55 3 12 3 6.98 3 3 7.03 3 12s3.98 9 9 9c5.2 0 8.64-3.65 8.64-8.8 0-.59-.06-1.04-.29-1.1z"
-          />
-        </svg>
-        Continue with Google
-      </Button>
-
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <span className="h-px flex-1 bg-border" />
-        or
-        <span className="h-px flex-1 bg-border" />
-      </div>
-
       <form onSubmit={sendLink} className="space-y-3">
         <div className="space-y-1.5">
           <Label htmlFor="email">Email</Label>
@@ -187,10 +155,41 @@ export function LoginForm({ initialError }: { initialError?: string }) {
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
+        <label className="flex items-start gap-3 rounded-lg border bg-muted/50 p-3 text-sm">
+          <Checkbox
+            checked={agreed}
+            onChange={(e) => setAgreed(e.target.checked)}
+            aria-describedby="consent-text"
+            name="consent"
+          />
+          <span id="consent-text">
+            I agree to the{" "}
+            <a href="/privacy" target="_blank" className="font-medium underline underline-offset-2">
+              privacy policy
+            </a>{" "}
+            and understand Tracker is a planning tool, not investment advice.
+          </span>
+        </label>
         <Button type="submit" className="w-full" disabled={busy}>
           {busy ? "Sending…" : "Email me a sign-in code"}
         </Button>
       </form>
+
+      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <span className="h-px flex-1 bg-border" />
+        or
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
+      <Button type="button" variant="outline" className="w-full" onClick={google} disabled={busy}>
+        <svg viewBox="0 0 24 24" aria-hidden>
+          <path
+            fill="currentColor"
+            d="M21.35 11.1H12v2.98h5.35c-.23 1.5-1.68 4.4-5.35 4.4-3.22 0-5.85-2.67-5.85-5.96S8.78 6.56 12 6.56c1.83 0 3.06.78 3.76 1.45l2.56-2.47C16.68 4.01 14.55 3 12 3 6.98 3 3 7.03 3 12s3.98 9 9 9c5.2 0 8.64-3.65 8.64-8.8 0-.59-.06-1.04-.29-1.1z"
+          />
+        </svg>
+        Continue with Google
+      </Button>
 
       {error && (
         <p role="alert" className="rounded-lg bg-danger-soft p-3 text-sm text-danger">

@@ -70,6 +70,12 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
 
   await expect(page).toHaveURL(/expenses/);
   await page.getByLabel("Rent per month", { exact: true }).fill("40000");
+  // Typing a custom cost name key by key keeps focus in the field.
+  await page.getByRole("button", { name: "Add a cost" }).click();
+  await page.getByLabel("Expense name", { exact: true }).pressSequentially("School fees");
+  await expect(page.getByLabel("Expense name", { exact: true })).toHaveValue("School fees");
+  await page.getByLabel("School fees per month", { exact: true }).pressSequentially("5000");
+  await expect(page.getByLabel("School fees per month", { exact: true })).toHaveValue("5,000");
   await page.getByRole("button", { name: "Save and continue" }).click();
 
   await expect(page).toHaveURL(/insurance/);
