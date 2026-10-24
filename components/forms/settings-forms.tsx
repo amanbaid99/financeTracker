@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Input } from "@/components/ui/input";
 import { deleteAccount, saveOverrides, saveTheme, setAiEnabled, signOut } from "@/lib/actions";
@@ -88,24 +89,26 @@ export function AiSettings({ enabled, configured }: { enabled: boolean; configur
 }
 
 export interface OverrideValues {
-  savingsMinPct: number;
-  taxReservePct: number;
   healthCoverMetro: number;
   healthCoverOther: number;
   termIncomeMultiple: number;
+  /** 0 = automatic (income multiple). */
+  termCoverTarget: number;
   highInterestThresholdPct: number;
-  retirementBaselinePct: number;
   retirementAge: number;
 }
+
+const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 
 export function AssumptionSettings({ values, defaults }: { values: OverrideValues; defaults: OverrideValues }) {
   const [v, setV] = useState<Record<keyof OverrideValues, string>>(
     Object.fromEntries(Object.entries(values).map(([k, x]) => [k, String(x)])) as Record<keyof OverrideValues, string>,
   );
+  const [termTarget, setTermTarget] = useState<number | null>(values.termCoverTarget || null);
   const { pending, run, status } = useAction();
   const num = (k: keyof OverrideValues) => Number(v[k]);
-  const field = (k: keyof OverrideValues, label: string, suffix: string, hint: string) => (
-    <Field label={label} htmlFor={`ov-${k}`} hint={`${hint} Default ${defaults[k]}${suffix}.`}>
+  const field = (k: keyof OverrideValues, label: string, fmt: (n: number) => string) => (
+    <Field label={label} htmlFor={`ov-${k}`} hint={`Default ${fmt(defaults[k])}.`}>
       <Input
         id={`ov-${k}`}
         inputMode="decimal"
@@ -115,21 +118,16 @@ export function AssumptionSettings({ values, defaults }: { values: OverrideValue
     </Field>
   );
   function save() {
-    // Only store values that differ from defaults.
-    const diff = <K extends keyof OverrideValues>(k: K, scale = 1) =>
-      num(k) !== defaults[k] ? num(k) / scale : undefined;
+    // Values equal to the default are cleared (null) so future default changes apply.
+    const diff = (k: keyof OverrideValues) => (num(k) !== defaults[k] ? num(k) : null);
     run(() =>
       saveOverrides({
-        budget: {
-          savingsMinPct: diff("savingsMinPct", 100),
-          freelance: { taxReservePct: diff("taxReservePct", 100) },
-        },
         ladder: {
           healthCoverMetro: diff("healthCoverMetro"),
           healthCoverOther: diff("healthCoverOther"),
           termIncomeMultiple: diff("termIncomeMultiple"),
+          termCoverTarget: termTarget && termTarget > 0 ? termTarget : null,
           highInterestThresholdPct: diff("highInterestThresholdPct"),
-          retirementBaselinePct: diff("retirementBaselinePct", 100),
         },
         goals: { retirementAge: diff("retirementAge") },
       }),
@@ -138,18 +136,156 @@ export function AssumptionSettings({ values, defaults }: { values: OverrideValue
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        {field("savingsMinPct", "Minimum savings (% of base)", "%", "")}
-        {field("taxReservePct", "Freelance tax reserve (%)", "%", "")}
-        {field("healthCoverMetro", "Health cover target, metro (₹)", "", "")}
-        {field("healthCoverOther", "Health cover target, elsewhere (₹)", "", "")}
-        {field("termIncomeMultiple", "Term cover (x yearly income)", "x", "")}
-        {field("highInterestThresholdPct", "High-interest debt above (%)", "%", "")}
-        {field("retirementBaselinePct", "Retirement baseline (% of base)", "%", "")}
-        {field("retirementAge", "Retirement age", "", "")}
+        <Field
+          label="My term cover target (₹)"
+          htmlFor="ov-termCoverTarget"
+          className="sm:col-span-2"
+          hint={
+            termTarget
+              ? `Your plan aims for ${inr.format(termTarget)} of term cover.`
+              : `Leave blank to use ${v.termIncomeMultiple || defaults.termIncomeMultiple}x your yearly income plus loans, minus savings.`
+          }
+        >
+          <MoneyInput id="ov-termCoverTarget" placeholder="Automatic" value={termTarget} onChange={setTermTarget} />
+        </Field>
+        {!termTarget && field("termIncomeMultiple", "Term cover (x yearly income)", (n) => `${n}x`)}
+        {field("healthCoverMetro", "Health cover target, metro (₹)", (n) => inr.format(n))}
+        {field("healthCoverOther", "Health cover target, elsewhere (₹)", (n) => inr.format(n))}
+        {field("highInterestThresholdPct", "High-interest debt above (%)", (n) => `${n}%`)}
+        {field("retirementAge", "Retirement age", (n) => String(n))}
       </div>
+      <p className="text-xs text-muted-foreground">Savings and income-split ratios are on the Budget page.</p>
       <div className="flex items-center gap-3">
         <Button type="button" onClick={save} disabled={pending}>
           Save assumptions
+        </Button>
+        {status}
+      </div>
+    </div>
+  );
+}
+
+/** Budget ratios, edited on the Budget page. Percentages are whole numbers here. */
+export interface RatioValues {
+  savingsMinPct: number;
+  capPct: number;
+  variable: [number, number, number];
+  bonus: [number, number, number];
+  secondary: [number, number];
+  retirementBaselinePct: number;
+  taxReservePct: number;
+}
+
+export function BudgetRatios({ values, defaults }: { values: RatioValues; defaults: RatioValues }) {
+  const [r, setR] = useState(values);
+  const { pending, run, status } = useAction();
+  const pctInput = (id: string, label: string, value: number, onChange: (n: number) => void) => (
+    <div className="space-y-1">
+      <label htmlFor={id} className="text-xs text-muted-foreground">
+        {label}
+      </label>
+      <div className="relative">
+        <Input
+          id={id}
+          inputMode="decimal"
+          className="pr-7"
+          value={Number.isFinite(value) ? String(value) : ""}
+          onChange={(e) => onChange(Number(e.target.value.replace(/[^\d.]/g, "") || 0))}
+        />
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+          %
+        </span>
+      </div>
+    </div>
+  );
+  const sum = (xs: number[]) => Math.round(xs.reduce((a, b) => a + b, 0) * 100) / 100;
+  const splitNote = (xs: number[]) =>
+    sum(xs) === 100 ? null : <p className="text-xs text-danger">Adds up to {sum(xs)}%. Make it 100%.</p>;
+  const same = (a: number[], b: number[]) => a.every((x, i) => x === b[i]);
+  const valid =
+    sum(r.variable) === 100 && sum(r.bonus) === 100 && sum(r.secondary) === 100 && r.capPct >= r.savingsMinPct;
+
+  function save() {
+    const d = defaults;
+    const pctOrNull = (x: number, def: number) => (x === def ? null : x / 100);
+    const split3 = (x: [number, number, number], def: [number, number, number]) =>
+      same(x, def) ? null : { ladder: x[0] / 100, goals: x[1] / 100, wants: x[2] / 100 };
+    run(() =>
+      saveOverrides({
+        budget: {
+          savingsMinPct: pctOrNull(r.savingsMinPct, d.savingsMinPct),
+          essentialsPlusSavingsCapPct: pctOrNull(r.capPct, d.capPct),
+          variableSurplus: split3(r.variable, d.variable),
+          bonusSurplus: split3(r.bonus, d.bonus),
+          secondarySurplus: same(r.secondary, d.secondary)
+            ? null
+            : { ladderGoals: r.secondary[0] / 100, wants: r.secondary[1] / 100 },
+          freelance: { taxReservePct: pctOrNull(r.taxReservePct, d.taxReservePct) },
+        },
+        ladder: { retirementBaselinePct: pctOrNull(r.retirementBaselinePct, d.retirementBaselinePct) },
+      }),
+    );
+  }
+
+  return (
+    <div className="space-y-5">
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">Base income</legend>
+        <div className="grid grid-cols-2 items-end gap-3">
+          {pctInput("r-save", "Save at least", r.savingsMinPct, (n) => setR({ ...r, savingsMinPct: n }))}
+          {pctInput("r-cap", "Essentials + savings at most", r.capPct, (n) => setR({ ...r, capPct: n }))}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Whatever is left after essentials and savings is for wants. With these settings, at least {100 - r.capPct}%
+          of base income stays yours to spend.
+        </p>
+        {r.capPct < r.savingsMinPct && (
+          <p className="text-xs text-danger">The cap must be at least the savings minimum.</p>
+        )}
+      </fieldset>
+
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">Variable pay and freelance surplus</legend>
+        <div className="grid grid-cols-3 items-end gap-3">
+          {pctInput("r-v1", "Next step", r.variable[0], (n) => setR({ ...r, variable: [n, r.variable[1], r.variable[2]] }))}
+          {pctInput("r-v2", "Goals", r.variable[1], (n) => setR({ ...r, variable: [r.variable[0], n, r.variable[2]] }))}
+          {pctInput("r-v3", "Wants", r.variable[2], (n) => setR({ ...r, variable: [r.variable[0], r.variable[1], n] }))}
+        </div>
+        {splitNote(r.variable)}
+      </fieldset>
+
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">Bonuses and one-offs</legend>
+        <div className="grid grid-cols-3 items-end gap-3">
+          {pctInput("r-b1", "Next step", r.bonus[0], (n) => setR({ ...r, bonus: [n, r.bonus[1], r.bonus[2]] }))}
+          {pctInput("r-b2", "Goals", r.bonus[1], (n) => setR({ ...r, bonus: [r.bonus[0], n, r.bonus[2]] }))}
+          {pctInput("r-b3", "Wants", r.bonus[2], (n) => setR({ ...r, bonus: [r.bonus[0], r.bonus[1], n] }))}
+        </div>
+        {splitNote(r.bonus)}
+      </fieldset>
+
+      <fieldset className="space-y-2">
+        <legend className="text-sm font-medium">Second job income</legend>
+        <div className="grid grid-cols-2 items-end gap-3">
+          {pctInput("r-s1", "Next step and goals", r.secondary[0], (n) => setR({ ...r, secondary: [n, r.secondary[1]] }))}
+          {pctInput("r-s2", "Wants", r.secondary[1], (n) => setR({ ...r, secondary: [r.secondary[0], n] }))}
+        </div>
+        {splitNote(r.secondary)}
+      </fieldset>
+
+      <div className="grid grid-cols-2 items-end gap-3">
+        {pctInput("r-ret", "Retirement baseline (of base)", r.retirementBaselinePct, (n) =>
+          setR({ ...r, retirementBaselinePct: n }),
+        )}
+        {pctInput("r-tax", "Freelance tax reserve", r.taxReservePct, (n) => setR({ ...r, taxReservePct: n }))}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="button" onClick={save} disabled={pending || !valid}>
+          Save ratios
+        </Button>
+        <Button type="button" variant="ghost" onClick={() => setR(defaults)} disabled={pending}>
+          Reset to defaults
         </Button>
         {status}
       </div>

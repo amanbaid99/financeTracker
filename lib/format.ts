@@ -56,3 +56,11 @@ export function parseRupees(input: string | number | null | undefined): number |
   const n = Number(cleaned);
   return Number.isFinite(n) ? Math.round(n) : null;
 }
+
+/** "by 15 Mar 2030", "around Mar 2031 (no deadline)" or "no deadline, not reached yet". */
+export function goalWhen(g: { openEnded: boolean; targetDate: string | null; estimatedMonths: number | null }): string {
+  if (!g.openEnded) return `by ${formatDate(g.targetDate)}`;
+  if (g.estimatedMonths === null) return "no deadline · not reached at current pace";
+  if (g.estimatedMonths === 0) return "no deadline · already there";
+  return `no deadline · around ${formatDate(g.targetDate).slice(-8)}`;
+}

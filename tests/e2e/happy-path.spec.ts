@@ -194,4 +194,35 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await page.screenshot({ path: "test-results/month-bank-375.png", fullPage: true });
   await page.goto("/month");
   await page.screenshot({ path: "test-results/month-bills-375.png", fullPage: true });
+
+  // A goal with no deadline gets an estimated date.
+  await page.goto("/goals/new");
+  await page.getByLabel("Goal type", { exact: true }).selectOption("travel");
+  await page.getByLabel("Name", { exact: true }).fill("Japan trip");
+  await page.getByLabel("Target in today's rupees", { exact: true }).fill("100000");
+  await page.getByLabel("No fixed date: tell me when I'll get there").check();
+  await page.getByRole("button", { name: "Save goal" }).click();
+  await expect(page.getByRole("heading", { name: "Japan trip" })).toBeVisible();
+  await expect(page.getByText("No deadline", { exact: true })).toBeVisible();
+  await expect(page.getByText("Get there in")).toBeVisible();
+
+  // Budget ratios: savings minimum 25% is saved and used.
+  await page.goto("/budget");
+  await page.getByLabel("Save at least", { exact: true }).fill("25");
+  await page.getByRole("button", { name: "Save ratios" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("Save at least", { exact: true })).toHaveValue("25");
+  await expect(page.getByText("at least 25%")).toBeVisible();
+
+  // Term cover target of 2 Cr in Settings, without losing the ratio above.
+  await page.goto("/settings");
+  await page.getByLabel("My term cover target (₹)", { exact: true }).fill("20000000");
+  await page.getByRole("button", { name: "Save assumptions" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("My term cover target (₹)", { exact: true })).toHaveValue("2,00,00,000");
+  await page.goto("/budget");
+  await expect(page.getByLabel("Save at least", { exact: true })).toHaveValue("25");
+  await page.screenshot({ path: "test-results/budget-ratios-375.png", fullPage: true });
 });

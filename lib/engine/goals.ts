@@ -1,6 +1,6 @@
 import { defaultCategoryForKind, isEquity } from "./categories";
 import type { EngineConfig, HorizonBand } from "./config";
-import { monthsBetween } from "./dates";
+import { addMonths, monthsBetween } from "./dates";
 import type { Goal, GoalAllocation, Holding, RiskProfile } from "./types";
 
 /** FV = PV * (1 + i)^n, with i as a percentage per year. */
@@ -114,14 +114,22 @@ export function bandFor(
   return { band: bands[index], baseBand: bands[baseIndex], shifted: index !== baseIndex };
 }
 
-export type GoalStatus = "funded" | "on_track" | "slightly_behind" | "behind";
+export type GoalStatus = "funded" | "on_track" | "slightly_behind" | "behind" | "open";
 
 export interface GoalAnalysis {
   goalId: string;
   name: string;
   type: Goal["type"];
   priority: number;
-  targetDate: string;
+  /** The set date, or the estimated date for a goal with no deadline. */
+  targetDate: string | null;
+  /** True when the user set no deadline. */
+  openEnded: boolean;
+  /** For open goals: months until reached at the current pace, or null if never. */
+  estimatedMonths: number | null;
+  /** For open goals: monthly SIP needed to reach it in the hint horizon. */
+  hintMonthly: number;
+  hintYears: number;
   months: number;
   years: number;
   inflationPct: number;
@@ -174,6 +182,7 @@ export function analyzeGoal(
   },
 ): GoalAnalysis {
   const { cfg } = ctx;
+  if (goal.targetDate === null) return analyzeOpenGoal(goal, ctx);
   const months = monthsBetween(ctx.todayISO, goal.targetDate);
   const years = months / 12;
   const inflationPct = inflationFor(goal, cfg);
@@ -248,6 +257,10 @@ export function analyzeGoal(
     type: goal.type,
     priority: goal.priority,
     targetDate: goal.targetDate,
+    openEnded: false,
+    estimatedMonths: null,
+    hintMonthly: 0,
+    hintYears: 0,
     months,
     years,
     inflationPct,
@@ -273,10 +286,138 @@ export function analyzeGoal(
   };
 }
 
-/** Goals in funding order: user priority (1 first), then nearest date. */
-export function sortGoalsForFunding<T extends { priority: number; targetDate: string }>(goals: T[]): T[] {
+/**
+ * Months until a goal with no deadline is reached at the current pace: linked
+ * holdings grow at their own returns with their SIPs (and step-ups), money
+ * saved on the goal grows at a modest return, and the target grows with
+ * inflation. Null if it isn't reached within the look-ahead window.
+ */
+export function estimateMonthsToGoal(opts: {
+  targetToday: number;
+  inflationPct: number;
+  saved: number;
+  savedReturnPct: number;
+  holdings: { value: number; sip: number; stepUpPct: number; returnPct: number }[];
+  maxMonths: number;
+}): number | null {
+  const iMonthly = Math.pow(1 + opts.inflationPct / 100, 1 / 12);
+  let target = opts.targetToday;
+  let saved = Math.max(0, opts.saved);
+  const hs = opts.holdings.map((h) => ({ ...h }));
+  const total = () => saved + hs.reduce((s, h) => s + h.value, 0);
+  if (total() >= target) return 0;
+  for (let k = 0; k < opts.maxMonths; k++) {
+    // SIPs go in at the start of the month, then everything grows for a month.
+    for (const h of hs) {
+      const sip = h.sip * Math.pow(1 + h.stepUpPct / 100, Math.floor(k / 12));
+      h.value = (h.value + sip) * (1 + h.returnPct / 100 / 12);
+    }
+    saved *= 1 + opts.savedReturnPct / 100 / 12;
+    target *= iMonthly;
+    if (total() >= target) return k + 1;
+  }
+  return null;
+}
+
+function analyzeOpenGoal(
+  goal: Goal,
+  ctx: { holdings: Holding[]; allocations: GoalAllocation[]; risk: RiskProfile | null; todayISO: string; cfg: EngineConfig },
+): GoalAnalysis {
+  const { cfg } = ctx;
+  const inflationPct = inflationFor(goal, cfg);
+  const links = linkedHoldings(goal.id, ctx.holdings, ctx.allocations);
+  const linkedValue = Math.round(links.reduce((s, l) => s + (l.holding.currentValue * l.percent) / 100, 0));
+  const linkedSip = Math.round(links.reduce((s, l) => s + ((l.holding.monthlySip ?? 0) * l.percent) / 100, 0));
+  const currentAmount = Math.max(0, goal.savedAmount) + linkedValue;
+
+  const estimatedMonths = estimateMonthsToGoal({
+    targetToday: goal.targetToday,
+    inflationPct,
+    saved: goal.savedAmount,
+    savedReturnPct: cfg.goals.openGoalSavedReturnPct,
+    holdings: links.map((l) => ({
+      value: (l.holding.currentValue * l.percent) / 100,
+      sip: ((l.holding.monthlySip ?? 0) * l.percent) / 100,
+      stepUpPct: l.holding.sipStepUpPct ?? 0,
+      returnPct: expectedReturnFor(l.holding, cfg).pct,
+    })),
+    maxMonths: cfg.goals.openGoalMaxYears * 12,
+  });
+
+  const months = estimatedMonths ?? 0;
+  const years = months / 12;
+  const futureTarget = Math.round(futureValue(goal.targetToday, inflationPct, years));
+  const { band } = bandFor(estimatedMonths === null ? cfg.goals.openGoalHintYears : years, ctx.risk, cfg);
+  const categories =
+    goal.type === "retirement" && years >= 5 ? [...band.categories, ...cfg.goals.retirementExtraCategories] : band.categories;
+  const alreadyFunded = estimatedMonths === 0;
+
+  // "To get there in N years" hint, priced like a dated goal.
+  const hintYears = cfg.goals.openGoalHintYears;
+  const hintBand = bandFor(hintYears, ctx.risk, cfg).band;
+  const hintTarget = futureValue(goal.targetToday, inflationPct, hintYears);
+  const hintMonthly = Math.max(0, Math.ceil(requiredSip(hintTarget, currentAmount, hintBand.returnPct, hintYears * 12)));
+
+  const hasEquity = links.some(
+    (l) => l.percent > 0 && l.holding.currentValue > 0 && isEquity(l.holding.kind, l.holding.category),
+  );
+  const glidePath = hasEquity && estimatedMonths !== null && years <= cfg.goals.glidePathYears && !alreadyFunded;
+  const estimatedDate = estimatedMonths === null ? null : addMonths(ctx.todayISO, estimatedMonths);
+
+  let reason: string;
+  if (alreadyFunded) {
+    reason = "You already have enough for this goal.";
+  } else if (estimatedMonths === null) {
+    reason =
+      linkedSip > 0
+        ? `At your current SIPs this goal isn't reached within ${cfg.goals.openGoalMaxYears} years, because its cost rises faster than your savings grow. A bigger SIP or a set date would help.`
+        : "With no SIP, this goal isn't reached: compounding alone doesn't keep up with its rising cost. Link a SIP to it or set a date to see the monthly amount needed.";
+  } else {
+    reason = `At your current pace you'll get there in about ${
+      estimatedMonths < 12 ? `${estimatedMonths} months` : `${Math.round(years * 10) / 10} years`
+    }, ${linkedSip > 0 ? "with your linked SIPs" : "from compounding alone"}. The target grows ${inflationPct}% a year with inflation.`;
+  }
+  if (glidePath) reason += " Start moving this goal to debt: shift about a third of its equity each year.";
+
+  return {
+    goalId: goal.id,
+    name: goal.name,
+    type: goal.type,
+    priority: goal.priority,
+    targetDate: estimatedDate,
+    openEnded: true,
+    estimatedMonths,
+    hintMonthly,
+    hintYears,
+    months,
+    years,
+    inflationPct,
+    targetToday: goal.targetToday,
+    futureTarget,
+    band,
+    categories,
+    returnPct: band.returnPct,
+    savedAmount: goal.savedAmount,
+    linkedValue,
+    linkedSip,
+    currentAmount,
+    requiredMonthly: 0,
+    requiredMonthlyStepUp: 0,
+    stepUpPct: cfg.goals.suggestedStepUpPct,
+    alreadyFunded,
+    dueNow: false,
+    projected: estimatedMonths === null ? currentAmount : futureTarget,
+    projectedPct: futureTarget > 0 ? currentAmount / futureTarget : 1,
+    status: alreadyFunded ? "funded" : "open",
+    glidePath,
+    reason,
+  };
+}
+
+/** Goals in funding order: user priority (1 first), then nearest date (no deadline last). */
+export function sortGoalsForFunding<T extends { priority: number; targetDate: string | null }>(goals: T[]): T[] {
   return [...goals].sort(
-    (a, b) => a.priority - b.priority || a.targetDate.localeCompare(b.targetDate),
+    (a, b) => a.priority - b.priority || (a.targetDate ?? "9999").localeCompare(b.targetDate ?? "9999"),
   );
 }
 

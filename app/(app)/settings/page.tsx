@@ -33,15 +33,14 @@ export default async function SettingsPage() {
   const c = analysis.config;
   const d = defaultConfig;
   const toValues = (x: typeof c) => ({
-    savingsMinPct: Math.round(x.budget.savingsMinPct * 100),
-    taxReservePct: Math.round(x.budget.freelance.taxReservePct * 100),
     healthCoverMetro: x.ladder.healthCoverMetro,
     healthCoverOther: x.ladder.healthCoverOther,
     termIncomeMultiple: x.ladder.termIncomeMultiple,
+    termCoverTarget: x.ladder.termCoverTarget,
     highInterestThresholdPct: x.ladder.highInterestThresholdPct,
-    retirementBaselinePct: Math.round(x.ladder.retirementBaselinePct * 100),
     retirementAge: x.goals.retirementAge,
   });
+
 
   return (
     <main className="mx-auto max-w-3xl space-y-5">

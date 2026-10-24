@@ -245,7 +245,7 @@ export type Database = {
           priority: number;
           saved_amount: number;
           status: string | null;
-          target_date: string;
+          target_date: string | null;
           target_today: number;
           type: Database["public"]["Enums"]["goal_type"];
           user_id: string;
@@ -259,7 +259,7 @@ export type Database = {
           priority?: number;
           saved_amount?: number;
           status?: string | null;
-          target_date: string;
+          target_date?: string | null;
           target_today: number;
           type: Database["public"]["Enums"]["goal_type"];
           user_id?: string;
@@ -272,7 +272,7 @@ export type Database = {
           priority?: number;
           saved_amount?: number;
           status?: string | null;
-          target_date?: string;
+          target_date?: string | null;
           target_today?: number;
           type?: Database["public"]["Enums"]["goal_type"];
           user_id?: string;

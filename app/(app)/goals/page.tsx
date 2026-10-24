@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { loadAnalysis } from "@/lib/data";
 import { sortGoalsForFunding } from "@/lib/engine/goals";
-import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
+import { formatINR, formatINRCompact, formatMonths, goalWhen } from "@/lib/format";
 import { GOAL_TYPE_LABELS, STATUS_BADGE } from "@/lib/labels";
 
 export const metadata: Metadata = { title: "Goals" };
@@ -54,7 +54,7 @@ export default async function GoalsPage() {
                       <div className="min-w-0">
                         <p className="truncate font-semibold">{g.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {GOAL_TYPE_LABELS[g.type]} · priority {g.priority} · {formatDate(g.targetDate)}
+                          {GOAL_TYPE_LABELS[g.type]} · priority {g.priority} · {goalWhen(g)}
                         </p>
                       </div>
                       <Badge variant={STATUS_BADGE[g.status].variant}>{STATUS_BADGE[g.status].label}</Badge>
@@ -70,9 +70,17 @@ export default async function GoalsPage() {
                         <dd className="tabular font-medium">{formatINRCompact(g.futureTarget)}</dd>
                       </div>
                       <div>
-                        <dt className="text-xs text-muted-foreground">Needs monthly</dt>
+                        <dt className="text-xs text-muted-foreground">
+                          {g.openEnded ? "Get there in" : "Needs monthly"}
+                        </dt>
                         <dd className="tabular font-medium">
-                          {g.requiredMonthly > 0 ? formatINR(g.requiredMonthly) : "Nothing more"}
+                          {g.openEnded
+                            ? g.estimatedMonths === null
+                              ? "Not at this pace"
+                              : formatMonths(g.estimatedMonths)
+                            : g.requiredMonthly > 0
+                              ? formatINR(g.requiredMonthly)
+                              : "Nothing more"}
                         </dd>
                       </div>
                     </dl>

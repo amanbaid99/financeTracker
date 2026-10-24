@@ -4,6 +4,7 @@ import {
   allocateToGoals,
   analyzeGoal,
   bandFor,
+  estimateMonthsToGoal,
   futureValue,
   projectedValue,
   requiredSip,
@@ -227,5 +228,75 @@ describe("step-up SIP", () => {
       });
     expect(run(10).projected).toBeGreaterThan(run(null).projected);
     expect(run(null).requiredMonthlyStepUp).toBeLessThan(run(null).requiredMonthly);
+  });
+});
+
+describe("goals with no deadline", () => {
+  const open = (g: Partial<Goal> = {}) => goal({ targetDate: null, targetToday: 500_000, type: "travel", ...g });
+  const sipHolding = (sip: number, value = 0): Holding => ({
+    id: "h",
+    kind: "mutual_fund",
+    name: null,
+    category: "equity_index",
+    currentValue: value,
+    monthlySip: sip,
+  });
+  const ctx = (holdings: Holding[], allocations = [{ goalId: "g1", holdingId: "h", percent: 100 }]) => ({
+    holdings,
+    allocations: holdings.length ? allocations : [],
+    risk: "moderate" as const,
+    todayISO: TODAY,
+    cfg,
+  });
+
+  it("estimates when a SIP reaches the inflating target", () => {
+    const a = analyzeGoal(open(), ctx([sipHolding(10_000)]));
+    expect(a.openEnded).toBe(true);
+    expect(a.status).toBe("open");
+    expect(a.requiredMonthly).toBe(0);
+    expect(a.estimatedMonths).toBeGreaterThan(36);
+    expect(a.estimatedMonths).toBeLessThan(60);
+    expect(a.targetDate).not.toBeNull();
+    // At the estimate, projected value covers the inflated target.
+    expect(a.reason).toContain("with your linked SIPs");
+  });
+
+  it("a bigger SIP gets there sooner", () => {
+    const slow = analyzeGoal(open(), ctx([sipHolding(5_000)])).estimatedMonths!;
+    const fast = analyzeGoal(open(), ctx([sipHolding(20_000)])).estimatedMonths!;
+    expect(fast).toBeLessThan(slow);
+  });
+
+  it("compounding alone works when returns beat inflation", () => {
+    const a = analyzeGoal(open({ targetToday: 200_000 }), ctx([sipHolding(0, 100_000)]));
+    // 11% return vs 6% inflation: roughly doubles relative to target in ~14-15 years.
+    expect(a.estimatedMonths).toBeGreaterThan(150);
+    expect(a.estimatedMonths).toBeLessThan(200);
+    expect(a.reason).toContain("from compounding alone");
+  });
+
+  it("is never reached when savings grow slower than the cost", () => {
+    const a = analyzeGoal(open({ inflationRate: 10, savedAmount: 100_000 }), ctx([]));
+    expect(a.estimatedMonths).toBeNull();
+    expect(a.status).toBe("open");
+    expect(a.hintMonthly).toBeGreaterThan(0);
+  });
+
+  it("is funded when you already have enough", () => {
+    const a = analyzeGoal(open({ savedAmount: 600_000 }), ctx([]));
+    expect(a.estimatedMonths).toBe(0);
+    expect(a.status).toBe("funded");
+  });
+
+  it("matches a hand simulation for one holding", () => {
+    const m = estimateMonthsToGoal({
+      targetToday: 120_000,
+      inflationPct: 0,
+      saved: 0,
+      savedReturnPct: 0,
+      holdings: [{ value: 0, sip: 10_000, stepUpPct: 0, returnPct: 0 }],
+      maxMonths: 100,
+    });
+    expect(m).toBe(12);
   });
 });

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BudgetChart } from "@/components/budget-chart";
+import { BudgetRatios, type RatioValues } from "@/components/forms/settings-forms";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { InfoTip } from "@/components/ui/info-tip";
 import { loadAnalysis } from "@/lib/data";
+import { defaultConfig, type EngineConfig } from "@/lib/engine/config";
 import type { StreamRole } from "@/lib/engine/budget";
 import { formatDate, formatINR } from "@/lib/format";
 import { INCOME_TYPE_LABELS } from "@/lib/labels";
@@ -29,6 +31,21 @@ function Row({ label, value, strong, tip }: { label: string; value: number; stro
       <span className="tabular">{formatINR(value)}</span>
     </div>
   );
+}
+
+const p = (x: number) => Math.round(x * 1000) / 10;
+
+function ratioValues(c: EngineConfig): RatioValues {
+  const b = c.budget;
+  return {
+    savingsMinPct: p(b.savingsMinPct),
+    capPct: p(b.essentialsPlusSavingsCapPct),
+    variable: [p(b.variableSurplus.ladder), p(b.variableSurplus.goals), p(b.variableSurplus.wants)],
+    bonus: [p(b.bonusSurplus.ladder), p(b.bonusSurplus.goals), p(b.bonusSurplus.wants)],
+    secondary: [p(b.secondarySurplus.ladderGoals), p(b.secondarySurplus.wants)],
+    retirementBaselinePct: p(c.ladder.retirementBaselinePct),
+    taxReservePct: p(b.freelance.taxReservePct),
+  };
 }
 
 export default async function BudgetPage() {
@@ -195,6 +212,18 @@ export default async function BudgetPage() {
           </CardContent>
         </Card>
       )}
+      <Card id="ratios">
+        <CardHeader>
+          <CardTitle>Your ratios</CardTitle>
+          <CardDescription>
+            How base income splits between essentials, savings and wants, and where extra income goes. Your plan
+            updates as soon as you save.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <BudgetRatios values={ratioValues(config)} defaults={ratioValues(defaultConfig)} />
+        </CardContent>
+      </Card>
     </main>
   );
 }

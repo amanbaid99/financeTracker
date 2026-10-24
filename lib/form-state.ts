@@ -83,6 +83,7 @@ export function goalState(g: GoalRow | null, todayISO: string, type: GoalType = 
       targetToday: null,
       targetDate: addMonths(todayISO, type === "retirement" ? 300 : 36),
       priority: type === "retirement" ? 2 : 3,
+      noDeadline: false,
       inflationRate: "",
       savedAmount: null,
     };
@@ -92,7 +93,8 @@ export function goalState(g: GoalRow | null, todayISO: string, type: GoalType = 
     name: g.name,
     type: g.type,
     targetToday: g.target_today,
-    targetDate: g.target_date,
+    targetDate: g.target_date ?? addMonths(todayISO, 36),
+    noDeadline: g.target_date === null,
     priority: g.priority,
     inflationRate: g.inflation_rate === null ? "" : String(Number(g.inflation_rate)),
     savedAmount: g.saved_amount,

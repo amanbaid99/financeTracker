@@ -22,7 +22,7 @@ import { Progress } from "@/components/ui/progress";
 import { aiConfigured } from "@/lib/ai/config";
 import { loadAnalysis } from "@/lib/data";
 import type { StepStatus } from "@/lib/engine/ladder";
-import { formatINR, formatINRCompact } from "@/lib/format";
+import { formatINR, formatINRCompact, formatMonths } from "@/lib/format";
 import { STATUS_BADGE } from "@/lib/labels";
 import { buildReminders } from "@/lib/reminders";
 
@@ -318,9 +318,11 @@ export default async function DashboardPage() {
                       <p className="tabular text-xs text-muted-foreground">
                         {formatINRCompact(g.currentAmount)} of{" "}
                         {formatINRCompact(g.futureTarget)}
-                        {g.requiredMonthly > 0
-                          ? ` · needs ${formatINR(g.requiredMonthly)}/month`
-                          : ""}
+                        {g.openEnded
+                          ? ` · ${g.estimatedMonths === null ? "not reached at this pace" : g.estimatedMonths === 0 ? "already there" : `about ${formatMonths(g.estimatedMonths)} away`}`
+                          : g.requiredMonthly > 0
+                            ? ` · needs ${formatINR(g.requiredMonthly)}/month`
+                            : ""}
                       </p>
                     </Link>
                   </li>

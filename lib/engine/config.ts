@@ -49,6 +49,8 @@ export const defaultConfig = {
     healthCoverMetro: 1_000_000,
     healthCoverOther: 500_000,
     termIncomeMultiple: 15,
+    /** Fixed term cover target in rupees. 0 means use the income multiple. */
+    termCoverTarget: 0,
     highInterestThresholdPct: 10,
     /** Debt kinds treated as high interest when no rate is entered. */
     assumeHighInterestKinds: ["credit_card", "personal_loan"],
@@ -153,6 +155,12 @@ export const defaultConfig = {
       gold: 8,
       other: 7,
     } as Record<string, number>,
+    /** Return assumed for money saved directly on a goal with no deadline. */
+    openGoalSavedReturnPct: 7,
+    /** How far ahead to look when estimating a goal with no deadline. */
+    openGoalMaxYears: 50,
+    /** Horizon used for the "to get there in N years" hint on open goals. */
+    openGoalHintYears: 5,
     /** Yearly step-up used to suggest a lower starting SIP on each goal. */
     suggestedStepUpPct: 10,
     status: { onTrack: 1, slightlyBehind: 0.8 },

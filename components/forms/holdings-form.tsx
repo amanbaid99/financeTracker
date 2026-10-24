@@ -30,7 +30,7 @@ export interface HoldingRowState {
   expectedReturn: string;
   goal: GoalChoice;
   initialGoal: GoalChoice;
-  newGoal?: { name: string; type: GoalType; targetToday: number | null; targetDate: string };
+  newGoal?: { name: string; type: GoalType; targetToday: number | null; targetDate: string; noDeadline?: boolean };
 }
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
@@ -81,7 +81,7 @@ export function HoldingsForm({
         name: r.newGoal.name || GOAL_TYPE_LABELS[r.newGoal.type],
         type: r.newGoal.type,
         targetToday: r.newGoal.targetToday ?? 0,
-        targetDate: r.newGoal.targetDate,
+        targetDate: r.newGoal.noDeadline ? null : r.newGoal.targetDate,
       };
     }
     if (r.goal === r.initialGoal || r.goal === "split") return undefined;
@@ -296,14 +296,27 @@ export function HoldingsForm({
                       onChange={(v) => update(i, { newGoal: { ...r.newGoal!, targetToday: v } })}
                     />
                   </Field>
-                  <Field label="Target date" htmlFor={`h-gdate-${i}`}>
-                    <Input
-                      id={`h-gdate-${i}`}
-                      type="date"
-                      value={r.newGoal.targetDate}
-                      onChange={(e) => update(i, { newGoal: { ...r.newGoal!, targetDate: e.target.value } })}
-                    />
-                  </Field>
+                  <div className="space-y-2">
+                    {!r.newGoal.noDeadline && (
+                      <Field label="Target date" htmlFor={`h-gdate-${i}`}>
+                        <Input
+                          id={`h-gdate-${i}`}
+                          type="date"
+                          value={r.newGoal.targetDate}
+                          onChange={(e) => update(i, { newGoal: { ...r.newGoal!, targetDate: e.target.value } })}
+                        />
+                      </Field>
+                    )}
+                    <label className="flex items-center gap-2 text-sm">
+                      <input
+                        type="checkbox"
+                        className="size-4 accent-[var(--primary)]"
+                        checked={Boolean(r.newGoal.noDeadline)}
+                        onChange={(e) => update(i, { newGoal: { ...r.newGoal!, noDeadline: e.target.checked } })}
+                      />
+                      No fixed date
+                    </label>
+                  </div>
                   <p className="text-xs text-muted-foreground sm:col-span-2">
                     All of this investment will count toward the new goal. You can split it later.
                   </p>

@@ -10,6 +10,7 @@ import { riskFromAnswers } from "@/lib/engine/risk";
 import type { Section } from "@/lib/engine/types";
 import { AI_CONSENT_VERSION, DISCLAIMER_VERSION, PRIVACY_VERSION } from "@/lib/legal";
 import type { Database } from "@/lib/supabase/database.types";
+import { mergeOverrides, type Obj } from "@/lib/overrides";
 import { createClient } from "@/lib/supabase/server";
 import { ACCENT_COOKIE, ACCENTS, THEME_COOKIE, THEME_COOKIE_OPTIONS, THEMES } from "@/lib/theme";
 
@@ -330,7 +331,7 @@ const holdingSchema = z.object({
           "custom",
         ]),
         targetToday: money.min(1, "add the goal's target amount"),
-        targetDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "pick the goal's date"),
+        targetDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "pick the goal's date").nullable(),
       }),
     ])
     .optional(),
@@ -455,7 +456,7 @@ const goalSchema = z.object({
     "custom",
   ]),
   targetToday: money.min(1, "add a target amount"),
-  targetDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "pick a date"),
+  targetDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "pick a date").nullable(),
   priority: z.number().int().min(1).max(5),
   inflationRate: z.number().min(0).max(30).nullable().optional(),
   savedAmount: money.default(0),
@@ -705,24 +706,41 @@ export async function setAiEnabled(enabled: boolean): Promise<ActionResult> {
 // Settings
 // ---------------------------------------------------------------------------
 
+const pct = (max: number) => z.number().min(0).max(max).nullable().optional();
+const split3 = z
+  .object({ ladder: z.number().min(0).max(1), goals: z.number().min(0).max(1), wants: z.number().min(0).max(1) })
+  .refine((x) => Math.abs(x.ladder + x.goals + x.wants - 1) < 0.001, "the three parts must add up to 100%")
+  .nullable()
+  .optional();
+
+// Every field is optional; null resets it to the default.
 const overridesSchema = z
   .object({
     budget: z
       .object({
-        savingsMinPct: z.number().min(0).max(0.9).optional(),
-        freelance: z.object({ taxReservePct: z.number().min(0).max(0.6).optional() }).optional(),
+        savingsMinPct: pct(0.9),
+        essentialsPlusSavingsCapPct: pct(1),
+        variableSurplus: split3,
+        bonusSurplus: split3,
+        secondarySurplus: z
+          .object({ ladderGoals: z.number().min(0).max(1), wants: z.number().min(0).max(1) })
+          .refine((x) => Math.abs(x.ladderGoals + x.wants - 1) < 0.001, "the two parts must add up to 100%")
+          .nullable()
+          .optional(),
+        freelance: z.object({ taxReservePct: pct(0.6) }).optional(),
       })
       .optional(),
     ladder: z
       .object({
-        healthCoverMetro: money.optional(),
-        healthCoverOther: money.optional(),
-        termIncomeMultiple: z.number().min(5).max(30).optional(),
-        highInterestThresholdPct: z.number().min(0).max(40).optional(),
-        retirementBaselinePct: z.number().min(0).max(0.5).optional(),
+        healthCoverMetro: money.nullable().optional(),
+        healthCoverOther: money.nullable().optional(),
+        termIncomeMultiple: z.number().min(5).max(30).nullable().optional(),
+        termCoverTarget: money.nullable().optional(),
+        highInterestThresholdPct: z.number().min(0).max(40).nullable().optional(),
+        retirementBaselinePct: pct(0.5),
       })
       .optional(),
-    goals: z.object({ retirementAge: z.number().int().min(40).max(75).optional() }).optional(),
+    goals: z.object({ retirementAge: z.number().int().min(40).max(75).nullable().optional() }).optional(),
   })
   .strict();
 
@@ -730,7 +748,13 @@ export async function saveOverrides(input: z.input<typeof overridesSchema>): Pro
   try {
     const v = overridesSchema.parse(input);
     const { supabase, userId } = await session();
-    const { error } = await supabase.from("settings").update({ config_overrides: v }).eq("user_id", userId);
+    const { data } = await supabase.from("settings").select("config_overrides").eq("user_id", userId).single();
+    const current = (data?.config_overrides ?? {}) as Obj;
+    const next = mergeOverrides(current, v as Obj);
+    const { error } = await supabase
+      .from("settings")
+      .update({ config_overrides: next as Database["public"]["Tables"]["settings"]["Update"]["config_overrides"] })
+      .eq("user_id", userId);
     if (error) throw new Error(error.message);
     return done();
   } catch (e) {

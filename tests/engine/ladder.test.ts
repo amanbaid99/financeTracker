@@ -294,3 +294,25 @@ describe("credit cards paid in full", () => {
     expect(stepStatus(d, "emergency_fund")).toBe("done");
   });
 });
+
+describe("term cover target", () => {
+  it("uses a fixed amount from settings instead of the income multiple", () => {
+    const d = solidBasics({ profile: profile({ maritalStatus: "married", dependents: 2 }) });
+    const a = analyze(d, { ladder: { termCoverTarget: 20_000_000 } }, TODAY);
+    expect(a.nextFocus?.step.key).toBe("term_insurance");
+    expect(a.nextFocus?.gap).toBe(20_000_000);
+    expect(a.nextFocus?.reason).toContain("cover amount you chose");
+  });
+
+  it("a 2 Cr policy completes the step with a 2 Cr target", () => {
+    const d = solidBasics({
+      profile: profile({ maritalStatus: "married", dependents: 2 }),
+      insurance: [
+        { id: "p", kind: "health", source: "personal", coverAmount: 1_000_000, premium: 12_000, renewalMonth: 4 },
+        { id: "t", kind: "term", source: "personal", coverAmount: 20_000_000, premium: 20_000, renewalMonth: 4 },
+      ],
+    });
+    const a = analyze(d, { ladder: { termCoverTarget: 20_000_000 } }, TODAY);
+    expect(a.ladder.find((s) => s.key === "term_insurance")?.status).toBe("done");
+  });
+});

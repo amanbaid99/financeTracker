@@ -36,7 +36,8 @@ function goalFacts(g: GoalAnalysis, index: number) {
   return {
     goal: `${GOAL_LABELS[g.type] ?? "goal"} (goal ${index + 1})`,
     priority: g.priority,
-    years_away: Math.round(g.years * 10) / 10,
+    no_deadline: g.openEnded,
+    years_away: g.openEnded && g.estimatedMonths === null ? "not reached at current pace" : Math.round(g.years * 10) / 10,
     target_today: roughRupees(g.targetToday),
     target_future_after_inflation: roughRupees(g.futureTarget),
     inflation_pct: g.inflationPct,

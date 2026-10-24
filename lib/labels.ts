@@ -50,4 +50,5 @@ export const STATUS_BADGE: Record<GoalStatus, { label: string; variant: "success
   on_track: { label: "On track", variant: "success" },
   slightly_behind: { label: "Slightly behind", variant: "warning" },
   behind: { label: "Behind", variant: "danger" },
+  open: { label: "No deadline", variant: "default" },
 };

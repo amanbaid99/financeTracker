@@ -13,7 +13,7 @@ export interface GoalSummary {
   name: string;
   type: keyof typeof GOAL_TYPE_LABELS;
   targetToday: number;
-  targetDate: string;
+  targetDate: string | null;
 }
 
 export function GoalsStep({
@@ -84,7 +84,7 @@ export function GoalsStep({
               <div className="min-w-0">
                 <p className="truncate font-medium">{g.name}</p>
                 <p className="text-muted-foreground">
-                  {GOAL_TYPE_LABELS[g.type]} · by {formatDate(g.targetDate)}
+                  {GOAL_TYPE_LABELS[g.type]} · {g.targetDate ? `by ${formatDate(g.targetDate)}` : "no deadline"}
                 </p>
               </div>
               <span className="tabular font-medium">{formatINRCompact(g.targetToday)}</span>

@@ -18,6 +18,8 @@ export interface GoalFormState {
   type: GoalType;
   targetToday: number | null;
   targetDate: string;
+  /** No fixed date: the app estimates when it's reached. */
+  noDeadline: boolean;
   priority: number;
   inflationRate: string;
   savedAmount: number | null;
@@ -49,7 +51,7 @@ export function GoalForm({
         name: g.name || GOAL_TYPE_LABELS[g.type],
         type: g.type,
         targetToday: g.targetToday ?? 0,
-        targetDate: g.targetDate,
+        targetDate: g.noDeadline ? null : g.targetDate,
         priority: g.priority,
         inflationRate: g.inflationRate === "" ? null : Number(g.inflationRate),
         savedAmount: g.savedAmount ?? 0,
@@ -98,15 +100,34 @@ export function GoalForm({
         >
           <MoneyInput id="g-target" required value={g.targetToday} onChange={(v) => set({ targetToday: v })} />
         </Field>
-        <Field label="Target date" htmlFor="g-date">
-          <Input
-            id="g-date"
-            type="date"
-            required
-            value={g.targetDate}
-            onChange={(e) => set({ targetDate: e.target.value })}
-          />
-        </Field>
+        <div className="space-y-2">
+          {g.noDeadline ? (
+            <Field label="Target date" htmlFor="g-nodate" hint="We'll estimate when you get there from your linked SIPs and savings.">
+              <p id="g-nodate" className="flex h-10 items-center text-sm text-muted-foreground">
+                No fixed date
+              </p>
+            </Field>
+          ) : (
+            <Field label="Target date" htmlFor="g-date">
+              <Input
+                id="g-date"
+                type="date"
+                required
+                value={g.targetDate}
+                onChange={(e) => set({ targetDate: e.target.value })}
+              />
+            </Field>
+          )}
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="size-4 accent-[var(--primary)]"
+              checked={g.noDeadline}
+              onChange={(e) => set({ noDeadline: e.target.checked })}
+            />
+            No fixed date: tell me when I&apos;ll get there
+          </label>
+        </div>
         <Field label="Priority" htmlFor="g-priority" hint="1 is most important. Higher priority goals get funded first.">
           <Select id="g-priority" value={g.priority} onChange={(e) => set({ priority: Number(e.target.value) })}>
             {[1, 2, 3, 4, 5].map((p) => (

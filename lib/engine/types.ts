@@ -134,8 +134,8 @@ export interface Goal {
   name: string;
   type: GoalType;
   targetToday: number;
-  /** ISO date (yyyy-mm-dd). */
-  targetDate: string;
+  /** ISO date (yyyy-mm-dd). Null means no deadline: the engine estimates when it's reached. */
+  targetDate: string | null;
   priority: number;
   /** Percentage per year, e.g. 6. Null uses the default for the goal type. */
   inflationRate: number | null;

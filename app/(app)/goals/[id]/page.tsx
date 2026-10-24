@@ -73,7 +73,10 @@ export default async function GoalPage({
             <Badge variant={STATUS_BADGE[g.status].variant}>{STATUS_BADGE[g.status].label}</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            By {formatDate(g.targetDate)} ({formatMonths(g.months)} away) · priority {g.priority}
+            {g.openEnded
+              ? `No deadline${g.estimatedMonths ? ` · about ${formatMonths(g.estimatedMonths)} at your current pace (${formatDate(g.targetDate)})` : ""}`
+              : `By ${formatDate(g.targetDate)} (${formatMonths(g.months)} away)`}{" "}
+            · priority {g.priority}
           </p>
         </div>
         <Link href={`/goals/${id}?edit=1`} className="text-sm text-primary underline-offset-2 hover:underline">
@@ -102,15 +105,36 @@ export default async function GoalPage({
             <Stat
               label="Target then"
               value={formatINRCompact(g.futureTarget)}
-              tip={`Today's amount grown by ${g.inflationPct}% inflation a year until your target date.`}
+              tip={`Today's amount grown by ${g.inflationPct}% inflation a year until ${g.openEnded ? "the estimated date" : "your target date"}.`}
             />
             <Stat label="Saved so far" value={formatINRCompact(g.currentAmount)} />
-            <Stat
-              label="Invest monthly"
-              value={g.dueNow ? `${formatINRCompact(g.requiredMonthly)} now` : formatINR(g.requiredMonthly)}
-              tip={`Monthly SIP needed at a ${g.returnPct}% a year planning return, with what you've saved growing at the same rate.`}
-            />
+            {g.openEnded ? (
+              <Stat
+                label="Get there in"
+                value={
+                  g.estimatedMonths === null
+                    ? "Not at this pace"
+                    : g.estimatedMonths === 0
+                      ? "Already there"
+                      : formatMonths(g.estimatedMonths)
+                }
+                tip="Estimated from your linked investments' returns, SIPs and step-ups, with the target growing by inflation."
+              />
+            ) : (
+              <Stat
+                label="Invest monthly"
+                value={g.dueNow ? `${formatINRCompact(g.requiredMonthly)} now` : formatINR(g.requiredMonthly)}
+                tip={`Monthly SIP needed at a ${g.returnPct}% a year planning return, with what you've saved growing at the same rate.`}
+              />
+            )}
           </dl>
+          {g.openEnded && !g.alreadyFunded && g.hintMonthly > 0 && (
+            <p className="rounded-lg bg-primary-soft p-3 text-sm">
+              <span className="font-medium">Want it sooner?</span> Investing about {formatINR(g.hintMonthly)}/month
+              would get you there in {g.hintYears} years. Link a SIP on the Holdings page, or set a date to plan it
+              properly.
+            </p>
+          )}
           {g.requiredMonthly > 0 && !g.dueNow && g.months >= 24 && g.requiredMonthlyStepUp < g.requiredMonthly && (
             <p className="rounded-lg bg-primary-soft p-3 text-sm">
               <span className="font-medium">Or start smaller with a step-up SIP:</span>{" "}
@@ -124,7 +148,7 @@ export default async function GoalPage({
               tone={g.status === "behind" ? "danger" : g.status === "slightly_behind" ? "warning" : "success"}
               label="Goal progress"
             />
-            <p className="tabular text-xs text-muted-foreground">
+            <p className={`tabular text-xs text-muted-foreground ${g.openEnded ? "hidden" : ""}`}>
               At your current SIPs ({formatINR(g.linkedSip)}/month, including any yearly step-ups) you&apos;d reach {formatINRCompact(g.projected)},{" "}
               {Math.round(g.projectedPct * 100)}% of the target.
             </p>

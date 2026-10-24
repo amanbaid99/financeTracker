@@ -210,7 +210,10 @@ export function evaluateLadder(
   const loansInherited = married && outstanding > 0;
   const annualIncome = budget.expectedIncome * 12;
   const rawTermTarget = L.termIncomeMultiple * annualIncome + outstanding - liquid;
-  const termTarget = Math.max(0, Math.ceil(rawTermTarget / 100_000) * 100_000);
+  const fixedTermTarget = L.termCoverTarget > 0;
+  const termTarget = fixedTermTarget
+    ? L.termCoverTarget
+    : Math.max(0, Math.ceil(rawTermTarget / 100_000) * 100_000);
   const termCover = sum(data.insurance.filter((p) => p.kind === "term").map((p) => p.coverAmount));
   if (!householdKnown) {
     steps.push(unknownStep(3, "term_insurance", "Term insurance", "cover", "household", termTarget));
@@ -240,7 +243,9 @@ export function evaluateLadder(
       target: termTarget,
       current: termCover,
       gap: Math.max(0, termTarget - termCover),
-      reason: `If something happened to you, ${L.termIncomeMultiple}x your yearly income plus your loans keeps your family going.`,
+      reason: fixedTermTarget
+        ? "If something happened to you, the cover amount you chose keeps your family going."
+        : `If something happened to you, ${L.termIncomeMultiple}x your yearly income plus your loans keeps your family going. You can set your own target amount in Settings.`,
     });
   }
 
@@ -287,7 +292,8 @@ export function evaluateLadder(
   );
 
   // Step 6: goals.
-  const behind = goals.filter((g) => g.status !== "funded" && g.status !== "on_track");
+  // Goals with no deadline are never "behind"; they just show when they'll land.
+  const behind = goals.filter((g) => g.status === "slightly_behind" || g.status === "behind");
   const goalGap = sum(goals.map((g) => Math.max(0, g.futureTarget - g.projected)));
   steps.push({
     id: 6,
