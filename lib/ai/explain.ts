@@ -19,10 +19,10 @@ Rules you must follow:
 - No jargon without a short explanation. No em dashes. No headings. Short paragraphs or a short list.
 - Do not add a disclaimer; the app shows one.`;
 
-const LIMITS: Record<AiFeature, { words: number; tokens: number; complex: boolean }> = {
-  next_focus: { words: 110, tokens: 300, complex: false },
-  goal: { words: 130, tokens: 350, complex: false },
-  plan_review: { words: 250, tokens: 700, complex: true },
+const LIMITS: Record<AiFeature, { words: number; tokens: number }> = {
+  next_focus: { words: 110, tokens: 300 },
+  goal: { words: 130, tokens: 350 },
+  plan_review: { words: 250, tokens: 700 },
 };
 
 const PROMPTS: Record<AiFeature, string> = {
@@ -87,11 +87,11 @@ export async function explain(feature: AiFeature, goalId?: string): Promise<Expl
     { role: "user", content: `${PROMPTS[feature]} Keep it under ${limits.words} words.\n\nData:\n${payload}` },
   ];
 
-  // Free models first. Paid only if allowed, and first only for complex requests.
+  // Free models first, always. The paid model is only a fallback, and only if allowed.
   type Attempt = { tier: "free" | "paid"; models: string[] };
   const free: Attempt | null = cfg.freeModels.length ? { tier: "free", models: cfg.freeModels } : null;
   const paid: Attempt | null = cfg.allowPaid && cfg.paidModel ? { tier: "paid", models: [cfg.paidModel] } : null;
-  const plan = (limits.complex ? [paid, free] : [free, paid]).filter((a): a is Attempt => a !== null);
+  const plan = [free, paid].filter((a): a is Attempt => a !== null);
 
   let lastError = "No AI model is configured.";
   for (const attempt of plan) {

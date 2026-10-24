@@ -1,0 +1,113 @@
+// Onboarding and dashboard happy path against the LOCAL Supabase stack.
+// Signs in with a real magic link read from the local mail catcher (Mailpit).
+import { createClient } from "@supabase/supabase-js";
+import { expect, test } from "@playwright/test";
+
+const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
+const SECRET = process.env.SUPABASE_SECRET_KEY!;
+const MAILPIT = process.env.MAILPIT_URL ?? "http://127.0.0.1:54324";
+const email = `e2e-${Date.now()}@example.test`;
+
+async function magicLink(to: string): Promise<string> {
+  for (let i = 0; i < 30; i++) {
+    const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:${to}`)}`);
+    const json = (await res.json()) as { messages?: { ID: string }[] };
+    const id = json.messages?.[0]?.ID;
+    if (id) {
+      const msg = (await (await fetch(`${MAILPIT}/api/v1/message/${id}`)).json()) as { Text: string; HTML: string };
+      const link = (msg.Text + msg.HTML).match(/https?:\/\/[^\s"'<>]+verify[^\s"'<>]+/)?.[0];
+      if (link) return link.replace(/&amp;/g, "&");
+    }
+    await new Promise((r) => setTimeout(r, 500));
+  }
+  throw new Error("No magic link email arrived");
+}
+
+test.beforeAll(async () => {
+  const admin = createClient(SUPABASE_URL, SECRET, { auth: { persistSession: false } });
+  const { error } = await admin.from("allowed_emails").insert({ email });
+  if (error) throw error;
+});
+
+test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
+  // Not invited: friendly error.
+  await page.goto("/login");
+  await page.getByRole("checkbox", { name: /privacy policy/ }).check();
+  await page.getByLabel("Email", { exact: true }).fill(`nobody-${Date.now()}@example.test`);
+  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+  await expect(page.getByText("isn't on the invite list")).toBeVisible();
+
+  // Invited: magic link.
+  await page.getByLabel("Email", { exact: true }).fill(email);
+  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+  await expect(page.getByText("Check your inbox")).toBeVisible();
+  await page.goto(await magicLink(email));
+  await expect(page).toHaveURL(/\/onboarding\/basics/);
+
+  // Basics + theme.
+  await page.getByLabel("Your name", { exact: true }).fill("Asha");
+  await page.getByLabel("Age", { exact: true }).fill("30");
+  await page.getByLabel("City type", { exact: true }).selectOption("metro");
+  await page.getByRole("radio", { name: "Beige" }).click();
+  await page.getByRole("button", { name: "Save and continue" }).click();
+  await expect(page).toHaveURL(/household/);
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "beige");
+
+  await page.getByRole("button", { name: "Skip for now" }).click();
+  await expect(page).toHaveURL(/income/);
+  await page.getByLabel("Monthly amount", { exact: true }).fill("100000");
+  await page.getByRole("button", { name: "Save and continue" }).click();
+
+  await expect(page).toHaveURL(/expenses/);
+  await page.getByLabel("Rent per month", { exact: true }).fill("40000");
+  await page.getByRole("button", { name: "Save and continue" }).click();
+
+  await expect(page).toHaveURL(/insurance/);
+  await page.getByLabel("I don't have any insurance", { exact: true }).check();
+  await page.getByRole("button", { name: "Save and continue" }).click();
+
+  await expect(page).toHaveURL(/liabilities/);
+  await page.getByLabel("No loans or card dues", { exact: true }).check();
+  await page.getByRole("button", { name: "Save and continue" }).click();
+
+  await expect(page).toHaveURL(/holdings/);
+  await page.getByLabel("Current value", { exact: true }).fill("20000");
+  await page.getByRole("button", { name: "Save and continue" }).click();
+
+  await expect(page).toHaveURL(/goals/);
+  await page.getByRole("button", { name: "Add retirement goal" }).click();
+  await expect(page.getByText("Retirement").first()).toBeVisible();
+  await page.getByRole("button", { name: "Continue" }).click();
+
+  await expect(page).toHaveURL(/risk/);
+  await page.getByRole("button", { name: "Skip for now" }).click();
+
+  await expect(page).toHaveURL(/finish/);
+  await page.getByRole("checkbox", { name: /I understand/ }).check();
+  await page.getByRole("button", { name: "Show my next focus" }).click();
+
+  // Dashboard: starter buffer is next (20k saved vs 40k essentials).
+  await expect(page).toHaveURL(/dashboard/);
+  await expect(page.getByRole("heading", { name: "Build a 1-month starter buffer" })).toBeVisible();
+  await expect(page.getByText("₹20,000").first()).toBeVisible();
+  await expect(page.getByText("not investment advice", { exact: false }).first()).toBeVisible();
+
+  // Usable at 375px: no horizontal scroll.
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+  await page.screenshot({ path: "test-results/dashboard-375.png", fullPage: true });
+
+  // Other pages render.
+  for (const [path, heading] of [
+    ["/budget", "Budget"],
+    ["/goals", "Goals"],
+    ["/holdings", "Holdings"],
+    ["/settings", "Settings"],
+  ]) {
+    await page.goto(path);
+    await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
+    const o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    expect(o, `${path} overflows at 375px`).toBeLessThanOrEqual(0);
+    await page.screenshot({ path: `test-results${path}-375.png`, fullPage: true });
+  }
+});
