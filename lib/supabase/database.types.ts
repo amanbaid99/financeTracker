@@ -224,10 +224,12 @@ export type Database = {
         Row: {
           category: string | null;
           current_value: number;
+          expected_return_pct: number | null;
           id: string;
           kind: Database["public"]["Enums"]["holding_kind"];
           monthly_sip: number | null;
           name: string | null;
+          sip_step_up_pct: number | null;
           source: Database["public"]["Enums"]["holding_source"];
           updated_at: string;
           user_id: string;
@@ -236,10 +238,12 @@ export type Database = {
         Insert: {
           category?: string | null;
           current_value?: number;
+          expected_return_pct?: number | null;
           id?: string;
           kind: Database["public"]["Enums"]["holding_kind"];
           monthly_sip?: number | null;
           name?: string | null;
+          sip_step_up_pct?: number | null;
           source?: Database["public"]["Enums"]["holding_source"];
           updated_at?: string;
           user_id?: string;
@@ -247,10 +251,12 @@ export type Database = {
         Update: {
           category?: string | null;
           current_value?: number;
+          expected_return_pct?: number | null;
           id?: string;
           kind?: Database["public"]["Enums"]["holding_kind"];
           monthly_sip?: number | null;
           name?: string | null;
+          sip_step_up_pct?: number | null;
           source?: Database["public"]["Enums"]["holding_source"];
           updated_at?: string;
           user_id?: string;
@@ -333,9 +339,11 @@ export type Database = {
       insurance_policies: {
         Row: {
           cover_amount: number;
+          covers: string;
           id: string;
           kind: Database["public"]["Enums"]["insurance_kind"];
           premium: number | null;
+          premium_frequency: string;
           renewal_month: number | null;
           source: Database["public"]["Enums"]["insurance_source"];
           user_id: string;
@@ -343,18 +351,22 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           cover_amount?: number;
+          covers?: string;
           id?: string;
           kind: Database["public"]["Enums"]["insurance_kind"];
           premium?: number | null;
+          premium_frequency?: string;
           renewal_month?: number | null;
           source: Database["public"]["Enums"]["insurance_source"];
           user_id?: string;
         };
         Update: {
           cover_amount?: number;
+          covers?: string;
           id?: string;
           kind?: Database["public"]["Enums"]["insurance_kind"];
           premium?: number | null;
+          premium_frequency?: string;
           renewal_month?: number | null;
           source?: Database["public"]["Enums"]["insurance_source"];
           user_id?: string;

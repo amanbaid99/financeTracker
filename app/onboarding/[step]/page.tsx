@@ -130,6 +130,8 @@ export default async function StepPage({
           back={back}
           initial={holdingState(raw)}
           answered={answered("holdings")}
+          goals={raw.goals.map((g) => ({ id: g.id, name: g.name }))}
+          defaultReturns={analysis.config.goals.returnByCategory}
         />
       );
       break;

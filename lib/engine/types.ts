@@ -66,8 +66,10 @@ export interface InsurancePolicy {
   kind: InsuranceKind;
   source: InsuranceSource;
   coverAmount: number;
-  /** Annual premium. */
+  /** Yearly premium you pay (monthly payments are converted to yearly). */
   premium: number | null;
+  /** Who is insured. "others" (e.g. parents) is budgeted but isn't your own cover. */
+  covers?: "self" | "family" | "others";
   renewalMonth: number | null;
 }
 
@@ -107,6 +109,10 @@ export interface Holding {
   category: string | null;
   currentValue: number;
   monthlySip: number | null;
+  /** SIP rises by this % every 12 months (step-up SIP). */
+  sipStepUpPct?: number | null;
+  /** Planning return % a year. Null uses the category default from config. */
+  expectedReturnPct?: number | null;
 }
 
 export type GoalType =

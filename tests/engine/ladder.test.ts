@@ -58,6 +58,27 @@ describe("priority ladder", () => {
     expect(a.nextFocus?.reason).toContain("ends when the job does");
   });
 
+  it("step 2: a policy only for parents doesn't count as your cover", () => {
+    const d = solidBasics({
+      insurance: [
+        { id: "p", kind: "health", source: "personal", covers: "others", coverAmount: 1_000_000, premium: 30_000, renewalMonth: 4 },
+      ],
+    });
+    const a = run(d);
+    expect(a.nextFocus?.step.key).toBe("health_insurance");
+    expect(a.nextFocus?.reason).toContain("doesn't cover you");
+    expect(a.budget.essentials.insurancePremiums).toBe(2_500);
+  });
+
+  it("step 2: a family floater that includes you counts", () => {
+    const d = solidBasics({
+      insurance: [
+        { id: "p", kind: "health", source: "family", covers: "family", coverAmount: 1_000_000, premium: 30_000, renewalMonth: 4 },
+      ],
+    });
+    expect(stepStatus(d, "health_insurance")).toBe("done");
+  });
+
   it("step 2: smaller cities need ₹5L", () => {
     const d = solidBasics({
       profile: profile({ cityTier: "tier2" }),

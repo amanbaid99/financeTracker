@@ -168,7 +168,12 @@ export function evaluateLadder(
   const metro = data.profile.cityTier === "metro" || data.profile.cityTier === null;
   const healthTarget = metro ? L.healthCoverMetro : L.healthCoverOther;
   const health = data.insurance.filter((p) => p.kind === "health");
-  const ownHealth = sum(health.filter((p) => p.source !== "employer").map((p) => p.coverAmount));
+  // Your own cover: personal or family floater that includes you. Policies
+  // only for parents or others are in the budget but don't protect you.
+  const ownHealth = sum(
+    health.filter((p) => p.source !== "employer" && p.covers !== "others").map((p) => p.coverAmount),
+  );
+  const othersOnly = health.some((p) => p.covers === "others");
   const employerHealth = sum(health.filter((p) => p.source === "employer").map((p) => p.coverAmount));
   steps.push(
     insuranceKnown
@@ -184,7 +189,9 @@ export function evaluateLadder(
           reason:
             employerHealth > 0 && ownHealth < healthTarget
               ? "Your employer cover is a bonus, but it ends when the job does. Get a personal or family floater too."
-              : "One hospital stay can wipe out years of savings. Your own cover protects your plan.",
+              : othersOnly && ownHealth < healthTarget
+                ? "The policy for your family members is counted in your budget, but it doesn't cover you. You need your own cover too."
+                : "One hospital stay can wipe out years of savings. Your own cover protects your plan.",
           detail:
             data.profile.cityTier === null
               ? "Using the metro amount until you tell us your city."

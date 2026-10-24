@@ -218,10 +218,9 @@ export function computeEssentials(
     ? round(sum(essentialRows.map((e) => e.amountMonthly)))
     : round(baseIncome * cfg.budget.essentialsFallbackPct);
   const emis = round(sum(data.liabilities.filter((l) => l.outstanding > 0).map((l) => l.emi ?? 0)));
-  // Employer-paid premiums are not your outflow.
-  const insurancePremiums = round(
-    sum(data.insurance.filter((p) => p.source !== "employer").map((p) => (p.premium ?? 0) / 12)),
-  );
+  // Every premium you pay is an essential, including policies for parents.
+  // Employer-paid cover has no premium entered, so it adds nothing.
+  const insurancePremiums = round(sum(data.insurance.map((p) => (p.premium ?? 0) / 12)));
   const lines = [
     ...essentialRows.map((e) => ({ label: e.category, amount: round(e.amountMonthly) })),
     ...data.liabilities

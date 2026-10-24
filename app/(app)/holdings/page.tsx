@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadAnalysis } from "@/lib/data";
 import { categoryLabel } from "@/lib/engine/categories";
+import { expectedReturnFor } from "@/lib/engine/goals";
 import { holdingState } from "@/lib/form-state";
 import { formatINR, formatINRCompact } from "@/lib/format";
 import { HOLDING_KIND_LABELS } from "@/lib/labels";
@@ -12,7 +13,7 @@ import { HOLDING_KIND_LABELS } from "@/lib/labels";
 export const metadata: Metadata = { title: "Holdings" };
 
 export default async function HoldingsPage() {
-  const { raw, data } = await loadAnalysis();
+  const { raw, data, analysis } = await loadAnalysis();
   const goals = raw.goals.map((g) => ({ id: g.id, name: g.name }));
   const total = data.holdings.reduce((s, h) => s + h.currentValue, 0);
   const items = data.holdings.map((h) => {
@@ -53,6 +54,8 @@ export default async function HoldingsPage() {
                         <p className="text-xs text-muted-foreground">
                           {categoryLabel(h.category)}
                           {h.monthlySip ? ` · SIP ${formatINR(h.monthlySip)}/month` : ""}
+                          {h.monthlySip && h.sipStepUpPct ? `, +${h.sipStepUpPct}% a year` : ""}
+                          {` · plans at ${expectedReturnFor(h, analysis.config).pct}% a year`}
                         </p>
                       </div>
                       <div className="text-right">
@@ -88,6 +91,8 @@ export default async function HoldingsPage() {
             editing
             optional={false}
             saveLabel="Save holdings"
+            goals={goals}
+            defaultReturns={analysis.config.goals.returnByCategory}
           />
         </CardContent>
       </Card>

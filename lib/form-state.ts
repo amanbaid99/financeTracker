@@ -35,6 +35,8 @@ export const insuranceState = (raw: RawData): InsuranceRowState[] =>
     source: p.source,
     coverAmount: p.cover_amount,
     premium: p.premium,
+    premiumFrequency: p.premium_frequency as InsuranceRowState["premiumFrequency"],
+    covers: p.covers as InsuranceRowState["covers"],
     renewalMonth: p.renewal_month,
   }));
 
@@ -48,6 +50,14 @@ export const liabilityState = (raw: RawData): LiabilityRowState[] =>
     emi: l.emi,
   }));
 
+/** Current goal link of a holding: none, one goal at 100%, or split across goals. */
+function goalLinkOf(raw: RawData, holdingId: string): HoldingRowState["goal"] {
+  const allocs = raw.allocations.filter((a) => a.holding_id === holdingId);
+  if (allocs.length === 0) return "none";
+  if (allocs.length === 1 && Number(allocs[0].percent) === 100) return allocs[0].goal_id;
+  return "split";
+}
+
 export const holdingState = (raw: RawData): HoldingRowState[] =>
   raw.holdings.map((h) => ({
     id: h.id,
@@ -56,6 +66,10 @@ export const holdingState = (raw: RawData): HoldingRowState[] =>
     category: h.category ?? "other",
     currentValue: h.current_value,
     monthlySip: h.monthly_sip,
+    sipStepUpPct: h.sip_step_up_pct === null ? "" : String(Number(h.sip_step_up_pct)),
+    expectedReturn: h.expected_return_pct === null ? "" : String(Number(h.expected_return_pct)),
+    goal: goalLinkOf(raw, h.id),
+    initialGoal: goalLinkOf(raw, h.id),
   }));
 
 export function goalState(g: GoalRow | null, todayISO: string, type: GoalType = "custom"): GoalFormState {

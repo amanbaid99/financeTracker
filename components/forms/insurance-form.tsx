@@ -18,8 +18,24 @@ export interface InsuranceRowState {
   source: InsuranceSource;
   coverAmount: number | null;
   premium: number | null;
+  premiumFrequency: "monthly" | "quarterly" | "half_yearly" | "yearly";
+  covers: "self" | "family" | "others";
   renewalMonth: number | null;
 }
+
+const FREQUENCY_LABELS: Record<InsuranceRowState["premiumFrequency"], string> = {
+  monthly: "Monthly",
+  quarterly: "Quarterly",
+  half_yearly: "Half-yearly",
+  yearly: "Yearly",
+};
+const PER_YEAR = { monthly: 12, quarterly: 4, half_yearly: 2, yearly: 1 } as const;
+
+const COVERS_LABELS: Record<InsuranceRowState["covers"], string> = {
+  self: "Just me",
+  family: "Me and my family (floater)",
+  others: "Only parents or other family members",
+};
 
 const KIND_LABELS: Record<InsuranceKind, string> = {
   health: "Health insurance",
@@ -37,6 +53,8 @@ const empty = (kind: InsuranceKind = "health"): InsuranceRowState => ({
   source: "personal",
   coverAmount: null,
   premium: null,
+  premiumFrequency: "yearly",
+  covers: "self",
   renewalMonth: null,
 });
 
@@ -76,6 +94,8 @@ export function InsuranceForm({
                     source: r.source,
                     coverAmount: r.coverAmount ?? 0,
                     premium: r.premium,
+                    premiumFrequency: r.premiumFrequency,
+                    covers: r.covers,
                     renewalMonth: r.renewalMonth,
                   })),
             )
@@ -122,8 +142,50 @@ export function InsuranceForm({
             <Field label="Cover amount" htmlFor={`ins-cover-${i}`} tip="The maximum the policy pays out (sum insured).">
               <MoneyInput id={`ins-cover-${i}`} value={r.coverAmount} onChange={(v) => update(i, { coverAmount: v })} />
             </Field>
-            <Field label="Yearly premium" htmlFor={`ins-prem-${i}`} hint="Counted as an essential cost.">
+            {r.kind !== "term" && (
+              <Field
+                label="Who it covers"
+                htmlFor={`ins-covers-${i}`}
+                tip="A policy only for your parents is counted in your budget, but it doesn't count as your own health cover."
+              >
+                <Select
+                  id={`ins-covers-${i}`}
+                  value={r.covers}
+                  onChange={(e) => update(i, { covers: e.target.value as InsuranceRowState["covers"] })}
+                >
+                  {Object.entries(COVERS_LABELS).map(([v, l]) => (
+                    <option key={v} value={v}>
+                      {l}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            )}
+            <Field
+              label="Premium you pay"
+              htmlFor={`ins-prem-${i}`}
+              hint={
+                r.premium
+                  ? `About ${new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(Math.round((r.premium * PER_YEAR[r.premiumFrequency]) / 12))} a month in your budget.`
+                  : "Leave blank if your employer pays it."
+              }
+            >
               <MoneyInput id={`ins-prem-${i}`} value={r.premium} onChange={(v) => update(i, { premium: v })} />
+            </Field>
+            <Field label="Paid" htmlFor={`ins-freq-${i}`}>
+              <Select
+                id={`ins-freq-${i}`}
+                value={r.premiumFrequency}
+                onChange={(e) =>
+                  update(i, { premiumFrequency: e.target.value as InsuranceRowState["premiumFrequency"] })
+                }
+              >
+                {Object.entries(FREQUENCY_LABELS).map(([v, l]) => (
+                  <option key={v} value={v}>
+                    {l}
+                  </option>
+                ))}
+              </Select>
             </Field>
             <Field label="Renewal month" htmlFor={`ins-renew-${i}`} hint="We'll remind you before it's due.">
               <Select
@@ -148,6 +210,13 @@ export function InsuranceForm({
           </Button>
           <Button type="button" variant="outline" onClick={() => setRows((rs) => [...rs, empty("term")])}>
             <Plus /> Term policy
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setRows((rs) => [...rs, { ...empty("health"), source: "personal", covers: "others" }])}
+          >
+            <Plus /> Policy for parents / family
           </Button>
         </div>
       )}

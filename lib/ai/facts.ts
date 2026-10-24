@@ -42,6 +42,8 @@ function goalFacts(g: GoalAnalysis, index: number) {
     inflation_pct: g.inflationPct,
     saved_so_far: roughRupees(g.currentAmount),
     required_monthly: roughRupees(g.requiredMonthly),
+    or_start_with_yearly_step_up: g.requiredMonthly > 0 ? roughRupees(g.requiredMonthlyStepUp) : null,
+    suggested_step_up_pct: g.stepUpPct,
     current_monthly_sip: roughRupees(g.linkedSip),
     status: g.status.replace("_", " "),
     planning_return_pct: g.returnPct,

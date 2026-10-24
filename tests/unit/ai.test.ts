@@ -41,6 +41,7 @@ describe("AI facts are anonymous", () => {
 describe("AI output guard", () => {
   it("flags named products but allows category phrases", () => {
     expect(findNamedProducts("Consider an Equity Index Fund or a Liquid Fund.")).toEqual([]);
+    expect(findNamedProducts("An Arbitrage Fund or a Gilt Fund suits this.")).toEqual([]);
     expect(findNamedProducts("Put it in Acme Bluechip Fund.")).toEqual(["Acme Bluechip Fund"]);
     expect(findNamedProducts("Zeta Mutual Fund has good returns")).toHaveLength(1);
   });

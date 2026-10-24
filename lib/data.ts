@@ -81,6 +81,13 @@ function ageFrom(profile: ProfileRow, todayISO: string): number | null {
   return ty - y - (tm < m || (tm === m && td < d) ? 1 : 0);
 }
 
+export const PAYMENTS_PER_YEAR: Record<string, number> = {
+  monthly: 12,
+  quarterly: 4,
+  half_yearly: 2,
+  yearly: 1,
+};
+
 export function toFinanceData(raw: RawData, todayISO: string): FinanceData {
   const p = raw.profile;
   return {
@@ -116,7 +123,8 @@ export function toFinanceData(raw: RawData, todayISO: string): FinanceData {
       kind: i.kind,
       source: i.source,
       coverAmount: i.cover_amount,
-      premium: i.premium,
+      premium: i.premium === null ? null : i.premium * PAYMENTS_PER_YEAR[i.premium_frequency],
+      covers: i.covers as "self" | "family" | "others",
       renewalMonth: i.renewal_month,
     })),
     liabilities: raw.liabilities.map((l) => ({
@@ -134,6 +142,8 @@ export function toFinanceData(raw: RawData, todayISO: string): FinanceData {
       category: h.category,
       currentValue: h.current_value,
       monthlySip: h.monthly_sip,
+      sipStepUpPct: h.sip_step_up_pct === null ? null : Number(h.sip_step_up_pct),
+      expectedReturnPct: h.expected_return_pct === null ? null : Number(h.expected_return_pct),
     })),
     goals: raw.goals.map((g) => ({
       id: g.id,

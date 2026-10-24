@@ -7,6 +7,8 @@ import {
   futureValue,
   projectedValue,
   requiredSip,
+  requiredStepUpSip,
+  stepUpSipValue,
   suggestRetirement,
 } from "@/lib/engine/goals";
 import type { Goal, Holding } from "@/lib/engine/types";
@@ -185,5 +187,45 @@ describe("suggestRetirement", () => {
     const s = suggestRetirement(600_000, 30, TODAY, cfg);
     expect(s.targetToday).toBe(15_000_000);
     expect(s.targetDate).toBe("2056-10-24");
+  });
+});
+
+describe("step-up SIP", () => {
+  it("with 0% step-up matches the flat SIP projection", () => {
+    expect(stepUpSipValue(10_000, 0, 12, 36)).toBeCloseTo(projectedValue(0, 10_000, 12, 36), 4);
+  });
+
+  it("raises the SIP every 12 months", () => {
+    // No return: 12 x 1000 + 12 x 1100 = 25,200
+    expect(stepUpSipValue(1_000, 10, 0, 24)).toBeCloseTo(25_200, 6);
+  });
+
+  it("needs a lower starting SIP that still reaches the target", () => {
+    const flat = requiredSip(2_000_000, 100_000, 11, 120);
+    const start = requiredStepUpSip(2_000_000, 100_000, 11, 120, 10);
+    expect(start).toBeLessThan(flat);
+    expect(projectedValue(100_000, 0, 11, 120) + stepUpSipValue(start, 10, 11, 120)).toBeCloseTo(2_000_000, 2);
+  });
+
+  it("counts a linked holding's step-up in the goal projection", () => {
+    const holding = (step: number | null): Holding => ({
+      id: "h",
+      kind: "mutual_fund",
+      name: null,
+      category: "flexi_cap",
+      currentValue: 0,
+      monthlySip: 10_000,
+      sipStepUpPct: step,
+    });
+    const run = (step: number | null) =>
+      analyzeGoal(goal({ targetDate: "2036-10-24" }), {
+        holdings: [holding(step)],
+        allocations: [{ goalId: "g1", holdingId: "h", percent: 100 }],
+        risk: "moderate",
+        todayISO: TODAY,
+        cfg,
+      });
+    expect(run(10).projected).toBeGreaterThan(run(null).projected);
+    expect(run(null).requiredMonthlyStepUp).toBeLessThan(run(null).requiredMonthly);
   });
 });

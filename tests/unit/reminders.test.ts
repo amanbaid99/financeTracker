@@ -9,7 +9,7 @@ describe("reminders", () => {
       insurance: [
         { id: "a", kind: "health", source: "personal", coverAmount: 1, premium: 1, renewalMonth: 11 },
         { id: "b", kind: "term", source: "personal", coverAmount: 1, premium: 1, renewalMonth: 3 },
-        { id: "c", kind: "health", source: "employer", coverAmount: 1, premium: 1, renewalMonth: 10 },
+        { id: "c", kind: "health", source: "employer", coverAmount: 1, premium: null, renewalMonth: 10 },
       ],
     });
     expect(r.map((x) => x.id)).toEqual(["ins-a"]);

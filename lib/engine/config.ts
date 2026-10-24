@@ -119,6 +119,42 @@ export const defaultConfig = {
     } as Record<string, number>,
     defaultInflationPct: 6,
     glidePathYears: 3,
+    /**
+     * Long-run planning returns (% a year) per holding category. Conservative
+     * assumptions, not live market data. Users can override per holding.
+     */
+    returnByCategory: {
+      savings_account: 3,
+      sweep_fd: 6.5,
+      fd_rd: 7,
+      liquid_fund: 6.5,
+      overnight_fund: 6.5,
+      ultra_short_debt: 7,
+      short_debt_fund: 7,
+      corporate_bond: 7.5,
+      gilt: 7.5,
+      debt_fund: 7,
+      arbitrage: 6.5,
+      conservative_hybrid: 8,
+      balanced_advantage: 9,
+      aggressive_hybrid: 10.5,
+      multi_asset: 10,
+      equity_index: 11,
+      flexi_cap: 11.5,
+      large_cap: 11,
+      mid_small_cap: 13,
+      elss: 11.5,
+      sectoral_thematic: 12,
+      international: 10,
+      direct_equity: 12,
+      ppf: 7.1,
+      epf_vpf: 8.25,
+      nps: 10,
+      gold: 8,
+      other: 7,
+    } as Record<string, number>,
+    /** Yearly step-up used to suggest a lower starting SIP on each goal. */
+    suggestedStepUpPct: 10,
     status: { onTrack: 1, slightlyBehind: 0.8 },
     retirementAge: 60,
     /** Retirement corpus suggestion, in today's rupees: this many years of annual essentials. */

@@ -111,6 +111,13 @@ export default async function GoalPage({
               tip={`Monthly SIP needed at a ${g.returnPct}% a year planning return, with what you've saved growing at the same rate.`}
             />
           </dl>
+          {g.requiredMonthly > 0 && !g.dueNow && g.months >= 24 && g.requiredMonthlyStepUp < g.requiredMonthly && (
+            <p className="rounded-lg bg-primary-soft p-3 text-sm">
+              <span className="font-medium">Or start smaller with a step-up SIP:</span>{" "}
+              {formatINR(g.requiredMonthlyStepUp)}/month now, raised by {g.stepUpPct}% every year, reaches the same
+              target.
+            </p>
+          )}
           <div className="space-y-1">
             <Progress
               value={g.futureTarget ? (g.currentAmount / g.futureTarget) * 100 : 100}
@@ -118,7 +125,7 @@ export default async function GoalPage({
               label="Goal progress"
             />
             <p className="tabular text-xs text-muted-foreground">
-              At your current SIPs ({formatINR(g.linkedSip)}/month) you&apos;d reach {formatINRCompact(g.projected)},{" "}
+              At your current SIPs ({formatINR(g.linkedSip)}/month, including any yearly step-ups) you&apos;d reach {formatINRCompact(g.projected)},{" "}
               {Math.round(g.projectedPct * 100)}% of the target.
             </p>
           </div>
@@ -167,6 +174,7 @@ export default async function GoalPage({
                     <p className="truncate font-medium">{holding.name || HOLDING_KIND_LABELS[holding.kind]}</p>
                     <p className="text-xs text-muted-foreground">
                       {categoryLabel(holding.category)} · {percent}% of it
+                      {holding.monthlySip && holding.sipStepUpPct ? ` · SIP +${holding.sipStepUpPct}% a year` : ""}
                     </p>
                   </div>
                   <span className="tabular">{formatINR((holding.currentValue * percent) / 100)}</span>

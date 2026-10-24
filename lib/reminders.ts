@@ -19,11 +19,11 @@ export function buildReminders(opts: {
   const t = parseISODate(opts.todayISO);
   const nextMonth = (t.m % 12) + 1;
   for (const p of opts.insurance) {
-    if (!p.renewalMonth || p.source === "employer") continue;
+    if (!p.renewalMonth || (p.source === "employer" && !p.premium)) continue;
     if (p.renewalMonth === t.m || p.renewalMonth === nextMonth) {
       out.push({
         id: `ins-${p.id}`,
-        text: `Your ${p.kind === "term" ? "term" : p.kind === "health" ? "health" : ""} insurance renews in ${monthName(p.renewalMonth)}. Keep the premium ready so cover doesn't lapse.`.replace("  ", " "),
+        text: `Your ${p.covers === "others" ? "family members' " : ""}${p.kind === "term" ? "term" : p.kind === "health" ? "health" : ""} insurance renews in ${monthName(p.renewalMonth)}. Keep the premium ready so cover doesn't lapse.`.replace("  ", " "),
         href: "/onboarding/insurance",
       });
     }

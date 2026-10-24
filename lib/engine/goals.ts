@@ -1,4 +1,4 @@
-import { isEquity } from "./categories";
+import { defaultCategoryForKind, isEquity } from "./categories";
 import type { EngineConfig, HorizonBand } from "./config";
 import { monthsBetween } from "./dates";
 import type { Goal, GoalAllocation, Holding, RiskProfile } from "./types";
@@ -39,6 +39,54 @@ export function projectedValue(
   const growth = Math.pow(1 + r, months);
   if (r === 0) return saved + monthlySip * months;
   return saved * growth + (monthlySip * (growth - 1) * (1 + r)) / r;
+}
+
+/**
+ * Value after `months` of a SIP paid at the start of each month that rises by
+ * `stepUpPct` every 12 months. With no step-up this matches projectedValue.
+ */
+export function stepUpSipValue(
+  monthlySip: number,
+  stepUpPct: number,
+  annualReturnPct: number,
+  months: number,
+): number {
+  if (months <= 0 || monthlySip <= 0) return 0;
+  const r = annualReturnPct / 100 / 12;
+  const g = stepUpPct / 100;
+  let total = 0;
+  for (let k = 0; k < months; k++) {
+    const sip = monthlySip * Math.pow(1 + g, Math.floor(k / 12));
+    total += sip * Math.pow(1 + r, months - k);
+  }
+  return total;
+}
+
+/** Starting SIP needed if it steps up by `stepUpPct` a year. Negative means funded. */
+export function requiredStepUpSip(
+  target: number,
+  saved: number,
+  annualReturnPct: number,
+  months: number,
+  stepUpPct: number,
+): number {
+  if (months <= 0) return target - saved;
+  const r = annualReturnPct / 100 / 12;
+  const gap = target - saved * Math.pow(1 + r, months);
+  return gap / stepUpSipValue(1, stepUpPct, annualReturnPct, months);
+}
+
+/** The return a holding plans with: the user's own figure, else its category default. */
+export function expectedReturnFor(
+  holding: Pick<Holding, "kind" | "category" | "expectedReturnPct">,
+  cfg: EngineConfig,
+): { pct: number; isDefault: boolean } {
+  if (holding.expectedReturnPct !== null && holding.expectedReturnPct !== undefined) {
+    return { pct: holding.expectedReturnPct, isDefault: false };
+  }
+  const category = holding.category ?? defaultCategoryForKind(holding.kind);
+  const table = cfg.goals.returnByCategory;
+  return { pct: table[category] ?? table.other ?? cfg.goals.defaultInflationPct, isDefault: true };
 }
 
 export function bandIndexForYears(years: number, bands: HorizonBand[]): number {
@@ -87,6 +135,9 @@ export interface GoalAnalysis {
   linkedSip: number;
   currentAmount: number;
   requiredMonthly: number;
+  /** Starting SIP needed with the suggested yearly step-up. */
+  requiredMonthlyStepUp: number;
+  stepUpPct: number;
   alreadyFunded: boolean;
   dueNow: boolean;
   projected: number;
@@ -147,7 +198,24 @@ export function analyzeGoal(
   const dueNow = months <= 0 && !alreadyFunded;
   const requiredMonthly = alreadyFunded ? 0 : Math.ceil(rawSip);
 
-  const projected = Math.round(projectedValue(currentAmount, linkedSip, band.returnPct, months));
+  // Money saved directly on the goal grows at the band's return. Each linked
+  // holding (its value and its SIP, with any step-up) grows at its own return.
+  const projected = Math.round(
+    projectedValue(Math.max(0, goal.savedAmount), 0, band.returnPct, months) +
+      links.reduce((s, l) => {
+        const share = l.percent / 100;
+        const ret = expectedReturnFor(l.holding, cfg).pct;
+        return (
+          s +
+          projectedValue(l.holding.currentValue * share, 0, ret, months) +
+          stepUpSipValue((l.holding.monthlySip ?? 0) * share, l.holding.sipStepUpPct ?? 0, ret, months)
+        );
+      }, 0),
+  );
+  const stepUpPct = cfg.goals.suggestedStepUpPct;
+  const requiredMonthlyStepUp = alreadyFunded
+    ? 0
+    : Math.ceil(requiredStepUpSip(futureTarget, currentAmount, band.returnPct, months, stepUpPct));
   const projectedPct = futureTarget > 0 ? projected / futureTarget : 1;
   let status: GoalStatus;
   if (alreadyFunded) status = "funded";
@@ -193,6 +261,8 @@ export function analyzeGoal(
     linkedSip,
     currentAmount,
     requiredMonthly,
+    requiredMonthlyStepUp,
+    stepUpPct,
     alreadyFunded,
     dueNow,
     projected,

@@ -79,7 +79,13 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await page.getByRole("button", { name: "Save and continue" }).click();
 
   await expect(page).toHaveURL(/insurance/);
-  await page.getByLabel("I don't have any insurance", { exact: true }).check();
+  // A health policy for parents, paid monthly: budgeted, but not your own cover.
+  await page.getByRole("button", { name: "Policy for parents / family" }).click();
+  await expect(page.getByLabel("Who it covers", { exact: true })).toHaveValue("others");
+  await page.getByLabel("Cover amount", { exact: true }).fill("500000");
+  await page.getByLabel("Premium you pay", { exact: true }).fill("2000");
+  await page.getByLabel("Paid", { exact: true }).selectOption("monthly");
+  await expect(page.getByText("About ₹2,000 a month in your budget.")).toBeVisible();
   await page.getByRole("button", { name: "Save and continue" }).click();
 
   await expect(page).toHaveURL(/liabilities/);
@@ -88,9 +94,18 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
 
   await expect(page).toHaveURL(/holdings/);
   await page.getByLabel("Current value", { exact: true }).fill("20000");
+  await page.getByLabel("Monthly SIP or deposit", { exact: true }).fill("5000");
+  await page.getByLabel("Yearly step-up (%)", { exact: true }).fill("10");
+  await expect(page.getByText("Next year: ₹5,500/month")).toBeVisible();
+  // Return is pre-filled from the category; a new goal can be created inline.
+  await expect(page.getByLabel("Expected return (% a year)", { exact: true })).toHaveValue("3");
+  await page.getByLabel("Goal for this money", { exact: true }).selectOption("new");
+  await page.getByLabel("Goal name", { exact: true }).fill("Bike");
+  await page.getByLabel("Target amount (today's ₹)", { exact: true }).fill("100000");
   await page.getByRole("button", { name: "Save and continue" }).click();
 
   await expect(page).toHaveURL(/goals/);
+  await expect(page.getByText("Bike")).toBeVisible();
   await page.getByRole("button", { name: "Add retirement goal" }).click();
   await expect(page.getByText("Retirement").first()).toBeVisible();
   await page.getByRole("button", { name: "Continue" }).click();
@@ -102,10 +117,12 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await page.getByRole("checkbox", { name: /I understand/ }).check();
   await page.getByRole("button", { name: "Show my next focus" }).click();
 
-  // Dashboard: starter buffer is next (20k saved vs 40k essentials).
+  // Dashboard: starter buffer is next. Essentials are 47k (40k rent + 5k school
+  // fees + 2k parents' premium). The 20k savings is earmarked for the Bike goal,
+  // so none of it counts toward the buffer.
   await expect(page).toHaveURL(/dashboard/);
   await expect(page.getByRole("heading", { name: "Build a 1-month starter buffer" })).toBeVisible();
-  await expect(page.getByText("₹20,000").first()).toBeVisible();
+  await expect(page.getByText("₹47,000").first()).toBeVisible();
   await expect(page.getByText("not investment advice", { exact: false }).first()).toBeVisible();
 
   // Usable at 375px: no horizontal scroll.

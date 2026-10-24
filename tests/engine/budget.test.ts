@@ -153,16 +153,18 @@ describe("monthly split of base income", () => {
     expect(splitBase(100_000, 120_000, 0, cfg)).toMatchObject({ savings: 0, wants: 0, shortfall: 20_000 });
   });
 
-  it("essentials include EMIs and non-employer premiums", () => {
+  it("essentials include EMIs and every premium you pay", () => {
     const data = makeData({
       liabilities: [{ id: "l", kind: "car", outstanding: 300_000, interestRate: 9, emi: 10_000 }],
       insurance: [
         { id: "p", kind: "health", source: "personal", coverAmount: 1_000_000, premium: 24_000, renewalMonth: 1 },
-        { id: "q", kind: "health", source: "employer", coverAmount: 500_000, premium: 12_000, renewalMonth: 1 },
+        { id: "q", kind: "health", source: "employer", coverAmount: 500_000, premium: null, renewalMonth: 1 },
+        { id: "r", kind: "health", source: "personal", covers: "others", coverAmount: 500_000, premium: 36_000, renewalMonth: 1 },
       ],
     });
     const b = computeBudget(data, cfg, { todayISO: TODAY });
-    expect(b.essentials).toMatchObject({ expenses: 40_000, emis: 10_000, insurancePremiums: 2_000, total: 52_000 });
+    // 24k + 36k (parents) a year = 5k a month; employer cover with no premium adds nothing.
+    expect(b.essentials).toMatchObject({ expenses: 40_000, emis: 10_000, insurancePremiums: 5_000, total: 55_000 });
   });
 
   it("falls back to 50% of base when expenses are not entered", () => {

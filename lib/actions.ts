@@ -237,6 +237,8 @@ const insuranceSchema = z.object({
   source: z.enum(["personal", "employer", "family"]),
   coverAmount: money,
   premium: optMoney,
+  premiumFrequency: z.enum(["monthly", "quarterly", "half_yearly", "yearly"]).default("yearly"),
+  covers: z.enum(["self", "family", "others"]).default("self"),
   renewalMonth: z.number().int().min(1).max(12).nullable().optional(),
 });
 
@@ -249,6 +251,8 @@ export async function saveInsurance(input: z.input<typeof insuranceSchema>[]): P
       source: r.source,
       cover_amount: r.coverAmount,
       premium: r.premium ?? null,
+      premium_frequency: r.premiumFrequency,
+      covers: r.kind === "term" ? "self" : r.covers,
       renewal_month: r.renewalMonth ?? null,
     }));
     await markAnswered(supabase, userId, "insurance");
@@ -293,19 +297,98 @@ const holdingSchema = z.object({
   category: z.enum(categoryValues).nullable().optional(),
   currentValue: money,
   monthlySip: optMoney,
+  sipStepUpPct: z.number().min(0).max(50).nullable().optional(),
+  expectedReturnPct: z.number().min(0).max(30).nullable().optional(),
+  /**
+   * Optional goal for this holding, set from the holdings form. Only sent when
+   * the user changed it. "none" removes links; a goal links 100% of the holding.
+   */
+  goalLink: z
+    .discriminatedUnion("mode", [
+      z.object({ mode: z.literal("none") }),
+      z.object({ mode: z.literal("existing"), goalId: uuid }),
+      z.object({
+        mode: z.literal("new"),
+        name: z.string().trim().min(1, "name the new goal").max(60),
+        type: z.enum([
+          "emergency_fund",
+          "insurance_premium_fund",
+          "wedding",
+          "house_down_payment",
+          "vehicle",
+          "education",
+          "travel",
+          "retirement",
+          "medical",
+          "custom",
+        ]),
+        targetToday: money.min(1, "add the goal's target amount"),
+        targetDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "pick the goal's date"),
+      }),
+    ])
+    .optional(),
 });
 
 export async function saveHoldings(input: z.input<typeof holdingSchema>[]): Promise<ActionResult> {
   try {
     const rows = z.array(holdingSchema).max(60).parse(input);
     const { supabase, userId } = await session();
-    await syncRows(supabase, userId, "holdings", rows, (r) => ({
-      kind: r.kind,
-      name: r.name || null,
-      category: r.category ?? null,
-      current_value: r.currentValue,
-      monthly_sip: r.monthlySip ?? null,
-    }));
+
+    const keep = rows.map((r) => r.id).filter((id): id is string => Boolean(id));
+    let del = supabase.from("holdings").delete().eq("user_id", userId);
+    if (keep.length) del = del.not("id", "in", `(${keep.join(",")})`);
+    const { error: delError } = await del;
+    if (delError) throw new Error(delError.message);
+
+    for (const r of rows) {
+      const row = {
+        kind: r.kind,
+        name: r.name || null,
+        category: r.category ?? null,
+        current_value: r.currentValue,
+        monthly_sip: r.monthlySip ?? null,
+        sip_step_up_pct: r.monthlySip ? (r.sipStepUpPct ?? null) : null,
+        expected_return_pct: r.expectedReturnPct ?? null,
+      };
+      const res = r.id
+        ? await supabase.from("holdings").update(row).eq("id", r.id).eq("user_id", userId).select("id").single()
+        : await supabase.from("holdings").insert({ ...row, user_id: userId }).select("id").single();
+      if (res.error) throw new Error(res.error.message);
+      const holdingId = res.data.id;
+
+      if (!r.goalLink) continue;
+      let goalId: string | null = null;
+      if (r.goalLink.mode === "existing") goalId = r.goalLink.goalId;
+      if (r.goalLink.mode === "new") {
+        const g = await supabase
+          .from("goals")
+          .insert({
+            user_id: userId,
+            name: r.goalLink.name,
+            type: r.goalLink.type,
+            target_today: r.goalLink.targetToday,
+            target_date: r.goalLink.targetDate,
+            priority: 3,
+          })
+          .select("id")
+          .single();
+        if (g.error) throw new Error(g.error.message);
+        goalId = g.data.id;
+        await markAnswered(supabase, userId, "goals");
+      }
+      const { error: clearError } = await supabase
+        .from("goal_allocations")
+        .delete()
+        .eq("user_id", userId)
+        .eq("holding_id", holdingId);
+      if (clearError) throw new Error(clearError.message);
+      if (goalId) {
+        const { error } = await supabase
+          .from("goal_allocations")
+          .insert({ user_id: userId, holding_id: holdingId, goal_id: goalId, percent: 100 });
+        if (error) throw new Error(error.message);
+      }
+    }
     await markAnswered(supabase, userId, "holdings");
     return done();
   } catch (e) {
