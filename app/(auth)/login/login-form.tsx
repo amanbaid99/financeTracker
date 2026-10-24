@@ -31,8 +31,8 @@ export function LoginForm({ initialError }: { initialError?: string }) {
   const router = useRouter();
 
   const redirectTo = () => {
-    const base = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
-    return `${base}/auth/callback?consent=${PRIVACY_VERSION}`;
+    // Always the site's own origin, so a mistyped env value can't break the link.
+    return `${window.location.origin}/auth/callback?consent=${PRIVACY_VERSION}`;
   };
 
   async function sendLink(e?: React.FormEvent) {
