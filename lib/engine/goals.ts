@@ -3,6 +3,12 @@ import type { EngineConfig, HorizonBand } from "./config";
 import { addMonths, monthsBetween } from "./dates";
 import type { Goal, GoalAllocation, Holding, RiskProfile } from "./types";
 
+/** Rounds a goal amount to the nearest `step` rupees (e.g. 10,000). */
+export function roundGoalAmount(n: number, step: number): number {
+  if (!step || step <= 1) return Math.round(n);
+  return Math.round(n / step) * step;
+}
+
 /** FV = PV * (1 + i)^n, with i as a percentage per year. */
 export function futureValue(presentValue: number, inflationPct: number, years: number): number {
   return presentValue * Math.pow(1 + inflationPct / 100, Math.max(0, years));
@@ -186,7 +192,7 @@ export function analyzeGoal(
   const months = monthsBetween(ctx.todayISO, goal.targetDate);
   const years = months / 12;
   const inflationPct = inflationFor(goal, cfg);
-  const futureTarget = Math.round(futureValue(goal.targetToday, inflationPct, years));
+  const futureTarget = roundGoalAmount(futureValue(goal.targetToday, inflationPct, years), cfg.goals.roundTo);
   const { band, shifted } = bandFor(years, ctx.risk, cfg);
   const categories =
     goal.type === "retirement" && years >= 5
@@ -209,7 +215,7 @@ export function analyzeGoal(
 
   // Money saved directly on the goal grows at the band's return. Each linked
   // holding (its value and its SIP, with any step-up) grows at its own return.
-  const projected = Math.round(
+  const projected = roundGoalAmount(
     projectedValue(Math.max(0, goal.savedAmount), 0, band.returnPct, months) +
       links.reduce((s, l) => {
         const share = l.percent / 100;
@@ -220,6 +226,7 @@ export function analyzeGoal(
           stepUpSipValue((l.holding.monthlySip ?? 0) * share, l.holding.sipStepUpPct ?? 0, ret, months)
         );
       }, 0),
+    cfg.goals.roundTo,
   );
   const stepUpPct = cfg.goals.suggestedStepUpPct;
   const requiredMonthlyStepUp = alreadyFunded
@@ -346,7 +353,7 @@ function analyzeOpenGoal(
 
   const months = estimatedMonths ?? 0;
   const years = months / 12;
-  const futureTarget = Math.round(futureValue(goal.targetToday, inflationPct, years));
+  const futureTarget = roundGoalAmount(futureValue(goal.targetToday, inflationPct, years), cfg.goals.roundTo);
   const { band } = bandFor(estimatedMonths === null ? cfg.goals.openGoalHintYears : years, ctx.risk, cfg);
   const categories =
     goal.type === "retirement" && years >= 5 ? [...band.categories, ...cfg.goals.retirementExtraCategories] : band.categories;
@@ -457,7 +464,7 @@ export function suggestRetirement(
   todayISO: string,
   cfg: EngineConfig,
 ): { targetToday: number; targetDate: string | null; reason: string } {
-  const targetToday = Math.round(annualEssentials * cfg.goals.retirementCorpusYears);
+  const targetToday = roundGoalAmount(annualEssentials * cfg.goals.retirementCorpusYears, cfg.goals.roundTo);
   let targetDate: string | null = null;
   if (age !== null) {
     const yearsLeft = Math.max(1, cfg.goals.retirementAge - age);

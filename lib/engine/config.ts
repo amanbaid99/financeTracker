@@ -155,6 +155,8 @@ export const defaultConfig = {
       gold: 8,
       other: 7,
     } as Record<string, number>,
+    /** Goal amounts (future target, projection, suggestions) round to this many rupees. */
+    roundTo: 10_000,
     /** Return assumed for money saved directly on a goal with no deadline. */
     openGoalSavedReturnPct: 7,
     /** How far ahead to look when estimating a goal with no deadline. */

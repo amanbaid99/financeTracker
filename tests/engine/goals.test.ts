@@ -5,6 +5,7 @@ import {
   analyzeGoal,
   bandFor,
   estimateMonthsToGoal,
+  roundGoalAmount,
   futureValue,
   projectedValue,
   requiredSip,
@@ -92,7 +93,8 @@ describe("analyzeGoal", () => {
     const a = analyzeGoal(goal(), { holdings: [], allocations: [], risk: "moderate", todayISO: TODAY, cfg });
     expect(a.months).toBe(60);
     expect(a.inflationPct).toBe(7);
-    expect(a.futureTarget).toBe(Math.round(1_000_000 * 1.07 ** 5));
+    // 1,402,552 rounded to the nearest 10,000.
+    expect(a.futureTarget).toBe(1_400_000);
     expect(a.band.key).toBe("5_to_7y");
     expect(a.requiredMonthly).toBeGreaterThan(0);
     expect(a.status).toBe("behind");
@@ -298,5 +300,13 @@ describe("goals with no deadline", () => {
       maxMonths: 100,
     });
     expect(m).toBe(12);
+  });
+});
+
+describe("goal amount rounding", () => {
+  it("rounds to the nearest 10,000", () => {
+    expect(roundGoalAmount(1_402_552, 10_000)).toBe(1_400_000);
+    expect(roundGoalAmount(68_95_000, 10_000)).toBe(69_00_000);
+    expect(roundGoalAmount(4_999, 10_000)).toBe(0);
   });
 });
