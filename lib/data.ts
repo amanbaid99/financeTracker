@@ -167,6 +167,7 @@ export function toFinanceData(raw: RawData, todayISO: string): FinanceData {
       premium: i.premium === null ? null : i.premium * PAYMENTS_PER_YEAR[i.premium_frequency],
       covers: i.covers as "self" | "family" | "others",
       inBudget: i.in_budget,
+      frequency: i.premium_frequency as "monthly" | "quarterly" | "half_yearly" | "yearly",
       renewalMonth: i.renewal_month,
     })),
     liabilities: raw.liabilities.map((l) => ({

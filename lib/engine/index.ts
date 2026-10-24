@@ -2,7 +2,7 @@ import { computeBudget, type BudgetResult } from "./budget";
 import { computeCompleteness, type CompletenessResult } from "./completeness";
 import { mergeConfig, type EngineConfig } from "./config";
 import { allocateToGoals, analyzeGoal, type GoalAnalysis } from "./goals";
-import { currentStep, evaluateLadder, SECTION_LABELS, type LadderStep } from "./ladder";
+import { currentStep, evaluateLadder, liquidAssets, SECTION_LABELS, type LadderStep } from "./ladder";
 import type { FinanceData } from "./types";
 
 export * from "./types";
@@ -23,6 +23,8 @@ export interface NextFocus {
   /** Where the action button goes. */
   href: string;
   goalSplit?: { goalId: string; name: string; amount: number }[];
+  /** With no income: months your liquid savings cover essentials. */
+  runwayMonths?: number | null;
 }
 
 export interface Analysis {
@@ -34,6 +36,10 @@ export interface Analysis {
   nextFocus: NextFocus | null;
   existingSips: number;
   retirementBaseline: number;
+  /** True when there is no regular income right now (e.g. between jobs). */
+  noIncome: boolean;
+  /** Liquid savings free for emergencies, and how many months of essentials they cover. */
+  runway: { liquid: number; months: number | null };
 }
 
 const SECTION_HREF: Record<string, string> = {
@@ -79,6 +85,12 @@ export function analyze(data: FinanceData, overrides: unknown, todayISO: string)
     ? Math.max(goalsNeed, retirementBaseline)
     : stepNeedMonthly(step, cfg) + existingSips;
   const budget = computeBudget(data, cfg, { todayISO, savingsNeed });
+  const noIncome = budget.expectedIncome <= 0;
+  const liquid = liquidAssets(data);
+  const runway = {
+    liquid,
+    months: budget.essentials.total > 0 ? Math.floor((liquid / budget.essentials.total) * 10) / 10 : null,
+  };
 
   return {
     config: cfg,
@@ -86,9 +98,11 @@ export function analyze(data: FinanceData, overrides: unknown, todayISO: string)
     ladder,
     goals,
     completeness: computeCompleteness(data, cfg),
-    nextFocus: step ? buildNextFocus(step, budget, goals, existingSips, retirementBaseline) : null,
+    nextFocus: step ? buildNextFocus(step, budget, goals, existingSips, retirementBaseline, runway) : null,
     existingSips,
     retirementBaseline,
+    noIncome,
+    runway,
   };
 }
 
@@ -98,6 +112,7 @@ export function buildNextFocus(
   goals: GoalAnalysis[],
   existingSips: number,
   retirementBaseline: number,
+  runway: { liquid: number; months: number | null } = { liquid: 0, months: null },
 ): NextFocus {
   if (step.status === "unknown" && step.askAbout) {
     const isGoals = step.askAbout === "goals";
@@ -110,6 +125,25 @@ export function buildNextFocus(
       reason: step.reason,
       action: isGoals ? "Add a goal" : "Add details",
       href: SECTION_HREF[step.askAbout] ?? "/settings",
+    };
+  }
+
+  if (step.kind === "cashflow" && budget.expectedIncome <= 0) {
+    const m = runway.months;
+    const cover =
+      m === null
+        ? "Add your monthly expenses to see how long your savings last."
+        : `Your savings cover about ${m < 1 ? "less than a month" : `${Math.floor(m)} month${Math.floor(m) === 1 ? "" : "s"}`} of essentials.`;
+    return {
+      step,
+      title: "You're between incomes",
+      gap: budget.essentials.total,
+      monthly: null,
+      monthsToComplete: null,
+      runwayMonths: m,
+      reason: `With no income right now, essentials of ₹${budget.essentials.total.toLocaleString("en-IN")} a month come from savings. ${cover} Pay EMIs and insurance premiums first, hold off on new investments, and keep existing SIPs only while you have more than 6 months covered. Once you add your salary, your normal plan comes back.`,
+      action: "Update income",
+      href: "/details/income",
     };
   }
 

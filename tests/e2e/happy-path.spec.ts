@@ -225,4 +225,29 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await page.goto("/budget");
   await expect(page.getByLabel("Save at least", { exact: true })).toHaveValue("25");
   await page.screenshot({ path: "test-results/budget-ratios-375.png", fullPage: true });
+
+  // Money plan on the Budget page.
+  await page.goto("/budget");
+  await expect(page.getByText("Your money plan this month")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Essentials/ })).toBeVisible();
+  await page.screenshot({ path: "test-results/money-plan-375.png", fullPage: true });
+
+  // Salary 0: between-incomes mode with runway.
+  await page.goto("/details/income");
+  await page.getByLabel("Monthly amount", { exact: true }).fill("0");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page).toHaveURL(/\/details$/);
+  await page.goto("/dashboard");
+  await expect(page.getByRole("heading", { name: "You're between incomes" })).toBeVisible();
+  await expect(page.getByText("Savings last")).toBeVisible();
+  await page.goto("/budget");
+  await expect(page.getByText(/No income right now/).first()).toBeVisible();
+
+  // Salary back: normal plan returns.
+  await page.goto("/details/income");
+  await page.getByLabel("Monthly amount", { exact: true }).fill("100000");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page).toHaveURL(/\/details$/);
+  await page.goto("/dashboard");
+  await expect(page.getByRole("heading", { name: "You're between incomes" })).toHaveCount(0);
 });

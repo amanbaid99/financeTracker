@@ -56,9 +56,30 @@ export function NextFocusCard({ focus, aiOn }: { focus: NextFocus | null; aiOn: 
         {!isAsk && (
           <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <Stat
-              label={isCover ? "Cover missing" : focus.step.kind === "cashflow" ? "Monthly shortfall" : "Gap"}
+              label={
+                isCover
+                  ? "Cover missing"
+                  : focus.runwayMonths !== undefined
+                    ? "Essentials a month"
+                    : focus.step.kind === "cashflow"
+                      ? "Monthly shortfall"
+                      : "Gap"
+              }
               value={formatINRCompact(focus.gap)}
             />
+            {focus.runwayMonths !== undefined && (
+              <Stat
+                label="Savings last"
+                value={
+                  focus.runwayMonths === null
+                    ? "Add expenses"
+                    : focus.runwayMonths < 1
+                      ? "Under a month"
+                      : `${Math.floor(focus.runwayMonths)} month${Math.floor(focus.runwayMonths) === 1 ? "" : "s"}`
+                }
+                tip="Your savings, FDs and liquid funds (minus card bills and money earmarked for goals) divided by your monthly essentials."
+              />
+            )}
             {focus.monthly !== null && (
               <Stat
                 label="Put toward it monthly"

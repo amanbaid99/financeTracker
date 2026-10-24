@@ -72,6 +72,8 @@ export interface InsurancePolicy {
   covers?: "self" | "family" | "others";
   /** False when the user chose not to budget or save for this premium. */
   inBudget?: boolean;
+  /** How often it's paid. Premium above is always yearly. */
+  frequency?: "monthly" | "quarterly" | "half_yearly" | "yearly";
   renewalMonth: number | null;
 }
 

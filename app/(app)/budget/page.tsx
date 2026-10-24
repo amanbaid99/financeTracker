@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BudgetChart } from "@/components/budget-chart";
+import { MoneyPlanCard } from "@/components/money-plan";
+import { buildMoneyPlan } from "@/lib/engine/plan";
 import { BudgetRatios, type RatioValues } from "@/components/forms/settings-forms";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,7 +51,8 @@ function ratioValues(c: EngineConfig): RatioValues {
 }
 
 export default async function BudgetPage() {
-  const { analysis } = await loadAnalysis();
+  const { analysis, data } = await loadAnalysis();
+  const plan = buildMoneyPlan(data, analysis);
   const { budget, config } = analysis;
   const pctOf = (n: number) => `${Math.round(n * 100)}%`;
 
@@ -59,6 +62,8 @@ export default async function BudgetPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Budget</h1>
         <p className="text-sm text-muted-foreground">{budget.reason}</p>
       </div>
+
+      <MoneyPlanCard plan={plan} />
 
       <Card>
         <CardHeader>

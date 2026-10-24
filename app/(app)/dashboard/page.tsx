@@ -86,16 +86,12 @@ export default async function DashboardPage() {
         next rupee should go.
       </p>
 
-      {!budget.cashFlowOk && (
-        <div
-          role="alert"
-          className="flex gap-3 rounded-xl border border-danger/40 bg-danger-soft p-3 text-sm text-danger"
-        >
+      {!budget.cashFlowOk && !analysis.noIncome && (
+        <div role="alert" className="flex gap-3 rounded-xl border border-danger/40 bg-danger-soft p-3 text-sm text-danger">
           <AlertTriangle className="size-5 shrink-0" aria-hidden />
           <p>
-            Your essentials and EMIs ({formatINR(budget.essentials.total)}) are
-            more than your base income ({formatINR(budget.baseIncome)}). Fixing
-            this comes first.
+            Your essentials and EMIs ({formatINR(budget.essentials.total)}) are more than your base income (
+            {formatINR(budget.baseIncome)}). Fixing this comes first.
           </p>
         </div>
       )}
