@@ -1,6 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { completeCodeSignIn } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Input, Label } from "@/components/ui/input";
 import { PRIVACY_VERSION } from "@/lib/legal";
@@ -9,6 +11,9 @@ import { createClient } from "@/lib/supabase/client";
 function friendlyError(message: string): string {
   if (/database error|not on the invite list|saving new user/i.test(message)) {
     return "This email isn't on the invite list. Ask the person who invited you to add it.";
+  }
+  if (/expired|invalid|otp/i.test(message)) {
+    return "That code is wrong or has expired. Check the latest email, or send a new code.";
   }
   if (/rate limit|too many/i.test(message)) {
     return "Too many sign-in emails were sent. Wait a minute and try again.";
@@ -22,14 +27,16 @@ export function LoginForm({ initialError }: { initialError?: string }) {
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState(initialError ? friendlyError(initialError) : "");
+  const [code, setCode] = useState("");
+  const router = useRouter();
 
   const redirectTo = () => {
     const base = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
     return `${base}/auth/callback?consent=${PRIVACY_VERSION}`;
   };
 
-  async function sendLink(e: React.FormEvent) {
-    e.preventDefault();
+  async function sendLink(e?: React.FormEvent) {
+    e?.preventDefault();
     if (!agreed) return setError("Please accept the privacy policy to continue.");
     setBusy(true);
     setError("");
@@ -40,6 +47,30 @@ export function LoginForm({ initialError }: { initialError?: string }) {
     setBusy(false);
     if (error) setError(friendlyError(error.message));
     else setSent(true);
+  }
+
+  async function verifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    const token = code.replace(/\D/g, "");
+    if (token.length < 6) return setError("Enter the code from the email.");
+    setBusy(true);
+    setError("");
+    const { error } = await createClient().auth.verifyOtp({
+      email: email.trim().toLowerCase(),
+      token,
+      type: "email",
+    });
+    if (error) {
+      setBusy(false);
+      return setError(friendlyError(error.message));
+    }
+    const res = await completeCodeSignIn(PRIVACY_VERSION);
+    if (!res.ok) {
+      setBusy(false);
+      return setError(res.error);
+    }
+    router.replace(res.next);
+    router.refresh();
   }
 
   async function google() {
@@ -58,15 +89,53 @@ export function LoginForm({ initialError }: { initialError?: string }) {
 
   if (sent) {
     return (
-      <div className="space-y-2 text-center" role="status">
-        <p className="font-medium">Check your inbox</p>
-        <p className="text-sm text-muted-foreground">
-          We sent a sign-in link to <span className="font-medium text-foreground">{email}</span>. Open it on this
-          device and browser.
-        </p>
-        <Button variant="link" onClick={() => setSent(false)}>
-          Use a different email
-        </Button>
+      <div className="space-y-4">
+        <div className="space-y-1 text-center" role="status">
+          <p className="font-medium">Check your inbox</p>
+          <p className="text-sm text-muted-foreground">
+            We sent a code to <span className="font-medium text-foreground">{email}</span>. Type it below, or open
+            the link in the email on this device.
+          </p>
+        </div>
+        <form onSubmit={verifyCode} className="space-y-3">
+          <div className="space-y-1.5">
+            <Label htmlFor="code">Code from the email</Label>
+            <Input
+              id="code"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              autoFocus
+              maxLength={10}
+              placeholder="123456"
+              className="tabular text-center text-lg tracking-[0.3em]"
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 10))}
+            />
+          </div>
+          <Button type="submit" className="w-full" disabled={busy}>
+            {busy ? "Checking…" : "Sign in"}
+          </Button>
+        </form>
+        {error && (
+          <p role="alert" className="rounded-lg bg-danger-soft p-3 text-sm text-danger">
+            {error}
+          </p>
+        )}
+        <div className="flex justify-between">
+          <Button
+            variant="link"
+            onClick={() => {
+              setSent(false);
+              setCode("");
+              setError("");
+            }}
+          >
+            Use a different email
+          </Button>
+          <Button variant="link" onClick={() => sendLink()} disabled={busy}>
+            Send a new code
+          </Button>
+        </div>
       </div>
     );
   }
@@ -119,7 +188,7 @@ export function LoginForm({ initialError }: { initialError?: string }) {
           />
         </div>
         <Button type="submit" className="w-full" disabled={busy}>
-          {busy ? "Sending…" : "Email me a sign-in link"}
+          {busy ? "Sending…" : "Email me a sign-in code"}
         </Button>
       </form>
 

@@ -1,5 +1,5 @@
 // Onboarding and dashboard happy path against the LOCAL Supabase stack.
-// Signs in with a real magic link read from the local mail catcher (Mailpit).
+// Signs in with the real email code read from the local mail catcher (Mailpit).
 import { createClient } from "@supabase/supabase-js";
 import { expect, test } from "@playwright/test";
 
@@ -8,19 +8,24 @@ const SECRET = process.env.SUPABASE_SECRET_KEY!;
 const MAILPIT = process.env.MAILPIT_URL ?? "http://127.0.0.1:54324";
 const email = `e2e-${Date.now()}@example.test`;
 
-async function magicLink(to: string): Promise<string> {
+async function emailText(to: string): Promise<string> {
   for (let i = 0; i < 30; i++) {
     const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:${to}`)}`);
     const json = (await res.json()) as { messages?: { ID: string }[] };
     const id = json.messages?.[0]?.ID;
     if (id) {
       const msg = (await (await fetch(`${MAILPIT}/api/v1/message/${id}`)).json()) as { Text: string; HTML: string };
-      const link = (msg.Text + msg.HTML).match(/https?:\/\/[^\s"'<>]+verify[^\s"'<>]+/)?.[0];
-      if (link) return link.replace(/&amp;/g, "&");
+      return msg.Text + msg.HTML;
     }
     await new Promise((r) => setTimeout(r, 500));
   }
-  throw new Error("No magic link email arrived");
+  throw new Error("No sign-in email arrived");
+}
+
+async function signInCode(to: string): Promise<string> {
+  const code = (await emailText(to)).match(/\b(\d{6,10})\b/)?.[1];
+  if (!code) throw new Error("No code in the sign-in email");
+  return code;
 }
 
 test.beforeAll(async () => {
@@ -34,14 +39,19 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await page.goto("/login");
   await page.getByRole("checkbox", { name: /privacy policy/ }).check();
   await page.getByLabel("Email", { exact: true }).fill(`nobody-${Date.now()}@example.test`);
-  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+  await page.getByRole("button", { name: "Email me a sign-in code" }).click();
   await expect(page.getByText("isn't on the invite list")).toBeVisible();
 
-  // Invited: magic link.
+  // Invited: wrong code is rejected, right code signs in.
   await page.getByLabel("Email", { exact: true }).fill(email);
-  await page.getByRole("button", { name: "Email me a sign-in link" }).click();
+  await page.getByRole("button", { name: "Email me a sign-in code" }).click();
   await expect(page.getByText("Check your inbox")).toBeVisible();
-  await page.goto(await magicLink(email));
+  const code = await signInCode(email);
+  await page.getByLabel("Code from the email", { exact: true }).fill(code === "000000" ? "111111" : "000000");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page.getByText("wrong or has expired")).toBeVisible();
+  await page.getByLabel("Code from the email", { exact: true }).fill(code);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/onboarding\/basics/);
 
   // Basics + theme.
