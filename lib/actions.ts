@@ -613,6 +613,65 @@ export async function setBillPaid(input: z.input<typeof billSchema>): Promise<Ac
   }
 }
 
+const monthBillSchema = z.object({
+  /** Existing row this month to update; omit to create one. */
+  id: uuid.nullable().optional(),
+  /** Repeating series to add this month's amount to. */
+  seriesId: uuid.nullable().optional(),
+  cardId: uuid.nullable().optional(),
+  label: z.string().trim().min(1, "name the bill").max(60),
+  /** Null = not generated yet. */
+  amount: money.nullable(),
+  dueDay: z.number().int().min(1).max(31).nullable().optional(),
+  recurring: z.boolean().default(false),
+});
+
+export async function saveMonthBill(input: z.input<typeof monthBillSchema>): Promise<ActionResult> {
+  try {
+    const v = monthBillSchema.parse(input);
+    const { supabase, userId } = await session();
+    const row = {
+      label: v.label,
+      amount: v.amount,
+      due_day: v.dueDay ?? null,
+      recurring: v.cardId ? false : v.recurring,
+      card_id: v.cardId ?? null,
+    };
+    if (v.id) {
+      const { error } = await supabase.from("month_bills").update(row).eq("id", v.id).eq("user_id", userId);
+      if (error) throw new Error(error.message);
+      return done(v.id);
+    }
+    const month = `${todayIST().slice(0, 7)}-01`;
+    // Card bills use the card id as their series, so there's one per card per month.
+    const seriesId = v.cardId ?? v.seriesId ?? undefined;
+    const { data, error } = await supabase
+      .from("month_bills")
+      .insert({ ...row, user_id: userId, month, ...(seriesId ? { series_id: seriesId } : {}) })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return done(data.id);
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** Removes this month's entry; with stopRepeating, the whole repeating series. */
+export async function deleteMonthBill(input: { seriesId: string; stopRepeating: boolean }): Promise<ActionResult> {
+  try {
+    const v = z.object({ seriesId: uuid, stopRepeating: z.boolean() }).parse(input);
+    const { supabase, userId } = await session();
+    let q = supabase.from("month_bills").delete().eq("user_id", userId).eq("series_id", v.seriesId);
+    if (!v.stopRepeating) q = q.eq("month", `${todayIST().slice(0, 7)}-01`);
+    const { error } = await q;
+    if (error) throw new Error(error.message);
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 export async function updateBankBalance(input: { holdingId: string; value: number }): Promise<ActionResult> {
   try {
     const v = z.object({ holdingId: uuid, value: money }).parse(input);

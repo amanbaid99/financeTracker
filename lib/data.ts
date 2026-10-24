@@ -20,6 +20,7 @@ export type AllocationRow = Tables["goal_allocations"]["Row"];
 export type CardRow = Tables["credit_cards"]["Row"];
 export type PlannedRow = Tables["planned_expenses"]["Row"];
 export type BillStatusRow = Tables["bill_status"]["Row"];
+export type MonthBillRow = Tables["month_bills"]["Row"];
 
 export interface RawData {
   profile: ProfileRow;
@@ -35,6 +36,8 @@ export interface RawData {
   planned: PlannedRow[];
   /** Paid ticks for the current month (IST). */
   billStatus: BillStatusRow[];
+  /** This month's bills plus every repeating bill series. */
+  monthBills: MonthBillRow[];
   overrides: unknown;
 }
 
@@ -63,6 +66,7 @@ export const loadRaw = cache(async (): Promise<RawData> => {
     cards,
     planned,
     billStatus,
+    monthBills,
   ] = await Promise.all([
       supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
       supabase.from("income_streams").select("*").order("created_at"),
@@ -77,6 +81,11 @@ export const loadRaw = cache(async (): Promise<RawData> => {
       supabase.from("credit_cards").select("*").order("created_at"),
       supabase.from("planned_expenses").select("*").order("next_due", { nullsFirst: false }),
       supabase.from("bill_status").select("*").eq("month", thisMonth),
+      supabase
+        .from("month_bills")
+        .select("*")
+        .or(`month.eq.${thisMonth},recurring.eq.true`)
+        .order("month", { ascending: false }),
     ]);
   const firstError = [
     profile,
@@ -92,6 +101,7 @@ export const loadRaw = cache(async (): Promise<RawData> => {
     cards,
     planned,
     billStatus,
+    monthBills,
   ]
     .map((r) => r.error)
     .find(Boolean);
@@ -110,6 +120,7 @@ export const loadRaw = cache(async (): Promise<RawData> => {
     cards: cards.data ?? [],
     planned: planned.data ?? [],
     billStatus: billStatus.data ?? [],
+    monthBills: monthBills.data ?? [],
     overrides: settings.data?.config_overrides ?? {},
   };
 });

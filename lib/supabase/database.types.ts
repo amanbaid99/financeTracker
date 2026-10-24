@@ -472,6 +472,54 @@ export type Database = {
         };
         Relationships: [];
       };
+      month_bills: {
+        Row: {
+          amount: number | null;
+          card_id: string | null;
+          created_at: string;
+          due_day: number | null;
+          id: string;
+          label: string;
+          month: string;
+          recurring: boolean;
+          series_id: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          amount?: number | null;
+          card_id?: string | null;
+          created_at?: string;
+          due_day?: number | null;
+          id?: string;
+          label: string;
+          month: string;
+          recurring?: boolean;
+          series_id?: string;
+          user_id?: string;
+        };
+        Update: {
+          amount?: number | null;
+          card_id?: string | null;
+          created_at?: string;
+          due_day?: number | null;
+          id?: string;
+          label?: string;
+          month?: string;
+          recurring?: boolean;
+          series_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "month_bills_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "credit_cards";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       planned_expenses: {
         Row: {
           amount: number;

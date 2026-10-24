@@ -177,6 +177,17 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await page.goto("/month");
   await expect(page.getByText("Travel card bill")).toBeVisible();
   await expect(page.getByText("Gym membership")).toBeVisible();
+  // A bill that isn't generated yet, then its amount once it arrives.
+  await page.getByRole("button", { name: "Add a bill" }).click();
+  await page.getByLabel("Bill", { exact: true }).fill("Electricity");
+  await page.getByLabel("Due day", { exact: true }).selectOption("28");
+  await page.getByRole("button", { name: "Add bill", exact: true }).click();
+  await expect(page.getByText("Electricity")).toBeVisible();
+  await expect(page.getByText(/^Not generated yet/).first()).toBeVisible();
+  await page.getByRole("button", { name: "Add amount" }).first().click();
+  await page.getByLabel("Electricity amount").fill("2100");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByText("₹2,100")).toBeVisible();
   await page.getByLabel("Mark Travel card bill as paid").check();
   await page.reload();
   await expect(page.getByLabel("Mark Travel card bill as paid")).toBeChecked();

@@ -34,7 +34,23 @@ export default async function MonthPage({ searchParams }: { searchParams: Promis
 
   const bills: Bill[] = buildMonthBills({
     todayISO: today,
-    cards: data.cards ?? [],
+    cards: raw.cards.map((c) => ({
+      id: c.id,
+      label: c.label,
+      outstanding: c.outstanding,
+      dueDay: c.due_day,
+      statementDay: c.statement_day,
+    })),
+    monthBills: raw.monthBills.map((r) => ({
+      id: r.id,
+      month: r.month,
+      seriesId: r.series_id,
+      label: r.label,
+      amount: r.amount,
+      dueDay: r.due_day,
+      recurring: r.recurring,
+      cardId: r.card_id,
+    })),
     emis: raw.liabilities
       .filter((l) => (l.emi ?? 0) > 0 && l.outstanding > 0)
       .map((l) => ({ id: l.id, label: `${l.label || LIABILITY_LABELS[l.kind]} EMI`, emi: l.emi ?? 0 })),
@@ -59,20 +75,23 @@ export default async function MonthPage({ searchParams }: { searchParams: Promis
     if (!key.startsWith("plan:") || bills.some((b) => b.key === key)) continue;
     const [, id, due] = key.split(":");
     const p = raw.planned.find((x) => x.id === id);
-    if (p) bills.push({ key, kind: "planned", label: p.name, amount: p.amount, dueDate: due ?? null, plannedId: id });
+    if (p) {
+      bills.push({ key, kind: "planned", label: p.name, amount: p.amount, dueDate: due ?? null, status: "due", plannedId: id });
+    }
   }
 
   const banks = raw.holdings.filter((h) => h.kind === "savings");
   const bankTotal = banks.reduce((s, h) => s + h.current_value, 0);
   const cardTotal = (data.cards ?? []).reduce((s, c) => s + c.outstanding, 0);
   const paid = new Set(paidKeys);
-  // Card bills ticked as paid this month have already left the bank.
-  const cardUnpaid = (data.cards ?? [])
-    .filter((c) => !paid.has(`card:${c.id}`))
-    .reduce((s, c) => s + c.outstanding, 0);
+  // Card bills ticked as paid this month have already left the bank. A card
+  // whose bill isn't generated yet still counts its spend so far.
+  const cardUnpaid = bills
+    .filter((b) => b.kind === "card" && !paid.has(b.key))
+    .reduce((s, b) => s + (b.amount ?? b.estimate ?? 0), 0);
   const otherUnpaid = bills
     .filter((b) => b.kind !== "card" && !paid.has(b.key))
-    .reduce((s, b) => s + b.amount, 0);
+    .reduce((s, b) => s + (b.amount ?? 0), 0);
   const left = bankTotal - cardUnpaid - otherUnpaid;
   const [, m] = today.split("-").map(Number);
 
@@ -108,7 +127,8 @@ export default async function MonthPage({ searchParams }: { searchParams: Promis
           <CardHeader>
             <CardTitle>Bills this month</CardTitle>
             <CardDescription>
-              Card bills, EMIs, insurance and planned expenses due now, plus your SIPs. Tick each one as you pay it.
+              Card bills, EMIs, insurance, planned expenses and your own bills, plus SIPs. Bills that aren&apos;t out yet
+              show as not generated; add the amount when they arrive, and tick each one as you pay it.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
