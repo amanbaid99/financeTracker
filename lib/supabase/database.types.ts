@@ -84,6 +84,34 @@ export type Database = {
         };
         Relationships: [];
       };
+      bill_status: {
+        Row: {
+          bill_key: string;
+          id: string;
+          month: string;
+          paid: boolean;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          bill_key: string;
+          id?: string;
+          month: string;
+          paid?: boolean;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          bill_key?: string;
+          id?: string;
+          month?: string;
+          paid?: boolean;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       consents: {
         Row: {
           created_at: string;
@@ -109,6 +137,37 @@ export type Database = {
           kind?: Database["public"]["Enums"]["consent_kind"];
           user_id?: string;
           version?: string;
+        };
+        Relationships: [];
+      };
+      credit_cards: {
+        Row: {
+          created_at: string;
+          due_day: number | null;
+          id: string;
+          label: string;
+          outstanding: number;
+          statement_day: number | null;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          due_day?: number | null;
+          id?: string;
+          label: string;
+          outstanding?: number;
+          statement_day?: number | null;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          due_day?: number | null;
+          id?: string;
+          label?: string;
+          outstanding?: number;
+          statement_day?: number | null;
+          user_id?: string;
         };
         Relationships: [];
       };
@@ -340,10 +399,13 @@ export type Database = {
         Row: {
           cover_amount: number;
           covers: string;
+          debit_day: number | null;
           id: string;
+          in_budget: boolean;
           kind: Database["public"]["Enums"]["insurance_kind"];
           premium: number | null;
           premium_frequency: string;
+          renewal_date: string | null;
           renewal_month: number | null;
           source: Database["public"]["Enums"]["insurance_source"];
           user_id: string;
@@ -352,10 +414,13 @@ export type Database = {
         Insert: {
           cover_amount?: number;
           covers?: string;
+          debit_day?: number | null;
           id?: string;
+          in_budget?: boolean;
           kind: Database["public"]["Enums"]["insurance_kind"];
           premium?: number | null;
           premium_frequency?: string;
+          renewal_date?: string | null;
           renewal_month?: number | null;
           source: Database["public"]["Enums"]["insurance_source"];
           user_id?: string;
@@ -363,10 +428,13 @@ export type Database = {
         Update: {
           cover_amount?: number;
           covers?: string;
+          debit_day?: number | null;
           id?: string;
+          in_budget?: boolean;
           kind?: Database["public"]["Enums"]["insurance_kind"];
           premium?: number | null;
           premium_frequency?: string;
+          renewal_date?: string | null;
           renewal_month?: number | null;
           source?: Database["public"]["Enums"]["insurance_source"];
           user_id?: string;
@@ -400,6 +468,40 @@ export type Database = {
           kind?: Database["public"]["Enums"]["liability_kind"];
           label?: string | null;
           outstanding?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      planned_expenses: {
+        Row: {
+          amount: number;
+          created_at: string;
+          every_months: number;
+          id: string;
+          in_budget: boolean;
+          name: string;
+          next_due: string | null;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          amount: number;
+          created_at?: string;
+          every_months?: number;
+          id?: string;
+          in_budget?: boolean;
+          name: string;
+          next_due?: string | null;
+          user_id?: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          every_months?: number;
+          id?: string;
+          in_budget?: boolean;
+          name?: string;
+          next_due?: string | null;
           user_id?: string;
         };
         Relationships: [];

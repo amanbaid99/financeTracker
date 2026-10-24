@@ -57,13 +57,20 @@ export default async function BudgetPage() {
             <Row
               label="Essentials"
               value={budget.split.essentials}
-              tip={`Expenses ${formatINR(budget.essentials.expenses)}${budget.essentials.estimated ? " (estimated)" : ""}, EMIs ${formatINR(budget.essentials.emis)}, insurance premiums ${formatINR(budget.essentials.insurancePremiums)} a month.`}
+              tip={`Expenses ${formatINR(budget.essentials.expenses)}${budget.essentials.estimated ? " (estimated)" : ""}, EMIs ${formatINR(budget.essentials.emis)}, insurance premiums ${formatINR(budget.essentials.insurancePremiums)}, planned expenses ${formatINR(budget.essentials.planned)} a month.`}
             />
             <Row label="Savings" value={budget.split.savings} />
             <Row label="Wants" value={budget.split.wants} />
             {budget.split.shortfall > 0 && <Row label="Shortfall" value={-budget.split.shortfall} strong />}
           </div>
           <p className="text-xs text-muted-foreground">{budget.split.reason}</p>
+          <p className="text-xs text-muted-foreground">
+            Have costs that come round every few months, like the gym or servicing?{" "}
+            <Link href="/details/planned?from=budget" className="text-primary underline">
+              Plan for them
+            </Link>{" "}
+            and a monthly share is set aside.
+          </p>
           {budget.notes.map((n) => (
             <p key={n} className="rounded-lg bg-warning-soft p-2 text-xs text-warning">
               {n}
@@ -76,7 +83,7 @@ export default async function BudgetPage() {
         <CardHeader>
           <div className="flex items-center justify-between gap-2">
             <CardTitle>Income streams</CardTitle>
-            <Link href="/onboarding/income" className="text-sm text-primary underline-offset-2 hover:underline">
+            <Link href="/details/income" className="text-sm text-primary underline-offset-2 hover:underline">
               Edit
             </Link>
           </div>
@@ -176,7 +183,7 @@ export default async function BudgetPage() {
           <CardHeader>
             <div className="flex items-center justify-between gap-2">
               <CardTitle>Biggest essentials</CardTitle>
-              <Link href="/onboarding/expenses" className="text-sm text-primary underline-offset-2 hover:underline">
+              <Link href="/details/expenses" className="text-sm text-primary underline-offset-2 hover:underline">
                 Edit
               </Link>
             </div>

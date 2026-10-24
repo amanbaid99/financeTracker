@@ -12,7 +12,6 @@ import { aiConfigured } from "@/lib/ai/config";
 import { loadAnalysis, requireUser } from "@/lib/data";
 import { defaultConfig } from "@/lib/engine/config";
 import { formatDate } from "@/lib/format";
-import { STEPS } from "@/lib/onboarding";
 import { asAccent, asTheme } from "@/lib/theme";
 
 export const metadata: Metadata = { title: "Settings" };
@@ -24,7 +23,7 @@ const CONSENT_LABELS: Record<string, string> = {
 };
 
 export default async function SettingsPage() {
-  const { raw, analysis, data } = await loadAnalysis();
+  const { raw, analysis } = await loadAnalysis();
   const { supabase, user } = await requireUser();
   const { data: consents } = await supabase
     .from("consents")
@@ -59,22 +58,10 @@ export default async function SettingsPage() {
           <CardDescription>Every answer can be changed. More answers mean sharper suggestions.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ul className="divide-y">
-            {STEPS.filter((s) => s.slug !== "finish" && s.slug !== "goals").map((s) => (
-              <li key={s.slug}>
-                <Link
-                  href={s.slug === "holdings" ? "/holdings" : `/onboarding/${s.slug}?edit=1`}
-                  className="flex items-center justify-between py-3 text-sm hover:text-primary"
-                >
-                  <span>{s.title}</span>
-                  <span className="flex items-center gap-2 text-xs text-muted-foreground">
-                    {s.slug === "risk" && data.profile.riskProfile ? data.profile.riskProfile : ""}
-                    <ChevronRight className="size-4" aria-hidden />
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          <Link href="/details" className="flex items-center justify-between rounded-lg border p-3 text-sm hover:text-primary">
+            <span>Update income, expenses, insurance, loans, household and more</span>
+            <ChevronRight className="size-4" aria-hidden />
+          </Link>
         </CardContent>
       </Card>
 

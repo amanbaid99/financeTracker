@@ -70,6 +70,8 @@ export interface InsurancePolicy {
   premium: number | null;
   /** Who is insured. "others" (e.g. parents) is budgeted but isn't your own cover. */
   covers?: "self" | "family" | "others";
+  /** False when the user chose not to budget or save for this premium. */
+  inBudget?: boolean;
   renewalMonth: number | null;
 }
 
@@ -147,6 +149,24 @@ export interface GoalAllocation {
   percent: number;
 }
 
+/** A credit card paid in full each month. Its outstanding is spoken-for cash, not debt. */
+export interface CreditCard {
+  id: string;
+  label: string;
+  outstanding: number;
+  dueDay: number | null;
+}
+
+/** A cost that comes round every few months; the budget sets aside a monthly share. */
+export interface PlannedExpense {
+  id: string;
+  name: string;
+  amount: number;
+  everyMonths: number;
+  nextDue: string | null;
+  inBudget: boolean;
+}
+
 export interface FinanceData {
   profile: Profile;
   incomes: IncomeStream[];
@@ -156,4 +176,6 @@ export interface FinanceData {
   holdings: Holding[];
   goals: Goal[];
   allocations: GoalAllocation[];
+  cards?: CreditCard[];
+  plannedExpenses?: PlannedExpense[];
 }

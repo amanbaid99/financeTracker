@@ -4,10 +4,9 @@ import { Plus } from "lucide-react";
 import { useState } from "react";
 import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
 import { saveInsurance } from "@/lib/actions";
 import type { InsuranceKind, InsuranceSource } from "@/lib/engine/types";
-import { monthName } from "@/lib/format";
 import { Field } from "./field";
 import { NoneCheckbox, RowCard } from "./row-card";
 import { StepShell } from "./step-shell";
@@ -21,6 +20,12 @@ export interface InsuranceRowState {
   premiumFrequency: "monthly" | "quarterly" | "half_yearly" | "yearly";
   covers: "self" | "family" | "others";
   renewalMonth: number | null;
+  /** yyyy-mm-dd, for quarterly, half-yearly and yearly premiums. */
+  renewalDate: string;
+  /** Day of the month a monthly premium is debited. */
+  debitDay: number | null;
+  /** Count (monthly) or save for (yearly) this premium in the budget. */
+  inBudget: boolean;
 }
 
 const FREQUENCY_LABELS: Record<InsuranceRowState["premiumFrequency"], string> = {
@@ -56,6 +61,9 @@ const empty = (kind: InsuranceKind = "health"): InsuranceRowState => ({
   premiumFrequency: "yearly",
   covers: "self",
   renewalMonth: null,
+  renewalDate: "",
+  debitDay: null,
+  inBudget: true,
 });
 
 export function InsuranceForm({
@@ -97,6 +105,9 @@ export function InsuranceForm({
                     premiumFrequency: r.premiumFrequency,
                     covers: r.covers,
                     renewalMonth: r.renewalMonth,
+                    renewalDate: r.renewalDate || null,
+                    debitDay: r.debitDay,
+                    inBudget: r.inBudget,
                   })),
             )
       }
@@ -166,7 +177,9 @@ export function InsuranceForm({
               htmlFor={`ins-prem-${i}`}
               hint={
                 r.premium
-                  ? `About ${new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(Math.round((r.premium * PER_YEAR[r.premiumFrequency]) / 12))} a month in your budget.`
+                  ? r.premiumFrequency === "monthly"
+                    ? "Per month."
+                    : `Per ${r.premiumFrequency === "yearly" ? "year" : r.premiumFrequency === "quarterly" ? "quarter" : "half-year"}.`
                   : "Leave blank if your employer pays it."
               }
             >
@@ -187,20 +200,46 @@ export function InsuranceForm({
                 ))}
               </Select>
             </Field>
-            <Field label="Renewal month" htmlFor={`ins-renew-${i}`} hint="We'll remind you before it's due.">
-              <Select
-                id={`ins-renew-${i}`}
-                value={r.renewalMonth ?? ""}
-                onChange={(e) => update(i, { renewalMonth: e.target.value ? Number(e.target.value) : null })}
-              >
-                <option value="">Not sure</option>
-                {Array.from({ length: 12 }, (_, k) => (
-                  <option key={k + 1} value={k + 1}>
-                    {monthName(k + 1)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
+            {r.premiumFrequency === "monthly" ? (
+              <Field label="Debit day" htmlFor={`ins-debit-${i}`} hint="The day it leaves your bank each month.">
+                <Select
+                  id={`ins-debit-${i}`}
+                  value={r.debitDay ?? ""}
+                  onChange={(e) => update(i, { debitDay: e.target.value ? Number(e.target.value) : null })}
+                >
+                  <option value="">Not sure</option>
+                  {Array.from({ length: 31 }, (_, k) => (
+                    <option key={k + 1} value={k + 1}>
+                      {k + 1}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            ) : (
+              <Field label="Renewal date" htmlFor={`ins-renew-${i}`} hint="We'll remind you before it's due.">
+                <Input
+                  id={`ins-renew-${i}`}
+                  type="date"
+                  value={r.renewalDate}
+                  onChange={(e) => update(i, { renewalDate: e.target.value })}
+                />
+              </Field>
+            )}
+            {(r.premium ?? 0) > 0 && (
+              <label className="flex items-start gap-2 text-sm sm:col-span-2">
+                <input
+                  type="checkbox"
+                  className="mt-0.5 size-4 accent-[var(--primary)]"
+                  checked={r.inBudget}
+                  onChange={(e) => update(i, { inBudget: e.target.checked })}
+                />
+                <span>
+                  {r.premiumFrequency === "monthly"
+                    ? "Count this in my monthly budget"
+                    : `Save for it monthly: set aside ${new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(Math.round(((r.premium ?? 0) * PER_YEAR[r.premiumFrequency]) / 12))} a month so the renewal is ready`}
+                </span>
+              </label>
+            )}
           </RowCard>
         ))}
       {!none && (

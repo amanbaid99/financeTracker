@@ -38,6 +38,9 @@ export const insuranceState = (raw: RawData): InsuranceRowState[] =>
     premiumFrequency: p.premium_frequency as InsuranceRowState["premiumFrequency"],
     covers: p.covers as InsuranceRowState["covers"],
     renewalMonth: p.renewal_month,
+    renewalDate: p.renewal_date ?? "",
+    debitDay: p.debit_day,
+    inBudget: p.in_budget,
   }));
 
 export const liabilityState = (raw: RawData): LiabilityRowState[] =>

@@ -51,7 +51,8 @@ function known(data: FinanceData, section: Section, hasRows: boolean): boolean {
 
 /**
  * Liquid money that is free for emergencies: savings, FDs and liquid funds,
- * minus whatever share is earmarked for goals other than the emergency fund.
+ * minus whatever share is earmarked for goals other than the emergency fund,
+ * minus credit card bills that will be paid in full.
  */
 export function liquidAssets(data: FinanceData): number {
   const nonEmergencyGoals = new Set(
@@ -65,7 +66,9 @@ export function liquidAssets(data: FinanceData): number {
       .reduce((s, a) => s + a.percent, 0);
     total += (h.currentValue * Math.max(0, 100 - Math.min(100, earmarked))) / 100;
   }
-  return Math.round(total);
+  // Card bills paid in full are already spoken for.
+  const cardDues = (data.cards ?? []).reduce((s, c) => s + Math.max(0, c.outstanding), 0);
+  return Math.max(0, Math.round(total - cardDues));
 }
 
 export function isHighInterest(l: Liability, cfg: EngineConfig): boolean {

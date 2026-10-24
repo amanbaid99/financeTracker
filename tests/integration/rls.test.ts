@@ -100,6 +100,9 @@ describe("row level security", () => {
     await a.from("income_entries").insert({ user_id: idA, stream_id: streamA, month: "2026-09-01", amount: 1 });
     await a.from("goal_allocations").insert({ user_id: idA, goal_id: goalA, holding_id: holdingA, percent: 60 });
     await a.from("consents").insert({ user_id: idA, kind: "privacy_policy", version: "test" });
+    await a.from("credit_cards").insert({ user_id: idA, label: "Card", outstanding: 5000 });
+    await a.from("planned_expenses").insert({ user_id: idA, name: "Gym", amount: 12000, every_months: 12 });
+    await a.from("bill_status").insert({ user_id: idA, month: "2026-10-01", bill_key: "card:x", paid: true });
   });
 
   const tables = [
@@ -115,6 +118,9 @@ describe("row level security", () => {
     "goals",
     "goal_allocations",
     "ai_requests",
+    "credit_cards",
+    "planned_expenses",
+    "bill_status",
   ] as const;
 
   for (const t of tables.filter((x) => x !== "ai_requests")) {

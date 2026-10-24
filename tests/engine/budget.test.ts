@@ -186,3 +186,28 @@ describe("monthly split of base income", () => {
     expect(c.budget.savingsMinPct).toBe(0.2);
   });
 });
+
+describe("planned expenses and premium choices", () => {
+  it("sets aside a monthly share of planned expenses", () => {
+    const data = makeData({
+      plannedExpenses: [
+        { id: "g", name: "Gym", amount: 12_000, everyMonths: 12, nextDue: "2027-04-01", inBudget: true },
+        { id: "b", name: "Bike service", amount: 3_000, everyMonths: 6, nextDue: null, inBudget: true },
+        { id: "x", name: "Not budgeted", amount: 50_000, everyMonths: 12, nextDue: null, inBudget: false },
+      ],
+    });
+    const b = computeBudget(data, cfg, { todayISO: TODAY });
+    expect(b.essentials.planned).toBe(1_500);
+    expect(b.essentials.total).toBe(41_500);
+  });
+
+  it("leaves out premiums the user chose not to budget for", () => {
+    const data = makeData({
+      insurance: [
+        { id: "a", kind: "health", source: "personal", coverAmount: 1, premium: 24_000, renewalMonth: 1 },
+        { id: "b", kind: "health", source: "personal", coverAmount: 1, premium: 12_000, renewalMonth: 1, inBudget: false },
+      ],
+    });
+    expect(computeBudget(data, cfg, { todayISO: TODAY }).essentials.insurancePremiums).toBe(2_000);
+  });
+});

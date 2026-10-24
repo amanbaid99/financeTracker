@@ -285,3 +285,12 @@ describe("completeness", () => {
     expect(c.topMissing[0].why).toContain("emergency fund");
   });
 });
+
+describe("credit cards paid in full", () => {
+  it("card dues reduce the cash free for emergencies", () => {
+    const d = solidBasics({ cards: [{ id: "c", label: "Card", outstanding: 50_000, dueDay: 5 }] });
+    expect(liquidAssets(d)).toBe(150_000);
+    // 3 x 41k = 123k emergency target is still covered by 150k.
+    expect(stepStatus(d, "emergency_fund")).toBe("done");
+  });
+});

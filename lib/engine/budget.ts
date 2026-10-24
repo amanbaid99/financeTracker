@@ -35,6 +35,8 @@ export interface EssentialsBreakdown {
   expenses: number;
   emis: number;
   insurancePremiums: number;
+  /** Monthly set-aside for planned expenses (gym, servicing, repairs...). */
+  planned: number;
   total: number;
   /** True when expenses were not entered and the fallback share of base was used. */
   estimated: boolean;
@@ -207,7 +209,7 @@ export function budgetStream(
 }
 
 export function computeEssentials(
-  data: Pick<FinanceData, "expenses" | "liabilities" | "insurance" | "profile">,
+  data: Pick<FinanceData, "expenses" | "liabilities" | "insurance" | "profile" | "plannedExpenses">,
   baseIncome: number,
   cfg: EngineConfig,
 ): EssentialsBreakdown {
@@ -220,7 +222,13 @@ export function computeEssentials(
   const emis = round(sum(data.liabilities.filter((l) => l.outstanding > 0).map((l) => l.emi ?? 0)));
   // Every premium you pay is an essential, including policies for parents.
   // Employer-paid cover has no premium entered, so it adds nothing.
-  const insurancePremiums = round(sum(data.insurance.map((p) => (p.premium ?? 0) / 12)));
+  // Yearly or quarterly premiums become a monthly set-aside. Policies the user
+  // chose not to budget for are left out.
+  const insurancePremiums = round(
+    sum(data.insurance.filter((p) => p.inBudget !== false).map((p) => (p.premium ?? 0) / 12)),
+  );
+  const plannedRows = (data.plannedExpenses ?? []).filter((p) => p.inBudget && p.amount > 0);
+  const planned = round(sum(plannedRows.map((p) => p.amount / Math.max(1, p.everyMonths))));
   const lines = [
     ...essentialRows.map((e) => ({ label: e.category, amount: round(e.amountMonthly) })),
     ...data.liabilities
@@ -228,11 +236,13 @@ export function computeEssentials(
       .map((l) => ({ label: `${l.label || l.kind.replace("_", " ")} EMI`, amount: round(l.emi ?? 0) })),
   ];
   if (insurancePremiums > 0) lines.push({ label: "Insurance premiums", amount: insurancePremiums });
+  if (planned > 0) lines.push({ label: "Planned expenses (set aside)", amount: planned });
   return {
     expenses,
     emis,
     insurancePremiums,
-    total: expenses + emis + insurancePremiums,
+    planned,
+    total: expenses + emis + insurancePremiums + planned,
     estimated: !expensesKnown,
     biggestLines: lines.sort((a, b) => b.amount - a.amount).slice(0, 3),
   };

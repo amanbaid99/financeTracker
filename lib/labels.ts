@@ -12,7 +12,7 @@ export const INCOME_TYPE_LABELS: Record<IncomeType, string> = {
 };
 
 export const LIABILITY_LABELS: Record<LiabilityKind, string> = {
-  credit_card: "Credit card dues",
+  credit_card: "Credit card debt (carried over)",
   personal_loan: "Personal loan",
   car: "Car or bike loan",
   home: "Home loan",

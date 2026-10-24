@@ -1,10 +1,23 @@
-import { AlertTriangle, Bell, CheckCircle2, Circle, CircleDashed, CircleMinus } from "lucide-react";
+import {
+  AlertTriangle,
+  Bell,
+  CheckCircle2,
+  Circle,
+  CircleDashed,
+  CircleMinus,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AiExplain } from "@/components/ai-explain";
 import { NextFocusCard } from "@/components/next-focus-card";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { aiConfigured } from "@/lib/ai/config";
 import { loadAnalysis } from "@/lib/data";
@@ -15,12 +28,31 @@ import { buildReminders } from "@/lib/reminders";
 
 export const metadata: Metadata = { title: "Home" };
 
+const STEP_HREF: Record<string, string> = {
+  cash_flow: "/budget",
+  starter_buffer: "/holdings",
+  health_insurance: "/details/insurance",
+  term_insurance: "/details/insurance",
+  high_interest_debt: "/details/liabilities",
+  emergency_fund: "/holdings",
+  goals: "/goals",
+};
 
 const STEP_ICON: Record<StepStatus, React.ReactNode> = {
   done: <CheckCircle2 className="size-5 text-success" aria-label="Done" />,
   todo: <Circle className="size-5 text-primary" aria-label="To do" />,
-  unknown: <CircleDashed className="size-5 text-muted-foreground" aria-label="Needs info" />,
-  not_needed: <CircleMinus className="size-5 text-muted-foreground" aria-label="Not needed" />,
+  unknown: (
+    <CircleDashed
+      className="size-5 text-muted-foreground"
+      aria-label="Needs info"
+    />
+  ),
+  not_needed: (
+    <CircleMinus
+      className="size-5 text-muted-foreground"
+      aria-label="Not needed"
+    />
+  ),
 };
 
 export default async function DashboardPage() {
@@ -33,9 +65,15 @@ export default async function DashboardPage() {
     nextAdvanceTaxDate: budget.freelancer?.nextAdvanceTaxDate ?? null,
   });
   const allocatedPct = new Map<string, number>();
-  for (const a of data.allocations) allocatedPct.set(a.holdingId, (allocatedPct.get(a.holdingId) ?? 0) + a.percent);
+  for (const a of data.allocations)
+    allocatedPct.set(
+      a.holdingId,
+      (allocatedPct.get(a.holdingId) ?? 0) + a.percent,
+    );
   const unassigned = data.holdings.reduce(
-    (s, h) => s + (h.currentValue * Math.max(0, 100 - (allocatedPct.get(h.id) ?? 0))) / 100,
+    (s, h) =>
+      s +
+      (h.currentValue * Math.max(0, 100 - (allocatedPct.get(h.id) ?? 0))) / 100,
     0,
   );
   const base = Math.max(1, budget.baseIncome);
@@ -44,15 +82,20 @@ export default async function DashboardPage() {
   return (
     <main className="space-y-5">
       <p className="text-sm text-muted-foreground">
-        Hi {raw.profile.name.split(" ")[0] || "there"}, here&apos;s where your next rupee should go.
+        Hi {raw.profile.name.split(" ")[0] || "there"}, here&apos;s where your
+        next rupee should go.
       </p>
 
       {!budget.cashFlowOk && (
-        <div role="alert" className="flex gap-3 rounded-xl border border-danger/40 bg-danger-soft p-3 text-sm text-danger">
+        <div
+          role="alert"
+          className="flex gap-3 rounded-xl border border-danger/40 bg-danger-soft p-3 text-sm text-danger"
+        >
           <AlertTriangle className="size-5 shrink-0" aria-hidden />
           <p>
-            Your essentials and EMIs ({formatINR(budget.essentials.total)}) are more than your base income (
-            {formatINR(budget.baseIncome)}). Fixing this comes first.
+            Your essentials and EMIs ({formatINR(budget.essentials.total)}) are
+            more than your base income ({formatINR(budget.baseIncome)}). Fixing
+            this comes first.
           </p>
         </div>
       )}
@@ -63,28 +106,35 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Your priority ladder</CardTitle>
-            <CardDescription>Each step unlocks the next. We re-check it every time your data changes.</CardDescription>
+            <CardDescription>
+              Each step unlocks the next. We re-check it every time your data
+              changes.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <ol className="space-y-2">
               {ladder.map((s) => (
-                <li
-                  key={s.key}
-                  className={`flex items-center gap-3 rounded-lg p-2 text-sm ${s.id === currentId ? "bg-primary-soft" : ""}`}
-                >
-                  {STEP_ICON[s.status]}
-                  <span className="flex-1">{s.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {s.status === "done"
-                      ? "Done"
-                      : s.status === "not_needed"
-                        ? "Not needed"
-                        : s.status === "unknown"
-                          ? "Needs info"
-                          : s.gap > 0
-                            ? `${formatINRCompact(s.gap)} to go`
-                            : "To do"}
-                  </span>
+                <li key={s.key}>
+                  <Link
+                    href={
+                      s.askAbout ? `/details/${s.askAbout}` : STEP_HREF[s.key]
+                    }
+                    className={`flex items-center gap-3 rounded-lg p-2 text-sm hover:bg-muted ${s.id === currentId ? "bg-primary-soft" : ""}`}
+                  >
+                    {STEP_ICON[s.status]}
+                    <span className="flex-1">{s.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {s.status === "done"
+                        ? "Done"
+                        : s.status === "not_needed"
+                          ? "Not needed"
+                          : s.status === "unknown"
+                            ? "Needs info"
+                            : s.gap > 0
+                              ? `${formatINRCompact(s.gap)} to go`
+                              : "To do"}
+                    </span>
+                  </Link>
                 </li>
               ))}
             </ol>
@@ -96,17 +146,22 @@ export default async function DashboardPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Profile completeness</CardTitle>
-                <span className="tabular text-sm font-semibold">{completeness.score}%</span>
+                <span className="tabular text-sm font-semibold">
+                  {completeness.score}%
+                </span>
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Progress value={completeness.score} label="Profile completeness" />
+              <Progress
+                value={completeness.score}
+                label="Profile completeness"
+              />
               {completeness.topMissing.length > 0 ? (
                 <ul className="space-y-2 text-sm">
                   {completeness.topMissing.map((m) => (
                     <li key={m.key}>
                       <Link
-                        href={`/onboarding/${m.key === "risk" ? "risk" : m.key}`}
+                        href={`/details/${m.key}`}
                         className="font-medium text-primary underline-offset-2 hover:underline"
                       >
                         {m.label}
@@ -116,7 +171,9 @@ export default async function DashboardPage() {
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-muted-foreground">{completeness.reason}</p>
+                <p className="text-sm text-muted-foreground">
+                  {completeness.reason}
+                </p>
               )}
             </CardContent>
           </Card>
@@ -125,34 +182,79 @@ export default async function DashboardPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>This month</CardTitle>
-                <Link href="/budget" className="text-sm text-primary underline-offset-2 hover:underline">
+                <Link
+                  href="/budget"
+                  className="text-sm text-primary underline-offset-2 hover:underline"
+                >
                   Budget
                 </Link>
               </div>
-              <CardDescription>Base income {formatINR(budget.baseIncome)}</CardDescription>
+              <CardDescription>
+                Base income {formatINR(budget.baseIncome)}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex h-3 gap-0.5 overflow-hidden rounded-full" aria-hidden>
-                <div className="rounded-l-full bg-series-1" style={{ width: `${(budget.split.essentials / base) * 100}%` }} />
-                <div className="bg-series-2" style={{ width: `${(budget.split.savings / base) * 100}%` }} />
-                <div className="rounded-r-full bg-series-3" style={{ width: `${(budget.split.wants / base) * 100}%` }} />
+              <div
+                className="flex h-3 gap-0.5 overflow-hidden rounded-full"
+                aria-hidden
+              >
+                <div
+                  className="rounded-l-full bg-series-1"
+                  style={{
+                    width: `${(budget.split.essentials / base) * 100}%`,
+                  }}
+                />
+                <div
+                  className="bg-series-2"
+                  style={{ width: `${(budget.split.savings / base) * 100}%` }}
+                />
+                <div
+                  className="rounded-r-full bg-series-3"
+                  style={{ width: `${(budget.split.wants / base) * 100}%` }}
+                />
               </div>
               <dl className="grid grid-cols-3 gap-2 text-sm">
                 <div>
-                  <dt className="flex items-center gap-1 text-xs text-muted-foreground"><span className="size-2 rounded-full bg-series-1" aria-hidden />Essentials</dt>
-                  <dd className="tabular font-medium">{formatINRCompact(budget.split.essentials)}</dd>
+                  <dt className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <span
+                      className="size-2 rounded-full bg-series-1"
+                      aria-hidden
+                    />
+                    Essentials
+                  </dt>
+                  <dd className="tabular font-medium">
+                    {formatINRCompact(budget.split.essentials)}
+                  </dd>
                 </div>
                 <div>
-                  <dt className="flex items-center gap-1 text-xs text-muted-foreground"><span className="size-2 rounded-full bg-series-2" aria-hidden />Save</dt>
-                  <dd className="tabular font-medium">{formatINRCompact(budget.split.savings)}</dd>
+                  <dt className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <span
+                      className="size-2 rounded-full bg-series-2"
+                      aria-hidden
+                    />
+                    Save
+                  </dt>
+                  <dd className="tabular font-medium">
+                    {formatINRCompact(budget.split.savings)}
+                  </dd>
                 </div>
                 <div>
-                  <dt className="flex items-center gap-1 text-xs text-muted-foreground"><span className="size-2 rounded-full bg-series-3" aria-hidden />Wants</dt>
-                  <dd className="tabular font-medium">{formatINRCompact(budget.split.wants)}</dd>
+                  <dt className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <span
+                      className="size-2 rounded-full bg-series-3"
+                      aria-hidden
+                    />
+                    Wants
+                  </dt>
+                  <dd className="tabular font-medium">
+                    {formatINRCompact(budget.split.wants)}
+                  </dd>
                 </div>
               </dl>
               {budget.essentials.estimated && (
-                <p className="text-xs text-muted-foreground">Essentials are estimated until you add expenses.</p>
+                <p className="text-xs text-muted-foreground">
+                  Essentials are estimated until you add expenses.
+                </p>
               )}
             </CardContent>
           </Card>
@@ -164,7 +266,10 @@ export default async function DashboardPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Goals</CardTitle>
-              <Link href="/goals" className="text-sm text-primary underline-offset-2 hover:underline">
+              <Link
+                href="/goals"
+                className="text-sm text-primary underline-offset-2 hover:underline"
+              >
                 All goals
               </Link>
             </div>
@@ -173,7 +278,10 @@ export default async function DashboardPage() {
             {goals.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 No goals yet.{" "}
-                <Link href="/goals/new?type=retirement" className="text-primary underline">
+                <Link
+                  href="/goals/new?type=retirement"
+                  className="text-primary underline"
+                >
                   Start with retirement
                 </Link>
                 .
@@ -182,19 +290,37 @@ export default async function DashboardPage() {
               <ul className="space-y-3">
                 {goals.slice(0, 4).map((g) => (
                   <li key={g.goalId}>
-                    <Link href={`/goals/${g.goalId}`} className="block space-y-1.5">
+                    <Link
+                      href={`/goals/${g.goalId}`}
+                      className="block space-y-1.5"
+                    >
                       <div className="flex items-center justify-between gap-2 text-sm">
                         <span className="truncate font-medium">{g.name}</span>
-                        <Badge variant={STATUS_BADGE[g.status].variant}>{STATUS_BADGE[g.status].label}</Badge>
+                        <Badge variant={STATUS_BADGE[g.status].variant}>
+                          {STATUS_BADGE[g.status].label}
+                        </Badge>
                       </div>
                       <Progress
-                        value={g.futureTarget ? (g.currentAmount / g.futureTarget) * 100 : 100}
-                        tone={g.status === "behind" ? "danger" : g.status === "slightly_behind" ? "warning" : "success"}
+                        value={
+                          g.futureTarget
+                            ? (g.currentAmount / g.futureTarget) * 100
+                            : 100
+                        }
+                        tone={
+                          g.status === "behind"
+                            ? "danger"
+                            : g.status === "slightly_behind"
+                              ? "warning"
+                              : "success"
+                        }
                         label={`${g.name} progress`}
                       />
                       <p className="tabular text-xs text-muted-foreground">
-                        {formatINRCompact(g.currentAmount)} of {formatINRCompact(g.futureTarget)}
-                        {g.requiredMonthly > 0 ? ` · needs ${formatINR(g.requiredMonthly)}/month` : ""}
+                        {formatINRCompact(g.currentAmount)} of{" "}
+                        {formatINRCompact(g.futureTarget)}
+                        {g.requiredMonthly > 0
+                          ? ` · needs ${formatINR(g.requiredMonthly)}/month`
+                          : ""}
                       </p>
                     </Link>
                   </li>
@@ -215,14 +341,22 @@ export default async function DashboardPage() {
               <p className="text-muted-foreground">Nothing due right now.</p>
             )}
             {reminders.map((r) => (
-              <Link key={r.id} href={r.href} className="block rounded-lg bg-warning-soft p-3 text-warning">
+              <Link
+                key={r.id}
+                href={r.href}
+                className="block rounded-lg bg-warning-soft p-3 text-warning"
+              >
                 {r.text}
               </Link>
             ))}
             {unassigned >= 1 && (
               <Link href="/holdings" className="block rounded-lg bg-muted p-3">
-                <span className="font-medium">{formatINRCompact(unassigned)} unassigned.</span>{" "}
-                <span className="text-muted-foreground">Map your holdings to goals so they count.</span>
+                <span className="font-medium">
+                  {formatINRCompact(unassigned)} unassigned.
+                </span>{" "}
+                <span className="text-muted-foreground">
+                  Map your holdings to goals so they count.
+                </span>
               </Link>
             )}
           </CardContent>
@@ -234,7 +368,8 @@ export default async function DashboardPage() {
           <CardHeader>
             <CardTitle>Plan review</CardTitle>
             <CardDescription>
-              A short AI review of your whole plan, written from your computed numbers only.
+              A short AI review of your whole plan, written from your computed
+              numbers only.
             </CardDescription>
           </CardHeader>
           <CardContent>

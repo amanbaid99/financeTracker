@@ -18,13 +18,13 @@ export function stepIndex(slug: string): number {
 }
 
 export function nextHref(slug: StepSlug, editing: boolean): string {
-  if (editing) return "/settings";
+  if (editing) return "/details";
   const i = stepIndex(slug);
   return i >= 0 && i < STEPS.length - 1 ? `/onboarding/${STEPS[i + 1].slug}` : "/dashboard";
 }
 
 export function prevHref(slug: StepSlug, editing: boolean): string | null {
-  if (editing) return "/settings";
+  if (editing) return "/details";
   const i = stepIndex(slug);
   return i > 0 ? `/onboarding/${STEPS[i - 1].slug}` : null;
 }

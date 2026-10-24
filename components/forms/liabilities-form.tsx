@@ -73,7 +73,8 @@ export function LiabilitiesForm({
       }
     >
       <p className="text-sm text-muted-foreground">
-        Debt above 10% a year (like credit cards and personal loans) gets paid off before investing.
+        Debt above 10% a year (like credit cards and personal loans) gets paid off before investing. Cards you pay in
+        full every month go under Credit cards in My details instead.
       </p>
       <NoneCheckbox checked={none} onChange={setNone} label="No loans or card dues" />
       {!none &&

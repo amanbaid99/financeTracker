@@ -24,7 +24,7 @@ export function buildReminders(opts: {
       out.push({
         id: `ins-${p.id}`,
         text: `Your ${p.covers === "others" ? "family members' " : ""}${p.kind === "term" ? "term" : p.kind === "health" ? "health" : ""} insurance renews in ${monthName(p.renewalMonth)}. Keep the premium ready so cover doesn't lapse.`.replace("  ", " "),
-        href: "/onboarding/insurance",
+        href: "/details/insurance",
       });
     }
   }

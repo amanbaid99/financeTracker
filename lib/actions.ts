@@ -15,7 +15,7 @@ import { ACCENT_COOKIE, ACCENTS, THEME_COOKIE, THEME_COOKIE_OPTIONS, THEMES } fr
 
 export type ActionResult = { ok: true; id?: string } | { ok: false; error: string };
 
-type SyncTable = "expenses" | "insurance_policies" | "liabilities" | "holdings";
+type SyncTable = "expenses" | "insurance_policies" | "liabilities" | "holdings" | "credit_cards" | "planned_expenses";
 
 const money = z.number().int().min(0).max(1e13);
 const optMoney = money.nullable().optional();
@@ -240,6 +240,9 @@ const insuranceSchema = z.object({
   premiumFrequency: z.enum(["monthly", "quarterly", "half_yearly", "yearly"]).default("yearly"),
   covers: z.enum(["self", "family", "others"]).default("self"),
   renewalMonth: z.number().int().min(1).max(12).nullable().optional(),
+  renewalDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  debitDay: z.number().int().min(1).max(31).nullable().optional(),
+  inBudget: z.boolean().default(true),
 });
 
 export async function saveInsurance(input: z.input<typeof insuranceSchema>[]): Promise<ActionResult> {
@@ -253,7 +256,11 @@ export async function saveInsurance(input: z.input<typeof insuranceSchema>[]): P
       premium: r.premium ?? null,
       premium_frequency: r.premiumFrequency,
       covers: r.kind === "term" ? "self" : r.covers,
-      renewal_month: r.renewalMonth ?? null,
+      // Monthly premiums use a debit day; others use a renewal date.
+      debit_day: r.premiumFrequency === "monthly" ? (r.debitDay ?? null) : null,
+      renewal_date: r.premiumFrequency === "monthly" ? null : (r.renewalDate ?? null),
+      renewal_month: r.renewalDate ? Number(r.renewalDate.slice(5, 7)) : (r.renewalMonth ?? null),
+      in_budget: r.inBudget,
     }));
     await markAnswered(supabase, userId, "insurance");
     return done();
@@ -508,6 +515,132 @@ export async function saveRisk(answers: number[]): Promise<ActionResult> {
       .eq("user_id", userId);
     if (error) throw new Error(error.message);
     await markAnswered(supabase, userId, "risk");
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Monthly status: cards, planned expenses, bills, bank balances
+// ---------------------------------------------------------------------------
+
+const cardSchema = z.object({
+  id: uuid.nullable().optional(),
+  label: z.string().trim().min(1, "name each card").max(40),
+  outstanding: money,
+  statementDay: z.number().int().min(1).max(31).nullable().optional(),
+  dueDay: z.number().int().min(1).max(31).nullable().optional(),
+});
+
+export async function saveCards(input: z.input<typeof cardSchema>[]): Promise<ActionResult> {
+  try {
+    const rows = z.array(cardSchema).max(20).parse(input);
+    const { supabase, userId } = await session();
+    await syncRows(supabase, userId, "credit_cards", rows, (r) => ({
+      label: r.label,
+      outstanding: r.outstanding,
+      statement_day: r.statementDay ?? null,
+      due_day: r.dueDay ?? null,
+    }));
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+const plannedSchema = z.object({
+  id: uuid.nullable().optional(),
+  name: z.string().trim().min(1, "name each planned expense").max(60),
+  amount: money.min(1, "add an amount"),
+  everyMonths: z.number().int().min(1).max(120),
+  nextDue: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  inBudget: z.boolean().default(true),
+});
+
+export async function savePlanned(input: z.input<typeof plannedSchema>[]): Promise<ActionResult> {
+  try {
+    const rows = z.array(plannedSchema).max(40).parse(input);
+    const { supabase, userId } = await session();
+    await syncRows(supabase, userId, "planned_expenses", rows, (r) => ({
+      name: r.name,
+      amount: r.amount,
+      every_months: r.everyMonths,
+      next_due: r.nextDue ?? null,
+      in_budget: r.inBudget,
+    }));
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+const billSchema = z.object({
+  month: z.string().regex(/^\d{4}-\d{2}-01$/),
+  key: z.string().min(1).max(80),
+  paid: z.boolean(),
+  /** Planned expense to roll forward to its next occurrence once paid. */
+  plannedId: uuid.optional(),
+});
+
+export async function setBillPaid(input: z.input<typeof billSchema>): Promise<ActionResult> {
+  try {
+    const v = billSchema.parse(input);
+    const { supabase, userId } = await session();
+    const { error } = await supabase
+      .from("bill_status")
+      .upsert(
+        { user_id: userId, month: v.month, bill_key: v.key, paid: v.paid, updated_at: new Date().toISOString() },
+        { onConflict: "user_id,month,bill_key" },
+      );
+    if (error) throw new Error(error.message);
+    if (v.plannedId) {
+      const { data: p } = await supabase
+        .from("planned_expenses")
+        .select("next_due, every_months")
+        .eq("id", v.plannedId)
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (p?.next_due) {
+        const nextDue = addMonths(p.next_due, v.paid ? p.every_months : -p.every_months);
+        await supabase.from("planned_expenses").update({ next_due: nextDue }).eq("id", v.plannedId).eq("user_id", userId);
+      }
+    }
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function updateBankBalance(input: { holdingId: string; value: number }): Promise<ActionResult> {
+  try {
+    const v = z.object({ holdingId: uuid, value: money }).parse(input);
+    const { supabase, userId } = await session();
+    const { error } = await supabase
+      .from("holdings")
+      .update({ current_value: v.value })
+      .eq("id", v.holdingId)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function addBankAccount(input: { label: string; value: number }): Promise<ActionResult> {
+  try {
+    const v = z.object({ label: z.string().trim().min(1, "name the account").max(80), value: money }).parse(input);
+    const { supabase, userId } = await session();
+    const { error } = await supabase.from("holdings").insert({
+      user_id: userId,
+      kind: "savings",
+      name: v.label,
+      category: "savings_account",
+      current_value: v.value,
+    });
+    if (error) throw new Error(error.message);
+    await markAnswered(supabase, userId, "holdings");
     return done();
   } catch (e) {
     return fail(e);

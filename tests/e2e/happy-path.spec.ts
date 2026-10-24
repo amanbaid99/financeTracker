@@ -85,7 +85,8 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await page.getByLabel("Cover amount", { exact: true }).fill("500000");
   await page.getByLabel("Premium you pay", { exact: true }).fill("2000");
   await page.getByLabel("Paid", { exact: true }).selectOption("monthly");
-  await expect(page.getByText("About ₹2,000 a month in your budget.")).toBeVisible();
+  await page.getByLabel("Debit day", { exact: true }).selectOption("7");
+  await expect(page.getByLabel("Count this in my monthly budget")).toBeChecked();
   await page.getByRole("button", { name: "Save and continue" }).click();
 
   await expect(page).toHaveURL(/liabilities/);
@@ -136,6 +137,7 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
     ["/goals", "Goals"],
     ["/holdings", "Holdings"],
     ["/settings", "Settings"],
+    ["/details", "My details"],
   ]) {
     await page.goto(path);
     await expect(page.getByRole("heading", { name: heading, exact: true })).toBeVisible();
@@ -143,4 +145,53 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
     expect(o, `${path} overflows at 375px`).toBeLessThanOrEqual(0);
     await page.screenshot({ path: `test-results${path}-375.png`, fullPage: true });
   }
+
+  // Editing a section from My details saves and comes back.
+  await page.goto("/details");
+  await page.getByRole("link", { name: /Loans and cards/ }).click();
+  await expect(page).toHaveURL(/\/details\/liabilities/);
+  await page.getByLabel("No loans or card dues", { exact: true }).uncheck();
+  await page.getByRole("button", { name: "Add a loan or card" }).click();
+  await page.getByLabel("Amount still owed", { exact: true }).fill("30000");
+  await page.getByLabel("Interest rate (% a year)", { exact: true }).fill("36");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page).toHaveURL(/\/details$/);
+  await expect(page.getByText("₹30,000 owed")).toBeVisible();
+
+  // Credit card paid in full, a planned expense, then This month.
+  await page.goto("/details/cards");
+  await page.getByLabel("Card nickname", { exact: true }).fill("Travel card");
+  await page.getByLabel("Total outstanding now", { exact: true }).fill("15000");
+  await page.getByLabel("Payment due day", { exact: true }).selectOption("28");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page).toHaveURL(/\/details$/);
+
+  await page.goto("/details/planned");
+  await page.getByRole("button", { name: "Gym membership" }).click();
+  await page.getByLabel("Amount each time", { exact: true }).fill("12000");
+  await page.getByLabel("Next due", { exact: true }).fill(new Date().toISOString().slice(0, 10));
+  await expect(page.getByText("Save for it monthly: ₹1,000 a month")).toBeVisible();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page).toHaveURL(/\/details$/);
+
+  await page.goto("/month");
+  await expect(page.getByText("Travel card bill")).toBeVisible();
+  await expect(page.getByText("Gym membership")).toBeVisible();
+  await page.getByLabel("Mark Travel card bill as paid").check();
+  await page.reload();
+  await expect(page.getByLabel("Mark Travel card bill as paid")).toBeChecked();
+
+  await page.getByRole("tab", { name: "Bank & dues" }).click();
+  // The card bill was ticked as paid, so it's no longer deducted.
+  await expect(page.getByText("Card bills still to pay")).toBeVisible();
+  await page.getByRole("button", { name: "Add bank account" }).click();
+  await page.getByLabel("Account nickname").fill("Salary account");
+  await page.getByLabel("Current balance").fill("80000");
+  await page.getByRole("button", { name: "Add account" }).click();
+  await expect(page.getByLabel("Salary account balance")).toHaveValue("80,000");
+  const o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(o, "/month overflows at 375px").toBeLessThanOrEqual(0);
+  await page.screenshot({ path: "test-results/month-bank-375.png", fullPage: true });
+  await page.goto("/month");
+  await page.screenshot({ path: "test-results/month-bills-375.png", fullPage: true });
 });

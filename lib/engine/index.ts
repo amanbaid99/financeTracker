@@ -37,14 +37,14 @@ export interface Analysis {
 }
 
 const SECTION_HREF: Record<string, string> = {
-  household: "/onboarding/household",
-  income: "/onboarding/income",
-  expenses: "/onboarding/expenses",
-  insurance: "/onboarding/insurance",
-  liabilities: "/onboarding/liabilities",
+  household: "/details/household",
+  income: "/details/income",
+  expenses: "/details/expenses",
+  insurance: "/details/insurance",
+  liabilities: "/details/liabilities",
   holdings: "/holdings",
   goals: "/goals/new",
-  risk: "/onboarding/risk",
+  risk: "/details/risk",
 };
 
 function stepNeedMonthly(step: LadderStep | null, cfg: EngineConfig): number {
@@ -135,7 +135,7 @@ export function buildNextFocus(
       monthsToComplete: null,
       reason: step.reason,
       action: "Update insurance",
-      href: "/onboarding/insurance",
+      href: "/details/insurance",
     };
   }
 
@@ -171,7 +171,7 @@ export function buildNextFocus(
   };
   const actions: Record<string, [string, string]> = {
     starter_buffer: ["Update savings", "/holdings"],
-    high_interest_debt: ["Update loans", "/onboarding/liabilities"],
+    high_interest_debt: ["Update loans", "/details/liabilities"],
     emergency_fund: ["Update savings", "/holdings"],
   };
   let reason = step.reason;
