@@ -1,6 +1,7 @@
 import { FileUp, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CasGuideButton } from "@/components/cas-guide";
 import { GoalList } from "@/components/goal-list";
 import { MoneyPlanCard } from "@/components/money-plan";
 import { UpdateButton } from "@/components/update-values";
@@ -79,12 +80,15 @@ export default async function GoalsPage({
             <Plus /> New goal
           </Link>
         </div>
-        <Link
-          href="/import"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-2 hover:underline"
-        >
-          <FileUp className="size-4" aria-hidden /> Import a CAS statement
-        </Link>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <Link
+            href="/import"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-2 hover:underline"
+          >
+            <FileUp className="size-4" aria-hidden /> Import a CAS statement
+          </Link>
+          <CasGuideButton label="How to get it" />
+        </div>
       </div>
 
       {goals.length === 0 ? (

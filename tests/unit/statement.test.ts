@@ -93,12 +93,12 @@ describe("review rows", () => {
       inv({ id: "x", name: "Axis Bluechip" }),
     ]);
     expect(rows[0].match).toMatchObject({ id: "x", how: "name" });
-    expect(rows[0].questions).toEqual(["Is this your “Axis Bluechip”?"]);
+    expect(rows[0].questions).toEqual([{ kind: "confirm_match", text: "Is this your “Axis Bluechip”?" }]);
     const two = buildReview(statement([h({ key: "INF9", name: "Axis Bluechip Fund" })]), [
       inv({ id: "x", name: "Axis Bluechip" }),
       inv({ id: "y", name: "Bluechip (Axis)" }),
     ]);
-    expect(two[0].questions).toEqual(["Which of your investments is this?"]);
+    expect(two[0].questions.map((q) => q.kind)).toEqual(["which_match"]);
     expect(two[0].candidates.map((c) => c.id)).toEqual(["x", "y"]);
   });
 
@@ -107,7 +107,8 @@ describe("review rows", () => {
       inv({ id: "a", isin: "INF1", monthlySip: 5_000 }),
     ]);
     expect(rows[0].sip).toBe(0);
-    expect(rows[0].questions[0]).toMatch(/SIP stopped/);
+    expect(rows[0].questions[0]).toMatchObject({ kind: "sip_stopped", previousSip: 5_000 });
+    expect(rows[0].questions[0].text).toMatch(/₹5,000 a month SIP stopped/);
     const summary = buildReview(statement([h({ key: "INF1", name: "Some Index Fund" })], false), [
       inv({ id: "a", isin: "INF1", monthlySip: 5_000 }),
     ]);
@@ -136,7 +137,7 @@ describe("review rows", () => {
     );
     const out = applyAiCategories(rows, new Map([["A", { category: "flexi_cap", how: "two models agreed" as const }]]));
     expect(out[0]).toMatchObject({ category: "flexi_cap", categoryHow: "two models agreed", questions: [] });
-    expect(out[1]).toMatchObject({ category: null, questions: ["What kind of fund is this?"] });
+    expect(out[1]).toMatchObject({ category: null, questions: [{ kind: "category" }] });
   });
 
   it("validates what the reader returns", () => {

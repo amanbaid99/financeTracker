@@ -274,6 +274,13 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   const PP = "Parag Parikh Flexi Cap Fund - Direct Plan Growth";
   const LIQ = "Edelweiss Liquid Fund - Direct Growth";
   const MYST = "Quant Mystery Opportunities Fund - Direct Growth";
+  await page.getByRole("button", { name: "How to get it" }).click();
+  await expect(page.getByRole("heading", { name: "Getting your CAS" })).toBeVisible();
+  await expect(page.getByText(/camsonline\.com/)).toBeVisible();
+  await page.getByRole("tab", { name: "Stocks & demat" }).click();
+  await expect(page.getByText(/cdslindia\.com/)).toBeVisible();
+  await page.screenshot({ path: "test-results/cas-guide-375.png" });
+  await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.getByRole("link", { name: "Import a CAS statement" }).click();
   await expect(page.getByRole("heading", { name: "Import a statement" })).toBeVisible();
   await page
@@ -293,6 +300,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText(/^4 holdings read\. Every value checks out/)).toBeVisible();
   await expect(page.getByText("What kind of fund is this?")).toBeVisible();
   await expect(page.getByLabel(`${MYST}: kind of fund`)).toHaveValue("");
+  // Can't move on until every question is answered.
+  await expect(page.getByRole("button", { name: "Answer 1 question to continue" })).toBeDisabled();
   await expect(page.getByLabel(`${PP}: kind of fund`)).toHaveValue("flexi_cap");
   await expect(page.getByLabel(`${LIQ}: monthly SIP`)).toHaveValue("5,000");
   await page.getByLabel(`${PP}: this is`).selectOption({ label: "Update “Index SIP”" });
@@ -307,7 +316,19 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(o, "/import overflows at 375px").toBeLessThanOrEqual(0);
   await page.screenshot({ path: "test-results/import-review-375.png", fullPage: true });
-  await page.getByRole("button", { name: "Save these values" }).click();
+  // Nothing is saved until the changes are confirmed.
+  await page.getByRole("button", { name: /Review changes/ }).click();
+  await expect(page.getByText("Check before saving")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Will update" })).toContainText("Index SIP");
+  await expect(page.getByRole("region", { name: "Will update" })).toContainText("Value ₹4,00,000 → ₹4,20,000");
+  await expect(page.getByRole("region", { name: "Will add" })).toContainText(MYST);
+  await expect(page.getByRole("region", { name: "Will add" })).toContainText("Counts toward House");
+  await expect(page.getByRole("region", { name: "Will skip" })).toContainText("Stocks in demat");
+  await page.screenshot({ path: "test-results/import-confirm-375.png", fullPage: true });
+  await page.getByRole("button", { name: "Go back" }).click();
+  await expect(page.getByLabel(`${MYST}: kind of fund`)).toHaveValue("flexi_cap");
+  await page.getByRole("button", { name: /Review changes/ }).click();
+  await page.getByRole("button", { name: "Confirm and save" }).click();
   await expect(page.getByText("Updated 2 and added 1 investment.")).toBeVisible();
   await page.getByRole("button", { name: "Back to your goals" }).click();
   await page.getByRole("button", { name: /^Bills fund/ }).click();
@@ -322,6 +343,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   for (const name of [PP, LIQ, MYST]) await expect(page.getByLabel(`${name}: this is`)).not.toHaveValue("new");
   await expect(page.getByLabel(`${MYST}: kind of fund`)).toHaveValue("flexi_cap");
   await expect(page.getByText("What kind of fund is this?")).toHaveCount(0);
+  await page.getByLabel("Stocks in demat: this is").selectOption("skip");
+  await page.getByRole("button", { name: /Review changes/ }).click();
+  await expect(page.getByRole("region", { name: "Already up to date" })).toContainText("Index SIP");
+  await expect(page.getByRole("button", { name: "Confirm and save" })).toBeDisabled();
+  await page.getByRole("button", { name: "Go back" }).click();
 
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();

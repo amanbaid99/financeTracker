@@ -1,8 +1,15 @@
 "use client";
 
-import { AlertTriangle, CheckCircle2, FileUp, Sparkles } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  FileUp,
+  Sparkles,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
+import { CasGuideButton } from "@/components/cas-guide";
 import { Field } from "@/components/forms/field";
 import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
@@ -16,7 +23,11 @@ import {
   type ImportChoice,
   type PrepareResult,
 } from "@/lib/statement/actions";
-import type { ParsedStatement, ReviewRow } from "@/lib/statement/review";
+import type {
+  ParsedStatement,
+  Question,
+  ReviewRow,
+} from "@/lib/statement/review";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -42,21 +53,89 @@ interface RowState {
   category: string | null;
   sip: number | null;
   goalId: string;
-  /** Set once the user changes anything on the row: their answer. */
-  touched: boolean;
+  /** The user answered "is this your …?" (by tapping yes/no or picking an investment). */
+  matchAnswered: boolean;
+  /** The user answered "has your SIP stopped?". */
+  sipAnswered: boolean;
 }
 
-const CATEGORY_Q = "What kind of fund is this?";
-
-/** Questions still open for a row, given the user's answers so far. */
-function openQs(r: ReviewRow, s: RowState): string[] {
+/** Questions still waiting for an answer. */
+function openQuestions(r: ReviewRow, s: RowState): Question[] {
   if (s.target === "skip") return [];
-  const qs = r.questions.filter((q) =>
-    q === CATEGORY_Q ? !s.category : !s.touched,
-  );
-  if (r.kind === "mutual_fund" && !s.category && !qs.includes(CATEGORY_Q))
-    qs.push(CATEGORY_Q);
-  return qs;
+  const open = r.questions.filter((q) => {
+    if (q.kind === "confirm_match" || q.kind === "which_match")
+      return !s.matchAnswered;
+    if (q.kind === "sip_stopped")
+      return !s.sipAnswered && s.target === r.match?.id;
+    return !s.category;
+  });
+  if (
+    r.kind === "mutual_fund" &&
+    !s.category &&
+    !open.some((q) => q.kind === "category")
+  ) {
+    open.push({ kind: "category", text: "What kind of fund is this?" });
+  }
+  return open;
+}
+
+interface Change {
+  key: string;
+  action: "update" | "add" | "skip";
+  title: string;
+  lines: string[];
+  unchanged: boolean;
+}
+
+/** Plain list of what saving will do, for the confirm step. */
+function describeChanges(
+  ready: Ready,
+  state: Record<string, RowState>,
+): Change[] {
+  return ready.rows.map((r) => {
+    const s = state[r.key];
+    if (s.target === "skip")
+      return {
+        key: r.key,
+        action: "skip",
+        title: r.name,
+        lines: [],
+        unchanged: true,
+      };
+    const goal = ready.goals.find((g) => g.id === s.goalId)?.name;
+    if (s.target === "new") {
+      const lines = [`Value ${formatINR(r.value)}`];
+      if (s.sip) lines.push(`SIP ${formatINR(s.sip)} a month`);
+      if (s.category) lines.push(categoryLabel(s.category));
+      lines.push(goal ? `Counts toward ${goal}` : "Not linked to a goal");
+      return {
+        key: r.key,
+        action: "add",
+        title: r.name,
+        lines,
+        unchanged: false,
+      };
+    }
+    const inv = ready.investments.find((i) => i.id === s.target)!;
+    const lines: string[] = [];
+    if (inv.value !== r.value)
+      lines.push(`Value ${formatINR(inv.value)} → ${formatINR(r.value)}`);
+    if (s.sip !== null && s.sip !== inv.sip)
+      lines.push(`SIP ${formatINR(inv.sip)} → ${formatINR(s.sip)} a month`);
+    if (r.kind === "mutual_fund" && s.category && s.category !== inv.category) {
+      lines.push(
+        `Kind ${categoryLabel(inv.category)} → ${categoryLabel(s.category)}`,
+      );
+    }
+    if (goal) lines.push(`Also counts toward ${goal}`);
+    return {
+      key: r.key,
+      action: "update",
+      title: inv.name,
+      lines,
+      unchanged: lines.length === 0,
+    };
+  });
 }
 
 /** Sends the PDF straight to the statement reader with the user's sign-in token. */
@@ -99,6 +178,7 @@ export function ImportFlow() {
   const [error, setError] = useState("");
   const [ready, setReady] = useState<Ready | null>(null);
   const [state, setState] = useState<Record<string, RowState>>({});
+  const [confirming, setConfirming] = useState(false);
   const [done, setDone] = useState<string | null>(null);
   const [pending, start] = useTransition();
   const [stage, setStage] = useState("");
@@ -123,7 +203,8 @@ export function ImportFlow() {
                 category: r.category,
                 sip: r.sip,
                 goalId: "",
-                touched: false,
+                matchAnswered: false,
+                sipAnswered: false,
               },
             ]),
           ),
@@ -139,13 +220,15 @@ export function ImportFlow() {
     });
   }
 
-  const openQuestions = useMemo(() => {
-    if (!ready) return 0;
-    return ready.rows.filter((r) => {
-      const s = state[r.key];
-      return s ? openQs(r, s).length > 0 : false;
-    }).length;
-  }, [ready, state]);
+  const openCount = useMemo(
+    () =>
+      ready
+        ? ready.rows.filter(
+            (r) => state[r.key] && openQuestions(r, state[r.key]).length,
+          ).length
+        : 0,
+    [ready, state],
+  );
 
   function save() {
     if (!ready) return;
@@ -200,6 +283,7 @@ export function ImportFlow() {
           read();
         }}
       >
+        <CasGuideButton />
         <Field
           label="Statement PDF"
           htmlFor="cas-file"
@@ -216,7 +300,7 @@ export function ImportFlow() {
         <Field
           label="PDF password"
           htmlFor="cas-pw"
-          hint="CAMS / KFintech: the password you chose when you asked for it. NSDL / CDSL: usually your PAN in capitals."
+          hint="CAMS / KFintech: the password you chose when you asked for it. NSDL / CDSL: usually based on your PAN; the email says which."
         >
           <Input
             id="cas-pw"
@@ -241,18 +325,91 @@ export function ImportFlow() {
           The file is read and thrown away; it isn&apos;t stored, and neither is
           the password. Personal details like your PAN and folio numbers never
           leave the reader. Only fund names may be sent to AI to work out a
-          fund&apos;s category.
+          fund&apos;s category. Nothing changes until you confirm.
         </p>
       </form>
     );
   }
 
   const set = (key: string, patch: Partial<RowState>) =>
-    setState((s) => ({ ...s, [key]: { ...s[key], ...patch, touched: true } }));
+    setState((s) => ({ ...s, [key]: { ...s[key], ...patch } }));
+
+  if (confirming) {
+    const changes = describeChanges(ready, state);
+    const updates = changes.filter(
+      (c) => c.action === "update" && !c.unchanged,
+    );
+    const adds = changes.filter((c) => c.action === "add");
+    const same = changes.filter((c) => c.action === "update" && c.unchanged);
+    const skips = changes.filter((c) => c.action === "skip");
+    const group = (title: string, list: Change[], tone = "") =>
+      list.length > 0 && (
+        <section className="space-y-2" aria-label={title}>
+          <h2 className="text-sm font-semibold">{title}</h2>
+          <ul className="divide-y rounded-2xl border bg-card">
+            {list.map((c) => (
+              <li key={c.key} className="space-y-0.5 p-3 text-sm">
+                <p className={cn("font-medium", tone)}>{c.title}</p>
+                {c.lines.map((l) => (
+                  <p key={l} className="tabular text-xs text-muted-foreground">
+                    {l}
+                  </p>
+                ))}
+              </li>
+            ))}
+          </ul>
+        </section>
+      );
+    return (
+      <div className="space-y-4 pb-32">
+        <div className="space-y-1 rounded-2xl border bg-card p-4">
+          <p className="font-semibold">Check before saving</p>
+          <p className="text-sm text-muted-foreground">
+            {updates.length} update{updates.length === 1 ? "" : "s"},{" "}
+            {adds.length} new investment
+            {adds.length === 1 ? "" : "s"}
+            {skips.length ? `, ${skips.length} skipped` : ""}. Nothing changes
+            until you confirm.
+          </p>
+        </div>
+        {group("Will update", updates)}
+        {group("Will add", adds)}
+        {group("Already up to date", same, "text-muted-foreground")}
+        {group("Will skip", skips, "text-muted-foreground")}
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur">
+          <div className="mx-auto max-w-3xl space-y-2">
+            {error && (
+              <p role="alert" className="text-sm text-danger">
+                {error}
+              </p>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setConfirming(false)}
+                disabled={pending}
+              >
+                Go back
+              </Button>
+              <Button
+                type="button"
+                onClick={save}
+                disabled={pending || updates.length + adds.length === 0}
+              >
+                {pending ? "Saving…" : "Confirm and save"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const withIssues = ready.rows.filter((r) => r.issues.length).length;
 
   return (
-    <div className="space-y-4 pb-24">
+    <div className="space-y-4 pb-28">
       <div className="space-y-1 rounded-2xl border bg-card p-4">
         <p className="font-semibold">
           {SOURCE_LABEL[ready.source] ?? ready.source} statement
@@ -281,14 +438,14 @@ export function ImportFlow() {
         ))}
       </div>
 
-      {openQuestions > 0 && (
+      {openCount > 0 && (
         <p
           className="flex items-center gap-2 rounded-lg bg-warning-soft p-3 text-sm text-warning"
           role="status"
         >
           <AlertTriangle className="size-4 shrink-0" aria-hidden />
-          {openQuestions} holding{openQuestions === 1 ? " needs" : "s need"} a
-          quick check before saving.
+          {openCount} holding{openCount === 1 ? " needs" : "s need"} your answer
+          before you can save.
         </p>
       )}
 
@@ -296,11 +453,11 @@ export function ImportFlow() {
         {ready.rows.map((r) => {
           const s = state[r.key];
           const skipped = s.target === "skip";
-          const matched = s.target !== "new" && !skipped;
-          const oldValue = matched
-            ? (ready.investments.find((i) => i.id === s.target)?.value ?? null)
-            : null;
-          const questions = openQs(r, s);
+          const updating = s.target !== "new" && !skipped;
+          const target = updating
+            ? ready.investments.find((i) => i.id === s.target)
+            : undefined;
+          const questions = openQuestions(r, s);
           const choices = ready.investments.filter(
             (i) => i.isFund === (r.kind === "mutual_fund"),
           );
@@ -337,21 +494,77 @@ export function ImportFlow() {
                   <p className="tabular text-sm font-semibold">
                     {formatINR(r.value)}
                   </p>
-                  {oldValue !== null && oldValue !== r.value && (
+                  {target && target.value !== r.value && (
                     <p className="tabular text-xs text-muted-foreground">
-                      was {formatINR(oldValue)}
+                      was {formatINR(target.value)}
                     </p>
                   )}
                 </div>
               </div>
 
               {questions.map((q) => (
-                <p
-                  key={q}
-                  className="rounded-lg bg-warning-soft p-2 text-xs text-warning"
+                <div
+                  key={q.kind}
+                  className="space-y-2 rounded-lg bg-warning-soft p-2 text-xs text-warning"
                 >
-                  {q}
-                </p>
+                  <p>{q.text}</p>
+                  {q.kind === "confirm_match" && (
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => set(r.key, { matchAnswered: true })}
+                      >
+                        Yes, that&apos;s it
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          set(r.key, { target: "new", matchAnswered: true })
+                        }
+                      >
+                        No, it&apos;s new
+                      </Button>
+                    </div>
+                  )}
+                  {q.kind === "which_match" && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span>Pick it under &quot;This is&quot;, or</span>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => set(r.key, { matchAnswered: true })}
+                      >
+                        Keep the one selected
+                      </Button>
+                    </div>
+                  )}
+                  {q.kind === "sip_stopped" && (
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() =>
+                          set(r.key, { sip: 0, sipAnswered: true })
+                        }
+                      >
+                        Yes, it stopped
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          set(r.key, { sip: q.previousSip, sipAnswered: true })
+                        }
+                      >
+                        No, keep {formatINR(q.previousSip)} a month
+                      </Button>
+                    </div>
+                  )}
+                </div>
               ))}
               {r.issues.map((i) => (
                 <p key={i} className="text-xs text-warning">
@@ -365,7 +578,12 @@ export function ImportFlow() {
                     id={`t-${r.key}`}
                     aria-label={`${r.name}: this is`}
                     value={s.target}
-                    onChange={(e) => set(r.key, { target: e.target.value })}
+                    onChange={(e) =>
+                      set(r.key, {
+                        target: e.target.value,
+                        matchAnswered: true,
+                      })
+                    }
                   >
                     <option value="new">A new investment</option>
                     {choices.map((i) => (
@@ -402,19 +620,26 @@ export function ImportFlow() {
                       id={`s-${r.key}`}
                       aria-label={`${r.name}: monthly SIP`}
                       value={s.sip}
-                      onChange={(v) => set(r.key, { sip: v ?? 0 })}
+                      onChange={(v) =>
+                        set(r.key, { sip: v ?? 0, sipAnswered: true })
+                      }
                     />
                   </Field>
                 )}
-                {s.target === "new" && ready.goals.length > 0 && (
-                  <Field label="Counts toward" htmlFor={`g-${r.key}`}>
+                {!skipped && ready.goals.length > 0 && (
+                  <Field
+                    label={updating ? "Also count toward" : "Counts toward"}
+                    htmlFor={`g-${r.key}`}
+                  >
                     <Select
                       id={`g-${r.key}`}
                       aria-label={`${r.name}: goal`}
                       value={s.goalId}
                       onChange={(e) => set(r.key, { goalId: e.target.value })}
                     >
-                      <option value="">No goal yet</option>
+                      <option value="">
+                        {updating ? "No change" : "No goal yet"}
+                      </option>
                       {ready.goals.map((g) => (
                         <option key={g.id} value={g.id}>
                           {g.name}
@@ -430,19 +655,24 @@ export function ImportFlow() {
       </ul>
 
       <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur">
-        <div className="mx-auto max-w-3xl space-y-2">
-          {error && (
-            <p role="alert" className="text-sm text-danger">
-              {error}
-            </p>
-          )}
+        <div className="mx-auto max-w-3xl">
           <Button
             type="button"
             className="w-full"
-            onClick={save}
-            disabled={pending}
+            onClick={() => {
+              setError("");
+              setConfirming(true);
+              window.scrollTo({ top: 0 });
+            }}
+            disabled={openCount > 0}
           >
-            {pending ? "Saving…" : "Save these values"}
+            {openCount > 0 ? (
+              `Answer ${openCount} question${openCount === 1 ? "" : "s"} to continue`
+            ) : (
+              <>
+                Review changes <ArrowRight />
+              </>
+            )}
           </Button>
         </div>
       </div>

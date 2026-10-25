@@ -37,6 +37,13 @@ export type ParsedStatement = z.infer<typeof parsedStatementSchema>;
 
 export type ExistingInvestment = Investment & { isin: string | null };
 
+/** Something the user must answer before the row can be saved. */
+export type Question =
+  | { kind: "confirm_match"; text: string }
+  | { kind: "which_match"; text: string }
+  | { kind: "sip_stopped"; text: string; previousSip: number }
+  | { kind: "category"; text: string };
+
 export type CategoryHow = "yours" | "from its name" | "two models agreed" | "checked by a third model" | "ask";
 
 export interface ReviewRow {
@@ -56,8 +63,8 @@ export interface ReviewRow {
   match: { id: string; name: string; value: number; sip: number; how: "isin" | "name" } | null;
   /** Other existing investments it might be, best first (for name matches). */
   candidates: { id: string; name: string }[];
-  /** Plain questions the user should answer before saving. */
-  questions: string[];
+  /** Questions the user must answer before saving. */
+  questions: Question[];
 }
 
 const STOP = new Set([
@@ -101,7 +108,7 @@ export function buildReview(statement: ParsedStatement, existing: ExistingInvest
   for (const h of order) {
     const fixed = placeFromKey(h.key);
     const kind: Kind = fixed?.kind ?? (h.kind === "mutual_fund" ? "mutual_fund" : asKind(h.kind));
-    const questions: string[] = [];
+    const questions: Question[] = [];
     let match: ReviewRow["match"] = null;
     let candidates: ReviewRow["candidates"] = [];
 
@@ -122,8 +129,8 @@ export function buildReview(statement: ParsedStatement, existing: ExistingInvest
         used.add(best.id);
         questions.push(
           scored.length > 1 && scored[1].score >= scored[0].score - 0.1
-            ? "Which of your investments is this?"
-            : `Is this your “${label(best)}”?`,
+            ? { kind: "which_match", text: "Which of your investments is this?" }
+            : { kind: "confirm_match", text: `Is this your “${label(best)}”?` },
         );
       }
     }
@@ -153,7 +160,11 @@ export function buildReview(statement: ParsedStatement, existing: ExistingInvest
       sip = h.sipMonthly ?? 0;
       sipFromStatement = true;
       if (match && match.sip > 0 && sip === 0) {
-        questions.push(`No SIP into this fund lately. Has your ${match.sip.toLocaleString("en-IN")} a month SIP stopped?`);
+        questions.push({
+          kind: "sip_stopped",
+          text: `No SIP into this fund lately. Has your ₹${match.sip.toLocaleString("en-IN")} a month SIP stopped?`,
+          previousSip: match.sip,
+        });
       }
     }
 
@@ -187,6 +198,6 @@ export function applyAiCategories(
     if (r.category) return r;
     const v = verdicts.get(r.key);
     if (v) return { ...r, category: v.category, kind: v.category === "gold" ? "gold" : r.kind, categoryHow: v.how };
-    return { ...r, questions: [...r.questions, "What kind of fund is this?"] };
+    return { ...r, questions: [...r.questions, { kind: "category", text: "What kind of fund is this?" }] };
   });
 }

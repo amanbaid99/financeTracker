@@ -33,7 +33,7 @@ export type PrepareResult =
       rows: ReviewRow[];
       goals: { id: string; name: string }[];
       /** The user's investments, for "this is…" choices. */
-      investments: { id: string; name: string; isFund: boolean; value: number }[];
+      investments: { id: string; name: string; isFund: boolean; value: number; sip: number; category: string | null }[];
     }
   | { ok: false; error: string };
 
@@ -82,6 +82,8 @@ export async function prepareImport(input: ParsedStatement): Promise<PrepareResu
       name: e.name?.trim() || "Unnamed investment",
       isFund: e.kind === "mutual_fund",
       value: e.value,
+      sip: e.monthlySip,
+      category: e.category,
     })),
   };
 }
