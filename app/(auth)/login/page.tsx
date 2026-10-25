@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Logo } from "@/components/logo";
+import { InstallHint } from "@/components/install-hint";
 import { Card, CardContent } from "@/components/ui/card";
 import { LoginForm } from "./login-form";
 
@@ -18,6 +19,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           <LoginForm initialError={error} />
         </CardContent>
       </Card>
+      <InstallHint className="mt-4" />
       <p className="mt-6 text-center text-xs text-muted-foreground">Invite only. Your data is private to you.</p>
     </main>
   );

@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { completeCodeSignIn } from "@/app/auth/actions";
+import { verifyEmailCode } from "@/app/auth/actions";
+import { useIsStandalone } from "@/components/install-hint";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Input, Label } from "@/components/ui/input";
 import { PRIVACY_VERSION } from "@/lib/legal";
@@ -29,6 +30,7 @@ export function LoginForm({ initialError }: { initialError?: string }) {
   const [error, setError] = useState(initialError ? friendlyError(initialError) : "");
   const [code, setCode] = useState("");
   const router = useRouter();
+  const standalone = useIsStandalone();
 
   const redirectTo = () => {
     // Always the site's own origin, so a mistyped env value can't break the link.
@@ -51,23 +53,13 @@ export function LoginForm({ initialError }: { initialError?: string }) {
 
   async function verifyCode(e: React.FormEvent) {
     e.preventDefault();
-    const token = code.replace(/\D/g, "");
-    if (token.length < 6) return setError("Enter the code from the email.");
+    if (code.replace(/\D/g, "").length < 6) return setError("Enter the code from the email.");
     setBusy(true);
     setError("");
-    const { error } = await createClient().auth.verifyOtp({
-      email: email.trim().toLowerCase(),
-      token,
-      type: "email",
-    });
-    if (error) {
-      setBusy(false);
-      return setError(friendlyError(error.message));
-    }
-    const res = await completeCodeSignIn(PRIVACY_VERSION);
+    const res = await verifyEmailCode(email, code, PRIVACY_VERSION);
     if (!res.ok) {
       setBusy(false);
-      return setError(res.error);
+      return setError(friendlyError(res.error));
     }
     router.replace(res.next);
     router.refresh();
@@ -93,8 +85,10 @@ export function LoginForm({ initialError }: { initialError?: string }) {
         <div className="space-y-1 text-center" role="status">
           <p className="font-medium">Check your inbox</p>
           <p className="text-sm text-muted-foreground">
-            We sent a code to <span className="font-medium text-foreground">{email}</span>. Type it below, or open
-            the link in the email on this device.
+            We sent a code to <span className="font-medium text-foreground">{email}</span>.{" "}
+            {standalone
+              ? "Type it below. Links in the email open in your browser, not this app, so use the code."
+              : "Type it below, or open the link in the email on this device."}
           </p>
         </div>
         <form onSubmit={verifyCode} className="space-y-3">

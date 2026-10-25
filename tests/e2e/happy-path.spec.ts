@@ -35,8 +35,17 @@ test.beforeAll(async () => {
 });
 
 test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
+  // Home Screen app: manifest and icons are public, and the login page links them.
+  const manifest = await page.request.get("/manifest.webmanifest");
+  expect(manifest.ok()).toBe(true);
+  expect((await manifest.json()).icons.length).toBeGreaterThan(0);
+  expect((await page.request.get("/icon-192.png")).ok()).toBe(true);
+
   // Not invited: friendly error.
   await page.goto("/login");
+  await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveCount(1);
+  await expect(page.locator('link[rel="manifest"]')).toHaveCount(1);
+  await expect(page.getByText("Use Tracker like an app")).toBeVisible();
   await page.getByRole("checkbox", { name: /privacy policy/ }).check();
   await page.getByLabel("Email", { exact: true }).fill(`nobody-${Date.now()}@example.test`);
   await page.getByRole("button", { name: "Email me a sign-in code" }).click();
@@ -53,6 +62,10 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await page.getByLabel("Code from the email", { exact: true }).fill(code);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/onboarding\/basics/);
+  // The session is stored in long-lived, server-set cookies (not capped at 7 days).
+  const authCookies = (await page.context().cookies()).filter((c) => c.name.includes("auth-token"));
+  expect(authCookies.length).toBeGreaterThan(0);
+  for (const c of authCookies) expect(c.expires * 1000 - Date.now()).toBeGreaterThan(300 * 86_400_000);
 
   // Basics + theme.
   await page.getByLabel("Your name", { exact: true }).fill("Asha");

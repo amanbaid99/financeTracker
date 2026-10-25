@@ -11,9 +11,17 @@ export const metadata: Metadata = {
   title: { default: "Tracker", template: "%s · Tracker" },
   description: "What should your next rupee go toward? A personal planning tool.",
   robots: { index: false, follow: false },
+  applicationName: "Tracker",
+  appleWebApp: { capable: true, title: "Tracker", statusBarStyle: "default" },
+  formatDetection: { telephone: false },
 };
 
-export const viewport: Viewport = { width: "device-width", initialScale: 1 };
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#15803d",
+};
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const store = await cookies();

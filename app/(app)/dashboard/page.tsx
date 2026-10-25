@@ -9,6 +9,7 @@ import {
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AiExplain } from "@/components/ai-explain";
+import { InstallHint } from "@/components/install-hint";
 import { NextFocusCard } from "@/components/next-focus-card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -97,6 +98,8 @@ export default async function DashboardPage() {
       )}
 
       <NextFocusCard focus={nextFocus} aiOn={aiOn} />
+
+      <InstallHint />
 
       <div className="grid gap-5 md:grid-cols-2">
         <Card>
