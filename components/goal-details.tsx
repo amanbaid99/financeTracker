@@ -66,35 +66,69 @@ export function SavingsPlan({ g }: { g: TrackedGoal }) {
   );
 }
 
+/** "₹1,27,519 in interest, minus ₹9,440 in charges: ₹1,18,079 saved" style breakdown. */
+function SavingLine({ g }: { g: TrackedGoal }) {
+  if (g.interestSaved <= 0 && g.foreclosureFee <= 0) return null;
+  if (g.foreclosureFee <= 0) {
+    return (
+      <>
+        {" "}
+        It saves about <b>{formatINR(g.interestSaved)}</b> in interest.
+      </>
+    );
+  }
+  if (g.netSaving <= 0) {
+    return (
+      <span className="mt-1 block font-medium text-warning">
+        The foreclosure charge ({formatINR(g.foreclosureFee)}) is more than the
+        interest you&apos;d save ({formatINR(g.interestSaved)}), so closing
+        early costs you {formatINR(-g.netSaving)} more.
+      </span>
+    );
+  }
+  return (
+    <>
+      {" "}
+      You save {formatINR(g.interestSaved)} in interest, minus{" "}
+      {formatINR(g.foreclosureFee)} in foreclosure charges:{" "}
+      <b>{formatINR(g.netSaving)} saved</b>.
+    </>
+  );
+}
+
 export function LoanPlan({ g }: { g: TrackedGoal }) {
   const l = g.loanState!;
   const needed = g.monthlySip + g.extraSipNeeded;
+  const withFee = l.feeRate > 0 ? ", charges included" : "";
   let plan: React.ReactNode;
   if (g.status === "reached") {
-    plan = `You've saved enough to close it today. Paying it off now saves about ${formatINR(l.interestLeft)} in interest.`;
+    plan = (
+      <>
+        You&apos;ve saved enough to close it today (
+        {formatINR(l.balance + l.feeToday)}
+        {withFee}).
+        <SavingLine g={g} />
+      </>
+    );
   } else if (g.emisCloseFirst && g.targetDate) {
     plan = `Your EMIs close this loan in ${monthYear(l.endDate)}, before your date. No extra saving needed.`;
   } else if (g.targetDate) {
     plan = (
       <>
-        On {formatDate(g.targetDate)} you&apos;ll still owe{" "}
-        <b>{formatINR(g.futureTarget)}</b>. Put{" "}
-        <b>{formatINR(needed)} a month</b> into your investments to close it
-        then
-        {g.interestSaved > 0 ? (
-          <>
-            , and save about <b>{formatINR(g.interestSaved)}</b> in interest
-          </>
-        ) : null}
-        .
+        Closing it on {formatDate(g.targetDate)} will take{" "}
+        <b>{formatINR(g.futureTarget)}</b>
+        {withFee}. Put <b>{formatINR(needed)} a month</b> into your investments
+        to get there.
+        <SavingLine g={g} />
       </>
     );
   } else if (g.monthsToReach !== null) {
     plan = (
       <>
-        At {formatINR(g.monthlySip)} a month, your savings catch up with what
-        you owe around <b>{monthYear(g.reachDate)}</b>. Closing it then saves
-        about <b>{formatINR(g.interestSaved)}</b> in interest.
+        At {formatINR(g.monthlySip)} a month, your savings catch up with the
+        cost of closing it{withFee ? " (charges included)" : ""} around{" "}
+        <b>{monthYear(g.reachDate)}</b>.
+        <SavingLine g={g} />
       </>
     );
   } else {
@@ -102,6 +136,10 @@ export function LoanPlan({ g }: { g: TrackedGoal }) {
       ? `At this pace your EMIs close it first, in ${monthYear(l.endDate)}. Save more each month to close it sooner.`
       : "Add an investment or a SIP to see when you could close it early.";
   }
+
+  const feeLabel = g.loan?.foreclosurePct
+    ? `${g.loan.foreclosurePct}%${g.loan.foreclosureGst ? " + GST" : ""} · ${formatINR(l.feeToday)} today`
+    : "None";
 
   return (
     <div className="space-y-3">
@@ -130,6 +168,7 @@ export function LoanPlan({ g }: { g: TrackedGoal }) {
             value={formatINR(l.interestLeft)}
           />
         )}
+        <Row label="Foreclosure charge" value={feeLabel} />
       </dl>
       <p className="rounded-lg bg-muted p-3 text-sm">{plan}</p>
     </div>

@@ -21,7 +21,9 @@ function needLabel(g: TrackedGoal): string {
   if (g.loanState) {
     return g.targetDate && !g.emisCloseFirst
       ? `needed to close it on ${formatDate(g.targetDate)}`
-      : "owed today";
+      : g.loanState.feeRate > 0
+        ? "needed to close it today"
+        : "owed today";
   }
   return g.targetDate ? `needed by ${formatDate(g.targetDate)}` : "needed";
 }

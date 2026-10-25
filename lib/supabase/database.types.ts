@@ -243,6 +243,8 @@ export type Database = {
           inflation_rate: number | null;
           loan_as_of: string | null;
           loan_emi: number | null;
+          loan_foreclosure_gst: boolean;
+          loan_foreclosure_pct: number | null;
           loan_months_left: number | null;
           loan_outstanding: number | null;
           loan_rate: number | null;
@@ -262,6 +264,8 @@ export type Database = {
           inflation_rate?: number | null;
           loan_as_of?: string | null;
           loan_emi?: number | null;
+          loan_foreclosure_gst?: boolean;
+          loan_foreclosure_pct?: number | null;
           loan_months_left?: number | null;
           loan_outstanding?: number | null;
           loan_rate?: number | null;
@@ -280,6 +284,8 @@ export type Database = {
           inflation_rate?: number | null;
           loan_as_of?: string | null;
           loan_emi?: number | null;
+          loan_foreclosure_gst?: boolean;
+          loan_foreclosure_pct?: number | null;
           loan_months_left?: number | null;
           loan_outstanding?: number | null;
           loan_rate?: number | null;

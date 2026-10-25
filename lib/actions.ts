@@ -71,6 +71,8 @@ const goalSchema = z
         emi: money.nullable(),
         ratePct: z.number().min(0).max(60),
         monthsLeft: z.number().int().min(1).max(600).nullable(),
+        foreclosurePct: z.number().min(0).max(20).nullable().optional(),
+        foreclosureGst: z.boolean().optional(),
       })
       .nullable(),
   })
@@ -114,6 +116,8 @@ export async function saveGoal(
       loan_emi: loan?.emi ?? null,
       loan_rate: loan?.ratePct ?? null,
       loan_months_left: loan?.monthsLeft ?? null,
+      loan_foreclosure_pct: loan?.foreclosurePct ?? null,
+      loan_foreclosure_gst: loan?.foreclosureGst ?? true,
       // The outstanding entered is today's; EMIs roll it forward from here.
       loan_as_of: loan ? todayIST() : null,
     };

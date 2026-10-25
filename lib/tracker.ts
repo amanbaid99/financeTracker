@@ -3,7 +3,13 @@
 
 import { addMonths, monthsBetween } from "./dates";
 import { defaultReturn } from "./instruments";
-import { balanceAfter, interestSavedIfClosedAt, loanState, type LoanInput, type LoanState } from "./loan";
+import {
+  balanceAfter,
+  interestSavedIfClosedAt,
+  loanState,
+  type LoanInput,
+  type LoanState,
+} from "./loan";
 
 export interface Investment {
   id: string;
@@ -36,7 +42,12 @@ export interface Link {
   percent: number;
 }
 
-export type GoalStatus = "reached" | "on_track" | "behind" | "no_investments" | "overdue";
+export type GoalStatus =
+  | "reached"
+  | "on_track"
+  | "behind"
+  | "no_investments"
+  | "overdue";
 
 export interface GoalLine {
   investment: Investment;
@@ -71,12 +82,21 @@ export interface TrackedGoal extends GoalInput {
   emisCloseFirst: boolean;
   /** Loans: interest avoided by closing on the target date (or reach date). */
   interestSaved: number;
+  /** Loans: foreclosure charge (with GST) when you close. */
+  foreclosureFee: number;
+  /** Loans: interest saved minus the foreclosure charge. */
+  netSaving: number;
 }
 
 const MAX_MONTHS = 600;
 
 /** Value after `months` with savings growing and a SIP paid at the start of each month. */
-export function projectedValue(saved: number, sip: number, annualPct: number, months: number): number {
+export function projectedValue(
+  saved: number,
+  sip: number,
+  annualPct: number,
+  months: number,
+): number {
   if (months <= 0) return saved;
   const r = annualPct / 100 / 12;
   if (r === 0) return saved + sip * months;
@@ -85,7 +105,12 @@ export function projectedValue(saved: number, sip: number, annualPct: number, mo
 }
 
 /** Monthly SIP needed to reach `target` in `months` from `saved`. Zero if already enough. */
-export function requiredSip(target: number, saved: number, annualPct: number, months: number): number {
+export function requiredSip(
+  target: number,
+  saved: number,
+  annualPct: number,
+  months: number,
+): number {
   if (months <= 0) return Math.max(0, target - saved);
   const r = annualPct / 100 / 12;
   const g = Math.pow(1 + r, months);
@@ -95,7 +120,12 @@ export function requiredSip(target: number, saved: number, annualPct: number, mo
 }
 
 /** Months until `target` is reached, or null if not within 50 years. */
-export function monthsToReach(target: number, saved: number, sip: number, annualPct: number): number | null {
+export function monthsToReach(
+  target: number,
+  saved: number,
+  sip: number,
+  annualPct: number,
+): number | null {
   if (saved >= target) return 0;
   for (let m = 1; m <= MAX_MONTHS; m++) {
     if (projectedValue(saved, sip, annualPct, m) >= target) return m;
@@ -103,7 +133,11 @@ export function monthsToReach(target: number, saved: number, sip: number, annual
   return null;
 }
 
-function goalLines(goal: GoalInput, investments: Investment[], links: Link[]): GoalLine[] {
+function goalLines(
+  goal: GoalInput,
+  investments: Investment[],
+  links: Link[],
+): GoalLine[] {
   const byId = new Map(investments.map((i) => [i.id, i]));
   return links
     .filter((l) => l.goalId === goal.id && byId.has(l.investmentId))
@@ -125,22 +159,36 @@ function blendedReturn(lines: GoalLine[]): number {
   const weight = (l: GoalLine) => l.value + l.monthlySip * 12;
   const total = lines.reduce((s, l) => s + weight(l), 0);
   if (!total) return lines.length ? lines[0].returnPct : 0;
-  return Math.round((lines.reduce((s, l) => s + weight(l) * l.returnPct, 0) / total) * 10) / 10;
+  return (
+    Math.round(
+      (lines.reduce((s, l) => s + weight(l) * l.returnPct, 0) / total) * 10,
+    ) / 10
+  );
 }
 
-export function trackGoal(goal: GoalInput, investments: Investment[], links: Link[], todayISO: string): TrackedGoal {
+export function trackGoal(
+  goal: GoalInput,
+  investments: Investment[],
+  links: Link[],
+  todayISO: string,
+): TrackedGoal {
   const lines = goalLines(goal, investments, links);
   const current = lines.reduce((s, l) => s + l.value, 0);
   const monthlySip = lines.reduce((s, l) => s + l.monthlySip, 0);
   const returnPct = blendedReturn(lines);
-  const months = goal.targetDate ? monthsBetween(todayISO, goal.targetDate) : null;
+  const months = goal.targetDate
+    ? monthsBetween(todayISO, goal.targetDate)
+    : null;
   const base = { ...goal, lines, current, monthlySip, returnPct, months };
 
-  if (goal.type === "loan_payoff" && goal.loan) return trackLoan(base, goal.loan, todayISO);
+  if (goal.type === "loan_payoff" && goal.loan)
+    return trackLoan(base, goal.loan, todayISO);
 
   const futureTarget =
     months !== null && goal.inflationPct
-      ? Math.round(goal.target * Math.pow(1 + goal.inflationPct / 100, months / 12))
+      ? Math.round(
+          goal.target * Math.pow(1 + goal.inflationPct / 100, months / 12),
+        )
       : goal.target;
 
   let projected: number | null = null;
@@ -152,8 +200,15 @@ export function trackGoal(goal: GoalInput, investments: Investment[], links: Lin
     status = "reached";
     toReach = 0;
   } else if (months !== null) {
-    projected = Math.round(projectedValue(current, monthlySip, returnPct, months));
-    extraSipNeeded = Math.max(0, Math.ceil(requiredSip(futureTarget, current, returnPct, months) - monthlySip));
+    projected = Math.round(
+      projectedValue(current, monthlySip, returnPct, months),
+    );
+    extraSipNeeded = Math.max(
+      0,
+      Math.ceil(
+        requiredSip(futureTarget, current, returnPct, months) - monthlySip,
+      ),
+    );
     if (months === 0) status = "overdue";
     else if (!lines.length) status = "no_investments";
     else status = projected >= futureTarget ? "on_track" : "behind";
@@ -169,11 +224,14 @@ export function trackGoal(goal: GoalInput, investments: Investment[], links: Lin
     projected,
     extraSipNeeded,
     monthsToReach: toReach,
-    reachDate: toReach !== null && months === null ? addMonths(todayISO, toReach) : null,
+    reachDate:
+      toReach !== null && months === null ? addMonths(todayISO, toReach) : null,
     status,
     loanState: null,
     emisCloseFirst: false,
     interestSaved: 0,
+    foreclosureFee: 0,
+    netSaving: 0,
   };
 }
 
@@ -182,18 +240,41 @@ export function trackGoal(goal: GoalInput, investments: Investment[], links: Lin
  * amount needed is what's still owed on the chosen date.
  */
 function trackLoan(
-  base: Pick<TrackedGoal, keyof GoalInput | "lines" | "current" | "monthlySip" | "returnPct" | "months">,
+  base: Pick<
+    TrackedGoal,
+    | keyof GoalInput
+    | "lines"
+    | "current"
+    | "monthlySip"
+    | "returnPct"
+    | "months"
+  >,
   input: LoanInput,
   todayISO: string,
 ): TrackedGoal {
   const loan = loanState(input, todayISO);
   const { current, monthlySip, returnPct, months, lines } = base;
-  const owedAfter = (k: number) => Math.round(balanceAfter(loan.balance, loan.ratePct, loan.emi, k));
+  const owedAfter = (k: number) =>
+    Math.round(balanceAfter(loan.balance, loan.ratePct, loan.emi, k));
+  // Closing costs what's owed plus the foreclosure charge on it.
+  const feeAfter = (k: number) => Math.round(owedAfter(k) * loan.feeRate);
+  const costAfter = (k: number) => owedAfter(k) + feeAfter(k);
+  const savings = (k: number) => {
+    const interestSaved =
+      k === 0 ? (loan.interestLeft ?? 0) : interestSavedIfClosedAt(loan, k);
+    const foreclosureFee = feeAfter(k);
+    return {
+      interestSaved,
+      foreclosureFee,
+      netSaving: interestSaved - foreclosureFee,
+    };
+  };
+  const costToday = costAfter(0);
   const done = (extra: Partial<TrackedGoal>): TrackedGoal => ({
     ...base,
-    target: loan.balance,
-    futureTarget: loan.balance,
-    progress: loan.balance > 0 ? Math.min(1, current / loan.balance) : 1,
+    target: costToday,
+    futureTarget: costToday,
+    progress: costToday > 0 ? Math.min(1, current / costToday) : 1,
     projected: null,
     extraSipNeeded: 0,
     monthsToReach: null,
@@ -202,37 +283,60 @@ function trackLoan(
     loanState: loan,
     emisCloseFirst: false,
     interestSaved: 0,
+    foreclosureFee: 0,
+    netSaving: 0,
     ...extra,
   });
 
-  if (loan.balance <= 0 || current >= loan.balance) {
-    return done({ status: "reached", monthsToReach: 0, progress: 1 });
+  if (loan.balance <= 0 || current >= costToday) {
+    return done({
+      status: "reached",
+      monthsToReach: 0,
+      progress: 1,
+      ...(loan.balance > 0 ? savings(0) : {}),
+    });
   }
 
   if (months !== null) {
     if (loan.monthsLeft !== null && months >= loan.monthsLeft) {
       // The regular EMIs finish before the target date.
-      return done({ emisCloseFirst: true, futureTarget: 0, progress: 1, reachDate: loan.endDate });
+      return done({
+        emisCloseFirst: true,
+        futureTarget: 0,
+        progress: 1,
+        reachDate: loan.endDate,
+      });
     }
-    const need = owedAfter(months);
-    const projected = Math.round(projectedValue(current, monthlySip, returnPct, months));
+    const need = costAfter(months);
+    const projected = Math.round(
+      projectedValue(current, monthlySip, returnPct, months),
+    );
     const status: GoalStatus =
-      months === 0 ? "overdue" : !lines.length ? "no_investments" : projected >= need ? "on_track" : "behind";
+      months === 0
+        ? "overdue"
+        : !lines.length
+          ? "no_investments"
+          : projected >= need
+            ? "on_track"
+            : "behind";
     return done({
       futureTarget: need,
       progress: need > 0 ? Math.min(1, current / need) : 1,
       projected,
-      extraSipNeeded: Math.max(0, Math.ceil(requiredSip(need, current, returnPct, months) - monthlySip)),
+      extraSipNeeded: Math.max(
+        0,
+        Math.ceil(requiredSip(need, current, returnPct, months) - monthlySip),
+      ),
       status,
-      interestSaved: interestSavedIfClosedAt(loan, months),
+      ...savings(months),
     });
   }
 
-  // No date: the first month your savings catch up with what's still owed.
+  // No date: the first month your savings catch up with the cost of closing.
   const limit = loan.monthsLeft ?? MAX_MONTHS;
   let reach: number | null = null;
   for (let m = 1; m < limit; m++) {
-    if (projectedValue(current, monthlySip, returnPct, m) >= owedAfter(m)) {
+    if (projectedValue(current, monthlySip, returnPct, m) >= costAfter(m)) {
       reach = m;
       break;
     }
@@ -248,12 +352,16 @@ function trackLoan(
     monthsToReach: reach,
     reachDate: addMonths(todayISO, reach),
     status: lines.length ? "on_track" : "no_investments",
-    interestSaved: interestSavedIfClosedAt(loan, reach),
+    ...savings(reach),
   });
 }
 
 /** Share of each investment not yet given to any goal, 0 to 100. */
-export function freePercent(investmentId: string, links: Link[], exceptGoalId?: string): number {
+export function freePercent(
+  investmentId: string,
+  links: Link[],
+  exceptGoalId?: string,
+): number {
   const used = links
     .filter((l) => l.investmentId === investmentId && l.goalId !== exceptGoalId)
     .reduce((s, l) => s + l.percent, 0);

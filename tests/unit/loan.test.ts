@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { balanceAfter, emiFor, interestSavedIfClosedAt, loanState, monthsToClose } from "@/lib/loan";
+import { balanceAfter, emiFor, foreclosureRate, interestSavedIfClosedAt, loanState, monthsToClose } from "@/lib/loan";
 import { projectedValue, trackGoal, type GoalInput, type Investment, type Link } from "@/lib/tracker";
 
 const TODAY = "2026-10-25";
@@ -78,5 +78,43 @@ describe("loan payoff goals", () => {
     const m = t.monthsToReach!;
     expect(projectedValue(100_000, 5_000, 11, m)).toBeGreaterThanOrEqual(balanceAfter(1_000_000, 9, 12_668, m));
     expect(projectedValue(100_000, 5_000, 11, m - 1)).toBeLessThan(balanceAfter(1_000_000, 9, 12_668, m - 1));
+  });
+});
+
+describe("foreclosure charges", () => {
+  const base = { outstanding: 1_000_000, emi: 12_668, ratePct: 9, monthsLeft: null, asOf: TODAY };
+
+  it("adds GST to the charge", () => {
+    expect(foreclosureRate({ foreclosurePct: 4, foreclosureGst: true })).toBeCloseTo(0.0472, 6);
+    expect(foreclosureRate({ foreclosurePct: 4, foreclosureGst: false })).toBeCloseTo(0.04, 6);
+    expect(loanState({ ...base, foreclosurePct: 4, foreclosureGst: true }, TODAY).feeToday).toBe(47_200);
+    expect(loanState(base, TODAY).feeToday).toBe(0);
+  });
+
+  const g = (loan: GoalInput["loan"], targetDate: string | null): GoalInput => ({
+    id: "g",
+    name: "Car loan",
+    type: "loan_payoff",
+    target: 0,
+    targetDate,
+    inflationPct: null,
+    loan,
+  });
+
+  it("needs the amount owed plus the charge, and nets the charge off the saving", () => {
+    const plain = trackGoal(g(base, "2029-10-25"), [], [], TODAY);
+    const withFee = trackGoal(g({ ...base, foreclosurePct: 4, foreclosureGst: true }, "2029-10-25"), [], [], TODAY);
+    const owed = Math.round(balanceAfter(1_000_000, 9, 12_668, 36));
+    expect(plain.futureTarget).toBe(owed);
+    expect(withFee.futureTarget).toBe(owed + Math.round(owed * 0.0472));
+    expect(withFee.foreclosureFee).toBe(Math.round(owed * 0.0472));
+    expect(withFee.interestSaved).toBe(plain.interestSaved);
+    expect(withFee.netSaving).toBe(withFee.interestSaved - withFee.foreclosureFee);
+    expect(withFee.extraSipNeeded).toBeGreaterThan(plain.extraSipNeeded);
+  });
+
+  it("shows when the charge costs more than it saves", () => {
+    const late = trackGoal(g({ ...base, foreclosurePct: 10, foreclosureGst: false }, "2036-06-25"), [], [], TODAY);
+    expect(late.netSaving).toBeLessThan(0);
   });
 });

@@ -116,6 +116,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText("₹7,500 interest")).toBeVisible();
   await expect(page.getByText("₹5,168 principal")).toBeVisible();
   await expect(page.getByText(/\(120 EMIs\)/)).toBeVisible();
+  await page.getByLabel("Foreclosure charge, % of amount owed").fill("4");
+  await expect(page.getByLabel("Plus 18% GST on the charge")).toBeChecked();
+  await expect(page.getByText(/Closing today would cost ₹10,47,200, including ₹47,200 in foreclosure charges/)).toBeVisible();
   await page.getByLabel(/No date: tell me when I can close it/).check();
   await page.getByRole("button", { name: "Create goal" }).click();
   await expect(page.getByRole("button", { name: /^Close my loan/ })).toHaveAttribute("aria-expanded", "true");
@@ -134,7 +137,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByLabel("Share for this goal, %")).toHaveValue("40");
   await page.getByRole("button", { name: "Add investment" }).last().click();
   await expect(page.getByText("40% of it")).toBeVisible();
-  await expect(page.getByText(/your savings catch up with what you owe/)).toBeVisible();
+  await expect(page.getByText(/your savings catch up with the cost of closing it/)).toBeVisible();
+  await expect(page.getByText(/4% \+ GST · ₹47,200 today/)).toBeVisible();
+  await expect(page.getByText(/in foreclosure charges:/)).toBeVisible();
   await expect(page.getByText(/^Can close it around/)).toBeVisible();
   let o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(o, "loan goal overflows at 375px").toBeLessThanOrEqual(0);
