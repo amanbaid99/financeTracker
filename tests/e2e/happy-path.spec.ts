@@ -78,8 +78,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("By when?").fill("2031-10-25");
   await page.getByLabel(/grow the target with inflation/).uncheck();
   await page.getByRole("button", { name: "Create goal" }).click();
-  await expect(page).toHaveURL(/\/goals\/[0-9a-f-]{36}$/);
-  await expect(page.getByRole("heading", { name: "House" })).toBeVisible();
+  // Back on the list with the new goal expanded.
+  await expect(page).toHaveURL(/\/goals\?open=/);
+  await expect(page.getByRole("button", { name: /^House/ })).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByText(/^Nothing yet/)).toBeVisible();
 
   // A mutual fund, 60% for this goal.
@@ -107,7 +108,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.screenshot({ path: "test-results/goal-house-375.png", fullPage: true });
 
   // A loan payoff goal: the EMI splits into interest and principal as you type.
-  await page.getByRole("link", { name: "Your goals" }).click();
   await page.getByRole("link", { name: "New goal" }).click();
   await page.getByRole("button", { name: /^Pay off a loan/ }).click();
   await page.getByLabel("Still owed today").fill("1000000");
@@ -118,7 +118,12 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText(/\(120 EMIs\)/)).toBeVisible();
   await page.getByLabel(/No date: tell me when I can close it/).check();
   await page.getByRole("button", { name: "Create goal" }).click();
-  await expect(page.getByRole("heading", { name: "Close my loan" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Close my loan/ })).toHaveAttribute("aria-expanded", "true");
+  // Only one goal open at a time; dated goals sort before goals with no date.
+  await expect(page.getByRole("button", { name: /^House/ })).toHaveAttribute("aria-expanded", "false");
+  const order = await page.locator("main li > button[aria-expanded]").allInnerTexts();
+  expect(order[0]).toMatch(/^House/);
+  expect(order[1]).toMatch(/^Close my loan/);
   await expect(page.getByText("Owed today", { exact: true })).toBeVisible();
   await expect(page.getByText("This month: principal")).toBeVisible();
   await expect(page.getByText("₹5,168", { exact: true })).toBeVisible();
@@ -140,8 +145,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Value today").fill("400000");
   await expect(page.getByText(/also counts toward another goal/)).toBeVisible();
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.getByRole("link", { name: "Your goals" }).click();
-  await page.getByRole("link", { name: /House/ }).click();
+  await page.getByRole("button", { name: /^House/ }).click();
   await expect(page.getByText("₹3,40,000", { exact: true })).toBeVisible();
 
   // Can't give a goal more than the free share.
@@ -149,7 +153,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Share for this goal, %").fill("70");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByText("Only 60% of this investment is free")).toBeVisible();
-  await page.getByRole("button", { name: "Close" }).click();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
 
   // Turn on inflation for the House goal.
   await page.getByRole("button", { name: "Edit", exact: true }).click();
@@ -161,20 +165,20 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Edit Bank FD" }).click();
   await page.getByRole("button", { name: "Remove from goal" }).click();
   await expect(page.getByRole("button", { name: "Edit Bank FD" })).toHaveCount(0);
-  await page.getByRole("link", { name: "Your goals" }).click();
-  await expect(page.getByRole("link", { name: /Close my loan/ })).toBeVisible();
+  await page.getByRole("button", { name: /^House/ }).click();
+  await expect(page.getByRole("button", { name: /^House/ })).toHaveAttribute("aria-expanded", "false");
   o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(o, "/goals overflows at 375px").toBeLessThanOrEqual(0);
   await page.screenshot({ path: "test-results/goals-375.png", fullPage: true });
   await expect(page.getByText(/not linked to a goal/)).toHaveCount(0);
 
   // Deleting a goal keeps its investments.
-  await page.getByRole("link", { name: /Close my loan/ }).click();
+  await page.getByRole("button", { name: /^Close my loan/ }).click();
   await page.getByRole("button", { name: "Delete goal" }).click();
   await page.getByRole("button", { name: "Tap again to delete this goal" }).click();
   await expect(page).toHaveURL(/\/goals$/);
-  await expect(page.getByRole("link", { name: /Close my loan/ })).toHaveCount(0);
-  await page.getByRole("link", { name: /House/ }).click();
+  await expect(page.getByRole("button", { name: /^Close my loan/ })).toHaveCount(0);
+  await page.getByRole("button", { name: /^House/ }).click();
   await expect(page.getByRole("button", { name: "Edit Index SIP" })).toBeVisible();
 
   // Theme from Settings.

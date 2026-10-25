@@ -145,7 +145,10 @@ export function DeleteGoalButton({ id }: { id: string }) {
           if (!confirm) return setConfirm(true);
           start(async () => {
             const res = await deleteGoal(id);
-            if (res.ok) router.push("/goals");
+            if (res.ok) {
+              router.replace("/goals");
+              router.refresh();
+            }
           });
         }}
       >
