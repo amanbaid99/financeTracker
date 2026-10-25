@@ -1,7 +1,6 @@
 import { ChevronRight, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { UnlinkedInvestments } from "@/components/goal-actions";
 import { GoalIcon } from "@/components/goal-icon";
 import { buttonVariants } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -13,9 +12,7 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Goals" };
 
 export default async function GoalsPage() {
-  const { goals, investments, links } = await loadGoals();
-  const linked = new Set(links.map((l) => l.investmentId));
-  const unlinked = investments.filter((i) => !linked.has(i.id));
+  const { goals } = await loadGoals();
   const saved = goals.reduce((s, g) => s + g.current, 0);
   const sips = goals.reduce((s, g) => s + g.monthlySip, 0);
 
@@ -74,7 +71,6 @@ export default async function GoalsPage() {
         </ul>
       )}
 
-      {unlinked.length > 0 && <UnlinkedInvestments investments={unlinked} links={links} />}
     </main>
   );
 }

@@ -157,7 +157,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Save goal" }).click();
   await expect(page.getByText(/grown at 6% a year/)).toBeVisible();
 
-  // Take the FD off the goal; it shows as unlinked on the list, then delete it.
+  // Take the FD off the goal, then delete it from there.
   await page.getByRole("button", { name: "Edit Bank FD" }).click();
   await page.getByRole("button", { name: "Remove from goal" }).click();
   await expect(page.getByRole("button", { name: "Edit Bank FD" })).toHaveCount(0);
@@ -166,10 +166,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   expect(o, "/goals overflows at 375px").toBeLessThanOrEqual(0);
   await page.screenshot({ path: "test-results/goals-375.png", fullPage: true });
-  await page.getByText("1 investment not linked to a goal").click();
-  await page.getByRole("button", { name: "Edit Bank FD" }).click();
-  await page.getByRole("button", { name: "Delete investment" }).click();
-  await page.getByRole("button", { name: "Tap again to delete" }).click();
   await expect(page.getByText(/not linked to a goal/)).toHaveCount(0);
 
   // Deleting a goal keeps its investments.

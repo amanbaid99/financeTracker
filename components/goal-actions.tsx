@@ -130,37 +130,6 @@ export function GoalInvestments({
   );
 }
 
-export function UnlinkedInvestments({ investments, links }: { investments: Investment[]; links: Link[] }) {
-  const [open, setOpen] = useState<Investment | null>(null);
-  const close = useCallback(() => setOpen(null), []);
-  return (
-    <details className="rounded-xl border bg-card">
-      <summary className="cursor-pointer list-none p-4 text-sm">
-        {investments.length} investment{investments.length === 1 ? "" : "s"} not linked to a goal
-      </summary>
-      <ul className="divide-y border-t px-4">
-        {investments.map((i) => (
-          <InvestmentRow key={i.id} investment={i} value={i.value} sip={i.monthlySip} percent={100} onClick={() => setOpen(i)} />
-        ))}
-      </ul>
-      <p className="px-4 pb-3 text-xs text-muted-foreground">
-        Open a goal and choose &ldquo;Add investment&rdquo;, then &ldquo;One I already have&rdquo; to link one.
-      </p>
-      {open && (
-        <InvestmentSheet
-          goalId={null}
-          linkedIds={[]}
-          investment={open}
-          percent={null}
-          investments={investments}
-          links={links}
-          onClose={close}
-        />
-      )}
-    </details>
-  );
-}
-
 export function DeleteGoalButton({ id }: { id: string }) {
   const router = useRouter();
   const [confirm, setConfirm] = useState(false);
