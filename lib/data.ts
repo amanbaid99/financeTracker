@@ -46,7 +46,9 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
   const [goals, holdings, allocations, profile] = await Promise.all([
     supabase
       .from("goals")
-      .select("id, name, target_today, target_date, inflation_rate, created_at")
+      .select(
+        "id, name, type, target_today, target_date, inflation_rate, created_at, loan_outstanding, loan_emi, loan_rate, loan_months_left, loan_as_of",
+      )
       .order("created_at"),
     supabase
       .from("holdings")
@@ -75,9 +77,20 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
       {
         id: g.id,
         name: g.name,
+        type: g.type,
         target: g.target_today,
         targetDate: g.target_date,
         inflationPct: g.inflation_rate === null ? null : Number(g.inflation_rate),
+        loan:
+          g.type === "loan_payoff" && g.loan_outstanding !== null
+            ? {
+                outstanding: g.loan_outstanding,
+                emi: g.loan_emi,
+                ratePct: Number(g.loan_rate ?? 0),
+                monthsLeft: g.loan_months_left,
+                asOf: g.loan_as_of ?? g.created_at.slice(0, 10),
+              }
+            : null,
       },
       investments,
       links,

@@ -25,6 +25,7 @@ const inv = (over: Partial<Investment> & { id: string }): Investment => ({
 const goal = (over: Partial<GoalInput> = {}): GoalInput => ({
   id: "g",
   name: "House",
+  type: "house_down_payment",
   target: 1_000_000,
   targetDate: "2031-10-25",
   inflationPct: null,

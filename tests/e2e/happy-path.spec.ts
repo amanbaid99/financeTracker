@@ -67,23 +67,29 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   expect(authCookies.length).toBeGreaterThan(0);
   for (const c of authCookies) expect(c.expires * 1000 - Date.now()).toBeGreaterThan(300 * 86_400_000);
 
-  // Empty state, then a first goal.
-  await expect(page.getByText("Start with a goal")).toBeVisible();
-  await page.getByRole("button", { name: "Create a goal" }).click();
-  await page.getByLabel("Goal name").fill("House");
-  await page.getByLabel("Target amount").fill("2000000");
-  await page.getByLabel("Target date").fill("2031-10-25");
+  // Empty state, then a first goal picked by type.
+  await expect(page.getByText("What are you saving for?")).toBeVisible();
+  await page.getByRole("link", { name: "Add your first goal" }).click();
+  await expect(page).toHaveURL(/\/goals\/new$/);
+  await page.screenshot({ path: "test-results/goal-types-375.png", fullPage: true });
+  await page.getByRole("button", { name: /^House/ }).click();
+  await expect(page.getByLabel("Name")).toHaveValue("House");
+  await page.getByLabel("How much do you need?").fill("2000000");
+  await page.getByLabel("By when?").fill("2031-10-25");
+  await page.getByLabel(/grow the target with inflation/).uncheck();
   await page.getByRole("button", { name: "Create goal" }).click();
+  await expect(page).toHaveURL(/\/goals\/[0-9a-f-]{36}$/);
   await expect(page.getByRole("heading", { name: "House" })).toBeVisible();
-  await expect(page.getByText("No investments yet")).toBeVisible();
+  await expect(page.getByText(/^Nothing yet/)).toBeVisible();
 
-  // A mutual fund, 60% for this goal, with the return filled from its category.
+  // A mutual fund, 60% for this goal.
   await page.getByRole("button", { name: "Add investment" }).click();
   await page.getByLabel("Fund category").selectOption("flexi_cap");
-  await expect(page.getByText("Leave blank to use 11.5% for this type.")).toBeVisible();
   await page.getByLabel("Nickname (optional)").fill("Index SIP");
-  await page.getByLabel("Current value").fill("300000");
+  await page.getByLabel("Value today").fill("300000");
   await page.getByLabel("Monthly SIP").fill("10000");
+  await page.getByText(/^More options/).click();
+  await expect(page.getByLabel("Expected return, % a year")).toHaveAttribute("placeholder", "11.5");
   await page.getByLabel("Share for this goal, %").fill("60");
   await page.getByRole("button", { name: "Add investment" }).last().click();
   await expect(page.getByRole("button", { name: "Edit Index SIP" })).toBeVisible();
@@ -93,69 +99,87 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Add investment" }).click();
   await page.getByLabel("Type").selectOption("fd");
   await page.getByLabel("Nickname (optional)").fill("Bank FD");
-  await page.getByLabel("Current value").fill("100000");
+  await page.getByLabel("Value today").fill("100000");
   await page.getByRole("button", { name: "Add investment" }).last().click();
   await expect(page.getByText("₹2,80,000", { exact: true })).toBeVisible();
-  await expect(page.getByText(/you'll have about/)).toBeVisible();
+  await expect(page.getByText("Needed each month to be on time")).toBeVisible();
+  await expect(page.getByText(/^Needs ₹[\d,]+ more a month$/).first()).toBeVisible();
+  await page.screenshot({ path: "test-results/goal-house-375.png", fullPage: true });
 
-  // A second goal with no date, sharing the rest of the fund.
-  await page.getByRole("button", { name: "New goal" }).click();
-  await page.getByLabel("Goal name").fill("Car");
-  await page.getByLabel("Target amount").fill("500000");
-  await page.getByLabel(/No fixed date/).check();
+  // A loan payoff goal: the EMI splits into interest and principal as you type.
+  await page.getByRole("link", { name: "Your goals" }).click();
+  await page.getByRole("link", { name: "New goal" }).click();
+  await page.getByRole("button", { name: /^Pay off a loan/ }).click();
+  await page.getByLabel("Still owed today").fill("1000000");
+  await page.getByLabel("EMI", { exact: true }).fill("12668");
+  await page.getByLabel("Interest, % a year").fill("9");
+  await expect(page.getByText("₹7,500 interest")).toBeVisible();
+  await expect(page.getByText("₹5,168 principal")).toBeVisible();
+  await expect(page.getByText(/\(120 EMIs\)/)).toBeVisible();
+  await page.getByLabel(/No date: tell me when I can close it/).check();
   await page.getByRole("button", { name: "Create goal" }).click();
-  await expect(page.getByRole("heading", { name: "Car" })).toBeVisible();
-  await page.getByRole("button", { name: "Add investment" }).last().click();
+  await expect(page.getByRole("heading", { name: "Close my loan" })).toBeVisible();
+  await expect(page.getByText("Owed today", { exact: true })).toBeVisible();
+  await expect(page.getByText("This month: principal")).toBeVisible();
+  await expect(page.getByText("₹5,168", { exact: true })).toBeVisible();
+
+  // Link the rest of the fund to the loan goal.
+  await page.getByRole("button", { name: "Add investment" }).click();
   await page.getByRole("radio", { name: "One I already have" }).click();
   await expect(page.getByLabel("Share for this goal, %")).toHaveValue("40");
   await page.getByRole("button", { name: "Add investment" }).last().click();
   await expect(page.getByText("40% of it")).toBeVisible();
-  await expect(page.getByText(/you'll get there in about/)).toBeVisible();
-  await expect(page.getByText("On its way")).toBeVisible();
+  await expect(page.getByText(/your savings catch up with what you owe/)).toBeVisible();
+  await expect(page.getByText(/^Can close it around/)).toBeVisible();
+  let o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(o, "loan goal overflows at 375px").toBeLessThanOrEqual(0);
+  await page.screenshot({ path: "test-results/goal-loan-375.png", fullPage: true });
 
-  // Update the fund's value once; both goals follow.
-  await page.getByRole("button", { name: "Edit Index SIP" }).first().click();
-  await page.getByLabel("Current value").fill("400000");
+  // Update the fund once from here; the House goal follows.
+  await page.getByRole("button", { name: "Edit Index SIP" }).click();
+  await page.getByLabel("Value today").fill("400000");
   await expect(page.getByText(/also counts toward another goal/)).toBeVisible();
   await page.getByRole("button", { name: "Save", exact: true }).click();
+  await page.getByRole("link", { name: "Your goals" }).click();
+  await page.getByRole("link", { name: /House/ }).click();
   await expect(page.getByText("₹3,40,000", { exact: true })).toBeVisible();
-  await expect(page.getByText("₹1,60,000", { exact: true }).first()).toBeVisible();
 
   // Can't give a goal more than the free share.
-  await page.getByRole("button", { name: "Edit Index SIP" }).last().click();
-  await page.getByLabel("Share for this goal, %").fill("50");
+  await page.getByRole("button", { name: "Edit Index SIP" }).click();
+  await page.getByLabel("Share for this goal, %").fill("70");
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.getByText("Only 40% of this investment is free")).toBeVisible();
+  await expect(page.getByText("Only 60% of this investment is free")).toBeVisible();
   await page.getByRole("button", { name: "Close" }).click();
 
-  // Inflation on the House goal.
-  await page.getByRole("button", { name: "Edit goal House" }).click();
-  await page.getByLabel("Grow the target with inflation").check();
+  // Turn on inflation for the House goal.
+  await page.getByRole("button", { name: "Edit", exact: true }).click();
+  await page.getByLabel(/grow the target with inflation/).check();
   await page.getByRole("button", { name: "Save goal" }).click();
-  await expect(page.getByText(/with 6% inflation/)).toBeVisible();
+  await expect(page.getByText(/grown at 6% a year/)).toBeVisible();
 
-  const o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-  expect(o, "/goals overflows at 375px").toBeLessThanOrEqual(0);
-  await page.screenshot({ path: "test-results/goals-375.png", fullPage: true });
-  await page.getByRole("button", { name: "Add investment" }).first().click();
-  await page.screenshot({ path: "test-results/goals-sheet-375.png" });
-  await page.getByRole("button", { name: "Close" }).click();
-
-  // Take the FD off the goal, then delete it from the unlinked list.
+  // Take the FD off the goal; it shows as unlinked on the list, then delete it.
   await page.getByRole("button", { name: "Edit Bank FD" }).click();
   await page.getByRole("button", { name: "Remove from goal" }).click();
-  await expect(page.getByText("Not linked to a goal")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit Bank FD" })).toHaveCount(0);
+  await page.getByRole("link", { name: "Your goals" }).click();
+  await expect(page.getByRole("link", { name: /Close my loan/ })).toBeVisible();
+  o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(o, "/goals overflows at 375px").toBeLessThanOrEqual(0);
+  await page.screenshot({ path: "test-results/goals-375.png", fullPage: true });
+  await page.getByText("1 investment not linked to a goal").click();
   await page.getByRole("button", { name: "Edit Bank FD" }).click();
-  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await page.getByRole("button", { name: "Delete investment" }).click();
   await page.getByRole("button", { name: "Tap again to delete" }).click();
-  await expect(page.getByText("Not linked to a goal")).toHaveCount(0);
+  await expect(page.getByText(/not linked to a goal/)).toHaveCount(0);
 
   // Deleting a goal keeps its investments.
-  await page.getByRole("button", { name: "Edit goal Car" }).click();
+  await page.getByRole("link", { name: /Close my loan/ }).click();
   await page.getByRole("button", { name: "Delete goal" }).click();
-  await page.getByRole("button", { name: "Tap again to delete" }).click();
-  await expect(page.getByRole("heading", { name: "Car" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "Edit Index SIP" })).toHaveCount(1);
+  await page.getByRole("button", { name: "Tap again to delete this goal" }).click();
+  await expect(page).toHaveURL(/\/goals$/);
+  await expect(page.getByRole("link", { name: /Close my loan/ })).toHaveCount(0);
+  await page.getByRole("link", { name: /House/ }).click();
+  await expect(page.getByRole("button", { name: "Edit Index SIP" })).toBeVisible();
 
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();

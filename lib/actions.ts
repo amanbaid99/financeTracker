@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { todayIST } from "@/lib/dates";
+import { GOAL_TYPES, type GoalType } from "@/lib/goal-types";
 import { PRIVACY_VERSION } from "@/lib/legal";
 import { categoryFor, FUND_CATEGORIES, KINDS } from "@/lib/instruments";
 import { createClient } from "@/lib/supabase/server";
@@ -39,29 +41,58 @@ function done(id?: string): ActionResult {
 // Goals
 // ---------------------------------------------------------------------------
 
-const goalSchema = z.object({
-  id: uuid.nullable().optional(),
-  name: z.string().trim().min(1, "name your goal").max(60),
-  target: money.min(1, "add a target amount"),
-  targetDate: isoDate.nullable(),
-  inflationPct: z.number().min(0).max(20).nullable(),
-});
+const goalTypes = GOAL_TYPES.map((t) => t.value) as [GoalType, ...GoalType[]];
+
+const goalSchema = z
+  .object({
+    id: uuid.nullable().optional(),
+    type: z.enum(goalTypes),
+    name: z.string().trim().min(1, "name your goal").max(60),
+    target: money,
+    targetDate: isoDate.nullable(),
+    inflationPct: z.number().min(0).max(20).nullable(),
+    loan: z
+      .object({
+        outstanding: money.min(1, "add what you still owe"),
+        emi: money.nullable(),
+        ratePct: z.number().min(0).max(60),
+        monthsLeft: z.number().int().min(1).max(600).nullable(),
+      })
+      .nullable(),
+  })
+  .superRefine((v, ctx) => {
+    if (v.type === "loan_payoff") {
+      if (!v.loan) ctx.addIssue({ code: "custom", path: ["loan"], message: "add the loan details" });
+      else if (!v.loan.emi && !v.loan.monthsLeft)
+        ctx.addIssue({ code: "custom", path: ["EMI"], message: "add the EMI or the months left" });
+    } else if (v.target < 1) {
+      ctx.addIssue({ code: "custom", path: ["target"], message: "add a target amount" });
+    }
+  });
 
 export async function saveGoal(input: z.input<typeof goalSchema>): Promise<ActionResult> {
   try {
     const v = goalSchema.parse(input);
     const { supabase, userId } = await session();
+    const loan = v.type === "loan_payoff" ? v.loan : null;
     const row = {
       name: v.name,
-      target_today: v.target,
+      type: v.type,
+      target_today: loan ? loan.outstanding : v.target,
       target_date: v.targetDate,
-      inflation_rate: v.inflationPct,
+      inflation_rate: loan ? null : v.inflationPct,
+      loan_outstanding: loan?.outstanding ?? null,
+      loan_emi: loan?.emi ?? null,
+      loan_rate: loan?.ratePct ?? null,
+      loan_months_left: loan?.monthsLeft ?? null,
+      // The outstanding entered is today's; EMIs roll it forward from here.
+      loan_as_of: loan ? todayIST() : null,
     };
     const res = v.id
       ? await supabase.from("goals").update(row).eq("id", v.id).eq("user_id", userId).select("id").single()
       : await supabase
           .from("goals")
-          .insert({ ...row, user_id: userId, type: "custom", priority: 3, saved_amount: 0 })
+          .insert({ ...row, user_id: userId, priority: 3, saved_amount: 0 })
           .select("id")
           .single();
     if (res.error) throw new Error(res.error.message);

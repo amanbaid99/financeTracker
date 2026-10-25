@@ -241,6 +241,11 @@ export type Database = {
           created_at: string;
           id: string;
           inflation_rate: number | null;
+          loan_as_of: string | null;
+          loan_emi: number | null;
+          loan_months_left: number | null;
+          loan_outstanding: number | null;
+          loan_rate: number | null;
           name: string;
           priority: number;
           saved_amount: number;
@@ -255,6 +260,11 @@ export type Database = {
           created_at?: string;
           id?: string;
           inflation_rate?: number | null;
+          loan_as_of?: string | null;
+          loan_emi?: number | null;
+          loan_months_left?: number | null;
+          loan_outstanding?: number | null;
+          loan_rate?: number | null;
           name: string;
           priority?: number;
           saved_amount?: number;
@@ -268,6 +278,11 @@ export type Database = {
           created_at?: string;
           id?: string;
           inflation_rate?: number | null;
+          loan_as_of?: string | null;
+          loan_emi?: number | null;
+          loan_months_left?: number | null;
+          loan_outstanding?: number | null;
+          loan_rate?: number | null;
           name?: string;
           priority?: number;
           saved_amount?: number;
@@ -663,7 +678,8 @@ export type Database = {
         | "travel"
         | "retirement"
         | "medical"
-        | "custom";
+        | "custom"
+        | "loan_payoff";
       holding_kind:
         | "savings"
         | "fd"
@@ -840,6 +856,7 @@ export const Constants = {
         "retirement",
         "medical",
         "custom",
+        "loan_payoff",
       ],
       holding_kind: [
         "savings",
