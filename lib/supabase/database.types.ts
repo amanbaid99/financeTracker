@@ -128,6 +128,57 @@ export type Database = {
         };
         Relationships: [];
       };
+      card_milestones: {
+        Row: {
+          card_id: string;
+          created_at: string;
+          deadline: string | null;
+          id: string;
+          name: string;
+          period: string;
+          reward: string | null;
+          spent: number;
+          spent_as_of: string | null;
+          target: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          card_id: string;
+          created_at?: string;
+          deadline?: string | null;
+          id?: string;
+          name: string;
+          period: string;
+          reward?: string | null;
+          spent?: number;
+          spent_as_of?: string | null;
+          target: number;
+          user_id?: string;
+        };
+        Update: {
+          card_id?: string;
+          created_at?: string;
+          deadline?: string | null;
+          id?: string;
+          name?: string;
+          period?: string;
+          reward?: string | null;
+          spent?: number;
+          spent_as_of?: string | null;
+          target?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "card_milestones_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "credit_cards";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       consents: {
         Row: {
           created_at: string;
@@ -158,32 +209,44 @@ export type Database = {
       };
       credit_cards: {
         Row: {
+          annual_fee: number | null;
+          benefits: string[];
           created_at: string;
           due_day: number | null;
           id: string;
           label: string;
           outstanding: number;
+          rewards: string | null;
           statement_day: number | null;
           user_id: string;
+          year_start: string | null;
         };
         ComputedFields: never;
         Insert: {
+          annual_fee?: number | null;
+          benefits?: string[];
           created_at?: string;
           due_day?: number | null;
           id?: string;
           label: string;
           outstanding?: number;
+          rewards?: string | null;
           statement_day?: number | null;
           user_id?: string;
+          year_start?: string | null;
         };
         Update: {
+          annual_fee?: number | null;
+          benefits?: string[];
           created_at?: string;
           due_day?: number | null;
           id?: string;
           label?: string;
           outstanding?: number;
+          rewards?: string | null;
           statement_day?: number | null;
           user_id?: string;
+          year_start?: string | null;
         };
         Relationships: [];
       };

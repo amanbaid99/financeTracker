@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle, PieChart, Target } from "lucide-react";
+import { CreditCard, MessageCircle, PieChart, Target } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -18,15 +18,16 @@ const TABS = [
     icon: PieChart,
     match: ["/portfolio"],
   },
+  { href: "/cards", label: "Cards", icon: CreditCard, match: ["/cards"] },
   { href: "/ask", label: "Ask", icon: MessageCircle, match: ["/ask"] },
 ];
 
-/** The three main sections, as a row of tabs under the header. */
+/** The main sections, as a row of tabs under the header. */
 export function AppTabs() {
   const path = usePathname();
   return (
     <nav aria-label="Main" className="mx-auto w-full max-w-3xl px-4">
-      <ul className="grid grid-cols-3">
+      <ul className="grid grid-cols-4">
         {TABS.map((t) => {
           const active = t.match.some(
             (m) => path === m || path.startsWith(`${m}/`),

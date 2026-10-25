@@ -1,6 +1,7 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
+import type { Card, Period } from "@/lib/cards";
 import { todayIST } from "@/lib/dates";
 import { PRIVACY_VERSION } from "@/lib/legal";
 import { createClient } from "@/lib/supabase/server";
@@ -72,7 +73,10 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
       .select("theme, accent, plan_lump_sum, plan_monthly")
       .eq("user_id", user.id)
       .maybeSingle(),
-    supabase.from("goal_bills").select("id, goal_id, name, amount, every_months, next_due").order("next_due"),
+    supabase
+      .from("goal_bills")
+      .select("id, goal_id, name, amount, every_months, next_due")
+      .order("next_due"),
   ]);
   const billRows = check(bills);
   const today = todayIST();
@@ -110,7 +114,10 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
                 ratePct: Number(g.loan_rate ?? 0),
                 monthsLeft: g.loan_months_left,
                 asOf: g.loan_as_of ?? g.created_at.slice(0, 10),
-                foreclosurePct: g.loan_foreclosure_pct === null ? null : Number(g.loan_foreclosure_pct),
+                foreclosurePct:
+                  g.loan_foreclosure_pct === null
+                    ? null
+                    : Number(g.loan_foreclosure_pct),
                 foreclosureGst: g.loan_foreclosure_gst,
                 emiDay: g.loan_emi_day,
                 firstEmi: g.loan_first_emi,
@@ -152,3 +159,48 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
         : null,
   };
 });
+
+/** The user's credit cards with their milestones. */
+export const loadCards = cache(
+  async (): Promise<{ cards: Card[]; today: string }> => {
+    const { supabase } = await requireUser();
+    const [cards, milestones] = await Promise.all([
+      supabase
+        .from("credit_cards")
+        .select(
+          "id, label, annual_fee, year_start, rewards, benefits, created_at",
+        )
+        .order("created_at"),
+      supabase
+        .from("card_milestones")
+        .select(
+          "id, card_id, name, target, period, deadline, reward, spent, spent_as_of",
+        )
+        .order("created_at"),
+    ]);
+    const ms = check(milestones);
+    return {
+      today: todayIST(),
+      cards: check(cards).map((c) => ({
+        id: c.id,
+        label: c.label,
+        annualFee: c.annual_fee,
+        yearStart: c.year_start,
+        rewards: c.rewards,
+        benefits: c.benefits ?? [],
+        milestones: ms
+          .filter((m) => m.card_id === c.id)
+          .map((m) => ({
+            id: m.id,
+            name: m.name,
+            target: m.target,
+            period: m.period as Period,
+            deadline: m.deadline,
+            reward: m.reward,
+            spent: m.spent,
+            spentAsOf: m.spent_as_of,
+          })),
+      })),
+    };
+  },
+);

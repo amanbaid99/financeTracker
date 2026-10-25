@@ -10,11 +10,15 @@ const email = `e2e-${Date.now()}@example.test`;
 
 async function emailText(to: string): Promise<string> {
   for (let i = 0; i < 30; i++) {
-    const res = await fetch(`${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:${to}`)}`);
+    const res = await fetch(
+      `${MAILPIT}/api/v1/search?query=${encodeURIComponent(`to:${to}`)}`,
+    );
     const json = (await res.json()) as { messages?: { ID: string }[] };
     const id = json.messages?.[0]?.ID;
     if (id) {
-      const msg = (await (await fetch(`${MAILPIT}/api/v1/message/${id}`)).json()) as { Text: string; HTML: string };
+      const msg = (await (
+        await fetch(`${MAILPIT}/api/v1/message/${id}`)
+      ).json()) as { Text: string; HTML: string };
       return msg.Text + msg.HTML;
     }
     await new Promise((r) => setTimeout(r, 500));
@@ -29,7 +33,9 @@ async function signInCode(to: string): Promise<string> {
 }
 
 test.beforeAll(async () => {
-  const admin = createClient(SUPABASE_URL, SECRET, { auth: { persistSession: false } });
+  const admin = createClient(SUPABASE_URL, SECRET, {
+    auth: { persistSession: false },
+  });
   const { error } = await admin.from("allowed_emails").insert({ email });
   if (error) throw error;
 });
@@ -47,7 +53,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.locator('link[rel="manifest"]')).toHaveCount(1);
   await expect(page.getByText("Use Tracker like an app")).toBeVisible();
   await page.getByRole("checkbox", { name: /privacy policy/ }).check();
-  await page.getByLabel("Email", { exact: true }).fill(`nobody-${Date.now()}@example.test`);
+  await page
+    .getByLabel("Email", { exact: true })
+    .fill(`nobody-${Date.now()}@example.test`);
   await page.getByRole("button", { name: "Email me a sign-in code" }).click();
   await expect(page.getByText("isn't on the invite list")).toBeVisible();
 
@@ -56,27 +64,41 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Email me a sign-in code" }).click();
   await expect(page.getByText("Check your inbox")).toBeVisible();
   const code = await signInCode(email);
-  await page.getByLabel("Code from the email", { exact: true }).fill(code === "000000" ? "111111" : "000000");
+  await page
+    .getByLabel("Code from the email", { exact: true })
+    .fill(code === "000000" ? "111111" : "000000");
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page.getByText("wrong or has expired")).toBeVisible();
   await page.getByLabel("Code from the email", { exact: true }).fill(code);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/goals$/);
   // Old pages a Home Screen app may still open go to Goals.
-  for (const old of ["/dashboard", "/month", "/holdings/new", "/budget/build", "/update"]) {
+  for (const old of [
+    "/dashboard",
+    "/month",
+    "/holdings/new",
+    "/budget/build",
+    "/update",
+  ]) {
     await page.goto(old);
     await expect(page).toHaveURL(/\/goals$/);
   }
   // The session is stored in long-lived, server-set cookies (not capped at 7 days).
-  const authCookies = (await page.context().cookies()).filter((c) => c.name.includes("auth-token"));
+  const authCookies = (await page.context().cookies()).filter((c) =>
+    c.name.includes("auth-token"),
+  );
   expect(authCookies.length).toBeGreaterThan(0);
-  for (const c of authCookies) expect(c.expires * 1000 - Date.now()).toBeGreaterThan(300 * 86_400_000);
+  for (const c of authCookies)
+    expect(c.expires * 1000 - Date.now()).toBeGreaterThan(300 * 86_400_000);
 
   // Empty state, then a first goal picked by type.
   await expect(page.getByText("What are you saving for?")).toBeVisible();
   await page.getByRole("link", { name: "Add your first goal" }).click();
   await expect(page).toHaveURL(/\/goals\/new$/);
-  await page.screenshot({ path: "test-results/goal-types-375.png", fullPage: true });
+  await page.screenshot({
+    path: "test-results/goal-types-375.png",
+    fullPage: true,
+  });
   await page.getByRole("button", { name: /^House/ }).click();
   await expect(page.getByLabel("Name")).toHaveValue("House");
   await page.getByLabel("How much do you need?").fill("2000000");
@@ -85,7 +107,10 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Create goal" }).click();
   // Back on the list with the new goal expanded.
   await expect(page).toHaveURL(/\/goals\?open=/);
-  await expect(page.getByRole("button", { name: /^House/ })).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByRole("button", { name: /^House/ })).toHaveAttribute(
+    "aria-expanded",
+    "true",
+  );
   await expect(page.getByText(/^Nothing yet/)).toBeVisible();
 
   // A mutual fund, 60% for this goal.
@@ -95,10 +120,15 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Value today").fill("300000");
   await page.getByLabel("Monthly SIP").fill("10000");
   await page.getByText(/^More options/).click();
-  await expect(page.getByLabel("Expected return, % a year")).toHaveAttribute("placeholder", "11.5");
+  await expect(page.getByLabel("Expected return, % a year")).toHaveAttribute(
+    "placeholder",
+    "11.5",
+  );
   await page.getByLabel("Share for this goal, %").fill("60");
   await page.getByRole("button", { name: "Add investment" }).last().click();
-  await expect(page.getByRole("button", { name: "Edit Index SIP" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Edit Index SIP" }),
+  ).toBeVisible();
   await expect(page.getByText("60% of it")).toBeVisible();
 
   // An FD as well.
@@ -109,8 +139,13 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Add investment" }).last().click();
   await expect(page.getByText("₹2,80,000", { exact: true })).toBeVisible();
   await expect(page.getByText("Needed each month to be on time")).toBeVisible();
-  await expect(page.getByText(/^Needs ₹[\d,]+ more a month$/).first()).toBeVisible();
-  await page.screenshot({ path: "test-results/goal-house-375.png", fullPage: true });
+  await expect(
+    page.getByText(/^Needs ₹[\d,]+ more a month$/).first(),
+  ).toBeVisible();
+  await page.screenshot({
+    path: "test-results/goal-house-375.png",
+    fullPage: true,
+  });
 
   // A loan payoff goal: the EMI splits into interest and principal as you type.
   await page.getByRole("link", { name: "New goal" }).click();
@@ -121,13 +156,20 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   const first = new Date();
   first.setMonth(first.getMonth() - 10);
   first.setDate(1);
-  await page.getByLabel("First EMI date").fill(first.toISOString().slice(0, 10));
+  await page
+    .getByLabel("First EMI date")
+    .fill(first.toISOString().slice(0, 10));
   await page.getByLabel("Interest, % a year").fill("8.65");
   await expect(page.getByLabel("Interest, % a year")).toHaveValue("8.65");
   await page.getByLabel("Tenure, months").fill("120");
-  await expect(page.getByText(/^1[01] EMIs paid so far\. Owed today:/)).toBeVisible();
+  await expect(
+    page.getByText(/^1[01] EMIs paid so far\. Owed today:/),
+  ).toBeVisible();
   await expect(page.getByText(/^Next EMI on /)).toBeVisible();
-  await page.screenshot({ path: "test-results/loan-form-375.png", fullPage: true });
+  await page.screenshot({
+    path: "test-results/loan-form-375.png",
+    fullPage: true,
+  });
 
   // What's owed now, with the EMI date.
   await page.getByRole("radio", { name: "I know what I owe now" }).click();
@@ -140,13 +182,24 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText(/\(120 EMIs\)/)).toBeVisible();
   await page.getByLabel("Foreclosure charge, % of amount owed").fill("4");
   await expect(page.getByLabel("Plus 18% GST on the charge")).toBeChecked();
-  await expect(page.getByText(/Closing today would cost ₹10,47,200, including ₹47,200 in foreclosure charges/)).toBeVisible();
+  await expect(
+    page.getByText(
+      /Closing today would cost ₹10,47,200, including ₹47,200 in foreclosure charges/,
+    ),
+  ).toBeVisible();
   await page.getByLabel(/No date: tell me when I can close it/).check();
   await page.getByRole("button", { name: "Create goal" }).click();
-  await expect(page.getByRole("button", { name: /^Close my loan/ })).toHaveAttribute("aria-expanded", "true");
+  await expect(
+    page.getByRole("button", { name: /^Close my loan/ }),
+  ).toHaveAttribute("aria-expanded", "true");
   // Only one goal open at a time; dated goals sort before goals with no date.
-  await expect(page.getByRole("button", { name: /^House/ })).toHaveAttribute("aria-expanded", "false");
-  const order = await page.locator("main li > button[aria-expanded]").allInnerTexts();
+  await expect(page.getByRole("button", { name: /^House/ })).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  const order = await page
+    .locator("main li > button[aria-expanded]")
+    .allInnerTexts();
   expect(order[0]).toMatch(/^House/);
   expect(order[1]).toMatch(/^Close my loan/);
   await expect(page.getByText("Owed today", { exact: true })).toBeVisible();
@@ -159,13 +212,20 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByLabel("Share for this goal, %")).toHaveValue("40");
   await page.getByRole("button", { name: "Add investment" }).last().click();
   await expect(page.getByText("40% of it")).toBeVisible();
-  await expect(page.getByText(/your savings catch up with the cost of closing it/)).toBeVisible();
+  await expect(
+    page.getByText(/your savings catch up with the cost of closing it/),
+  ).toBeVisible();
   await expect(page.getByText(/4% \+ GST · ₹47,200 today/)).toBeVisible();
   await expect(page.getByText(/in foreclosure charges:/)).toBeVisible();
   await expect(page.getByText(/^Can close it around/)).toBeVisible();
-  let o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  let o = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
   expect(o, "loan goal overflows at 375px").toBeLessThanOrEqual(0);
-  await page.screenshot({ path: "test-results/goal-loan-375.png", fullPage: true });
+  await page.screenshot({
+    path: "test-results/goal-loan-375.png",
+    fullPage: true,
+  });
 
   // Update the fund once from here; the House goal follows.
   await page.getByRole("button", { name: "Edit Index SIP" }).click();
@@ -179,7 +239,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Edit Index SIP" }).click();
   await page.getByLabel("Share for this goal, %").fill("70");
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.getByText("Only 60% of this investment is free")).toBeVisible();
+  await expect(
+    page.getByText("Only 60% of this investment is free"),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
 
   // Turn on inflation for the House goal.
@@ -190,7 +252,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
 
   // Update amounts for everything in one go.
   await page.getByRole("button", { name: "Update", exact: true }).click();
-  await expect(page.getByText("Type in what each investment is worth today.")).toBeVisible();
+  await expect(
+    page.getByText("Type in what each investment is worth today."),
+  ).toBeVisible();
   await page.getByLabel("Bank FD value today").fill("120000");
   await expect(page.getByText("Was ₹1,00,000")).toBeVisible();
   await page.screenshot({ path: "test-results/update-375.png" });
@@ -200,10 +264,17 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Take the FD off the goal, then delete it from there.
   await page.getByRole("button", { name: "Edit Bank FD" }).click();
   await page.getByRole("button", { name: "Remove from goal" }).click();
-  await expect(page.getByRole("button", { name: "Edit Bank FD" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Edit Bank FD" })).toHaveCount(
+    0,
+  );
   await page.getByRole("button", { name: /^House/ }).click();
-  await expect(page.getByRole("button", { name: /^House/ })).toHaveAttribute("aria-expanded", "false");
-  o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  await expect(page.getByRole("button", { name: /^House/ })).toHaveAttribute(
+    "aria-expanded",
+    "false",
+  );
+  o = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
   expect(o, "/goals overflows at 375px").toBeLessThanOrEqual(0);
   await page.screenshot({ path: "test-results/goals-375.png", fullPage: true });
   await expect(page.getByText(/not linked to a goal/)).toHaveCount(0);
@@ -211,21 +282,35 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Deleting a goal keeps its investments.
   await page.getByRole("button", { name: /^Close my loan/ }).click();
   await page.getByRole("button", { name: "Delete goal" }).click();
-  await page.getByRole("button", { name: "Tap again to delete this goal" }).click();
+  await page
+    .getByRole("button", { name: "Tap again to delete this goal" })
+    .click();
   await expect(page).toHaveURL(/\/goals$/);
-  await expect(page.getByRole("button", { name: /^Close my loan/ })).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: /^Close my loan/ }),
+  ).toHaveCount(0);
   await page.getByRole("button", { name: /^House/ }).click();
-  await expect(page.getByRole("button", { name: "Edit Index SIP" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Edit Index SIP" }),
+  ).toBeVisible();
 
   // Money plan: suggests a split, and recording it takes it out of the plan.
   await page.getByRole("button", { name: /Plan my money/ }).click();
-  await expect(page.getByText(/in investments not linked to a goal/)).toBeVisible();
+  await expect(
+    page.getByText(/in investments not linked to a goal/),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Use this amount" }).click();
-  await expect(page.getByLabel("Savings to put toward goals now")).toHaveValue("2,80,000");
+  await expect(page.getByLabel("Savings to put toward goals now")).toHaveValue(
+    "2,80,000",
+  );
   await page.getByLabel("Can invest each month, in total").fill("40000");
   await page.getByRole("button", { name: "Suggest a split" }).click();
   await expect(page.getByText("Your money plan")).toBeVisible();
-  await expect(page.getByText("₹2,80,000 now · ₹30,000 a month free (after ₹10,000 of SIPs)")).toBeVisible();
+  await expect(
+    page.getByText(
+      "₹2,80,000 now · ₹30,000 a month free (after ₹10,000 of SIPs)",
+    ),
+  ).toBeVisible();
   await expect(page.getByText("Suggested", { exact: true })).toBeVisible();
   await expect(page.getByText(/into an equity index fund/)).toBeVisible();
   await page.screenshot({ path: "test-results/plan-375.png", fullPage: true });
@@ -233,8 +318,13 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText("Filled in from your plan.")).toBeVisible();
   await expect(page.getByLabel("Fund category")).toHaveValue("equity_index");
   await page.getByLabel("Nickname (optional)").fill("Planned index fund");
-  await page.getByRole("dialog").getByRole("button", { name: "Add investment" }).click();
-  await expect(page.getByRole("button", { name: "Edit Planned index fund" })).toBeVisible();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Add investment" })
+    .click();
+  await expect(
+    page.getByRole("button", { name: "Edit Planned index fund" }),
+  ).toBeVisible();
   await expect(page.getByText(/^₹0 now · /)).toBeVisible();
 
   // Bills fund: one liquid fund for known payments.
@@ -254,9 +344,14 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Gym amount").fill("12000");
   await page.getByLabel("Gym how often").selectOption("6");
   await page.getByLabel("Gym next due").fill(inMonths(1));
-  await page.screenshot({ path: "test-results/bills-form-375.png", fullPage: true });
+  await page.screenshot({
+    path: "test-results/bills-form-375.png",
+    fullPage: true,
+  });
   await page.getByRole("button", { name: "Create goal" }).click();
-  await expect(page.getByRole("button", { name: /^Bills fund/ })).toHaveAttribute("aria-expanded", "true");
+  await expect(
+    page.getByRole("button", { name: /^Bills fund/ }),
+  ).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByText("Should hold today")).toBeVisible();
   await expect(page.getByText("Put in each month")).toBeVisible();
   await expect(page.getByText("₹4,000", { exact: true }).first()).toBeVisible();
@@ -268,49 +363,79 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Nickname (optional)").fill("Bills liquid fund");
   await page.getByLabel("Value today").fill("30000");
   await page.getByLabel("Monthly SIP").fill("5000");
-  await page.getByRole("dialog").getByRole("button", { name: "Add investment" }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Add investment" })
+    .click();
   await expect(page.getByText(/^Next: Gym on .+, covered$/)).toBeVisible();
-  await expect(page.getByText("Covered", { exact: true }).first()).toBeVisible();
-  o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  await expect(
+    page.getByText("Covered", { exact: true }).first(),
+  ).toBeVisible();
+  o = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
   expect(o, "bills fund overflows at 375px").toBeLessThanOrEqual(0);
-  await page.screenshot({ path: "test-results/bills-fund-375.png", fullPage: true });
+  await page.screenshot({
+    path: "test-results/bills-fund-375.png",
+    fullPage: true,
+  });
 
   // Import a CAS statement: bad files are refused with a plain reason.
   const PP = "Parag Parikh Flexi Cap Fund - Direct Plan Growth";
   const LIQ = "Edelweiss Liquid Fund - Direct Growth";
   const MYST = "Quant Mystery Opportunities Fund - Direct Growth";
   await page.getByRole("button", { name: "How to get it" }).click();
-  await expect(page.getByRole("heading", { name: "Getting your CAS" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Getting your CAS" }),
+  ).toBeVisible();
   await expect(page.getByText(/camsonline\.com/)).toBeVisible();
   await page.getByRole("tab", { name: "Stocks & demat" }).click();
   await expect(page.getByText(/cdslindia\.com/)).toBeVisible();
   await page.screenshot({ path: "test-results/cas-guide-375.png" });
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.getByRole("link", { name: "Import a CAS statement" }).click();
-  await expect(page.getByRole("heading", { name: "Import a statement" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Import a statement" }),
+  ).toBeVisible();
   await page
     .getByLabel("Statement PDF")
-    .setInputFiles({ name: "notes.pdf", mimeType: "application/pdf", buffer: Buffer.from("hello") });
+    .setInputFiles({
+      name: "notes.pdf",
+      mimeType: "application/pdf",
+      buffer: Buffer.from("hello"),
+    });
   await page.getByRole("button", { name: /Read statement/ }).click();
   await expect(page.getByText(/^This isn't a PDF\./)).toBeVisible();
-  await page.getByLabel("Statement PDF").setInputFiles("tests/e2e/fixtures/locked.pdf");
+  await page
+    .getByLabel("Statement PDF")
+    .setInputFiles("tests/e2e/fixtures/locked.pdf");
   await page.getByLabel("PDF password").fill("wrong");
   await page.getByRole("button", { name: /Read statement/ }).click();
-  await expect(page.getByText("That password didn't open the statement.")).toBeVisible();
+  await expect(
+    page.getByText("That password didn't open the statement."),
+  ).toBeVisible();
 
   // The test statement: review, answer the questions, save.
   await page.getByLabel("PDF password").fill("fixture");
   await page.getByRole("button", { name: /Read statement/ }).click();
   await expect(page.getByText("CAMS statement · 30 Sep 2026")).toBeVisible();
-  await expect(page.getByText(/^4 holdings read\. Every value checks out/)).toBeVisible();
+  await expect(
+    page.getByText(/^4 holdings read\. Every value checks out/),
+  ).toBeVisible();
   await expect(page.getByText("What kind of fund is this?")).toBeVisible();
   await expect(page.getByLabel(`${MYST}: kind of fund`)).toHaveValue("");
   // Can't move on until every question is answered.
-  await expect(page.getByRole("button", { name: "Answer 1 question to continue" })).toBeDisabled();
+  await expect(
+    page.getByRole("button", { name: "Answer 1 question to continue" }),
+  ).toBeDisabled();
   await expect(page.getByLabel(`${PP}: kind of fund`)).toHaveValue("flexi_cap");
   await expect(page.getByLabel(`${LIQ}: monthly SIP`)).toHaveValue("5,000");
-  await page.getByLabel(`${PP}: this is`).selectOption({ label: "Update “Index SIP”" });
-  await page.getByLabel(`${LIQ}: this is`).selectOption({ label: "Update “Bills liquid fund”" });
+  await page
+    .getByLabel(`${PP}: this is`)
+    .selectOption({ label: "Update “Index SIP”" });
+  await page
+    .getByLabel(`${LIQ}: this is`)
+    .selectOption({ label: "Update “Bills liquid fund”" });
   await page.getByLabel(`${MYST}: kind of fund`).selectOption("flexi_cap");
   await page.getByLabel(`${MYST}: goal`).selectOption({ label: "House" });
   await page.getByLabel("Stocks in demat: this is").selectOption("skip");
@@ -318,63 +443,119 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText("What kind of fund is this?")).toHaveCount(0);
   await expect(page.getByText(/needs? a quick check/)).toHaveCount(0);
   await expect(page.getByText("was ₹4,00,000")).toBeVisible();
-  o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  o = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
   expect(o, "/import overflows at 375px").toBeLessThanOrEqual(0);
-  await page.screenshot({ path: "test-results/import-review-375.png", fullPage: true });
+  await page.screenshot({
+    path: "test-results/import-review-375.png",
+    fullPage: true,
+  });
   // Nothing is saved until the changes are confirmed.
   await page.getByRole("button", { name: /Review changes/ }).click();
   await expect(page.getByText("Check before saving")).toBeVisible();
-  await expect(page.getByRole("region", { name: "Will update" })).toContainText("Index SIP");
-  await expect(page.getByRole("region", { name: "Will update" })).toContainText("Value ₹4,00,000 → ₹4,20,000");
-  await expect(page.getByRole("region", { name: "Will add" })).toContainText(MYST);
-  await expect(page.getByRole("region", { name: "Will add" })).toContainText("Counts toward House");
-  await expect(page.getByRole("region", { name: "Will skip" })).toContainText("Stocks in demat");
-  await page.screenshot({ path: "test-results/import-confirm-375.png", fullPage: true });
+  await expect(page.getByRole("region", { name: "Will update" })).toContainText(
+    "Index SIP",
+  );
+  await expect(page.getByRole("region", { name: "Will update" })).toContainText(
+    "Value ₹4,00,000 → ₹4,20,000",
+  );
+  await expect(page.getByRole("region", { name: "Will add" })).toContainText(
+    MYST,
+  );
+  await expect(page.getByRole("region", { name: "Will add" })).toContainText(
+    "Counts toward House",
+  );
+  await expect(page.getByRole("region", { name: "Will skip" })).toContainText(
+    "Stocks in demat",
+  );
+  await page.screenshot({
+    path: "test-results/import-confirm-375.png",
+    fullPage: true,
+  });
   await page.getByRole("button", { name: "Go back" }).click();
-  await expect(page.getByLabel(`${MYST}: kind of fund`)).toHaveValue("flexi_cap");
+  await expect(page.getByLabel(`${MYST}: kind of fund`)).toHaveValue(
+    "flexi_cap",
+  );
   await page.getByRole("button", { name: /Review changes/ }).click();
   await page.getByRole("button", { name: "Confirm and save" }).click();
-  await expect(page.getByText("Updated 2 and added 1 investment.")).toBeVisible();
+  await expect(
+    page.getByText("Updated 2 and added 1 investment."),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Back to your goals" }).click();
   await page.getByRole("button", { name: /^Bills fund/ }).click();
-  await expect(page.getByRole("button", { name: "Edit Bills liquid fund" })).toContainText("₹31,000");
+  await expect(
+    page.getByRole("button", { name: "Edit Bills liquid fund" }),
+  ).toContainText("₹31,000");
 
   // Importing again matches every fund by its ISIN, with the category kept.
   await page.getByRole("link", { name: "Import a CAS statement" }).click();
-  await page.getByLabel("Statement PDF").setInputFiles("tests/e2e/fixtures/locked.pdf");
+  await page
+    .getByLabel("Statement PDF")
+    .setInputFiles("tests/e2e/fixtures/locked.pdf");
   await page.getByLabel("PDF password").fill("fixture");
   await page.getByRole("button", { name: /Read statement/ }).click();
   await expect(page.getByText("CAMS statement · 30 Sep 2026")).toBeVisible();
-  for (const name of [PP, LIQ, MYST]) await expect(page.getByLabel(`${name}: this is`)).not.toHaveValue("new");
-  await expect(page.getByLabel(`${MYST}: kind of fund`)).toHaveValue("flexi_cap");
+  for (const name of [PP, LIQ, MYST])
+    await expect(page.getByLabel(`${name}: this is`)).not.toHaveValue("new");
+  await expect(page.getByLabel(`${MYST}: kind of fund`)).toHaveValue(
+    "flexi_cap",
+  );
   await expect(page.getByText("What kind of fund is this?")).toHaveCount(0);
   await page.getByLabel("Stocks in demat: this is").selectOption("skip");
   await page.getByRole("button", { name: /Review changes/ }).click();
-  await expect(page.getByRole("region", { name: "Already up to date" })).toContainText("Index SIP");
-  await expect(page.getByRole("button", { name: "Confirm and save" })).toBeDisabled();
+  await expect(
+    page.getByRole("region", { name: "Already up to date" }),
+  ).toContainText("Index SIP");
+  await expect(
+    page.getByRole("button", { name: "Confirm and save" }),
+  ).toBeDisabled();
   await page.getByRole("button", { name: "Go back" }).click();
 
   // Portfolio: everything held, split by asset class, with growth.
   await page.getByRole("link", { name: "Portfolio" }).click();
   await expect(page.getByRole("heading", { name: "Portfolio" })).toBeVisible();
   await expect(page.getByText("Where your money is")).toBeVisible();
-  await expect(page.getByRole("group", { name: "Where your money is" }).getByRole("button", { name: /^Equity:/ })).toBeVisible();
+  await expect(
+    page
+      .getByRole("group", { name: "Where your money is" })
+      .getByRole("button", { name: /^Equity:/ }),
+  ).toBeVisible();
   await expect(page.getByText(/grown$/)).toBeVisible();
-  await expect(page.getByRole("list", { name: "Holdings" })).toContainText("Index SIP");
-  await expect(page.getByRole("list", { name: "Holdings" })).toContainText("+₹70,000 (+20%)");
-  await page.getByRole("group", { name: "Where your money is" }).getByRole("button", { name: /^Equity:/ }).click();
+  await expect(page.getByRole("list", { name: "Holdings" })).toContainText(
+    "Index SIP",
+  );
+  await expect(page.getByRole("list", { name: "Holdings" })).toContainText(
+    "+₹70,000 (+20%)",
+  );
+  await page
+    .getByRole("group", { name: "Where your money is" })
+    .getByRole("button", { name: /^Equity:/ })
+    .click();
   await expect(page.getByText(/^Equity · ₹/)).toBeVisible();
-  o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  o = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
   expect(o, "/portfolio overflows at 375px").toBeLessThanOrEqual(0);
-  await page.screenshot({ path: "test-results/portfolio-375.png", fullPage: true });
+  await page.screenshot({
+    path: "test-results/portfolio-375.png",
+    fullPage: true,
+  });
 
   // Ask: off until turned on, asks a follow-up, answers with your own names.
   await page.getByRole("link", { name: "Ask" }).click();
-  await expect(page.getByText("What's sent to the AI (through OpenRouter)")).toBeVisible();
-  await page.screenshot({ path: "test-results/ask-consent-375.png", fullPage: true });
+  await expect(
+    page.getByText("What's sent to the AI (through OpenRouter)"),
+  ).toBeVisible();
+  await page.screenshot({
+    path: "test-results/ask-consent-375.png",
+    fullPage: true,
+  });
   await page.getByRole("button", { name: "Turn on Ask" }).click();
   await page.getByRole("button", { name: /skin treatment/ }).click();
-  await expect(page.getByText("How much do you need, and by when?")).toBeVisible();
+  await expect(
+    page.getByText("How much do you need, and by when?"),
+  ).toBeVisible();
   await page.getByLabel("Your question").fill("₹50,000 in two weeks");
   await page.getByRole("button", { name: "Send" }).click();
   const answer = page.locator(`ol[aria-label="Conversation"] > li`).last();
@@ -384,8 +565,17 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(answer).not.toContainText("[I");
   await page.screenshot({ path: "test-results/ask-375.png", fullPage: true });
   // What reached the AI: codes and rounded amounts, none of your names.
-  const sent = JSON.stringify(await (await page.request.get("http://127.0.0.1:5329/last")).json());
-  for (const name of ["Bank FD", "House", "Index SIP", "Quant Mystery", "Bills liquid fund", email]) {
+  const sent = JSON.stringify(
+    await (await page.request.get("http://127.0.0.1:5329/last")).json(),
+  );
+  for (const name of [
+    "Bank FD",
+    "House",
+    "Index SIP",
+    "Quant Mystery",
+    "Bills liquid fund",
+    email,
+  ]) {
     expect(sent, `${name} was sent to the AI`).not.toContain(name);
   }
   expect(sent).toContain("[G1] house goal");
@@ -400,7 +590,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("link", { name: "Settings" }).click();
   await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
   await expect(page.getByText("Invite people")).toHaveCount(0);
-  const service = createClient(SUPABASE_URL, SECRET, { auth: { persistSession: false } });
+  const service = createClient(SUPABASE_URL, SECRET, {
+    auth: { persistSession: false },
+  });
   await service.from("app_admins").insert({ email });
   const friend = `friend-${Date.now()}@example.test`;
   try {
@@ -408,22 +600,71 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     await expect(page.getByText("Invite people")).toBeVisible();
     const people = page.getByRole("list", { name: "Invited people" });
     await expect(people).toContainText(email);
-    await expect(people.getByRole("button", { name: `Remove invite for ${email}` })).toHaveCount(0);
+    await expect(
+      people.getByRole("button", { name: `Remove invite for ${email}` }),
+    ).toHaveCount(0);
     await page.getByLabel("Their email").fill(friend.toUpperCase());
     await page.getByLabel("Note (optional)").fill("Riya");
     await page.getByRole("button", { name: "Invite", exact: true }).click();
-    await expect(page.getByText("Invited. Now send them the message.")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Send invite message" })).toBeVisible();
+    await expect(
+      page.getByText("Invited. Now send them the message."),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Send invite message" }),
+    ).toBeVisible();
     await expect(people).toContainText(friend);
     await expect(people).toContainText("Riya");
-    await page.screenshot({ path: "test-results/invites-375.png", fullPage: true });
-    await people.getByRole("button", { name: `Remove invite for ${friend}` }).click();
+    await page.screenshot({
+      path: "test-results/invites-375.png",
+      fullPage: true,
+    });
+    await people
+      .getByRole("button", { name: `Remove invite for ${friend}` })
+      .click();
     await expect(page.getByText(`Removed ${friend}.`)).toBeVisible();
     await expect(people).not.toContainText(friend);
   } finally {
     await service.from("app_admins").delete().eq("email", email);
     await service.from("allowed_emails").delete().eq("email", friend);
   }
+
+  // Credit cards: benefits and a spend milestone with progress.
+  await page.getByRole("link", { name: "Cards", exact: true }).click();
+  await expect(
+    page.getByRole("heading", { name: "Credit cards" }),
+  ).toBeVisible();
+  await expect(
+    page.getByText("Track your cards' benefits and milestones"),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Add a card" }).click();
+  await page.getByLabel("Card name").fill("Regalia Gold");
+  await page.getByLabel("Annual fee").fill("2500");
+  await page.getByLabel("Card year starts").fill("2026-04-10");
+  await page
+    .getByLabel("Benefits, one per line")
+    .fill("4 lounge visits a quarter\nFuel surcharge waiver");
+  await page.getByRole("button", { name: "Add card" }).click();
+  const cardRow = page.getByRole("button", { name: /Regalia Gold/ });
+  await expect(cardRow).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByText("Fuel surcharge waiver")).toBeVisible();
+  await page.getByRole("button", { name: "Add milestone" }).click();
+  await page.getByRole("button", { name: "+ Annual fee waiver" }).click();
+  await page.getByLabel("Spend target").fill("400000");
+  await page.getByLabel("Spent so far this period").fill("100000");
+  await page
+    .getByRole("button", { name: "Add milestone", exact: true })
+    .last()
+    .click();
+  await expect(
+    page.getByRole("progressbar", { name: "Annual fee waiver progress" }),
+  ).toHaveAttribute("aria-valuenow", "25");
+  await page.getByLabel("Annual fee waiver: spent so far").fill("400000");
+  await page.getByRole("button", { name: "Update", exact: true }).click();
+  await expect(
+    page.getByRole("progressbar", { name: "Annual fee waiver progress" }),
+  ).toHaveAttribute("aria-valuenow", "100");
+  await expect(page.getByText("Annual fee waived: reached")).toBeVisible();
+  await page.screenshot({ path: "test-results/cards-375.png", fullPage: true });
 
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();
