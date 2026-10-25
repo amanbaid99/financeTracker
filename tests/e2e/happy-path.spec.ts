@@ -62,6 +62,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Code from the email", { exact: true }).fill(code);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/goals$/);
+  // Old pages a Home Screen app may still open go to Goals.
+  for (const old of ["/dashboard", "/month", "/holdings/new", "/budget/build", "/update"]) {
+    await page.goto(old);
+    await expect(page).toHaveURL(/\/goals$/);
+  }
   // The session is stored in long-lived, server-set cookies (not capped at 7 days).
   const authCookies = (await page.context().cookies()).filter((c) => c.name.includes("auth-token"));
   expect(authCookies.length).toBeGreaterThan(0);
