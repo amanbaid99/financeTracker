@@ -1,6 +1,7 @@
 import {
   AlertTriangle,
   Bell,
+  RefreshCw,
   CheckCircle2,
   Circle,
   CircleDashed,
@@ -79,13 +80,33 @@ export default async function DashboardPage() {
   );
   const base = Math.max(1, budget.baseIncome);
   const currentId = nextFocus?.step.id;
+  const lastUpdated = raw.holdings.reduce<string | null>(
+    (latest, h) => (!latest || h.updated_at > latest ? h.updated_at : latest),
+    null,
+  );
+  const daysSince = lastUpdated ? Math.floor((Date.parse(today) - Date.parse(lastUpdated.slice(0, 10))) / 86_400_000) : null;
+
 
   return (
     <main className="space-y-5">
-      <p className="text-sm text-muted-foreground">
-        Hi {raw.profile.name.split(" ")[0] || "there"}, here&apos;s where your
-        next rupee should go.
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted-foreground">
+          Hi {raw.profile.name.split(" ")[0] || "there"}, here&apos;s where your next rupee should go.
+        </p>
+        <Link
+          href="/update"
+          className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium hover:bg-muted ${
+            daysSince !== null && daysSince >= 30 ? "border-warning/50 bg-warning-soft text-warning" : ""
+          }`}
+        >
+          <RefreshCw className="size-3.5" aria-hidden />
+          {daysSince === null
+            ? "Update balances"
+            : daysSince === 0
+              ? "Balances updated today"
+              : `Update balances · last ${daysSince} day${daysSince === 1 ? "" : "s"} ago`}
+        </Link>
+      </div>
 
       {!budget.cashFlowOk && !analysis.noIncome && (
         <div role="alert" className="flex gap-3 rounded-xl border border-danger/40 bg-danger-soft p-3 text-sm text-danger">

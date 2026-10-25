@@ -1,6 +1,15 @@
 "use client";
 
-import { CalendarCheck, Home, PiggyBank, Settings, Target, UserRound, Wallet } from "lucide-react";
+import {
+  CalendarCheck,
+  Home,
+  PiggyBank,
+  RefreshCw,
+  Settings,
+  Target,
+  UserRound,
+  Wallet,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "@/components/logo";
@@ -40,17 +49,30 @@ export function AppNav() {
               </Link>
             ))}
           </nav>
-          <Link
-            href="/settings"
-            aria-label="Settings"
-            aria-current={active("/settings") ? "page" : undefined}
-            className={cn(
-              "inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground",
-              active("/settings") && "bg-muted text-foreground",
-            )}
-          >
-            <Settings className="size-5" aria-hidden />
-          </Link>
+          <div className="flex items-center gap-1 md:ml-2">
+            <Link
+              href="/update"
+              aria-current={active("/update") ? "page" : undefined}
+              className={cn(
+                "inline-flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium hover:bg-muted",
+                active("/update") && "bg-muted",
+              )}
+            >
+              <RefreshCw className="size-4" aria-hidden />
+              Update
+            </Link>
+            <Link
+              href="/settings"
+              aria-label="Settings"
+              aria-current={active("/settings") ? "page" : undefined}
+              className={cn(
+                "inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground",
+                active("/settings") && "bg-muted text-foreground",
+              )}
+            >
+              <Settings className="size-5" aria-hidden />
+            </Link>
+          </div>
         </div>
       </header>
       <nav

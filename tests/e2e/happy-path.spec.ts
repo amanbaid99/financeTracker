@@ -277,4 +277,21 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await expect(page).toHaveURL(/\/details$/);
   await page.goto("/dashboard");
   await expect(page.getByRole("heading", { name: "You're between incomes" })).toHaveCount(0);
+
+  // Quick update: change a bank balance and a loan in one save.
+  await page.getByRole("link", { name: "Update", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Quick update" })).toBeVisible();
+  await page.getByLabel("Salary account balance today").fill("90000");
+  await page.getByLabel(/Credit card debt.*amount still owed/).fill("25000");
+  await expect(page.getByText("2 changes not saved yet")).toBeVisible();
+  await page.getByRole("button", { name: "Save all" }).click();
+  await expect(page.getByText("Saved 2 updates.", { exact: false })).toBeVisible();
+  await page.reload();
+  await expect(page.getByLabel("Salary account balance today")).toHaveValue("90,000");
+  await expect(page.getByLabel(/Credit card debt.*amount still owed/)).toHaveValue("25,000");
+  const updateOverflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(updateOverflow, "/update overflows at 375px").toBeLessThanOrEqual(0);
+  await page.screenshot({ path: "test-results/update-375.png", fullPage: false });
+  await page.goto("/dashboard");
+  await expect(page.getByText("Balances updated today")).toBeVisible();
 });

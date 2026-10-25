@@ -672,6 +672,40 @@ export async function deleteMonthBill(input: { seriesId: string; stopRepeating: 
   }
 }
 
+const quickUpdateSchema = z.object({
+  holdings: z.array(z.object({ id: uuid, value: money })).max(100).default([]),
+  cards: z.array(z.object({ id: uuid, outstanding: money })).max(40).default([]),
+  liabilities: z.array(z.object({ id: uuid, outstanding: money })).max(40).default([]),
+  goals: z.array(z.object({ id: uuid, saved: money })).max(40).default([]),
+});
+
+/** Saves many balances at once from the Quick update screen. Only changed rows are sent. */
+export async function quickUpdate(input: z.input<typeof quickUpdateSchema>): Promise<ActionResult> {
+  try {
+    const v = quickUpdateSchema.parse(input);
+    const { supabase, userId } = await session();
+    const results = await Promise.all([
+      ...v.holdings.map((h) =>
+        supabase.from("holdings").update({ current_value: h.value }).eq("id", h.id).eq("user_id", userId),
+      ),
+      ...v.cards.map((c) =>
+        supabase.from("credit_cards").update({ outstanding: c.outstanding }).eq("id", c.id).eq("user_id", userId),
+      ),
+      ...v.liabilities.map((l) =>
+        supabase.from("liabilities").update({ outstanding: l.outstanding }).eq("id", l.id).eq("user_id", userId),
+      ),
+      ...v.goals.map((g) =>
+        supabase.from("goals").update({ saved_amount: g.saved }).eq("id", g.id).eq("user_id", userId),
+      ),
+    ]);
+    const failed = results.find((r) => r.error);
+    if (failed?.error) throw new Error(failed.error.message);
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 export async function updateBankBalance(input: { holdingId: string; value: number }): Promise<ActionResult> {
   try {
     const v = z.object({ holdingId: uuid, value: money }).parse(input);
