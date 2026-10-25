@@ -26,7 +26,7 @@ export async function finishSignIn(supabase: Supabase, userId: string, consentVe
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("theme, accent, onboarding_completed_at")
+    .select("theme, accent")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -35,5 +35,5 @@ export async function finishSignIn(supabase: Supabase, userId: string, consentVe
     store.set(THEME_COOKIE, profile.theme, THEME_COOKIE_OPTIONS);
     store.set(ACCENT_COOKIE, profile.accent, THEME_COOKIE_OPTIONS);
   }
-  return profile?.onboarding_completed_at ? "/dashboard" : "/onboarding/basics";
+  return "/goals";
 }

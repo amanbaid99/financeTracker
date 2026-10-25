@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Tracker",
     short_name: "Tracker",
     description: "What should your next rupee go toward?",
-    start_url: "/dashboard",
+    start_url: "/goals",
     scope: "/",
     display: "standalone",
     background_color: "#ffffff",
