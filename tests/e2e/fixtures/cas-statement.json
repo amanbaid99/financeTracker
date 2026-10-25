@@ -1,0 +1,28 @@
+{
+  "source": "CAMS",
+  "detailed": true,
+  "statementDate": "2026-09-30",
+  "holdings": [
+    {
+      "key": "INF879O01027", "kind": "mutual_fund", "name": "Parag Parikh Flexi Cap Fund - Direct Plan Growth",
+      "isin": "INF879O01027", "amc": "PPFAS Mutual Fund", "fundType": "EQUITY", "units": 4893.12, "nav": 85.835,
+      "value": 420000, "navDate": "2026-09-30", "sipMonthly": 10000, "lastSipDate": "2026-09-05", "count": 1, "issues": []
+    },
+    {
+      "key": "INF754K01JJ4", "kind": "mutual_fund", "name": "Edelweiss Liquid Fund - Direct Growth",
+      "isin": "INF754K01JJ4", "amc": "Edelweiss Mutual Fund", "fundType": "DEBT", "units": 9.5, "nav": 3263.16,
+      "value": 31000, "navDate": "2026-09-30", "sipMonthly": 5000, "lastSipDate": "2026-09-10", "count": 1, "issues": []
+    },
+    {
+      "key": "INF000Q01Z99", "kind": "mutual_fund", "name": "Quant Mystery Opportunities Fund - Direct Growth",
+      "isin": "INF000Q01Z99", "amc": "Some AMC", "fundType": null, "units": 100, "nav": 250,
+      "value": 25000, "navDate": "2026-09-30", "sipMonthly": null, "lastSipDate": null, "count": 1, "issues": []
+    },
+    {
+      "key": "DEMAT-STOCKS", "kind": "stock", "name": "Stocks in demat", "isin": null, "amc": null, "fundType": null,
+      "units": 0, "nav": 0, "value": 47000, "navDate": "2026-09-30", "sipMonthly": null, "lastSipDate": null,
+      "count": 4, "issues": []
+    }
+  ],
+  "warnings": []
+}

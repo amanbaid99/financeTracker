@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/cas_parse.py": {
+      "maxDuration": 30,
+      "excludeFiles": "{.next,node_modules,tests,public,app,components,lib,supabase,scripts,.venv-cas,test-results}/**"
+    }
+  }
+}

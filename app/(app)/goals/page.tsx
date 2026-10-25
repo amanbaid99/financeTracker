@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { FileUp, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GoalList } from "@/components/goal-list";
@@ -79,6 +79,12 @@ export default async function GoalsPage({
             <Plus /> New goal
           </Link>
         </div>
+        <Link
+          href="/import"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-2 hover:underline"
+        >
+          <FileUp className="size-4" aria-hidden /> Import a CAS statement
+        </Link>
       </div>
 
       {goals.length === 0 ? (

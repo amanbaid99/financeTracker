@@ -354,6 +354,7 @@ export type Database = {
           current_value: number;
           expected_return_pct: number | null;
           id: string;
+          isin: string | null;
           kind: Database["public"]["Enums"]["holding_kind"];
           monthly_sip: number | null;
           name: string | null;
@@ -370,6 +371,7 @@ export type Database = {
           current_value?: number;
           expected_return_pct?: number | null;
           id?: string;
+          isin?: string | null;
           kind: Database["public"]["Enums"]["holding_kind"];
           monthly_sip?: number | null;
           name?: string | null;
@@ -385,6 +387,7 @@ export type Database = {
           current_value?: number;
           expected_return_pct?: number | null;
           id?: string;
+          isin?: string | null;
           kind?: Database["public"]["Enums"]["holding_kind"];
           monthly_sip?: number | null;
           name?: string | null;

@@ -40,21 +40,24 @@ export default function PrivacyPage() {
         <ul>
           <li>Your email address and, if you use Google sign-in, your name from Google.</li>
           <li>
-            What you choose to enter: age, city type, household, income, expenses, insurance, loans, savings,
-            investments and goals. Almost everything is optional.
+            What you choose to enter: your goals, the investments saving for them (names, values, SIPs), loan details
+            for loan goals, planned payments for a bills fund, and your money plan amounts.
+          </li>
+          <li>
+            From a statement you import: each fund&apos;s name, ISIN, category, value and SIP. Nothing else from the
+            statement is kept.
           </li>
           <li>Your settings (theme, colour) and a record of what you agreed to and when.</li>
-          <li>A count of AI explanation requests (time and model used, never the content) to enforce daily limits.</li>
         </ul>
         <p>
-          We never ask for bank account numbers, card numbers, passwords to your bank, or your PAN. Please don&apos;t
-          type them into free-text fields.
+          We never ask for bank account numbers, card numbers or passwords to your bank. Please don&apos;t type them
+          into free-text fields.
         </p>
       </Section>
 
       <Section title="How it is used">
         <p>
-          Only to show you your own budget, priorities and goal plans. We do not sell, rent or share your data, show
+          Only to show you your own goals, plans and progress. We do not sell, rent or share your data, show
           ads, or use it for marketing.
         </p>
       </Section>
@@ -69,26 +72,37 @@ export default function PrivacyPage() {
         </ul>
       </Section>
 
-      <Section title="AI explanations (optional)">
+      <Section title="Importing a statement (optional)">
         <p>
-          AI explanations are off until you turn them on. When on, Tracker sends a short summary to OpenRouter, which
-          passes it to an AI model provider, to write a plain-language explanation.
+          You can upload a Consolidated Account Statement (CAS) from CAMS, KFintech, NSDL or CDSL to update your
+          investments.
         </p>
         <ul>
           <li>
-            The summary contains only rounded numbers that Tracker has already worked out (for example &quot;gap ₹2.4
-            lakh, step: emergency fund&quot;) and general labels like &quot;retirement&quot;.
+            The PDF and its password are read on Tracker&apos;s server (hosted on Vercel) and thrown away straight
+            after. Neither is stored or logged.
           </li>
           <li>
-            It never includes your name, email, age, date of birth, city, goal names you typed, or the names of funds
-            or institutions you hold.
+            Your name, PAN, address, email, phone, folio numbers and demat account numbers are dropped while reading
+            and never reach the app or its database.
           </li>
           <li>
-            Some free AI models may keep or learn from what they receive. Because only anonymised numbers are sent,
-            nothing in it identifies you.
+            Nothing is saved until you review it and tap save. You choose what updates, what is added and what is
+            skipped.
           </li>
         </ul>
-        <p>You can turn AI explanations off at any time in Settings.</p>
+      </Section>
+
+      <Section title="AI">
+        <p>
+          When a fund&apos;s category can&apos;t be worked out from its name, Tracker may ask AI models through
+          OpenRouter. Only the fund&apos;s public scheme name is sent, never amounts, units, ISINs or anything about
+          you. Two models must agree before an answer is used; otherwise you&apos;re asked to pick.
+        </p>
+        <p>
+          Some free AI models may keep or learn from what they receive. Since only public fund names are sent, nothing
+          in it identifies you.
+        </p>
       </Section>
 
       <Section title="Cookies">
@@ -104,7 +118,6 @@ export default function PrivacyPage() {
           <li>
             Delete your account from Settings. This permanently removes every row of your data. It cannot be undone.
           </li>
-          <li>Withdraw AI consent at any time; nothing further is sent.</li>
         </ul>
         {contact ? (
           <p>

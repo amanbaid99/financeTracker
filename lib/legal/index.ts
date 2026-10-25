@@ -1,6 +1,6 @@
 // Versions of the legal texts. Bump a version when its text changes so users
 // are asked to accept the new one; every acceptance is stored in `consents`.
-export const PRIVACY_VERSION = "2026-10-24";
+export const PRIVACY_VERSION = "2026-10-25";
 export const DISCLAIMER_VERSION = "2026-10-24";
 export const AI_CONSENT_VERSION = "2026-10-24";
 

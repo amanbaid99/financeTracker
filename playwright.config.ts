@@ -14,10 +14,21 @@ export default defineConfig({
     ...(executablePath ? { launchOptions: { executablePath } } : {}),
   },
   projects: [{ name: "mobile", use: { ...devices["Desktop Chrome"], viewport: { width: 375, height: 800 } } }],
-  webServer: {
-    command: "npm run start",
-    url: "http://localhost:3000/login",
-    reuseExistingServer: true,
-    timeout: 120_000,
-  },
+  // Build with CAS_PARSER_DEV_URL=http://127.0.0.1:5328 so /api/cas_parse
+  // reaches the local statement reader below.
+  webServer: [
+    {
+      command: "npm run start",
+      url: "http://localhost:3000/login",
+      reuseExistingServer: true,
+      timeout: 120_000,
+    },
+    {
+      command: ".venv-cas/bin/python scripts/cas_dev_server.py",
+      port: 5328,
+      reuseExistingServer: true,
+      timeout: 60_000,
+      env: { CAS_FAKE_FIXTURE: "tests/e2e/fixtures/cas-statement.json" },
+    },
+  ],
 });

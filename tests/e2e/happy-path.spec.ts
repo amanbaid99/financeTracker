@@ -270,6 +270,59 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   expect(o, "bills fund overflows at 375px").toBeLessThanOrEqual(0);
   await page.screenshot({ path: "test-results/bills-fund-375.png", fullPage: true });
 
+  // Import a CAS statement: bad files are refused with a plain reason.
+  const PP = "Parag Parikh Flexi Cap Fund - Direct Plan Growth";
+  const LIQ = "Edelweiss Liquid Fund - Direct Growth";
+  const MYST = "Quant Mystery Opportunities Fund - Direct Growth";
+  await page.getByRole("link", { name: "Import a CAS statement" }).click();
+  await expect(page.getByRole("heading", { name: "Import a statement" })).toBeVisible();
+  await page
+    .getByLabel("Statement PDF")
+    .setInputFiles({ name: "notes.pdf", mimeType: "application/pdf", buffer: Buffer.from("hello") });
+  await page.getByRole("button", { name: /Read statement/ }).click();
+  await expect(page.getByText(/^This isn't a PDF\./)).toBeVisible();
+  await page.getByLabel("Statement PDF").setInputFiles("tests/e2e/fixtures/locked.pdf");
+  await page.getByLabel("PDF password").fill("wrong");
+  await page.getByRole("button", { name: /Read statement/ }).click();
+  await expect(page.getByText("That password didn't open the statement.")).toBeVisible();
+
+  // The test statement: review, answer the questions, save.
+  await page.getByLabel("PDF password").fill("fixture");
+  await page.getByRole("button", { name: /Read statement/ }).click();
+  await expect(page.getByText("CAMS statement · 30 Sep 2026")).toBeVisible();
+  await expect(page.getByText(/^4 holdings read\. Every value checks out/)).toBeVisible();
+  await expect(page.getByText("What kind of fund is this?")).toBeVisible();
+  await expect(page.getByLabel(`${MYST}: kind of fund`)).toHaveValue("");
+  await expect(page.getByLabel(`${PP}: kind of fund`)).toHaveValue("flexi_cap");
+  await expect(page.getByLabel(`${LIQ}: monthly SIP`)).toHaveValue("5,000");
+  await page.getByLabel(`${PP}: this is`).selectOption({ label: "Update “Index SIP”" });
+  await page.getByLabel(`${LIQ}: this is`).selectOption({ label: "Update “Bills liquid fund”" });
+  await page.getByLabel(`${MYST}: kind of fund`).selectOption("flexi_cap");
+  await page.getByLabel(`${MYST}: goal`).selectOption({ label: "House" });
+  await page.getByLabel("Stocks in demat: this is").selectOption("skip");
+  // Answered questions clear, and a fund picked by hand shows its old value.
+  await expect(page.getByText("What kind of fund is this?")).toHaveCount(0);
+  await expect(page.getByText(/needs? a quick check/)).toHaveCount(0);
+  await expect(page.getByText("was ₹4,00,000")).toBeVisible();
+  o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(o, "/import overflows at 375px").toBeLessThanOrEqual(0);
+  await page.screenshot({ path: "test-results/import-review-375.png", fullPage: true });
+  await page.getByRole("button", { name: "Save these values" }).click();
+  await expect(page.getByText("Updated 2 and added 1 investment.")).toBeVisible();
+  await page.getByRole("button", { name: "Back to your goals" }).click();
+  await page.getByRole("button", { name: /^Bills fund/ }).click();
+  await expect(page.getByRole("button", { name: "Edit Bills liquid fund" })).toContainText("₹31,000");
+
+  // Importing again matches every fund by its ISIN, with the category kept.
+  await page.getByRole("link", { name: "Import a CAS statement" }).click();
+  await page.getByLabel("Statement PDF").setInputFiles("tests/e2e/fixtures/locked.pdf");
+  await page.getByLabel("PDF password").fill("fixture");
+  await page.getByRole("button", { name: /Read statement/ }).click();
+  await expect(page.getByText("CAMS statement · 30 Sep 2026")).toBeVisible();
+  for (const name of [PP, LIQ, MYST]) await expect(page.getByLabel(`${name}: this is`)).not.toHaveValue("new");
+  await expect(page.getByLabel(`${MYST}: kind of fund`)).toHaveValue("flexi_cap");
+  await expect(page.getByText("What kind of fund is this?")).toHaveCount(0);
+
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("radio", { name: "Beige" }).click();
