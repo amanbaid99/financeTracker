@@ -128,6 +128,8 @@ def _holding(**kw: Any) -> dict:
         "navDate": None,
         "sipMonthly": None,
         "lastSipDate": None,
+        # What was put in (cost), when the statement shows it; None if unknown.
+        "invested": None,
         "count": 1,
         "issues": [],
     }
@@ -159,6 +161,8 @@ def normalise_mf_statement(cas: Any) -> dict:
             if detailed and abs(_num(s.close) - _num(s.close_calculated)) > 0.01:
                 issues.append("Units don't add up from the transactions listed.")
             sip, last_sip = detect_sip(s.transactions, end) if detailed else (None, None)
+            cost = getattr(val, "cost", None)
+            invested = _num(cost) if cost is not None else None
             key = (s.isin or s.scheme or "").strip().upper()
             row = rows.get(key)
             if row is None:
@@ -175,6 +179,7 @@ def normalise_mf_statement(cas: Any) -> dict:
                     navDate=_iso(_date(val.date)),
                     sipMonthly=sip,
                     lastSipDate=last_sip,
+                    invested=invested,
                     issues=issues,
                 )
             else:
@@ -183,6 +188,8 @@ def normalise_mf_statement(cas: Any) -> dict:
                 row["value"] += value
                 row["count"] += 1
                 row["issues"] += issues
+                # Cost is only known if every folio of the fund shows it.
+                row["invested"] = None if row["invested"] is None or invested is None else row["invested"] + invested
                 if sip:
                     row["sipMonthly"] = (row["sipMonthly"] or 0) + sip
                 if last_sip and (not row["lastSipDate"] or last_sip > row["lastSipDate"]):
@@ -192,6 +199,8 @@ def normalise_mf_statement(cas: Any) -> dict:
     for h in holdings:
         h["value"] = int(round(h["value"]))
         h["units"] = round(h["units"], 4)
+        if h["invested"] is not None:
+            h["invested"] = int(round(h["invested"]))
     if closed:
         warnings.append(f"{closed} fund{'s' if closed != 1 else ''} with no units left were skipped.")
     warnings += [str(w) for w in getattr(cas, "parse_warnings", []) or []]
@@ -236,10 +245,14 @@ def normalise_demat_statement(cas: Any) -> dict:
                 continue
             key = (m.isin or m.name or "").strip().upper()
             issues = [] if value_matches(units, nav, v) else ["Value doesn't equal units × NAV on the statement."]
+            tc = getattr(m, "total_cost", None)
+            invested = _num(tc) if tc is not None else None
             if key in funds:
                 funds[key]["units"] += units
                 funds[key]["value"] += v
                 funds[key]["count"] += 1
+                prev = funds[key]["invested"]
+                funds[key]["invested"] = None if prev is None or invested is None else prev + invested
                 funds[key]["issues"] += issues
             else:
                 funds[key] = _holding(
@@ -252,6 +265,7 @@ def normalise_demat_statement(cas: Any) -> dict:
                     nav=nav,
                     value=v,
                     navDate=_iso(end),
+                    invested=invested,
                     issues=issues,
                 )
         balance = _num(getattr(acc, "balance", 0))
@@ -282,6 +296,8 @@ def normalise_demat_statement(cas: Any) -> dict:
     for h in holdings:
         h["value"] = int(round(h["value"]))
         h["units"] = round(h["units"], 4)
+        if h["invested"] is not None:
+            h["invested"] = int(round(h["invested"]))
     warnings += [str(w) for w in getattr(cas, "parse_warnings", []) or []]
     return {
         "source": _name(cas.file_type) or "NSDL",

@@ -93,6 +93,7 @@ export function InvestmentSheet({
     investment?.monthlySip || prefill?.monthlySip || null,
   );
   const [ret, setRet] = useState(investment?.returnPct?.toString() ?? "");
+  const [invested, setInvested] = useState<number | null>(investment?.invested ?? null);
   const [percent, setPercent] = useState(
     String(initialPercent ?? (investment ? free(investment.id) : 100)),
   );
@@ -146,6 +147,7 @@ export function InvestmentSheet({
         value: value ?? 0,
         monthlySip: sip ?? 0,
         returnPct: ret.trim() === "" ? null : Number(ret),
+        invested,
         percent: pct,
         fromPlan: !!prefill,
       }),
@@ -326,6 +328,13 @@ export function InvestmentSheet({
                     placeholder={String(dflt)}
                     onChange={(e) => setRet(e.target.value)}
                   />
+                </Field>
+                <Field
+                  label="Amount invested (optional)"
+                  htmlFor="i-invested"
+                  hint="What you've put in so far. Shows how much it has grown."
+                >
+                  <MoneyInput id="i-invested" value={invested} onChange={setInvested} />
                 </Field>
                 {shareField}
               </div>

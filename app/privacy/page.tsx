@@ -100,8 +100,16 @@ export default function PrivacyPage() {
           you. Two models must agree before an answer is used; otherwise you&apos;re asked to pick.
         </p>
         <p>
-          Some free AI models may keep or learn from what they receive. Since only public fund names are sent, nothing
-          in it identifies you.
+          <b>Ask</b> (off until you turn it on) answers questions about your own goals and investments. Each question
+          sends the AI your question as you typed it, plus your goals and investments as codes (like &quot;Goal 1,
+          wedding, ₹20L by 2030&quot;) with rounded amounts and kinds of funds. Goal names, nicknames and payment
+          names you typed are replaced by codes and put back only on your screen. Your name, email, PAN, folio and
+          account numbers are never sent. Chats aren&apos;t saved; only a count of questions is kept for the daily
+          limit. You can turn Ask off in Settings.
+        </p>
+        <p>
+          Some free AI models may keep or learn from what they receive. Nothing sent identifies you, but don&apos;t
+          type personal details into your questions.
         </p>
       </Section>
 

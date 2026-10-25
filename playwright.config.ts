@@ -22,6 +22,18 @@ export default defineConfig({
       url: "http://localhost:3000/login",
       reuseExistingServer: true,
       timeout: 120_000,
+      // AI calls go to the fake OpenRouter below.
+      env: {
+        OPENROUTER_API_KEY: "test-key",
+        OPENROUTER_BASE_URL: "http://127.0.0.1:5329/api/v1",
+        OPENROUTER_FREE_MODELS: "test/free-a,test/free-b",
+      },
+    },
+    {
+      command: "node tests/e2e/fake-openrouter.mjs",
+      port: 5329,
+      reuseExistingServer: true,
+      timeout: 30_000,
     },
     {
       command: ".venv-cas/bin/python scripts/cas_dev_server.py",

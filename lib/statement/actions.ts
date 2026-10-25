@@ -100,6 +100,7 @@ const choiceSchema = z
     kind: z.enum(KINDS),
     category: z.string().max(40).nullable(),
     value: money,
+    invested: money.nullable().optional(),
     sip: money.nullable(),
     goalId: z.string().uuid().nullable(),
   })
@@ -142,7 +143,9 @@ export async function applyImport(
           updated_at: string;
           monthly_sip?: number | null;
           category?: string | null;
+          invested?: number;
         } = { current_value: c.value, isin: c.isin, updated_at: now };
+        if (c.invested != null) patch.invested = c.invested;
         if (c.sip !== null) patch.monthly_sip = c.sip || null;
         if (c.kind === "mutual_fund") patch.category = category;
         const res = await supabase
@@ -165,6 +168,7 @@ export async function applyImport(
             category,
             current_value: c.value,
             monthly_sip: c.sip || null,
+            invested: c.invested ?? null,
             isin: c.isin,
             source: "cas",
           })

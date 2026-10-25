@@ -349,6 +349,48 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Confirm and save" })).toBeDisabled();
   await page.getByRole("button", { name: "Go back" }).click();
 
+  // Portfolio: everything held, split by asset class, with growth.
+  await page.getByRole("link", { name: "Portfolio" }).click();
+  await expect(page.getByRole("heading", { name: "Portfolio" })).toBeVisible();
+  await expect(page.getByText("Where your money is")).toBeVisible();
+  await expect(page.getByRole("group", { name: "Where your money is" }).getByRole("button", { name: /^Equity:/ })).toBeVisible();
+  await expect(page.getByText(/grown$/)).toBeVisible();
+  await expect(page.getByRole("list", { name: "Holdings" })).toContainText("Index SIP");
+  await expect(page.getByRole("list", { name: "Holdings" })).toContainText("+₹70,000 (+20%)");
+  await page.getByRole("group", { name: "Where your money is" }).getByRole("button", { name: /^Equity:/ }).click();
+  await expect(page.getByText(/^Equity · ₹/)).toBeVisible();
+  o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(o, "/portfolio overflows at 375px").toBeLessThanOrEqual(0);
+  await page.screenshot({ path: "test-results/portfolio-375.png", fullPage: true });
+
+  // Ask: off until turned on, asks a follow-up, answers with your own names.
+  await page.getByRole("link", { name: "Ask" }).click();
+  await expect(page.getByText("What's sent to the AI (through OpenRouter)")).toBeVisible();
+  await page.screenshot({ path: "test-results/ask-consent-375.png", fullPage: true });
+  await page.getByRole("button", { name: "Turn on Ask" }).click();
+  await page.getByRole("button", { name: /skin treatment/ }).click();
+  await expect(page.getByText("How much do you need, and by when?")).toBeVisible();
+  await page.getByLabel("Your question").fill("₹50,000 in two weeks");
+  await page.getByRole("button", { name: "Send" }).click();
+  const answer = page.locator(`ol[aria-label="Conversation"] > li`).last();
+  await expect(answer).toContainText("Take it from “Bank FD” first");
+  await expect(answer).toContainText("Leave “House” alone");
+  await expect(answer.locator("strong")).toHaveText("exit load");
+  await expect(answer).not.toContainText("[I");
+  await page.screenshot({ path: "test-results/ask-375.png", fullPage: true });
+  // What reached the AI: codes and rounded amounts, none of your names.
+  const sent = JSON.stringify(await (await page.request.get("http://127.0.0.1:5329/last")).json());
+  for (const name of ["Bank FD", "House", "Index SIP", "Quant Mystery", "Bills liquid fund", email]) {
+    expect(sent, `${name} was sent to the AI`).not.toContain(name);
+  }
+  expect(sent).toContain("[G1] house goal");
+  // Ask can be turned off in Settings.
+  await page.getByRole("link", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "Turn Ask off" }).click();
+  await expect(page.getByText("Turned off")).toBeVisible();
+  await page.getByRole("link", { name: "Ask" }).click();
+  await expect(page.getByRole("button", { name: "Turn on Ask" })).toBeVisible();
+
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("radio", { name: "Beige" }).click();

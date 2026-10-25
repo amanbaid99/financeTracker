@@ -224,6 +224,8 @@ const investmentSchema = z.object({
   value: money,
   monthlySip: money,
   returnPct: z.number().min(0).max(30).nullable(),
+  /** Amount put in, if the user knows it. */
+  invested: money.nullable().optional(),
   /** Share of this investment for the goal, 1 to 100. */
   percent: z.number().min(1, "use at least 1%").max(100),
   /** Recorded from a money plan suggestion: its value comes out of the plan's savings. */
@@ -262,6 +264,7 @@ export async function saveInvestment(
       current_value: v.value,
       monthly_sip: v.monthlySip || null,
       expected_return_pct: v.returnPct,
+      ...(v.invested !== undefined ? { invested: v.invested } : {}),
     };
     const res = v.investmentId
       ? await supabase

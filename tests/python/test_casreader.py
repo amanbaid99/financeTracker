@@ -28,7 +28,7 @@ def tx(d, t, amount):
     return NS(date=d, type=t, amount=D(amount), units=None, nav=None, balance=None, description="x")
 
 
-def scheme(name, isin, units, nav, value, txs=(), close_calc=None, kind="EQUITY"):
+def scheme(name, isin, units, nav, value, txs=(), close_calc=None, kind="EQUITY", cost=None):
     return NS(
         scheme=name,
         isin=isin,
@@ -41,7 +41,7 @@ def scheme(name, isin, units, nav, value, txs=(), close_calc=None, kind="EQUITY"
         open=D("0"),
         close=D(str(units)),
         close_calculated=D(str(close_calc if close_calc is not None else units)),
-        valuation=NS(date="30-Sep-2026", nav=D(str(nav)), value=D(str(value)), cost=None),
+        valuation=NS(date="30-Sep-2026", nav=D(str(nav)), value=D(str(value)), cost=D(str(cost)) if cost is not None else None),
         transactions=list(txs),
     )
 
@@ -71,8 +71,8 @@ class TestMutualFundStatement:
         ]
         cas = mf_cas(
             [
-                folio("123/45", [scheme("Index Fund - Direct Growth", "INF000A01", 100, 150, 15000, sip_txs)]),
-                folio("678/90", [scheme("Index Fund - Direct Growth", "INF000A01", 50, 150, 7500)]),
+                folio("123/45", [scheme("Index Fund - Direct Growth", "INF000A01", 100, 150, 15000, sip_txs, cost=12000)]),
+                folio("678/90", [scheme("Index Fund - Direct Growth", "INF000A01", 50, 150, 7500, cost=6000.4)]),
                 folio("111", [scheme("Old Fund", "INF000B02", 0, 10, 0)]),
             ]
         )
@@ -85,8 +85,18 @@ class TestMutualFundStatement:
         assert h["units"] == 150 and h["value"] == 22500 and h["count"] == 2
         assert h["sipMonthly"] == 7000  # two SIPs in September
         assert h["lastSipDate"] == "2026-09-20"
+        assert h["invested"] == 18000
         assert h["issues"] == []
         assert any("no units left" in w for w in out["warnings"])
+
+    def test_invested_is_unknown_if_any_folio_lacks_cost(self):
+        cas = mf_cas(
+            [
+                folio("1", [scheme("Fund A", "INF1", 10, 100, 1000, cost=800)]),
+                folio("2", [scheme("Fund A", "INF1", 10, 100, 1000)]),
+            ]
+        )
+        assert r.normalise(cas)["holdings"][0]["invested"] is None
 
     def test_flags_values_that_dont_add_up(self):
         cas = mf_cas([folio("1", [scheme("Fund A", "INF1", 10, 100, 1500, close_calc=9)])])
@@ -132,7 +142,9 @@ class TestDematStatement:
                 NS(name="Stock A", isin="INE1", num_shares=D("10"), price=D("1000"), value=D("10000")),
                 NS(name="Stock B", isin="INE2", num_shares=D("5"), price=D("1000"), value=D("5000")),
             ],
-            mutual_funds=[NS(name="ETF Fund", isin="INF9", balance=D("100"), nav=D("135"), value=D("13500"), type="EQUITY")],
+            mutual_funds=[
+                NS(name="ETF Fund", isin="INF9", balance=D("100"), nav=D("135"), value=D("13500"), type="EQUITY", total_cost=D("11000"))
+            ],
             bonds=[NS(name="Bond", isin="INB1", num_bonds=D("5"), value=D("5000"))],
         )
         cas = NS(
@@ -149,6 +161,8 @@ class TestDematStatement:
         assert by_key["DEMAT-STOCKS"]["value"] == 15000 and by_key["DEMAT-STOCKS"]["count"] == 2
         assert by_key["DEMAT-BONDS"]["value"] == 5000
         assert by_key["INF9"]["value"] == 13500
+        assert by_key["INF9"]["invested"] == 11000
+        assert by_key["DEMAT-STOCKS"]["invested"] is None
         assert by_key["NPS"]["kind"] == "nps"
         assert out["warnings"] == []
         text = json.dumps(out)

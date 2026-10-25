@@ -1,6 +1,7 @@
 import { Settings } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AppTabs } from "@/components/app-tabs";
 import { DisclaimerFooter } from "@/components/disclaimer";
 import { Logo } from "@/components/logo";
 import { needsPrivacyConsent } from "@/lib/data";
@@ -22,6 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <Settings className="size-5" aria-hidden />
           </Link>
         </div>
+        <AppTabs />
       </header>
       <div className="mx-auto w-full max-w-3xl px-4 pb-10 pt-5">
         {children}

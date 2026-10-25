@@ -63,7 +63,7 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
     supabase
       .from("holdings")
       .select(
-        "id, kind, name, category, current_value, monthly_sip, expected_return_pct",
+        "id, kind, name, category, current_value, monthly_sip, expected_return_pct, invested",
       )
       .order("current_value", { ascending: false }),
     supabase.from("goal_allocations").select("goal_id, holding_id, percent"),
@@ -85,6 +85,7 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
     monthlySip: h.monthly_sip ?? 0,
     returnPct:
       h.expected_return_pct === null ? null : Number(h.expected_return_pct),
+    invested: h.invested,
   }));
   const links: Link[] = check(allocations).map((a) => ({
     goalId: a.goal_id,

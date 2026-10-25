@@ -21,6 +21,8 @@ export interface Investment {
   monthlySip: number;
   /** User's own return %, or null for the type's default. */
   returnPct: number | null;
+  /** Amount put in (cost), when known. */
+  invested?: number | null;
 }
 
 export interface GoalInput {

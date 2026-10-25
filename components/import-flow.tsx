@@ -244,6 +244,7 @@ export function ImportFlow() {
         kind: r.kind,
         category: s.category,
         value: r.value,
+        invested: r.invested,
         sip: s.sip,
         goalId: s.goalId || null,
       };

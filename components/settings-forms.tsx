@@ -1,31 +1,49 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Field } from "@/components/forms/field";
 import { applyTheme, ThemePicker } from "@/components/theme-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { deleteAccount, saveTheme, signOut } from "@/lib/actions";
+import { setAskEnabled } from "@/lib/ask/actions";
 import type { Accent, Theme } from "@/lib/theme";
 
 function useAction() {
   const [pending, start] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const run = (fn: () => Promise<{ ok: boolean; error?: string }>, okText = "Saved") =>
+  const run = (
+    fn: () => Promise<{ ok: boolean; error?: string }>,
+    okText = "Saved",
+  ) =>
     start(async () => {
       setMsg(null);
       const res = await fn();
-      setMsg(res.ok ? { ok: true, text: okText } : { ok: false, text: res.error ?? "Failed" });
+      setMsg(
+        res.ok
+          ? { ok: true, text: okText }
+          : { ok: false, text: res.error ?? "Failed" },
+      );
     });
   const status = msg && (
-    <span role="status" className={`text-xs ${msg.ok ? "text-success" : "text-danger"}`}>
+    <span
+      role="status"
+      className={`text-xs ${msg.ok ? "text-success" : "text-danger"}`}
+    >
       {msg.text}
     </span>
   );
   return { pending, run, status };
 }
 
-export function ThemeSettings({ theme: t0, accent: a0 }: { theme: Theme; accent: Accent }) {
+export function ThemeSettings({
+  theme: t0,
+  accent: a0,
+}: {
+  theme: Theme;
+  accent: Accent;
+}) {
   const [theme, setTheme] = useState(t0);
   const [accent, setAccent] = useState(a0);
   const { pending, run, status } = useAction();
@@ -41,7 +59,11 @@ export function ThemeSettings({ theme: t0, accent: a0 }: { theme: Theme; accent:
         }}
       />
       <div className="flex items-center gap-3">
-        <Button type="button" onClick={() => run(() => saveTheme({ theme, accent }))} disabled={pending}>
+        <Button
+          type="button"
+          onClick={() => run(() => saveTheme({ theme, accent }))}
+          disabled={pending}
+        >
           Save look
         </Button>
         {status}
@@ -63,10 +85,16 @@ export function AccountSettings() {
       <div className="space-y-2 rounded-lg border border-danger/40 p-3">
         <p className="text-sm font-medium text-danger">Delete account</p>
         <p className="text-sm text-muted-foreground">
-          Permanently deletes your account, goals and investments. This can&apos;t be undone.
+          Permanently deletes your account, goals and investments. This
+          can&apos;t be undone.
         </p>
         <Field label="Type DELETE to confirm" htmlFor="del">
-          <Input id="del" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="off" />
+          <Input
+            id="del"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            autoComplete="off"
+          />
         </Field>
         <div className="flex items-center gap-3">
           <Button
@@ -79,6 +107,40 @@ export function AccountSettings() {
           </Button>
           {status}
         </div>
+      </div>
+    </div>
+  );
+}
+
+export function AskSettings({ enabled }: { enabled: boolean }) {
+  const router = useRouter();
+  const { pending, run, status } = useAction();
+  return (
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">
+        {enabled
+          ? "Ask is on. Your goals and investments are sent as codes with rounded amounts, never your names or PAN."
+          : "Ask is off. Nothing is sent to AI."}
+      </p>
+      <div className="flex items-center gap-3">
+        <Button
+          type="button"
+          variant={enabled ? "outline" : "default"}
+          disabled={pending}
+          onClick={() =>
+            run(
+              async () => {
+                const res = await setAskEnabled(!enabled);
+                router.refresh();
+                return res;
+              },
+              enabled ? "Turned off" : "Turned on",
+            )
+          }
+        >
+          {enabled ? "Turn Ask off" : "Turn Ask on"}
+        </Button>
+        {status}
       </div>
     </div>
   );

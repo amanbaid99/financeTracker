@@ -20,6 +20,7 @@ export const parsedHoldingSchema = z.object({
   navDate: z.string().nullable(),
   sipMonthly: z.number().int().min(0).nullable(),
   lastSipDate: z.string().nullable(),
+  invested: z.number().int().min(0).max(1e13).nullable().optional(),
   count: z.number().int().min(1).optional(),
   issues: z.array(z.string().max(300)).max(50),
 });
@@ -55,6 +56,8 @@ export interface ReviewRow {
   category: string | null;
   categoryHow: CategoryHow;
   value: number;
+  /** Amount put in, when the statement shows it. */
+  invested: number | null;
   /** SIP to save; null keeps whatever the matched investment has. */
   sip: number | null;
   /** True when the SIP comes from the statement's transactions. */
@@ -176,6 +179,7 @@ export function buildReview(statement: ParsedStatement, existing: ExistingInvest
       category,
       categoryHow,
       value: h.value,
+      invested: h.invested ?? null,
       sip,
       sipFromStatement,
       issues: h.issues,

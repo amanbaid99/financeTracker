@@ -149,6 +149,8 @@ describe("review rows", () => {
 describe("AI category agreement", () => {
   const settings: AiSettings = {
     apiKey: "k",
+    baseUrl: "https://openrouter.ai/api/v1",
+    dailyLimit: 20,
     freeModels: ["free-a", "free-b"],
     paidModel: "paid",
     allowPaid: true,
