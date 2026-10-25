@@ -7,6 +7,7 @@ import {
   type LucideIcon,
   Palmtree,
   Plane,
+  Receipt,
   ShieldCheck,
   Target,
 } from "lucide-react";
@@ -21,6 +22,7 @@ const ICONS: Record<string, LucideIcon> = {
   retirement: Palmtree,
   emergency_fund: ShieldCheck,
   loan_payoff: Landmark,
+  bills_fund: Receipt,
   custom: Target,
 };
 

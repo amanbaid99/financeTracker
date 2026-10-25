@@ -3,6 +3,11 @@
 import { ChevronLeft } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Field } from "@/components/forms/field";
+import {
+  BillsEditor,
+  newBillKey,
+  type BillRow,
+} from "@/components/bills-editor";
 import { GoalIcon } from "@/components/goal-icon";
 import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
@@ -70,6 +75,7 @@ export function GoalForm({
   );
   const info = type ? goalTypeInfo(type) : null;
   const isLoan = type === "loan_payoff";
+  const isBills = type === "bills_fund";
   const ls = goal?.loanState;
 
   const [name, setName] = useState(goal?.name ?? "");
@@ -113,6 +119,18 @@ export function GoalForm({
       : "",
   );
   const [feeGst, setFeeGst] = useState(goal?.loan?.foreclosureGst ?? true);
+  const [bills, setBills] = useState<BillRow[]>(
+    () =>
+      goal?.bills?.map((b) => ({
+        key: newBillKey(),
+        name: b.name,
+        amount: b.amount,
+        everyMonths: b.everyMonths,
+        // Show the rolled-forward date, not one that has already passed.
+        nextDue:
+          goal.billsFund?.bills.find((x) => x.id === b.id)?.due ?? b.nextDue,
+      })) ?? [],
+  );
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
 
@@ -135,7 +153,9 @@ export function GoalForm({
                       ? ""
                       : t.value === "loan_payoff"
                         ? "Close my loan"
-                        : t.label,
+                        : t.value === "bills_fund"
+                          ? "Bills fund"
+                          : t.label,
                   );
                 if (!inflation) setInflation(String(t.inflation || 6));
                 setInflate(t.inflation > 0);
@@ -197,10 +217,20 @@ export function GoalForm({
         type: type!,
         name,
         target: isLoan ? (loanInput?.outstanding ?? 0) : (target ?? 0),
-        targetDate: noDate ? null : date || null,
+        targetDate: isBills || noDate ? null : date || null,
         inflationPct:
-          !isLoan && inflate && !noDate ? (num(inflation) ?? 0) : null,
+          !isLoan && !isBills && inflate && !noDate
+            ? (num(inflation) ?? 0)
+            : null,
         loan: loanInput,
+        bills: isBills
+          ? bills.map((b) => ({
+              name: b.name,
+              amount: b.amount ?? 0,
+              everyMonths: b.everyMonths,
+              nextDue: b.nextDue,
+            }))
+          : null,
       });
       if (!res.ok) return setError(res.error);
       onSaved(res.id!);
@@ -460,6 +490,8 @@ export function GoalForm({
             </div>
           )}
         </>
+      ) : isBills ? (
+        <BillsEditor rows={bills} onChange={setBills} />
       ) : (
         <Field
           label="How much do you need?"
@@ -480,30 +512,32 @@ export function GoalForm({
         </Field>
       )}
 
-      <div className="space-y-2">
-        <Field label={isLoan ? "Close it by" : "By when?"} htmlFor="g-date">
-          <Input
-            id="g-date"
-            type="date"
-            value={date}
-            min={today}
-            onChange={(e) => setDate(e.target.value)}
-            disabled={noDate}
-            required={!noDate}
-          />
-        </Field>
-        <label className="flex items-center gap-2 text-sm">
-          <Checkbox
-            checked={noDate}
-            onChange={(e) => setNoDate(e.target.checked)}
-          />
-          {isLoan
-            ? "No date: tell me when I can close it"
-            : "No fixed date: tell me when I'll get there"}
-        </label>
-      </div>
+      {!isBills && (
+        <div className="space-y-2">
+          <Field label={isLoan ? "Close it by" : "By when?"} htmlFor="g-date">
+            <Input
+              id="g-date"
+              type="date"
+              value={date}
+              min={today}
+              onChange={(e) => setDate(e.target.value)}
+              disabled={noDate}
+              required={!noDate}
+            />
+          </Field>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={noDate}
+              onChange={(e) => setNoDate(e.target.checked)}
+            />
+            {isLoan
+              ? "No date: tell me when I can close it"
+              : "No fixed date: tell me when I'll get there"}
+          </label>
+        </div>
+      )}
 
-      {!isLoan && !noDate && (
+      {!isLoan && !isBills && !noDate && (
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-sm">
             <Checkbox

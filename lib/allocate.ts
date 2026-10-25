@@ -50,6 +50,8 @@ export function categoryForHorizon(
 ): { category: string; why: string } {
   if (type === "emergency_fund")
     return { category: "liquid_fund", why: "safe and quick to withdraw" };
+  if (type === "bills_fund")
+    return { category: "liquid_fund", why: "payments due within a year" };
   if (months !== null && months < 12)
     return {
       category: "liquid_fund",
@@ -113,6 +115,20 @@ export function planMoney(opts: {
     });
   }
 
+  // 0. Bills funds first: their payments are the nearest. Enough to cover
+  // every payment in the next year.
+  for (const g of active.filter((x) => x.billsFund)) {
+    const a = alloc.get(g.id)!;
+    const b = g.billsFund!;
+    a.lump = Math.min(lumpLeft, roundUp(b.topUpNow, 1000));
+    lumpLeft -= a.lump;
+    a.monthly = Math.min(
+      monthlyLeft,
+      roundUp(Math.max(0, b.monthlyNeed - g.monthlySip), 500),
+    );
+    monthlyLeft -= a.monthly;
+  }
+
   // 1. Dated goals, soonest first: enough to be on time.
   for (const g of active.filter((x) => x.targetDate && x.months)) {
     const a = alloc.get(g.id)!;
@@ -134,7 +150,7 @@ export function planMoney(opts: {
   }
 
   // 2. Whatever is left goes to goals with no date, by how much each still needs.
-  const open = active.filter((g) => !g.targetDate);
+  const open = active.filter((g) => !g.targetDate && !g.billsFund);
   const gaps = open.map((g) => Math.max(0, g.futureTarget - g.current));
   const totalGap = gaps.reduce((s, x) => s + x, 0);
   if (totalGap > 0 && (lumpLeft > 0 || monthlyLeft > 0)) {
@@ -185,7 +201,7 @@ export function planMoney(opts: {
   }
 
   const stillShortMonthly = active
-    .filter((g) => g.targetDate)
+    .filter((g) => g.targetDate || g.billsFund)
     .reduce(
       (s, g) =>
         s +

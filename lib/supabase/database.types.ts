@@ -236,6 +236,48 @@ export type Database = {
           },
         ];
       };
+      goal_bills: {
+        Row: {
+          amount: number;
+          created_at: string;
+          every_months: number;
+          goal_id: string;
+          id: string;
+          name: string;
+          next_due: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          amount: number;
+          created_at?: string;
+          every_months: number;
+          goal_id: string;
+          id?: string;
+          name: string;
+          next_due: string;
+          user_id?: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          every_months?: number;
+          goal_id?: string;
+          id?: string;
+          name?: string;
+          next_due?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "goal_bills_goal_id_fkey";
+            columns: ["goal_id"];
+            isOneToOne: false;
+            referencedRelation: "goals";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       goals: {
         Row: {
           created_at: string;
@@ -697,7 +739,8 @@ export type Database = {
         | "retirement"
         | "medical"
         | "custom"
-        | "loan_payoff";
+        | "loan_payoff"
+        | "bills_fund";
       holding_kind:
         | "savings"
         | "fd"
@@ -875,6 +918,7 @@ export const Constants = {
         "medical",
         "custom",
         "loan_payoff",
+        "bills_fund",
       ],
       holding_kind: [
         "savings",

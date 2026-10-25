@@ -9,6 +9,7 @@ export const GOAL_TYPES = [
   { value: "travel", label: "Travel", blurb: "A trip you're planning", inflation: 6 },
   { value: "retirement", label: "Retirement", blurb: "Money to stop working on", inflation: 6 },
   { value: "emergency_fund", label: "Emergency fund", blurb: "Months of expenses, kept safe", inflation: 0 },
+  { value: "bills_fund", label: "Bills fund", blurb: "Insurance, gym and other planned payments", inflation: 0 },
   { value: "loan_payoff", label: "Pay off a loan", blurb: "Close a home, car or personal loan early", inflation: 0 },
   { value: "custom", label: "Something else", blurb: "Any other goal", inflation: 0 },
 ] as const;

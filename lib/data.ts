@@ -53,7 +53,7 @@ function check<T>(res: {
 
 export const loadGoals = cache(async (): Promise<GoalsData> => {
   const { supabase, user } = await requireUser();
-  const [goals, holdings, allocations, profile] = await Promise.all([
+  const [goals, holdings, allocations, profile, bills] = await Promise.all([
     supabase
       .from("goals")
       .select(
@@ -72,7 +72,9 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
       .select("theme, accent, plan_lump_sum, plan_monthly")
       .eq("user_id", user.id)
       .maybeSingle(),
+    supabase.from("goal_bills").select("id, goal_id, name, amount, every_months, next_due").order("next_due"),
   ]);
+  const billRows = check(bills);
   const today = todayIST();
   const investments: Investment[] = check(holdings).map((h) => ({
     id: h.id,
@@ -112,6 +114,18 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
                 emiDay: g.loan_emi_day,
                 firstEmi: g.loan_first_emi,
               }
+            : null,
+        bills:
+          g.type === "bills_fund"
+            ? billRows
+                .filter((b) => b.goal_id === g.id)
+                .map((b) => ({
+                  id: b.id,
+                  name: b.name,
+                  amount: b.amount,
+                  everyMonths: b.every_months,
+                  nextDue: b.next_due,
+                }))
             : null,
       },
       investments,

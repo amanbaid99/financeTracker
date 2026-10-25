@@ -2,6 +2,7 @@
 // Pure functions; callers pass "today" in.
 
 import { addMonths, emisBetween, monthsBetween } from "./dates";
+import { billsFundState, type Bill, type BillsFundState } from "./bills-fund";
 import { defaultReturn } from "./instruments";
 import {
   balanceAfter,
@@ -33,6 +34,8 @@ export interface GoalInput {
   inflationPct: number | null;
   /** For loan payoff goals. */
   loan?: LoanInput | null;
+  /** For bills fund goals: the payments it saves for. */
+  bills?: Bill[] | null;
 }
 
 export interface Link {
@@ -78,6 +81,8 @@ export interface TrackedGoal extends GoalInput {
   status: GoalStatus;
   /** Loan payoff goals only. */
   loanState: LoanState | null;
+  /** Bills fund goals only. */
+  billsFund: BillsFundState | null;
   /** Loans: the EMIs alone close it on or before the target. */
   emisCloseFirst: boolean;
   /** Loans: interest avoided by closing on the target date (or reach date). */
@@ -183,6 +188,7 @@ export function trackGoal(
 
   if (goal.type === "loan_payoff" && goal.loan)
     return trackLoan(base, goal.loan, todayISO);
+  if (goal.type === "bills_fund") return trackBills(base, goal.bills ?? [], todayISO);
 
   const futureTarget =
     months !== null && goal.inflationPct
@@ -228,6 +234,7 @@ export function trackGoal(
       toReach !== null && months === null ? addMonths(todayISO, toReach) : null,
     status,
     loanState: null,
+    billsFund: null,
     emisCloseFirst: false,
     interestSaved: 0,
     foreclosureFee: 0,
@@ -283,6 +290,7 @@ function trackLoan(
     reachDate: null,
     status: "on_track",
     loanState: loan,
+    billsFund: null,
     emisCloseFirst: false,
     interestSaved: 0,
     foreclosureFee: 0,
@@ -369,4 +377,37 @@ export function freePercent(
     .filter((l) => l.investmentId === investmentId && l.goalId !== exceptGoalId)
     .reduce((s, l) => s + l.percent, 0);
   return Math.max(0, Math.round((100 - used) * 100) / 100);
+}
+
+/** A bills fund: on track while every payment in the next year is covered. */
+function trackBills(
+  base: Pick<TrackedGoal, keyof GoalInput | "lines" | "current" | "monthlySip" | "returnPct" | "months">,
+  bills: Bill[],
+  todayISO: string,
+): TrackedGoal {
+  const state = billsFundState(bills, base.current, base.monthlySip, todayISO);
+  const status: GoalStatus = !bills.length
+    ? "no_investments"
+    : state.firstShort
+      ? "behind"
+      : !base.lines.length
+        ? "no_investments"
+        : "on_track";
+  return {
+    ...base,
+    target: state.shouldHold,
+    futureTarget: state.shouldHold,
+    progress: state.shouldHold > 0 ? Math.min(1, base.current / state.shouldHold) : bills.length ? 1 : 0,
+    projected: null,
+    extraSipNeeded: Math.max(0, state.monthlyNeed - base.monthlySip),
+    monthsToReach: null,
+    reachDate: null,
+    status,
+    loanState: null,
+    billsFund: state,
+    emisCloseFirst: false,
+    interestSaved: 0,
+    foreclosureFee: 0,
+    netSaving: 0,
+  };
 }

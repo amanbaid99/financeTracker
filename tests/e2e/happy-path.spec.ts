@@ -232,6 +232,44 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Edit Planned index fund" })).toBeVisible();
   await expect(page.getByText(/^₹0 now · /)).toBeVisible();
 
+  // Bills fund: one liquid fund for known payments.
+  const inMonths = (n: number) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + n);
+    d.setDate(10);
+    return d.toISOString().slice(0, 10);
+  };
+  await page.getByRole("link", { name: "New goal" }).click();
+  await page.getByRole("button", { name: /^Bills fund/ }).click();
+  await expect(page.getByLabel("Name")).toHaveValue("Bills fund");
+  await page.getByRole("button", { name: "+ Health insurance" }).click();
+  await page.getByLabel("Health insurance amount").fill("24000");
+  await page.getByLabel("Health insurance next due").fill(inMonths(4));
+  await page.getByRole("button", { name: "+ Gym" }).click();
+  await page.getByLabel("Gym amount").fill("12000");
+  await page.getByLabel("Gym how often").selectOption("6");
+  await page.getByLabel("Gym next due").fill(inMonths(1));
+  await page.screenshot({ path: "test-results/bills-form-375.png", fullPage: true });
+  await page.getByRole("button", { name: "Create goal" }).click();
+  await expect(page.getByRole("button", { name: /^Bills fund/ })).toHaveAttribute("aria-expanded", "true");
+  await expect(page.getByText("Should hold today")).toBeVisible();
+  await expect(page.getByText("Put in each month")).toBeVisible();
+  await expect(page.getByText("₹4,000", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(/short for Gym on/).first()).toBeVisible();
+
+  // Link one liquid fund: payments show as covered.
+  await page.getByRole("button", { name: "Add investment" }).click();
+  await page.getByLabel("Fund category").selectOption("liquid_fund");
+  await page.getByLabel("Nickname (optional)").fill("Bills liquid fund");
+  await page.getByLabel("Value today").fill("30000");
+  await page.getByLabel("Monthly SIP").fill("5000");
+  await page.getByRole("dialog").getByRole("button", { name: "Add investment" }).click();
+  await expect(page.getByText(/^Next: Gym on .+, covered$/)).toBeVisible();
+  await expect(page.getByText("Covered", { exact: true }).first()).toBeVisible();
+  o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(o, "bills fund overflows at 375px").toBeLessThanOrEqual(0);
+  await page.screenshot({ path: "test-results/bills-fund-375.png", fullPage: true });
+
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("radio", { name: "Beige" }).click();

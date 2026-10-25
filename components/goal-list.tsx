@@ -9,7 +9,7 @@ import {
   SuggestionBox,
 } from "@/components/goal-actions";
 import type { Suggestion } from "@/lib/allocate";
-import { LoanPlan, SavingsPlan } from "@/components/goal-details";
+import { BillsPlan, LoanPlan, SavingsPlan } from "@/components/goal-details";
 import { GoalIcon } from "@/components/goal-icon";
 import { Progress } from "@/components/ui/progress";
 import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
@@ -107,21 +107,29 @@ export function GoalList({
                       {formatINR(g.current)}
                     </p>
                     <p className="tabular text-xs text-muted-foreground">
-                      saved of{" "}
-                      {formatINR(g.emisCloseFirst ? 0 : g.futureTarget)}{" "}
-                      {needLabel(g)}
+                      {g.billsFund
+                        ? `in the fund · should hold ${formatINR(g.futureTarget)} today`
+                        : `saved of ${formatINR(g.emisCloseFirst ? 0 : g.futureTarget)} ${needLabel(g)}`}
                     </p>
-                    {!g.loanState && g.futureTarget !== g.target && (
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {formatINR(g.target)} today, grown at {g.inflationPct}%
-                        a year for rising prices.
-                      </p>
-                    )}
+                    {!g.loanState &&
+                      !g.billsFund &&
+                      g.futureTarget !== g.target && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {formatINR(g.target)} today, grown at {g.inflationPct}
+                          % a year for rising prices.
+                        </p>
+                      )}
                   </div>
                   <EditGoalButton goal={g} today={today} />
                 </div>
 
-                {g.loanState ? <LoanPlan g={g} /> : <SavingsPlan g={g} />}
+                {g.loanState ? (
+                  <LoanPlan g={g} />
+                ) : g.billsFund ? (
+                  <BillsPlan g={g} />
+                ) : (
+                  <SavingsPlan g={g} />
+                )}
 
                 {suggestions.find((x) => x.goalId === g.id) && (
                   <SuggestionBox

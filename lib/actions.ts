@@ -82,6 +82,18 @@ const goalSchema = z
         foreclosureGst: z.boolean().optional(),
       })
       .nullable(),
+    bills: z
+      .array(
+        z.object({
+          name: z.string().trim().min(1, "name each payment").max(60),
+          amount: money.min(1, "add each payment's amount"),
+          everyMonths: z.number().int().min(1).max(60),
+          nextDue: isoDate,
+        }),
+      )
+      .max(50)
+      .nullable()
+      .optional(),
   })
   .superRefine((v, ctx) => {
     if (v.type === "loan_payoff") {
@@ -97,6 +109,8 @@ const goalSchema = z
           path: ["EMI"],
           message: "add the EMI or the months left",
         });
+    } else if (v.type === "bills_fund") {
+      // The target comes from the payments listed.
     } else if (v.target < 1) {
       ctx.addIssue({
         code: "custom",
@@ -116,7 +130,11 @@ export async function saveGoal(
     const row = {
       name: v.name,
       type: v.type,
-      target_today: loan ? loan.outstanding : v.target,
+      target_today: loan
+        ? loan.outstanding
+        : v.type === "bills_fund"
+          ? (v.bills ?? []).reduce((t, b) => t + b.amount, 0)
+          : v.target,
       target_date: v.targetDate,
       inflation_rate: loan ? null : v.inflationPct,
       loan_outstanding: loan?.outstanding ?? null,
@@ -149,7 +167,26 @@ export async function saveGoal(
           .select("id")
           .single();
     if (res.error) throw new Error(res.error.message);
-    return done(res.data.id);
+    const goalId = res.data.id;
+    if (v.type === "bills_fund") {
+      // Replace the payment list with what was sent.
+      const del = await supabase.from("goal_bills").delete().eq("goal_id", goalId).eq("user_id", userId);
+      if (del.error) throw new Error(del.error.message);
+      if (v.bills?.length) {
+        const ins = await supabase.from("goal_bills").insert(
+          v.bills.map((b) => ({
+            user_id: userId,
+            goal_id: goalId,
+            name: b.name,
+            amount: b.amount,
+            every_months: b.everyMonths,
+            next_due: b.nextDue,
+          })),
+        );
+        if (ins.error) throw new Error(ins.error.message);
+      }
+    }
+    return done(goalId);
   } catch (e) {
     return fail(e);
   }

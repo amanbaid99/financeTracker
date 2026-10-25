@@ -8,7 +8,22 @@ export type Tone = "success" | "warning" | "danger" | "muted";
 export const monthYear = (iso: string | null) =>
   formatDate(iso).split(" ").slice(1).join(" ");
 
+const dayMonth = (iso: string) => formatDate(iso).split(" ").slice(0, 2).join(" ");
+
 export function goalHeadline(g: TrackedGoal): { text: string; tone: Tone } {
+  const bf = g.billsFund;
+  if (bf) {
+    if (!bf.bills.length) return { text: "Add the payments this fund covers", tone: "muted" };
+    if (bf.firstShort)
+      return {
+        text: `${formatINR(bf.firstShort.shortBy)} short for ${bf.firstShort.name} on ${dayMonth(bf.firstShort.date)}`,
+        tone: "warning",
+      };
+    const next = bf.upcoming[0];
+    return next
+      ? { text: `Next: ${next.name} on ${dayMonth(next.date)}, covered`, tone: "success" }
+      : { text: "Nothing due in the next year", tone: "success" };
+  }
   const loan = g.type === "loan_payoff";
   switch (g.status) {
     case "reached":
@@ -77,13 +92,21 @@ export const TONE_BAR: Record<
  * each, the smaller amount comes first.
  */
 export function sortGoals<
-  T extends { targetDate: string | null; futureTarget: number; target: number },
+  T extends {
+    targetDate: string | null;
+    futureTarget: number;
+    target: number;
+    billsFund?: { upcoming: { date: string }[] } | null;
+  },
 >(goals: T[]): T[] {
   const amount = (g: T) => g.futureTarget || g.target;
+  // A bills fund sorts by its next payment.
+  const date = (g: T) => g.billsFund?.upcoming[0]?.date ?? g.targetDate;
   return [...goals].sort((a, b) => {
-    if (a.targetDate && b.targetDate && a.targetDate !== b.targetDate)
-      return a.targetDate < b.targetDate ? -1 : 1;
-    if (!a.targetDate !== !b.targetDate) return a.targetDate ? -1 : 1;
+    const da = date(a);
+    const db = date(b);
+    if (da && db && da !== db) return da < db ? -1 : 1;
+    if (!da !== !db) return da ? -1 : 1;
     return amount(a) - amount(b);
   });
 }

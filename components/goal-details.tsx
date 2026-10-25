@@ -175,3 +175,96 @@ export function LoanPlan({ g }: { g: TrackedGoal }) {
     </div>
   );
 }
+
+/** Bills fund: what it should hold, what to put in, and the payments coming up. */
+export function BillsPlan({ g }: { g: TrackedGoal }) {
+  const b = g.billsFund!;
+  if (!b.bills.length) {
+    return (
+      <p className="rounded-lg bg-muted p-3 text-sm">
+        Edit this goal to add the payments it covers, like insurance or the gym.
+      </p>
+    );
+  }
+  const diff = g.current - b.shouldHold;
+  const dm = (iso: string) => formatDate(iso).split(" ").slice(0, 2).join(" ");
+  return (
+    <div className="space-y-4">
+      <dl className="divide-y">
+        <Row label="Should hold today" value={formatINR(b.shouldHold)} />
+        <Row
+          label="In the fund"
+          value={
+            <>
+              {formatINR(g.current)}{" "}
+              <span
+                className={cn(
+                  "text-xs",
+                  diff >= 0 ? "text-success" : "text-warning",
+                )}
+              >
+                {diff === 0
+                  ? "on track"
+                  : diff > 0
+                    ? `${formatINR(diff)} ahead`
+                    : `${formatINR(-diff)} behind`}
+              </span>
+            </>
+          }
+        />
+        <Row
+          label="Put in each month"
+          value={formatINR(b.monthlyNeed)}
+          strong={g.monthlySip < b.monthlyNeed}
+        />
+        <Row label="Going in now" value={formatINR(g.monthlySip)} />
+        {b.topUpNow > 0 && (
+          <Row
+            label="Top up now to cover the year"
+            value={formatINR(b.topUpNow)}
+            strong
+          />
+        )}
+      </dl>
+      {b.firstShort && (
+        <p className="rounded-lg bg-warning-soft p-3 text-sm text-warning">
+          At {formatINR(g.monthlySip)} a month you&apos;ll be{" "}
+          {formatINR(b.firstShort.shortBy)} short for {b.firstShort.name} on{" "}
+          {formatDate(b.firstShort.date)}.{" "}
+          {b.topUpNow > 0
+            ? `Add ${formatINR(b.topUpNow)} now and put in ${formatINR(b.monthlyNeed)} a month to cover everything.`
+            : `Put in ${formatINR(b.monthlyNeed)} a month to cover everything.`}
+        </p>
+      )}
+      <div className="space-y-1">
+        <p className="text-sm font-semibold">Coming up</p>
+        <ul className="divide-y text-sm">
+          {b.upcoming.slice(0, 6).map((e) => (
+            <li
+              key={`${e.name}-${e.date}`}
+              className="flex items-baseline justify-between gap-3 py-2"
+            >
+              <span className="min-w-0">
+                <span className="block truncate">{e.name}</span>
+                <span className="text-xs text-muted-foreground">
+                  {dm(e.date)}
+                </span>
+              </span>
+              <span className="shrink-0 text-right">
+                <span className="tabular block">{formatINR(e.amount)}</span>
+                <span
+                  className={cn(
+                    "text-xs",
+                    e.covered ? "text-success" : "text-warning",
+                  )}
+                >
+                  {e.covered ? "Covered" : "Short"}
+                </span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
