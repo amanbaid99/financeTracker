@@ -110,7 +110,24 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // A loan payoff goal: the EMI splits into interest and principal as you type.
   await page.getByRole("link", { name: "New goal" }).click();
   await page.getByRole("button", { name: /^Pay off a loan/ }).click();
-  await page.getByLabel("Still owed today").fill("1000000");
+  // From the original loan: today's balance is worked out from EMIs paid.
+  await page.getByRole("radio", { name: "Work it out from my loan" }).click();
+  await page.getByLabel("Original loan amount").fill("1000000");
+  const first = new Date();
+  first.setMonth(first.getMonth() - 10);
+  first.setDate(1);
+  await page.getByLabel("First EMI date").fill(first.toISOString().slice(0, 10));
+  await page.getByLabel("Interest, % a year").fill("8.65");
+  await expect(page.getByLabel("Interest, % a year")).toHaveValue("8.65");
+  await page.getByLabel("Tenure, months").fill("120");
+  await expect(page.getByText(/^1[01] EMIs paid so far\. Owed today:/)).toBeVisible();
+  await expect(page.getByText(/^Next EMI on /)).toBeVisible();
+  await page.screenshot({ path: "test-results/loan-form-375.png", fullPage: true });
+
+  // What's owed now, with the EMI date.
+  await page.getByRole("radio", { name: "I know what I owe now" }).click();
+  await page.getByLabel("Owed after your latest EMI").fill("1000000");
+  await page.getByLabel("EMI date").selectOption("5");
   await page.getByLabel("EMI", { exact: true }).fill("12668");
   await page.getByLabel("Interest, % a year").fill("9");
   await expect(page.getByText("₹7,500 interest")).toBeVisible();

@@ -1,7 +1,7 @@
 // Loan maths for EMI loans: balance after each EMI, months left, interest vs principal.
 // Pure functions; rates are % a year, EMIs paid monthly.
 
-import { addMonths, monthsBetween } from "./dates";
+import { addMonths, emisBetween, nextEmiAfter, parseISODate } from "./dates";
 
 const monthly = (ratePct: number) => ratePct / 100 / 12;
 
@@ -54,6 +54,10 @@ export interface LoanInput {
   /** EMIs left on `asOf`, used when the EMI isn't given. */
   monthsLeft: number | null;
   asOf: string;
+  /** Day of the month the EMI is paid. Defaults to the day of `asOf`. */
+  emiDay?: number | null;
+  /** Set when the loan was entered from its start: the first EMI date. */
+  firstEmi?: string | null;
   /** Foreclosure charge, % of the amount owed when you close. */
   foreclosurePct?: number | null;
   /** 18% GST charged on top of the foreclosure charge. */
@@ -83,6 +87,12 @@ export interface LoanState {
   endDate: string | null;
   /** Interest still to pay if you just keep paying EMIs. */
   interestLeft: number | null;
+  /** Day of the month the EMI is paid. */
+  emiDay: number;
+  /** EMIs paid since the details were entered. */
+  emisPaid: number;
+  /** Date of the next EMI; null once the loan is closed. */
+  nextEmi: string | null;
   /** Foreclosure cost as a share of the amount owed (GST included). */
   feeRate: number;
   /** What closing today would cost in foreclosure charges. */
@@ -95,12 +105,14 @@ export function loanState(input: LoanInput, todayISO: string): LoanState {
     (input.monthsLeft
       ? emiFor(input.outstanding, input.ratePct, input.monthsLeft)
       : 0);
-  const paid = monthsBetween(input.asOf, todayISO);
+  const emiDay = input.emiDay ?? parseISODate(input.asOf).d;
+  const paid = emisBetween(input.asOf, todayISO, emiDay);
   const balance = Math.round(
     balanceAfter(input.outstanding, input.ratePct, emi, paid),
   );
   const monthsLeft = monthsToClose(balance, input.ratePct, emi);
   const interestThisMonth = Math.round(balance * monthly(input.ratePct));
+  const nextEmi = balance > 0 ? nextEmiAfter(todayISO, emiDay) : null;
   return {
     balance,
     emi,
@@ -109,7 +121,10 @@ export function loanState(input: LoanInput, todayISO: string): LoanState {
     interestThisMonth: balance > 0 ? interestThisMonth : 0,
     principalThisMonth:
       balance > 0 ? Math.max(0, Math.min(balance, emi - interestThisMonth)) : 0,
-    endDate: monthsLeft === null ? null : addMonths(todayISO, monthsLeft),
+    endDate: monthsLeft === null || !nextEmi ? null : addMonths(nextEmi, monthsLeft - 1),
+    emiDay,
+    emisPaid: paid,
+    nextEmi,
     feeRate: foreclosureRate(input),
     feeToday: Math.round(balance * foreclosureRate(input)),
     interestLeft:

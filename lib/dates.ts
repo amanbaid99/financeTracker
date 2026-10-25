@@ -54,3 +54,39 @@ export function nextYearlyDate(
   const future = candidates.filter((c) => c >= todayISO).sort();
   return future[0] ?? null;
 }
+
+/** The EMI date in a given month: `day`, or the month's last day if shorter. */
+export function emiDateIn(y: number, m: number, day: number): string {
+  const lastDay = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return toISODate({ y, m, d: Math.min(day, lastDay) });
+}
+
+/** The latest EMI date on or before `iso`. */
+export function lastEmiOnOrBefore(iso: string, day: number): string {
+  const { y, m } = parseISODate(iso);
+  const thisMonth = emiDateIn(y, m, day);
+  if (thisMonth <= iso) return thisMonth;
+  const prev = parseISODate(addMonths(`${toISODate({ y, m, d: 1 })}`, -1));
+  return emiDateIn(prev.y, prev.m, day);
+}
+
+/** The first EMI date after `iso`. */
+export function nextEmiAfter(iso: string, day: number): string {
+  const { y, m } = parseISODate(iso);
+  const thisMonth = emiDateIn(y, m, day);
+  if (thisMonth > iso) return thisMonth;
+  const next = parseISODate(addMonths(`${toISODate({ y, m, d: 1 })}`, 1));
+  return emiDateIn(next.y, next.m, day);
+}
+
+/** How many EMI dates fall after `fromISO` and on or before `toISO`. */
+export function emisBetween(fromISO: string, toISO: string, day: number): number {
+  if (toISO <= fromISO) return 0;
+  let count = 0;
+  let d = nextEmiAfter(fromISO, day);
+  while (d <= toISO) {
+    count++;
+    d = nextEmiAfter(d, day);
+  }
+  return count;
+}

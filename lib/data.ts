@@ -57,7 +57,7 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
     supabase
       .from("goals")
       .select(
-        "id, name, type, target_today, target_date, inflation_rate, created_at, loan_outstanding, loan_emi, loan_rate, loan_months_left, loan_as_of, loan_foreclosure_pct, loan_foreclosure_gst",
+        "id, name, type, target_today, target_date, inflation_rate, created_at, loan_outstanding, loan_emi, loan_rate, loan_months_left, loan_as_of, loan_foreclosure_pct, loan_foreclosure_gst, loan_emi_day, loan_first_emi",
       )
       .order("created_at"),
     supabase
@@ -109,6 +109,8 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
                 asOf: g.loan_as_of ?? g.created_at.slice(0, 10),
                 foreclosurePct: g.loan_foreclosure_pct === null ? null : Number(g.loan_foreclosure_pct),
                 foreclosureGst: g.loan_foreclosure_gst,
+                emiDay: g.loan_emi_day,
+                firstEmi: g.loan_first_emi,
               }
             : null,
       },

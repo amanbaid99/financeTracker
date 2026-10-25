@@ -1,7 +1,7 @@
 // Goal tracking: how much each goal has, where it's heading and what it needs.
 // Pure functions; callers pass "today" in.
 
-import { addMonths, monthsBetween } from "./dates";
+import { addMonths, emisBetween, monthsBetween } from "./dates";
 import { defaultReturn } from "./instruments";
 import {
   balanceAfter,
@@ -254,6 +254,8 @@ function trackLoan(
 ): TrackedGoal {
   const loan = loanState(input, todayISO);
   const { current, monthlySip, returnPct, months, lines } = base;
+  // EMIs paid between now and the target date (the balance drops on each).
+  const emisToDate = base.targetDate ? emisBetween(todayISO, base.targetDate, loan.emiDay) : null;
   const owedAfter = (k: number) =>
     Math.round(balanceAfter(loan.balance, loan.ratePct, loan.emi, k));
   // Closing costs what's owed plus the foreclosure charge on it.
@@ -298,7 +300,8 @@ function trackLoan(
   }
 
   if (months !== null) {
-    if (loan.monthsLeft !== null && months >= loan.monthsLeft) {
+    const k = emisToDate ?? months;
+    if (loan.monthsLeft !== null && k >= loan.monthsLeft) {
       // The regular EMIs finish before the target date.
       return done({
         emisCloseFirst: true,
@@ -307,7 +310,7 @@ function trackLoan(
         reachDate: loan.endDate,
       });
     }
-    const need = costAfter(months);
+    const need = costAfter(k);
     const projected = Math.round(
       projectedValue(current, monthlySip, returnPct, months),
     );
@@ -328,7 +331,7 @@ function trackLoan(
         Math.ceil(requiredSip(need, current, returnPct, months) - monthlySip),
       ),
       status,
-      ...savings(months),
+      ...savings(k),
     });
   }
 

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { todayIST } from "@/lib/dates";
+import { addMonths, lastEmiOnOrBefore, todayIST } from "@/lib/dates";
 import { GOAL_TYPES, type GoalType } from "@/lib/goal-types";
 import { PRIVACY_VERSION } from "@/lib/legal";
 import { categoryFor, FUND_CATEGORIES, KINDS } from "@/lib/instruments";
@@ -71,6 +71,13 @@ const goalSchema = z
         emi: money.nullable(),
         ratePct: z.number().min(0).max(60),
         monthsLeft: z.number().int().min(1).max(600).nullable(),
+        /** Day of the month the EMI is paid. */
+        emiDay: z.number().int().min(1).max(31),
+        /**
+         * Set when entering the loan from its start: `outstanding` is the
+         * original amount and `monthsLeft` the full tenure.
+         */
+        firstEmi: isoDate.nullable().optional(),
         foreclosurePct: z.number().min(0).max(20).nullable().optional(),
         foreclosureGst: z.boolean().optional(),
       })
@@ -118,8 +125,15 @@ export async function saveGoal(
       loan_months_left: loan?.monthsLeft ?? null,
       loan_foreclosure_pct: loan?.foreclosurePct ?? null,
       loan_foreclosure_gst: loan?.foreclosureGst ?? true,
-      // The outstanding entered is today's; EMIs roll it forward from here.
-      loan_as_of: loan ? todayIST() : null,
+      // From the start: the balance is the original amount just before the
+      // first EMI. Otherwise it's what's owed after the latest EMI.
+      loan_as_of: loan
+        ? loan.firstEmi
+          ? addMonths(loan.firstEmi, -1)
+          : lastEmiOnOrBefore(todayIST(), loan.emiDay)
+        : null,
+      loan_emi_day: loan?.emiDay ?? null,
+      loan_first_emi: loan?.firstEmi ?? null,
     };
     const res = v.id
       ? await supabase

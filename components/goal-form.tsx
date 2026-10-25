@@ -6,9 +6,10 @@ import { Field } from "@/components/forms/field";
 import { GoalIcon } from "@/components/goal-icon";
 import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
-import { Checkbox, Input } from "@/components/ui/input";
+import { Checkbox, Input, Select } from "@/components/ui/input";
 import { saveGoal } from "@/lib/actions";
-import { formatINR } from "@/lib/format";
+import { formatDate, formatINR } from "@/lib/format";
+import { addMonths, lastEmiOnOrBefore } from "@/lib/dates";
 import {
   asGoalType,
   GOAL_TYPES,
@@ -21,6 +22,39 @@ import type { TrackedGoal } from "@/lib/tracker";
 import { cn } from "@/lib/utils";
 
 const num = (s: string) => (s.trim() === "" ? null : Number(s));
+
+const ordinal = (d: number) =>
+  d % 10 === 1 && d !== 11
+    ? "st"
+    : d % 10 === 2 && d !== 12
+      ? "nd"
+      : d % 10 === 3 && d !== 13
+        ? "rd"
+        : "th";
+
+/** Interest rate with up to two decimals, e.g. 8.65. */
+function RateInput({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <Input
+      id="g-rate"
+      type="number"
+      inputMode="decimal"
+      min={0}
+      max={60}
+      step={0.01}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder="e.g. 8.65"
+      required
+    />
+  );
+}
 
 export function GoalForm({
   goal,
@@ -51,13 +85,26 @@ export function GoalForm({
         (goal ? goalTypeInfo(goal.type).inflation || 6 : ""),
     ),
   );
+  const fromStart = !!goal?.loan?.firstEmi;
+  // "now": what's owed after the latest EMI. "start": worked out from the original loan.
+  const [loanMode, setLoanMode] = useState<"now" | "start">(
+    fromStart ? "start" : "now",
+  );
   const [outstanding, setOutstanding] = useState<number | null>(
     ls?.balance ?? null,
+  );
+  const [original, setOriginal] = useState<number | null>(
+    fromStart ? goal!.loan!.outstanding : null,
+  );
+  const [emiDay, setEmiDay] = useState(String(ls?.emiDay ?? ""));
+  const [firstEmi, setFirstEmi] = useState(goal?.loan?.firstEmi ?? "");
+  const [tenure, setTenure] = useState(
+    fromStart ? String(goal!.loan!.monthsLeft ?? "") : "",
   );
   const [emi, setEmi] = useState<number | null>(goal?.loan?.emi ?? null);
   const [rate, setRate] = useState(goal?.loan ? String(goal.loan.ratePct) : "");
   const [monthsLeft, setMonthsLeft] = useState(
-    goal?.loan?.emi ? "" : String(ls?.monthsLeft ?? ""),
+    goal?.loan?.emi || fromStart ? "" : String(ls?.monthsLeft ?? ""),
   );
   const [feePct, setFeePct] = useState(
     goal?.loan?.foreclosurePct !== null &&
@@ -105,18 +152,38 @@ export function GoalForm({
     );
   }
 
+  // The loan as the server will store it, from either way of entering it.
+  const fromStartMode = loanMode === "start";
+  const day = fromStartMode
+    ? firstEmi
+      ? Number(firstEmi.slice(8, 10))
+      : null
+    : num(emiDay);
+  const loanInput =
+    isLoan && day
+      ? {
+          outstanding: (fromStartMode ? original : outstanding) ?? 0,
+          emi: emi || null,
+          ratePct: num(rate) ?? 0,
+          monthsLeft: fromStartMode ? num(tenure) : num(monthsLeft),
+          emiDay: day,
+          firstEmi: fromStartMode ? firstEmi || null : null,
+          foreclosurePct: num(feePct),
+          foreclosureGst: feeGst,
+        }
+      : null;
   // Live preview of the loan as details are typed in.
   const preview =
-    isLoan && outstanding && num(rate) !== null && (emi || num(monthsLeft))
+    loanInput &&
+    loanInput.outstanding &&
+    num(rate) !== null &&
+    (loanInput.emi || loanInput.monthsLeft)
       ? loanState(
           {
-            outstanding,
-            emi: emi || null,
-            ratePct: num(rate) ?? 0,
-            monthsLeft: num(monthsLeft),
-            asOf: today,
-            foreclosurePct: num(feePct),
-            foreclosureGst: feeGst,
+            ...loanInput,
+            asOf: loanInput.firstEmi
+              ? addMonths(loanInput.firstEmi, -1)
+              : lastEmiOnOrBefore(today, loanInput.emiDay),
           },
           today,
         )
@@ -129,20 +196,11 @@ export function GoalForm({
         id: goal?.id ?? null,
         type: type!,
         name,
-        target: isLoan ? (outstanding ?? 0) : (target ?? 0),
+        target: isLoan ? (loanInput?.outstanding ?? 0) : (target ?? 0),
         targetDate: noDate ? null : date || null,
         inflationPct:
           !isLoan && inflate && !noDate ? (num(inflation) ?? 0) : null,
-        loan: isLoan
-          ? {
-              outstanding: outstanding ?? 0,
-              emi: emi || null,
-              ratePct: num(rate) ?? 0,
-              monthsLeft: num(monthsLeft),
-              foreclosurePct: num(feePct),
-              foreclosureGst: feeGst,
-            }
-          : null,
+        loan: loanInput,
       });
       if (!res.ok) return setError(res.error);
       onSaved(res.id!);
@@ -187,55 +245,138 @@ export function GoalForm({
 
       {isLoan ? (
         <>
-          <Field label="Still owed today" htmlFor="g-out">
-            <MoneyInput
-              id="g-out"
-              value={outstanding}
-              onChange={setOutstanding}
-              placeholder="e.g. 8,00,000"
-              required
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="EMI" htmlFor="g-emi">
-              <MoneyInput
-                id="g-emi"
-                value={emi}
-                onChange={setEmi}
-                placeholder="e.g. 18,000"
-              />
-            </Field>
-            <Field label="Interest, % a year" htmlFor="g-rate">
-              <Input
-                id="g-rate"
-                type="number"
-                inputMode="decimal"
-                min={0}
-                max={60}
-                step={0.05}
-                value={rate}
-                onChange={(e) => setRate(e.target.value)}
-                placeholder="e.g. 9.5"
-                required
-              />
-            </Field>
+          <div
+            className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+            role="radiogroup"
+            aria-label="How to enter the loan"
+          >
+            {(
+              [
+                ["now", "I know what I owe now"],
+                ["start", "Work it out from my loan"],
+              ] as const
+            ).map(([m, label]) => (
+              <button
+                key={m}
+                type="button"
+                role="radio"
+                aria-checked={loanMode === m}
+                onClick={() => setLoanMode(m)}
+                className={`rounded-md px-2 py-1.5 text-sm ${loanMode === m ? "bg-card font-medium shadow-sm" : "text-muted-foreground"}`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
-          {!emi && (
-            <Field
-              label="EMIs left"
-              htmlFor="g-months"
-              hint="Don't know the EMI? Enter how many months are left."
-            >
-              <Input
-                id="g-months"
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={600}
-                value={monthsLeft}
-                onChange={(e) => setMonthsLeft(e.target.value)}
-              />
-            </Field>
+
+          {loanMode === "now" ? (
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                label="Owed after your latest EMI"
+                htmlFor="g-out"
+                className="col-span-2"
+              >
+                <MoneyInput
+                  id="g-out"
+                  value={outstanding}
+                  onChange={setOutstanding}
+                  placeholder="e.g. 8,00,000"
+                  required
+                />
+              </Field>
+              <Field label="EMI date" htmlFor="g-day">
+                <Select
+                  id="g-day"
+                  value={emiDay}
+                  onChange={(e) => setEmiDay(e.target.value)}
+                  required
+                >
+                  <option value="">Day of month</option>
+                  {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                      {ordinal(d)} of the month
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Interest, % a year" htmlFor="g-rate">
+                <RateInput value={rate} onChange={setRate} />
+              </Field>
+              <Field label="EMI" htmlFor="g-emi">
+                <MoneyInput
+                  id="g-emi"
+                  value={emi}
+                  onChange={setEmi}
+                  placeholder="e.g. 18,000"
+                />
+              </Field>
+              {!emi && (
+                <Field
+                  label="EMIs left"
+                  htmlFor="g-months"
+                  hint="If you don't know the EMI."
+                >
+                  <Input
+                    id="g-months"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    max={600}
+                    value={monthsLeft}
+                    onChange={(e) => setMonthsLeft(e.target.value)}
+                  />
+                </Field>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                label="Original loan amount"
+                htmlFor="g-orig"
+                className="col-span-2"
+              >
+                <MoneyInput
+                  id="g-orig"
+                  value={original}
+                  onChange={setOriginal}
+                  placeholder="e.g. 10,00,000"
+                  required
+                />
+              </Field>
+              <Field label="First EMI date" htmlFor="g-first">
+                <Input
+                  id="g-first"
+                  type="date"
+                  value={firstEmi}
+                  onChange={(e) => setFirstEmi(e.target.value)}
+                  required
+                />
+              </Field>
+              <Field label="Interest, % a year" htmlFor="g-rate">
+                <RateInput value={rate} onChange={setRate} />
+              </Field>
+              <Field label="Tenure, months" htmlFor="g-tenure">
+                <Input
+                  id="g-tenure"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={600}
+                  value={tenure}
+                  onChange={(e) => setTenure(e.target.value)}
+                  placeholder="e.g. 60"
+                />
+              </Field>
+              <Field label="EMI (optional)" htmlFor="g-emi">
+                <MoneyInput
+                  id="g-emi"
+                  value={emi}
+                  onChange={setEmi}
+                  placeholder="Worked out"
+                />
+              </Field>
+            </div>
           )}
           <div className="space-y-2">
             <Field
@@ -249,7 +390,7 @@ export function GoalForm({
                 inputMode="decimal"
                 min={0}
                 max={20}
-                step={0.25}
+                step={0.01}
                 value={feePct}
                 onChange={(e) => setFeePct(e.target.value)}
                 placeholder="e.g. 4"
@@ -277,6 +418,20 @@ export function GoalForm({
                 </p>
               ) : (
                 <>
+                  {loanMode === "start" && (
+                    <p>
+                      {preview.emisPaid} EMIs paid so far. Owed today:{" "}
+                      <span className="font-medium">
+                        {formatINR(preview.balance)}
+                      </span>
+                      .
+                    </p>
+                  )}
+                  {preview.nextEmi && (
+                    <p className="text-muted-foreground">
+                      Next EMI on {formatDate(preview.nextEmi)}.
+                    </p>
+                  )}
                   <p>
                     This month&apos;s EMI of {formatINR(preview.emi)}:{" "}
                     <span className="font-medium">

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { emiDateIn, emisBetween, lastEmiOnOrBefore, nextEmiAfter } from "@/lib/dates";
 import { balanceAfter, emiFor, foreclosureRate, interestSavedIfClosedAt, loanState, monthsToClose } from "@/lib/loan";
 import { projectedValue, trackGoal, type GoalInput, type Investment, type Link } from "@/lib/tracker";
 
@@ -116,5 +117,40 @@ describe("foreclosure charges", () => {
   it("shows when the charge costs more than it saves", () => {
     const late = trackGoal(g({ ...base, foreclosurePct: 10, foreclosureGst: false }, "2036-06-25"), [], [], TODAY);
     expect(late.netSaving).toBeLessThan(0);
+  });
+});
+
+describe("EMI dates", () => {
+  it("finds EMI dates, clamping to short months", () => {
+    expect(emiDateIn(2027, 2, 31)).toBe("2027-02-28");
+    expect(lastEmiOnOrBefore("2026-10-25", 5)).toBe("2026-10-05");
+    expect(lastEmiOnOrBefore("2026-10-03", 5)).toBe("2026-09-05");
+    expect(nextEmiAfter("2026-10-25", 5)).toBe("2026-11-05");
+    expect(nextEmiAfter("2026-10-05", 5)).toBe("2026-11-05");
+    expect(nextEmiAfter("2026-12-10", 5)).toBe("2027-01-05");
+    expect(emisBetween("2026-10-05", "2026-10-25", 5)).toBe(0);
+    expect(emisBetween("2026-10-05", "2026-11-05", 5)).toBe(1);
+    expect(emisBetween("2025-12-05", "2026-10-25", 5)).toBe(10);
+  });
+
+  it("drops the balance on the EMI date, not before", () => {
+    const loan = { outstanding: 1_000_000, emi: 12_668, ratePct: 9, monthsLeft: null, asOf: "2026-10-05", emiDay: 5 };
+    expect(loanState(loan, "2026-11-04").balance).toBe(1_000_000);
+    expect(loanState(loan, "2026-11-05").balance).toBe(Math.round(balanceAfter(1_000_000, 9, 12_668, 1)));
+    expect(loanState(loan, "2026-10-25").nextEmi).toBe("2026-11-05");
+  });
+
+  it("works out today's balance from the original loan", () => {
+    // 10 lakh at 9% for 10 years, first EMI on 5 Jan 2026: 10 EMIs paid by 25 Oct 2026.
+    const s = loanState(
+      { outstanding: 1_000_000, emi: null, ratePct: 9, monthsLeft: 120, asOf: "2025-12-05", emiDay: 5, firstEmi: "2026-01-05" },
+      TODAY,
+    );
+    expect(s.emi).toBe(12_668);
+    expect(s.emisPaid).toBe(10);
+    expect(s.balance).toBe(Math.round(balanceAfter(1_000_000, 9, 12_668, 10)));
+    expect(s.monthsLeft).toBe(110);
+    expect(s.nextEmi).toBe("2026-11-05");
+    expect(s.endDate).toBe("2035-12-05");
   });
 });

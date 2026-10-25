@@ -146,6 +146,7 @@ export function LoanPlan({ g }: { g: TrackedGoal }) {
       <dl className="divide-y">
         <Row label="Owed today" value={formatINR(l.balance)} strong />
         <Row label="EMI" value={`${formatINR(l.emi)} at ${l.ratePct}%`} />
+        {l.nextEmi && <Row label="Next EMI" value={formatDate(l.nextEmi)} />}
         <Row
           label="This month: interest"
           value={formatINR(l.interestThisMonth)}
