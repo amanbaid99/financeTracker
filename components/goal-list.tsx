@@ -6,7 +6,9 @@ import {
   DeleteGoalButton,
   EditGoalButton,
   GoalInvestments,
+  SuggestionBox,
 } from "@/components/goal-actions";
+import type { Suggestion } from "@/lib/allocate";
 import { LoanPlan, SavingsPlan } from "@/components/goal-details";
 import { GoalIcon } from "@/components/goal-icon";
 import { Progress } from "@/components/ui/progress";
@@ -31,7 +33,9 @@ export function GoalList({
   links,
   today,
   initialOpen,
+  suggestions = [],
 }: {
+  suggestions?: Suggestion[];
   goals: TrackedGoal[];
   investments: Investment[];
   links: Link[];
@@ -116,6 +120,15 @@ export function GoalList({
                 </div>
 
                 {g.loanState ? <LoanPlan g={g} /> : <SavingsPlan g={g} />}
+
+                {suggestions.find((x) => x.goalId === g.id) && (
+                  <SuggestionBox
+                    goal={g}
+                    suggestion={suggestions.find((x) => x.goalId === g.id)!}
+                    investments={investments}
+                    links={links}
+                  />
+                )}
 
                 <GoalInvestments
                   goal={g}

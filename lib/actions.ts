@@ -9,9 +9,17 @@ import { GOAL_TYPES, type GoalType } from "@/lib/goal-types";
 import { PRIVACY_VERSION } from "@/lib/legal";
 import { categoryFor, FUND_CATEGORIES, KINDS } from "@/lib/instruments";
 import { createClient } from "@/lib/supabase/server";
-import { ACCENT_COOKIE, ACCENTS, THEME_COOKIE, THEME_COOKIE_OPTIONS, THEMES } from "@/lib/theme";
+import {
+  ACCENT_COOKIE,
+  ACCENTS,
+  THEME_COOKIE,
+  THEME_COOKIE_OPTIONS,
+  THEMES,
+} from "@/lib/theme";
 
-export type ActionResult = { ok: true; id?: string } | { ok: false; error: string };
+export type ActionResult =
+  | { ok: true; id?: string }
+  | { ok: false; error: string };
 
 const money = z.number().int().min(0).max(1e13);
 const uuid = z.string().uuid();
@@ -27,9 +35,15 @@ async function session() {
 function fail(e: unknown): ActionResult {
   if (e instanceof z.ZodError) {
     const first = e.issues[0];
-    return { ok: false, error: `Check ${first.path.join(" ") || "your input"}: ${first.message}` };
+    return {
+      ok: false,
+      error: `Check ${first.path.join(" ") || "your input"}: ${first.message}`,
+    };
   }
-  return { ok: false, error: e instanceof Error ? e.message : "Something went wrong" };
+  return {
+    ok: false,
+    error: e instanceof Error ? e.message : "Something went wrong",
+  };
 }
 
 function done(id?: string): ActionResult {
@@ -62,15 +76,30 @@ const goalSchema = z
   })
   .superRefine((v, ctx) => {
     if (v.type === "loan_payoff") {
-      if (!v.loan) ctx.addIssue({ code: "custom", path: ["loan"], message: "add the loan details" });
+      if (!v.loan)
+        ctx.addIssue({
+          code: "custom",
+          path: ["loan"],
+          message: "add the loan details",
+        });
       else if (!v.loan.emi && !v.loan.monthsLeft)
-        ctx.addIssue({ code: "custom", path: ["EMI"], message: "add the EMI or the months left" });
+        ctx.addIssue({
+          code: "custom",
+          path: ["EMI"],
+          message: "add the EMI or the months left",
+        });
     } else if (v.target < 1) {
-      ctx.addIssue({ code: "custom", path: ["target"], message: "add a target amount" });
+      ctx.addIssue({
+        code: "custom",
+        path: ["target"],
+        message: "add a target amount",
+      });
     }
   });
 
-export async function saveGoal(input: z.input<typeof goalSchema>): Promise<ActionResult> {
+export async function saveGoal(
+  input: z.input<typeof goalSchema>,
+): Promise<ActionResult> {
   try {
     const v = goalSchema.parse(input);
     const { supabase, userId } = await session();
@@ -89,7 +118,13 @@ export async function saveGoal(input: z.input<typeof goalSchema>): Promise<Actio
       loan_as_of: loan ? todayIST() : null,
     };
     const res = v.id
-      ? await supabase.from("goals").update(row).eq("id", v.id).eq("user_id", userId).select("id").single()
+      ? await supabase
+          .from("goals")
+          .update(row)
+          .eq("id", v.id)
+          .eq("user_id", userId)
+          .select("id")
+          .single()
       : await supabase
           .from("goals")
           .insert({ ...row, user_id: userId, priority: 3, saved_amount: 0 })
@@ -105,7 +140,11 @@ export async function saveGoal(input: z.input<typeof goalSchema>): Promise<Actio
 export async function deleteGoal(id: string): Promise<ActionResult> {
   try {
     const { supabase, userId } = await session();
-    const { error } = await supabase.from("goals").delete().eq("id", uuid.parse(id)).eq("user_id", userId);
+    const { error } = await supabase
+      .from("goals")
+      .delete()
+      .eq("id", uuid.parse(id))
+      .eq("user_id", userId);
     if (error) throw new Error(error.message);
     return done();
   } catch (e) {
@@ -132,9 +171,13 @@ const investmentSchema = z.object({
   returnPct: z.number().min(0).max(30).nullable(),
   /** Share of this investment for the goal, 1 to 100. */
   percent: z.number().min(1, "use at least 1%").max(100),
+  /** Recorded from a money plan suggestion: its value comes out of the plan's savings. */
+  fromPlan: z.boolean().optional(),
 });
 
-export async function saveInvestment(input: z.input<typeof investmentSchema>): Promise<ActionResult> {
+export async function saveInvestment(
+  input: z.input<typeof investmentSchema>,
+): Promise<ActionResult> {
   try {
     const v = investmentSchema.parse(input);
     const { supabase, userId } = await session();
@@ -146,7 +189,9 @@ export async function saveInvestment(input: z.input<typeof investmentSchema>): P
         .select("goal_id, percent")
         .eq("holding_id", v.investmentId);
       if (error) throw new Error(error.message);
-      const used = (data ?? []).filter((a) => a.goal_id !== v.goalId).reduce((s, a) => s + Number(a.percent), 0);
+      const used = (data ?? [])
+        .filter((a) => a.goal_id !== v.goalId)
+        .reduce((s, a) => s + Number(a.percent), 0);
       if (used + v.percent > 100.001) {
         return {
           ok: false,
@@ -193,7 +238,26 @@ export async function saveInvestment(input: z.input<typeof investmentSchema>): P
       if (!updated?.length) {
         const { error } = await supabase
           .from("goal_allocations")
-          .insert({ user_id: userId, goal_id: v.goalId, holding_id: investmentId, percent: v.percent });
+          .insert({
+            user_id: userId,
+            goal_id: v.goalId,
+            holding_id: investmentId,
+            percent: v.percent,
+          });
+        if (error) throw new Error(error.message);
+      }
+    }
+    if (v.fromPlan && !v.investmentId && v.value > 0) {
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("plan_lump_sum")
+        .eq("user_id", userId)
+        .single();
+      if (p?.plan_lump_sum) {
+        const { error } = await supabase
+          .from("profiles")
+          .update({ plan_lump_sum: Math.max(0, p.plan_lump_sum - v.value) })
+          .eq("user_id", userId);
         if (error) throw new Error(error.message);
       }
     }
@@ -203,8 +267,34 @@ export async function saveInvestment(input: z.input<typeof investmentSchema>): P
   }
 }
 
+const planSchema = z.object({ lump: money, monthly: money });
+
+/** Saves what the user can put toward goals; null clears the plan. */
+export async function savePlan(
+  input: z.input<typeof planSchema> | null,
+): Promise<ActionResult> {
+  try {
+    const v = input === null ? null : planSchema.parse(input);
+    const { supabase, userId } = await session();
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        plan_lump_sum: v?.lump ?? null,
+        plan_monthly: v?.monthly ?? null,
+      })
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 /** Takes an investment off a goal; the investment itself stays. */
-export async function removeFromGoal(input: { goalId: string; investmentId: string }): Promise<ActionResult> {
+export async function removeFromGoal(input: {
+  goalId: string;
+  investmentId: string;
+}): Promise<ActionResult> {
   try {
     const v = z.object({ goalId: uuid, investmentId: uuid }).parse(input);
     const { supabase, userId } = await session();
@@ -221,10 +311,15 @@ export async function removeFromGoal(input: { goalId: string; investmentId: stri
   }
 }
 
-const valuesSchema = z.array(z.object({ id: uuid, value: money })).min(1).max(200);
+const valuesSchema = z
+  .array(z.object({ id: uuid, value: money }))
+  .min(1)
+  .max(200);
 
 /** Saves new values for several investments at once. */
-export async function updateValues(input: z.input<typeof valuesSchema>): Promise<ActionResult> {
+export async function updateValues(
+  input: z.input<typeof valuesSchema>,
+): Promise<ActionResult> {
   try {
     const rows = valuesSchema.parse(input);
     const { supabase, userId } = await session();
@@ -246,7 +341,11 @@ export async function updateValues(input: z.input<typeof valuesSchema>): Promise
 export async function deleteInvestment(id: string): Promise<ActionResult> {
   try {
     const { supabase, userId } = await session();
-    const { error } = await supabase.from("holdings").delete().eq("id", uuid.parse(id)).eq("user_id", userId);
+    const { error } = await supabase
+      .from("holdings")
+      .delete()
+      .eq("id", uuid.parse(id))
+      .eq("user_id", userId);
     if (error) throw new Error(error.message);
     return done();
   } catch (e) {
@@ -258,13 +357,21 @@ export async function deleteInvestment(id: string): Promise<ActionResult> {
 // Look, consent and account
 // ---------------------------------------------------------------------------
 
-const themeSchema = z.object({ theme: z.enum(THEMES), accent: z.enum(ACCENTS) });
+const themeSchema = z.object({
+  theme: z.enum(THEMES),
+  accent: z.enum(ACCENTS),
+});
 
-export async function saveTheme(input: z.input<typeof themeSchema>): Promise<ActionResult> {
+export async function saveTheme(
+  input: z.input<typeof themeSchema>,
+): Promise<ActionResult> {
   try {
     const v = themeSchema.parse(input);
     const { supabase, userId } = await session();
-    const { error } = await supabase.from("profiles").update(v).eq("user_id", userId);
+    const { error } = await supabase
+      .from("profiles")
+      .update(v)
+      .eq("user_id", userId);
     if (error) throw new Error(error.message);
     const store = await cookies();
     store.set(THEME_COOKIE, v.theme, THEME_COOKIE_OPTIONS);
@@ -280,7 +387,11 @@ export async function acceptPrivacy(): Promise<ActionResult> {
     const { supabase, userId } = await session();
     const { error } = await supabase
       .from("consents")
-      .insert({ user_id: userId, kind: "privacy_policy", version: PRIVACY_VERSION });
+      .insert({
+        user_id: userId,
+        kind: "privacy_policy",
+        version: PRIVACY_VERSION,
+      });
     if (error) throw new Error(error.message);
     return done();
   } catch (e) {
@@ -294,8 +405,11 @@ export async function signOut() {
   redirect("/login");
 }
 
-export async function deleteAccount(confirmation: string): Promise<ActionResult> {
-  if (confirmation !== "DELETE") return { ok: false, error: "Type DELETE to confirm." };
+export async function deleteAccount(
+  confirmation: string,
+): Promise<ActionResult> {
+  if (confirmation !== "DELETE")
+    return { ok: false, error: "Type DELETE to confirm." };
   const { supabase } = await session();
   const { error } = await supabase.rpc("delete_my_account");
   if (error) return { ok: false, error: error.message };

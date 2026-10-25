@@ -1,23 +1,40 @@
 "use client";
 
-import { ChevronRight, Pencil, Plus } from "lucide-react";
+import { ChevronRight, Pencil, Plus, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import { GoalForm } from "@/components/goal-form";
-import { InvestmentSheet, investmentSub, investmentTitle } from "@/components/investment-sheet";
+import {
+  InvestmentSheet,
+  investmentSub,
+  investmentTitle,
+} from "@/components/investment-sheet";
 import { Sheet } from "@/components/sheet";
 import { Button } from "@/components/ui/button";
 import { deleteGoal } from "@/lib/actions";
+import type { Suggestion } from "@/lib/allocate";
+import { goalHeadline } from "@/lib/goal-summary";
 import { formatINR } from "@/lib/format";
 import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
 
-export function EditGoalButton({ goal, today }: { goal: TrackedGoal; today: string }) {
+export function EditGoalButton({
+  goal,
+  today,
+}: {
+  goal: TrackedGoal;
+  today: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
   return (
     <>
-      <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={() => setOpen(true)}
+      >
         <Pencil /> Edit
       </Button>
       {open && (
@@ -67,9 +84,16 @@ export function InvestmentRow({
         </span>
         <span className="shrink-0 text-right">
           <span className="tabular block text-sm">{formatINR(value)}</span>
-          {percent < 100 && <span className="block text-xs text-muted-foreground">{percent}% of it</span>}
+          {percent < 100 && (
+            <span className="block text-xs text-muted-foreground">
+              {percent}% of it
+            </span>
+          )}
         </span>
-        <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+        <ChevronRight
+          className="size-4 shrink-0 text-muted-foreground"
+          aria-hidden
+        />
       </button>
     </li>
   );
@@ -95,7 +119,8 @@ export function GoalInvestments({
       </h2>
       {goal.lines.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Nothing yet. Add the mutual funds, stocks or deposits you&apos;re putting toward this goal.
+          Nothing yet. Add the mutual funds, stocks or deposits you&apos;re
+          putting toward this goal.
         </p>
       ) : (
         <ul className="divide-y">
@@ -106,12 +131,19 @@ export function GoalInvestments({
               value={l.value}
               sip={l.monthlySip}
               percent={l.percent}
-              onClick={() => setOpen({ investment: l.investment, percent: l.percent })}
+              onClick={() =>
+                setOpen({ investment: l.investment, percent: l.percent })
+              }
             />
           ))}
         </ul>
       )}
-      <Button type="button" variant="outline" className="w-full" onClick={() => setOpen({ investment: null, percent: null })}>
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={() => setOpen({ investment: null, percent: null })}
+      >
         <Plus /> Add investment
       </Button>
       {open && (
@@ -154,7 +186,67 @@ export function DeleteGoalButton({ id }: { id: string }) {
       >
         {confirm ? "Tap again to delete this goal" : "Delete goal"}
       </Button>
-      {confirm && <p className="text-xs text-muted-foreground">Its investments stay; they&apos;re just unlinked.</p>}
+      {confirm && (
+        <p className="text-xs text-muted-foreground">
+          Its investments stay; they&apos;re just unlinked.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** The plan's suggestion for one goal, with a button to record it once invested. */
+export function SuggestionBox({
+  goal,
+  suggestion: s,
+  investments,
+  links,
+}: {
+  goal: TrackedGoal;
+  suggestion: Suggestion;
+  investments: Investment[];
+  links: Link[];
+}) {
+  const [open, setOpen] = useState(false);
+  const close = useCallback(() => setOpen(false), []);
+  const what = [
+    s.lump ? `${formatINR(s.lump)} now` : "",
+    s.monthly ? `${formatINR(s.monthly)} a month` : "",
+  ]
+    .filter(Boolean)
+    .join(" and ");
+  return (
+    <div className="space-y-2 rounded-lg bg-primary-soft p-3 text-sm">
+      <p className="flex items-center gap-1.5 font-semibold text-primary">
+        <Sparkles className="size-4" aria-hidden /> Suggested
+      </p>
+      <p>
+        Put <b>{what}</b> into {/^[aeiou]/i.test(s.categoryLabel) ? "an" : "a"}{" "}
+        {s.categoryLabel.toLowerCase()} ({s.why}).
+      </p>
+      <p className="text-muted-foreground">
+        With this: {goalHeadline(s.after).text}.
+      </p>
+      <Button type="button" size="sm" onClick={() => setOpen(true)}>
+        I&apos;ve invested this
+      </Button>
+      {open && (
+        <InvestmentSheet
+          goalId={goal.id}
+          goalName={goal.name}
+          linkedIds={goal.lines.map((l) => l.investment.id)}
+          investment={null}
+          percent={null}
+          investments={investments}
+          links={links}
+          onClose={close}
+          prefill={{
+            fundCategory: s.category,
+            value: s.lump,
+            monthlySip: s.monthly,
+          }}
+        />
+      )}
     </div>
   );
 }

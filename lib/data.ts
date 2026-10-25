@@ -4,7 +4,12 @@ import { cache } from "react";
 import { todayIST } from "@/lib/dates";
 import { PRIVACY_VERSION } from "@/lib/legal";
 import { createClient } from "@/lib/supabase/server";
-import { trackGoal, type Investment, type Link, type TrackedGoal } from "@/lib/tracker";
+import {
+  trackGoal,
+  type Investment,
+  type Link,
+  type TrackedGoal,
+} from "@/lib/tracker";
 
 /** The signed-in user, or a redirect to /login. Cached per request. */
 export const requireUser = cache(async () => {
@@ -34,9 +39,14 @@ export interface GoalsData {
   today: string;
   theme: string;
   accent: string;
+  /** Money plan: savings to put toward goals now, and total monthly investing. Null until set. */
+  plan: { lump: number; monthly: number } | null;
 }
 
-function check<T>(res: { data: T | null; error: { message: string } | null }): T {
+function check<T>(res: {
+  data: T | null;
+  error: { message: string } | null;
+}): T {
   if (res.error) throw new Error(res.error.message);
   return res.data as T;
 }
@@ -52,10 +62,16 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
       .order("created_at"),
     supabase
       .from("holdings")
-      .select("id, kind, name, category, current_value, monthly_sip, expected_return_pct")
+      .select(
+        "id, kind, name, category, current_value, monthly_sip, expected_return_pct",
+      )
       .order("current_value", { ascending: false }),
     supabase.from("goal_allocations").select("goal_id, holding_id, percent"),
-    supabase.from("profiles").select("theme, accent").eq("user_id", user.id).maybeSingle(),
+    supabase
+      .from("profiles")
+      .select("theme, accent, plan_lump_sum, plan_monthly")
+      .eq("user_id", user.id)
+      .maybeSingle(),
   ]);
   const today = todayIST();
   const investments: Investment[] = check(holdings).map((h) => ({
@@ -65,7 +81,8 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
     category: h.category,
     value: h.current_value,
     monthlySip: h.monthly_sip ?? 0,
-    returnPct: h.expected_return_pct === null ? null : Number(h.expected_return_pct),
+    returnPct:
+      h.expected_return_pct === null ? null : Number(h.expected_return_pct),
   }));
   const links: Link[] = check(allocations).map((a) => ({
     goalId: a.goal_id,
@@ -80,7 +97,8 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
         type: g.type,
         target: g.target_today,
         targetDate: g.target_date,
-        inflationPct: g.inflation_rate === null ? null : Number(g.inflation_rate),
+        inflationPct:
+          g.inflation_rate === null ? null : Number(g.inflation_rate),
         loan:
           g.type === "loan_payoff" && g.loan_outstanding !== null
             ? {
@@ -104,5 +122,14 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
     today,
     theme: profile.data?.theme ?? "white",
     accent: profile.data?.accent ?? "green",
+    plan:
+      profile.data &&
+      (profile.data.plan_lump_sum !== null ||
+        profile.data.plan_monthly !== null)
+        ? {
+            lump: profile.data.plan_lump_sum ?? 0,
+            monthly: profile.data.plan_monthly ?? 0,
+          }
+        : null,
   };
 });

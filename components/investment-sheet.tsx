@@ -7,19 +7,37 @@ import { MoneyInput } from "@/components/money-input";
 import { Sheet } from "@/components/sheet";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
-import { deleteInvestment, removeFromGoal, saveInvestment } from "@/lib/actions";
+import {
+  deleteInvestment,
+  removeFromGoal,
+  saveInvestment,
+} from "@/lib/actions";
 import { categoryLabel } from "@/lib/categories";
 import { formatINR } from "@/lib/format";
-import { asKind, defaultReturn, FUND_CATEGORIES, KIND_LABELS, KINDS, type Kind } from "@/lib/instruments";
+import {
+  asKind,
+  defaultReturn,
+  FUND_CATEGORIES,
+  KIND_LABELS,
+  KINDS,
+  type Kind,
+} from "@/lib/instruments";
 import { freePercent, type Investment, type Link } from "@/lib/tracker";
 
 export function investmentTitle(i: Investment): string {
-  return i.name?.trim() || (i.kind === "mutual_fund" ? categoryLabel(i.category) : KIND_LABELS[asKind(i.kind)]);
+  return (
+    i.name?.trim() ||
+    (i.kind === "mutual_fund"
+      ? categoryLabel(i.category)
+      : KIND_LABELS[asKind(i.kind)])
+  );
 }
 
 export function investmentSub(i: Investment): string {
   const kind = asKind(i.kind);
-  return kind === "mutual_fund" && i.name?.trim() ? categoryLabel(i.category) : KIND_LABELS[kind];
+  return kind === "mutual_fund" && i.name?.trim()
+    ? categoryLabel(i.category)
+    : KIND_LABELS[kind];
 }
 
 /** Add an investment to a goal, or edit one. With no goal, edits an unlinked investment. */
@@ -32,7 +50,10 @@ export function InvestmentSheet({
   investments,
   links,
   onClose,
+  prefill,
 }: {
+  /** Pre-filled from a money plan suggestion; saving takes it out of the plan's savings. */
+  prefill?: { fundCategory: string; value: number; monthlySip: number };
   goalId: string | null;
   goalName?: string;
   /** Investments already on this goal. */
@@ -45,27 +66,45 @@ export function InvestmentSheet({
 }) {
   const router = useRouter();
   const free = (id: string) => (goalId ? freePercent(id, links, goalId) : 100);
-  const available = goalId ? investments.filter((i) => !linkedIds.includes(i.id) && free(i.id) > 0) : [];
+  const available = goalId
+    ? investments.filter((i) => !linkedIds.includes(i.id) && free(i.id) > 0)
+    : [];
   const [mode, setMode] = useState<"new" | "existing">("new");
   const [pickId, setPickId] = useState(available[0]?.id ?? "");
-  const picked = mode === "existing" ? (available.find((i) => i.id === pickId) ?? null) : null;
+  const picked =
+    mode === "existing"
+      ? (available.find((i) => i.id === pickId) ?? null)
+      : null;
 
-  const [kind, setKind] = useState<Kind>(investment ? asKind(investment.kind) : "mutual_fund");
+  const [kind, setKind] = useState<Kind>(
+    investment ? asKind(investment.kind) : "mutual_fund",
+  );
   const [fundCategory, setFundCategory] = useState(
-    investment?.kind === "mutual_fund" ? (investment.category ?? "other") : "equity_index",
+    prefill?.fundCategory ??
+      (investment?.kind === "mutual_fund"
+        ? (investment.category ?? "other")
+        : "equity_index"),
   );
   const [name, setName] = useState(investment?.name ?? "");
-  const [value, setValue] = useState<number | null>(investment?.value ?? null);
-  const [sip, setSip] = useState<number | null>(investment?.monthlySip || null);
+  const [value, setValue] = useState<number | null>(
+    investment?.value ?? (prefill?.value || null),
+  );
+  const [sip, setSip] = useState<number | null>(
+    investment?.monthlySip || prefill?.monthlySip || null,
+  );
   const [ret, setRet] = useState(investment?.returnPct?.toString() ?? "");
-  const [percent, setPercent] = useState(String(initialPercent ?? (investment ? free(investment.id) : 100)));
+  const [percent, setPercent] = useState(
+    String(initialPercent ?? (investment ? free(investment.id) : 100)),
+  );
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
 
   const category = kind === "mutual_fund" ? fundCategory : null;
   const dflt = defaultReturn(kind, category);
-  const sharedElsewhere = investment ? links.some((l) => l.investmentId === investment.id && l.goalId !== goalId) : false;
+  const sharedElsewhere = investment
+    ? links.some((l) => l.investmentId === investment.id && l.goalId !== goalId)
+    : false;
   const existing = mode === "existing" && !investment;
 
   const run = (fn: () => Promise<{ ok: boolean; error?: string }>) =>
@@ -86,7 +125,8 @@ export function InvestmentSheet({
           goalId,
           investmentId: picked.id,
           kind: asKind(picked.kind),
-          fundCategory: picked.kind === "mutual_fund" ? (picked.category ?? "other") : null,
+          fundCategory:
+            picked.kind === "mutual_fund" ? (picked.category ?? "other") : null,
           name: picked.name,
           value: picked.value,
           monthlySip: picked.monthlySip,
@@ -107,12 +147,17 @@ export function InvestmentSheet({
         monthlySip: sip ?? 0,
         returnPct: ret.trim() === "" ? null : Number(ret),
         percent: pct,
+        fromPlan: !!prefill,
       }),
     );
   }
 
   const shareField = goalId && (
-    <Field label="Share for this goal, %" htmlFor="i-pct" hint="Use less than 100 if part of it is for another goal.">
+    <Field
+      label="Share for this goal, %"
+      htmlFor="i-pct"
+      hint="Use less than 100 if part of it is for another goal."
+    >
       <Input
         id="i-pct"
         type="number"
@@ -128,7 +173,13 @@ export function InvestmentSheet({
 
   return (
     <Sheet
-      title={investment ? investmentTitle(investment) : goalName ? `Add to ${goalName}` : "Investment"}
+      title={
+        investment
+          ? investmentTitle(investment)
+          : goalName
+            ? `Add to ${goalName}`
+            : "Investment"
+      }
       onClose={onClose}
     >
       <form
@@ -138,8 +189,18 @@ export function InvestmentSheet({
           save();
         }}
       >
-        {!investment && available.length > 0 && (
-          <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1" role="radiogroup" aria-label="Which investment">
+        {prefill && (
+          <p className="rounded-lg bg-primary-soft p-3 text-sm">
+            Filled in from your plan. Change anything to match what you actually
+            invested.
+          </p>
+        )}
+        {!investment && !prefill && available.length > 0 && (
+          <div
+            className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+            role="radiogroup"
+            aria-label="Which investment"
+          >
             {(
               [
                 ["new", "New"],
@@ -188,7 +249,11 @@ export function InvestmentSheet({
           <>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Type" htmlFor="i-kind">
-                <Select id="i-kind" value={kind} onChange={(e) => setKind(e.target.value as Kind)}>
+                <Select
+                  id="i-kind"
+                  value={kind}
+                  onChange={(e) => setKind(e.target.value as Kind)}
+                >
                   {KINDS.map((k) => (
                     <option key={k} value={k}>
                       {KIND_LABELS[k]}
@@ -198,7 +263,11 @@ export function InvestmentSheet({
               </Field>
               {kind === "mutual_fund" && (
                 <Field label="Fund category" htmlFor="i-cat">
-                  <Select id="i-cat" value={fundCategory} onChange={(e) => setFundCategory(e.target.value)}>
+                  <Select
+                    id="i-cat"
+                    value={fundCategory}
+                    onChange={(e) => setFundCategory(e.target.value)}
+                  >
                     {FUND_CATEGORIES.map((c) => (
                       <option key={c.value} value={c.value}>
                         {c.label}
@@ -213,7 +282,9 @@ export function InvestmentSheet({
                 id="i-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder={kind === "mutual_fund" ? "e.g. My index SIP" : "e.g. Bank FD"}
+                placeholder={
+                  kind === "mutual_fund" ? "e.g. My index SIP" : "e.g. Bank FD"
+                }
                 maxLength={80}
               />
             </Field>
@@ -226,14 +297,24 @@ export function InvestmentSheet({
               </Field>
             </div>
             {sharedElsewhere && (
-              <p className="text-xs text-muted-foreground">This also counts toward another goal, so it changes there too.</p>
+              <p className="text-xs text-muted-foreground">
+                This also counts toward another goal, so it changes there too.
+              </p>
             )}
-            <details className="group rounded-lg border" open={!!initialPercent && initialPercent < 100}>
+            <details
+              className="group rounded-lg border"
+              open={!!initialPercent && initialPercent < 100}
+            >
               <summary className="cursor-pointer list-none px-3 py-2 text-sm text-muted-foreground">
-                More options · {ret.trim() || dflt}% a year{goalId && Number(percent) < 100 ? ` · ${percent}% share` : ""}
+                More options · {ret.trim() || dflt}% a year
+                {goalId && Number(percent) < 100 ? ` · ${percent}% share` : ""}
               </summary>
               <div className="space-y-4 border-t p-3">
-                <Field label="Expected return, % a year" htmlFor="i-ret" hint={`Leave blank to use ${dflt}% for this type.`}>
+                <Field
+                  label="Expected return, % a year"
+                  htmlFor="i-ret"
+                  hint={`Leave blank to use ${dflt}% for this type.`}
+                >
                   <Input
                     id="i-ret"
                     type="number"
@@ -253,11 +334,18 @@ export function InvestmentSheet({
         )}
 
         {error && (
-          <p role="alert" className="rounded-lg bg-danger-soft p-2 text-sm text-danger">
+          <p
+            role="alert"
+            className="rounded-lg bg-danger-soft p-2 text-sm text-danger"
+          >
             {error}
           </p>
         )}
-        <Button type="submit" className="w-full" disabled={pending || (existing && !picked)}>
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={pending || (existing && !picked)}
+        >
           {pending ? "Saving…" : investment ? "Save" : "Add investment"}
         </Button>
         {investment && (
@@ -268,7 +356,11 @@ export function InvestmentSheet({
                 variant="ghost"
                 size="sm"
                 disabled={pending}
-                onClick={() => run(() => removeFromGoal({ goalId, investmentId: investment.id }))}
+                onClick={() =>
+                  run(() =>
+                    removeFromGoal({ goalId, investmentId: investment.id }),
+                  )
+                }
               >
                 Remove from goal
               </Button>
@@ -278,7 +370,11 @@ export function InvestmentSheet({
               variant={confirmDelete ? "destructive" : "ghost"}
               size="sm"
               disabled={pending}
-              onClick={() => (confirmDelete ? run(() => deleteInvestment(investment.id)) : setConfirmDelete(true))}
+              onClick={() =>
+                confirmDelete
+                  ? run(() => deleteInvestment(investment.id))
+                  : setConfirmDelete(true)
+              }
             >
               {confirmDelete ? "Tap again to delete" : "Delete investment"}
             </Button>

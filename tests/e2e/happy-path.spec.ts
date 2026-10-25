@@ -190,6 +190,26 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: /^House/ }).click();
   await expect(page.getByRole("button", { name: "Edit Index SIP" })).toBeVisible();
 
+  // Money plan: suggests a split, and recording it takes it out of the plan.
+  await page.getByRole("button", { name: /Plan my money/ }).click();
+  await expect(page.getByText(/in investments not linked to a goal/)).toBeVisible();
+  await page.getByRole("button", { name: "Use this amount" }).click();
+  await expect(page.getByLabel("Savings to put toward goals now")).toHaveValue("2,80,000");
+  await page.getByLabel("Can invest each month, in total").fill("40000");
+  await page.getByRole("button", { name: "Suggest a split" }).click();
+  await expect(page.getByText("Your money plan")).toBeVisible();
+  await expect(page.getByText("₹2,80,000 now · ₹30,000 a month free (after ₹10,000 of SIPs)")).toBeVisible();
+  await expect(page.getByText("Suggested", { exact: true })).toBeVisible();
+  await expect(page.getByText(/into an equity index fund/)).toBeVisible();
+  await page.screenshot({ path: "test-results/plan-375.png", fullPage: true });
+  await page.getByRole("button", { name: "I've invested this" }).click();
+  await expect(page.getByText("Filled in from your plan.")).toBeVisible();
+  await expect(page.getByLabel("Fund category")).toHaveValue("equity_index");
+  await page.getByLabel("Nickname (optional)").fill("Planned index fund");
+  await page.getByRole("dialog").getByRole("button", { name: "Add investment" }).click();
+  await expect(page.getByRole("button", { name: "Edit Planned index fund" })).toBeVisible();
+  await expect(page.getByText(/^₹0 now · /)).toBeVisible();
+
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("radio", { name: "Beige" }).click();

@@ -2,11 +2,14 @@ import { Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { GoalList } from "@/components/goal-list";
+import { MoneyPlanCard } from "@/components/money-plan";
 import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
 import { loadGoals } from "@/lib/data";
 import { formatINR, formatINRCompact } from "@/lib/format";
+import { planMoney } from "@/lib/allocate";
 import { sortGoals } from "@/lib/goal-summary";
+import { freePercent } from "@/lib/tracker";
 
 export const metadata: Metadata = { title: "Goals" };
 
@@ -16,7 +19,30 @@ export default async function GoalsPage({
   searchParams: Promise<{ open?: string }>;
 }) {
   const { open } = await searchParams;
-  const { goals, investments, links, today } = await loadGoals();
+  const {
+    goals,
+    investments,
+    links,
+    today,
+    plan: planInput,
+  } = await loadGoals();
+  const sipsNow = investments.reduce((s, i) => s + i.monthlySip, 0);
+  const unassigned = Math.round(
+    investments.reduce(
+      (s, i) => s + (i.value * freePercent(i.id, links)) / 100,
+      0,
+    ),
+  );
+  const plan = planInput
+    ? planMoney({
+        goals,
+        investments,
+        links,
+        lump: planInput.lump,
+        monthlyTotal: planInput.monthly,
+        todayISO: today,
+      })
+    : null;
   const saved = goals.reduce((s, g) => s + g.current, 0);
   const sips = goals.reduce((s, g) => s + g.monthlySip, 0);
   // Investments on at least one goal, with the goals they count toward.
@@ -42,9 +68,14 @@ export default async function GoalsPage({
             </p>
           )}
         </div>
-        <div className={updatable.length > 0 ? "grid grid-cols-2 gap-2" : "flex"}>
+        <div
+          className={updatable.length > 0 ? "grid grid-cols-2 gap-2" : "flex"}
+        >
           {updatable.length > 0 && <UpdateButton items={updatable} />}
-          <Link href="/goals/new" className={buttonVariants({ className: "w-full" })}>
+          <Link
+            href="/goals/new"
+            className={buttonVariants({ className: "w-full" })}
+          >
             <Plus /> New goal
           </Link>
         </div>
@@ -62,13 +93,21 @@ export default async function GoalsPage({
           </Link>
         </div>
       ) : (
-        <GoalList
-          goals={sortGoals(goals)}
-          investments={investments}
-          links={links}
-          today={today}
-          initialOpen={open ?? null}
-        />
+        <>
+          <MoneyPlanCard
+            plan={plan}
+            sipsNow={sipsNow}
+            unassigned={unassigned}
+          />
+          <GoalList
+            suggestions={plan?.suggestions ?? []}
+            goals={sortGoals(goals)}
+            investments={investments}
+            links={links}
+            today={today}
+            initialOpen={open ?? null}
+          />
+        </>
       )}
     </main>
   );

@@ -589,6 +589,8 @@ export type Database = {
           marital_status: Database["public"]["Enums"]["marital_status"] | null;
           name: string;
           onboarding_completed_at: string | null;
+          plan_lump_sum: number | null;
+          plan_monthly: number | null;
           risk_profile: Database["public"]["Enums"]["risk_profile"] | null;
           sole_earner: boolean | null;
           theme: string;
@@ -609,6 +611,8 @@ export type Database = {
           marital_status?: Database["public"]["Enums"]["marital_status"] | null;
           name?: string;
           onboarding_completed_at?: string | null;
+          plan_lump_sum?: number | null;
+          plan_monthly?: number | null;
           risk_profile?: Database["public"]["Enums"]["risk_profile"] | null;
           sole_earner?: boolean | null;
           theme?: string;
@@ -628,6 +632,8 @@ export type Database = {
           marital_status?: Database["public"]["Enums"]["marital_status"] | null;
           name?: string;
           onboarding_completed_at?: string | null;
+          plan_lump_sum?: number | null;
+          plan_monthly?: number | null;
           risk_profile?: Database["public"]["Enums"]["risk_profile"] | null;
           sole_earner?: boolean | null;
           theme?: string;
