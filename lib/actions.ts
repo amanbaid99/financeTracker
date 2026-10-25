@@ -221,6 +221,28 @@ export async function removeFromGoal(input: { goalId: string; investmentId: stri
   }
 }
 
+const valuesSchema = z.array(z.object({ id: uuid, value: money })).min(1).max(200);
+
+/** Saves new values for several investments at once. */
+export async function updateValues(input: z.input<typeof valuesSchema>): Promise<ActionResult> {
+  try {
+    const rows = valuesSchema.parse(input);
+    const { supabase, userId } = await session();
+    const now = new Date().toISOString();
+    for (const r of rows) {
+      const { error } = await supabase
+        .from("holdings")
+        .update({ current_value: r.value, updated_at: now })
+        .eq("id", r.id)
+        .eq("user_id", userId);
+      if (error) throw new Error(error.message);
+    }
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 export async function deleteInvestment(id: string): Promise<ActionResult> {
   try {
     const { supabase, userId } = await session();

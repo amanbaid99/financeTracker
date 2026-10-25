@@ -161,6 +161,15 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Save goal" }).click();
   await expect(page.getByText(/grown at 6% a year/)).toBeVisible();
 
+  // Update amounts for everything in one go.
+  await page.getByRole("button", { name: "Update", exact: true }).click();
+  await expect(page.getByText("Type in what each investment is worth today.")).toBeVisible();
+  await page.getByLabel("Bank FD value today").fill("120000");
+  await expect(page.getByText("Was ₹1,00,000")).toBeVisible();
+  await page.screenshot({ path: "test-results/update-375.png" });
+  await page.getByRole("button", { name: "Save 1 change" }).click();
+  await expect(page.getByText("₹3,60,000", { exact: true })).toBeVisible();
+
   // Take the FD off the goal, then delete it from there.
   await page.getByRole("button", { name: "Edit Bank FD" }).click();
   await page.getByRole("button", { name: "Remove from goal" }).click();
