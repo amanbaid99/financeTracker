@@ -396,6 +396,35 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("link", { name: "Ask" }).click();
   await expect(page.getByRole("button", { name: "Turn on Ask" })).toBeVisible();
 
+  // Invites: hidden from normal users; admins can invite and remove people.
+  await page.getByRole("link", { name: "Settings" }).click();
+  await expect(page.getByRole("heading", { name: "Settings" })).toBeVisible();
+  await expect(page.getByText("Invite people")).toHaveCount(0);
+  const service = createClient(SUPABASE_URL, SECRET, { auth: { persistSession: false } });
+  await service.from("app_admins").insert({ email });
+  const friend = `friend-${Date.now()}@example.test`;
+  try {
+    await page.reload();
+    await expect(page.getByText("Invite people")).toBeVisible();
+    const people = page.getByRole("list", { name: "Invited people" });
+    await expect(people).toContainText(email);
+    await expect(people.getByRole("button", { name: `Remove invite for ${email}` })).toHaveCount(0);
+    await page.getByLabel("Their email").fill(friend.toUpperCase());
+    await page.getByLabel("Note (optional)").fill("Riya");
+    await page.getByRole("button", { name: "Invite", exact: true }).click();
+    await expect(page.getByText("Invited. Now send them the message.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Send invite message" })).toBeVisible();
+    await expect(people).toContainText(friend);
+    await expect(people).toContainText("Riya");
+    await page.screenshot({ path: "test-results/invites-375.png", fullPage: true });
+    await people.getByRole("button", { name: `Remove invite for ${friend}` }).click();
+    await expect(page.getByText(`Removed ${friend}.`)).toBeVisible();
+    await expect(people).not.toContainText(friend);
+  } finally {
+    await service.from("app_admins").delete().eq("email", email);
+    await service.from("allowed_emails").delete().eq("email", friend);
+  }
+
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("radio", { name: "Beige" }).click();

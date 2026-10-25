@@ -170,7 +170,11 @@ export async function saveGoal(
     const goalId = res.data.id;
     if (v.type === "bills_fund") {
       // Replace the payment list with what was sent.
-      const del = await supabase.from("goal_bills").delete().eq("goal_id", goalId).eq("user_id", userId);
+      const del = await supabase
+        .from("goal_bills")
+        .delete()
+        .eq("goal_id", goalId)
+        .eq("user_id", userId);
       if (del.error) throw new Error(del.error.message);
       if (v.bills?.length) {
         const ins = await supabase.from("goal_bills").insert(
@@ -294,14 +298,12 @@ export async function saveInvestment(
         .select("id");
       if (updError) throw new Error(updError.message);
       if (!updated?.length) {
-        const { error } = await supabase
-          .from("goal_allocations")
-          .insert({
-            user_id: userId,
-            goal_id: v.goalId,
-            holding_id: investmentId,
-            percent: v.percent,
-          });
+        const { error } = await supabase.from("goal_allocations").insert({
+          user_id: userId,
+          goal_id: v.goalId,
+          holding_id: investmentId,
+          percent: v.percent,
+        });
         if (error) throw new Error(error.message);
       }
     }
@@ -443,13 +445,11 @@ export async function saveTheme(
 export async function acceptPrivacy(): Promise<ActionResult> {
   try {
     const { supabase, userId } = await session();
-    const { error } = await supabase
-      .from("consents")
-      .insert({
-        user_id: userId,
-        kind: "privacy_policy",
-        version: PRIVACY_VERSION,
-      });
+    const { error } = await supabase.from("consents").insert({
+      user_id: userId,
+      kind: "privacy_policy",
+      version: PRIVACY_VERSION,
+    });
     if (error) throw new Error(error.message);
     return done();
   } catch (e) {
@@ -473,4 +473,49 @@ export async function deleteAccount(
   if (error) return { ok: false, error: error.message };
   await supabase.auth.signOut();
   redirect("/login");
+}
+
+// ---------------------------------------------------------------------------
+// Invites (admins only; the database functions enforce it)
+// ---------------------------------------------------------------------------
+
+export async function addInvite(input: {
+  email: string;
+  note?: string;
+}): Promise<ActionResult> {
+  try {
+    const v = z
+      .object({
+        email: z
+          .string()
+          .trim()
+          .toLowerCase()
+          .email("enter a valid email")
+          .max(254),
+        note: z.string().trim().max(80).optional(),
+      })
+      .parse(input);
+    const { supabase } = await session();
+    const { error } = await supabase.rpc("add_invite", {
+      p_email: v.email,
+      p_note: v.note || undefined,
+    });
+    if (error) throw new Error(error.message);
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function removeInvite(email: string): Promise<ActionResult> {
+  try {
+    const { supabase } = await session();
+    const { error } = await supabase.rpc("remove_invite", {
+      p_email: z.string().email().parse(email),
+    });
+    if (error) throw new Error(error.message);
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
 }

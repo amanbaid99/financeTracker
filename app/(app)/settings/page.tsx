@@ -6,6 +6,7 @@ import {
   AskSettings,
   ThemeSettings,
 } from "@/components/settings-forms";
+import { InviteSettings } from "@/components/invite-settings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadGoals, requireUser } from "@/lib/data";
 import { asAccent, asTheme } from "@/lib/theme";
@@ -20,6 +21,10 @@ export default async function SettingsPage() {
     .select("ai_enabled")
     .eq("user_id", user.id)
     .maybeSingle();
+  const { data: isAdmin } = await supabase.rpc("is_admin");
+  const invites = isAdmin
+    ? ((await supabase.rpc("list_invites")).data ?? [])
+    : [];
   return (
     <main className="space-y-5">
       <Link
@@ -42,6 +47,23 @@ export default async function SettingsPage() {
           <ThemeSettings theme={asTheme(theme)} accent={asAccent(accent)} />
         </CardContent>
       </Card>
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Invite people</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <InviteSettings
+              me={(user.email ?? "").toLowerCase()}
+              invites={invites.map((i) => ({
+                email: i.email,
+                note: i.note,
+                joined: i.joined,
+              }))}
+            />
+          </CardContent>
+        </Card>
+      )}
       <Card>
         <CardHeader>
           <CardTitle>Ask</CardTitle>

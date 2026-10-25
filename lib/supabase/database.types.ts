@@ -84,6 +84,22 @@ export type Database = {
         };
         Relationships: [];
       };
+      app_admins: {
+        Row: {
+          added_at: string;
+          email: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          added_at?: string;
+          email: string;
+        };
+        Update: {
+          added_at?: string;
+          email?: string;
+        };
+        Relationships: [];
+      };
       bill_status: {
         Row: {
           bill_key: string;
@@ -726,10 +742,26 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      add_invite: {
+        Args: { p_email: string; p_note?: string };
+        Returns: undefined;
+      };
+      caller_email: { Args: Record<PropertyKey, never>; Returns: string };
       delete_my_account: {
         Args: Record<PropertyKey, never>;
         Returns: undefined;
       };
+      is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      list_invites: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          added_at: string;
+          email: string;
+          joined: boolean;
+          note: string;
+        }[];
+      };
+      remove_invite: { Args: { p_email: string }; Returns: undefined };
     };
     Enums: {
       city_tier: "metro" | "tier2" | "tier3";

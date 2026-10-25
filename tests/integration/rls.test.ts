@@ -212,3 +212,50 @@ describe("row level security", () => {
     idA = "";
   });
 });
+
+describe("admin invites", () => {
+  // User A is deleted by the account test above, so these use B and a new user C.
+  const friend = `friend-${run}@example.test`;
+  const emailC = `rls-c-${run}@example.test`;
+  let c: Client;
+  let idC = "";
+
+  beforeAll(async () => {
+    await admin.from("allowed_emails").insert({ email: emailC });
+    const uc = await admin.auth.admin.createUser({ email: emailC, password, email_confirm: true });
+    if (uc.error) throw uc.error;
+    idC = uc.data.user!.id;
+    c = await signedIn(emailC);
+  });
+
+  afterAll(async () => {
+    if (idC) await admin.auth.admin.deleteUser(idC).catch(() => {});
+    await admin.from("allowed_emails").delete().in("email", [emailC, friend]);
+    await admin.from("app_admins" as never).delete().eq("email" as never, emailB as never);
+  });
+
+  it("non-admins can't see, add or remove invites, or read who's admin", async () => {
+    expect((await c.rpc("is_admin")).data).toBe(false);
+    expect((await c.rpc("list_invites")).error).toBeTruthy();
+    expect((await c.rpc("add_invite", { p_email: friend })).error).toBeTruthy();
+    expect((await c.rpc("remove_invite", { p_email: emailB })).error).toBeTruthy();
+    expect((await c.from("app_admins" as never).select("*")).data ?? []).toEqual([]);
+    expect((await c.from("app_admins" as never).insert({ email: emailC } as never)).error).toBeTruthy();
+  });
+
+  it("an admin can invite, see who joined, and remove", async () => {
+    const added = await admin.from("app_admins" as never).insert({ email: emailB } as never);
+    expect(added.error).toBeNull();
+    expect((await b.rpc("is_admin")).data).toBe(true);
+    expect((await b.rpc("add_invite", { p_email: ` ${friend.toUpperCase()} `, p_note: "Riya" })).error).toBeNull();
+    const list = (await b.rpc("list_invites")).data ?? [];
+    expect(list.find((i) => i.email === friend)).toMatchObject({ note: "Riya", joined: false });
+    expect(list.find((i) => i.email === emailC)).toMatchObject({ joined: true });
+    expect((await b.rpc("add_invite", { p_email: "not-an-email" })).error).toBeTruthy();
+    expect((await b.rpc("remove_invite", { p_email: emailB })).error).toBeTruthy(); // not yourself
+    expect((await b.rpc("remove_invite", { p_email: friend })).error).toBeNull();
+    expect(((await b.rpc("list_invites")).data ?? []).some((i) => i.email === friend)).toBe(false);
+    // C still can't do any of it.
+    expect((await c.rpc("add_invite", { p_email: friend })).error).toBeTruthy();
+  });
+});
