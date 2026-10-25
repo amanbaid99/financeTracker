@@ -294,4 +294,32 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await page.screenshot({ path: "test-results/update-375.png", fullPage: false });
   await page.goto("/dashboard");
   await expect(page.getByText("Balances updated today")).toBeVisible();
+
+  // Holdings: add one with a goal, edit it, then remove it.
+  await page.goto("/holdings");
+  await expect(page.getByText("Where your money is")).toBeVisible();
+  await page.getByRole("link", { name: "Add", exact: true }).click();
+  await page.getByRole("button", { name: "Mutual fund", exact: true }).click();
+  await page.getByLabel("Name", { exact: true }).fill("Index fund");
+  await page.getByLabel("Fund category", { exact: true }).selectOption({ label: "Equity index fund" });
+  await page.getByLabel("Current value", { exact: true }).fill("50000");
+  await page.getByLabel("Monthly SIP / deposit", { exact: true }).fill("5000");
+  await page.getByLabel("What's it for?", { exact: true }).selectOption({ label: "Bike" });
+  await page.getByRole("button", { name: "Add holding" }).click();
+  await expect(page).toHaveURL(/\/holdings$/);
+  await expect(page.getByRole("heading", { name: "Mutual funds" })).toBeVisible();
+  const row = page.getByRole("link", { name: /Index fund/ });
+  await expect(row).toContainText("Bike");
+  await expect(row).toContainText("Equity index fund");
+  await page.screenshot({ path: "test-results/holdings-list-375.png", fullPage: true });
+  await row.click();
+  await page.getByLabel("Current value", { exact: true }).fill("55000");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page).toHaveURL(/\/holdings$/);
+  await expect(page.getByRole("link", { name: /Index fund/ })).toContainText("₹55,000");
+  await page.getByRole("link", { name: /Index fund/ }).click();
+  page.once("dialog", (d) => d.accept());
+  await page.getByRole("button", { name: "Remove holding" }).click();
+  await expect(page).toHaveURL(/\/holdings$/);
+  await expect(page.getByRole("link", { name: /Index fund/ })).toHaveCount(0);
 });

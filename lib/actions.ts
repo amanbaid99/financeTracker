@@ -337,6 +337,86 @@ const holdingSchema = z.object({
     .optional(),
 });
 
+/** Inserts or updates one holding and, if asked, links it to a goal (100%). */
+async function upsertHolding(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  r: z.output<typeof holdingSchema>,
+): Promise<string> {
+  const row = {
+    kind: r.kind,
+    name: r.name || null,
+    category: r.category ?? null,
+    current_value: r.currentValue,
+    monthly_sip: r.monthlySip ?? null,
+    sip_step_up_pct: r.monthlySip ? (r.sipStepUpPct ?? null) : null,
+    expected_return_pct: r.expectedReturnPct ?? null,
+  };
+  const res = r.id
+    ? await supabase.from("holdings").update(row).eq("id", r.id).eq("user_id", userId).select("id").single()
+    : await supabase.from("holdings").insert({ ...row, user_id: userId }).select("id").single();
+  if (res.error) throw new Error(res.error.message);
+  const holdingId = res.data.id;
+
+  if (!r.goalLink) return holdingId;
+  let goalId: string | null = null;
+  if (r.goalLink.mode === "existing") goalId = r.goalLink.goalId;
+  if (r.goalLink.mode === "new") {
+    const g = await supabase
+      .from("goals")
+      .insert({
+        user_id: userId,
+        name: r.goalLink.name,
+        type: r.goalLink.type,
+        target_today: r.goalLink.targetToday,
+        target_date: r.goalLink.targetDate,
+        priority: 3,
+      })
+      .select("id")
+      .single();
+    if (g.error) throw new Error(g.error.message);
+    goalId = g.data.id;
+    await markAnswered(supabase, userId, "goals");
+  }
+  const { error: clearError } = await supabase
+    .from("goal_allocations")
+    .delete()
+    .eq("user_id", userId)
+    .eq("holding_id", holdingId);
+  if (clearError) throw new Error(clearError.message);
+  if (goalId) {
+    const { error } = await supabase
+      .from("goal_allocations")
+      .insert({ user_id: userId, holding_id: holdingId, goal_id: goalId, percent: 100 });
+    if (error) throw new Error(error.message);
+  }
+  return holdingId;
+}
+
+export async function saveHolding(input: z.input<typeof holdingSchema>): Promise<ActionResult> {
+  try {
+    const r = holdingSchema.parse(input);
+    const { supabase, userId } = await session();
+    const id = await upsertHolding(supabase, userId, r);
+    await markAnswered(supabase, userId, "holdings");
+    return done(id);
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function deleteHolding(id: string): Promise<ActionResult> {
+  try {
+    uuid.parse(id);
+    const { supabase, userId } = await session();
+    const { error } = await supabase.from("holdings").delete().eq("id", id).eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 export async function saveHoldings(input: z.input<typeof holdingSchema>[]): Promise<ActionResult> {
   try {
     const rows = z.array(holdingSchema).max(60).parse(input);
@@ -348,55 +428,7 @@ export async function saveHoldings(input: z.input<typeof holdingSchema>[]): Prom
     const { error: delError } = await del;
     if (delError) throw new Error(delError.message);
 
-    for (const r of rows) {
-      const row = {
-        kind: r.kind,
-        name: r.name || null,
-        category: r.category ?? null,
-        current_value: r.currentValue,
-        monthly_sip: r.monthlySip ?? null,
-        sip_step_up_pct: r.monthlySip ? (r.sipStepUpPct ?? null) : null,
-        expected_return_pct: r.expectedReturnPct ?? null,
-      };
-      const res = r.id
-        ? await supabase.from("holdings").update(row).eq("id", r.id).eq("user_id", userId).select("id").single()
-        : await supabase.from("holdings").insert({ ...row, user_id: userId }).select("id").single();
-      if (res.error) throw new Error(res.error.message);
-      const holdingId = res.data.id;
-
-      if (!r.goalLink) continue;
-      let goalId: string | null = null;
-      if (r.goalLink.mode === "existing") goalId = r.goalLink.goalId;
-      if (r.goalLink.mode === "new") {
-        const g = await supabase
-          .from("goals")
-          .insert({
-            user_id: userId,
-            name: r.goalLink.name,
-            type: r.goalLink.type,
-            target_today: r.goalLink.targetToday,
-            target_date: r.goalLink.targetDate,
-            priority: 3,
-          })
-          .select("id")
-          .single();
-        if (g.error) throw new Error(g.error.message);
-        goalId = g.data.id;
-        await markAnswered(supabase, userId, "goals");
-      }
-      const { error: clearError } = await supabase
-        .from("goal_allocations")
-        .delete()
-        .eq("user_id", userId)
-        .eq("holding_id", holdingId);
-      if (clearError) throw new Error(clearError.message);
-      if (goalId) {
-        const { error } = await supabase
-          .from("goal_allocations")
-          .insert({ user_id: userId, holding_id: holdingId, goal_id: goalId, percent: 100 });
-        if (error) throw new Error(error.message);
-      }
-    }
+    for (const r of rows) await upsertHolding(supabase, userId, r);
     await markAnswered(supabase, userId, "holdings");
     return done();
   } catch (e) {
