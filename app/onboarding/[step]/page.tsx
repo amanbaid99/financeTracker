@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { INTRO, StepBody } from "@/components/step-body";
 import { Progress } from "@/components/ui/progress";
 import { loadRaw } from "@/lib/data";
-import { nextHref, prevHref, STEPS, stepIndex, type StepSlug } from "@/lib/onboarding";
+import { flowIndex, nextHref, ONBOARDING_FLOW, prevHref, STEPS, stepIndex, type StepSlug } from "@/lib/onboarding";
 
 export const metadata: Metadata = { title: "Set up" };
 
@@ -21,7 +21,9 @@ export default async function StepPage({
   const slug = step as StepSlug;
   const meta = STEPS[index];
   const raw = await loadRaw();
-  const editing = sp.edit === "1" || Boolean(raw.profile.onboarding_completed_at);
+  const position = flowIndex(slug);
+  // Sections outside the short first-time flow always behave like edit pages.
+  const editing = sp.edit === "1" || Boolean(raw.profile.onboarding_completed_at) || position === -1;
   const next = nextHref(slug, editing);
   const back = prevHref(slug, editing);
 
@@ -30,10 +32,10 @@ export default async function StepPage({
       {!editing && (
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">
-            Step {index + 1} of {STEPS.length}
-            {meta.optional ? " · optional" : ""}
+            Step {position + 1} of {ONBOARDING_FLOW.length}
+            {position === ONBOARDING_FLOW.length - 1 ? "" : " · takes under a minute"}
           </p>
-          <Progress value={((index + 1) / STEPS.length) * 100} label="Onboarding progress" />
+          <Progress value={((position + 1) / ONBOARDING_FLOW.length) * 100} label="Onboarding progress" />
         </div>
       )}
       <div className="space-y-1">

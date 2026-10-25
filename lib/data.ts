@@ -198,6 +198,8 @@ export function toFinanceData(raw: RawData, todayISO: string): FinanceData {
       monthlySip: h.monthly_sip,
       sipStepUpPct: h.sip_step_up_pct === null ? null : Number(h.sip_step_up_pct),
       expectedReturnPct: h.expected_return_pct === null ? null : Number(h.expected_return_pct),
+      purpose: (h.purpose as "spending" | "bills" | "savings" | null) ?? null,
+      transitionFund: h.transition_fund ?? false,
     })),
     goals: raw.goals.map((g) => ({
       id: g.id,

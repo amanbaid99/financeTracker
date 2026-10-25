@@ -62,16 +62,23 @@ export function liquidAssets(data: FinanceData): number {
     data.goals.filter((g) => g.type !== "emergency_fund").map((g) => g.id),
   );
   let total = 0;
+  let spendingCash = 0;
   for (const h of data.holdings) {
     if (!isLiquid(h.kind, h.category)) continue;
+    // Spending and bills accounts are for this month's money, not emergencies.
+    if (h.purpose === "spending" || h.purpose === "bills") {
+      spendingCash += h.currentValue;
+      continue;
+    }
     const earmarked = data.allocations
       .filter((a) => a.holdingId === h.id && nonEmergencyGoals.has(a.goalId))
       .reduce((s, a) => s + a.percent, 0);
     total += (h.currentValue * Math.max(0, 100 - Math.min(100, earmarked))) / 100;
   }
-  // Card bills paid in full are already spoken for.
+  // Card bills paid in full are already spoken for. They come out of spending
+  // accounts first; only what those can't cover eats into savings.
   const cardDues = (data.cards ?? []).reduce((s, c) => s + Math.max(0, c.outstanding), 0);
-  return Math.max(0, Math.round(total - cardDues));
+  return Math.max(0, Math.round(total - Math.max(0, cardDues - spendingCash)));
 }
 
 export function isHighInterest(l: Liability, cfg: EngineConfig): boolean {

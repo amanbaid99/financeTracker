@@ -38,7 +38,15 @@ export interface HoldingFormValues {
   expectedReturn: string;
   /** "none", a goal id, or "split" when spread across goals. */
   goal: string;
+  /** Bank accounts only. */
+  purpose?: "spending" | "bills" | "savings";
 }
+
+export const PURPOSES: { value: "spending" | "bills" | "savings"; label: string; blurb: string }[] = [
+  { value: "spending", label: "Spending", blurb: "Day-to-day money" },
+  { value: "bills", label: "Bills & EMIs", blurb: "Pays fixed costs" },
+  { value: "savings", label: "Savings", blurb: "Safety net, not for spending" },
+];
 
 export function HoldingForm({
   initial,
@@ -98,6 +106,7 @@ export function HoldingForm({
         monthlySip: h.monthlySip,
         sipStepUpPct: h.sipStepUpPct === "" ? null : Number(h.sipStepUpPct),
         expectedReturnPct: ret === null || ret === def ? null : ret,
+        purpose: h.kind === "savings" ? (h.purpose ?? "savings") : null,
         goalLink: goalLink(),
       });
       if (!res.ok) return setError(res.error);
@@ -175,6 +184,31 @@ export function HoldingForm({
         <Field label="Monthly SIP / deposit" htmlFor="hf-sip" hint="Leave blank if none.">
           <MoneyInput id="hf-sip" value={h.monthlySip} onChange={(v) => set({ monthlySip: v })} />
         </Field>
+        {h.kind === "savings" && (
+          <fieldset className="space-y-2 sm:col-span-2">
+            <legend className="text-sm font-medium">This account is for</legend>
+            <div className="grid grid-cols-3 gap-2">
+              {PURPOSES.map((p) => (
+                <button
+                  key={p.value}
+                  type="button"
+                  aria-pressed={(h.purpose ?? "savings") === p.value}
+                  onClick={() => set({ purpose: p.value })}
+                  className={cn(
+                    "rounded-lg border p-2 text-left text-sm",
+                    (h.purpose ?? "savings") === p.value ? "border-primary bg-primary-soft" : "hover:bg-muted",
+                  )}
+                >
+                  <span className="block font-medium">{p.label}</span>
+                  <span className="block text-xs text-muted-foreground">{p.blurb}</span>
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Only savings accounts count toward your emergency fund.
+            </p>
+          </fieldset>
+        )}
         <Field label="What's it for?" htmlFor="hf-goal" className="sm:col-span-2">
           {h.goal === "split" ? (
             <p className="text-sm text-muted-foreground">Split across several goals. Change the split below.</p>

@@ -24,7 +24,7 @@ export interface QuickSections {
 }
 
 const SECTIONS: { key: keyof QuickSections; title: string; hint: string; empty: string; href: string }[] = [
-  { key: "banks", title: "Bank accounts", hint: "Balance today", empty: "No bank accounts", href: "/month?tab=bank" },
+  { key: "banks", title: "Bank accounts", hint: "Balance today", empty: "No bank accounts", href: "/holdings/new" },
   { key: "investments", title: "Investments", hint: "Current value", empty: "No investments", href: "/holdings" },
   { key: "cards", title: "Credit cards", hint: "Total outstanding", empty: "No cards", href: "/details/cards" },
   { key: "loans", title: "Loans", hint: "Amount still owed", empty: "No loans", href: "/details/liabilities" },

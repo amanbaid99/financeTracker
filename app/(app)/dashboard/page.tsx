@@ -11,7 +11,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AiExplain } from "@/components/ai-explain";
 import { InstallHint } from "@/components/install-hint";
+import { MoneyNowCard } from "@/components/money-now";
 import { NextFocusCard } from "@/components/next-focus-card";
+import { SetupChecklist } from "@/components/setup-checklist";
+import { TransitionCard } from "@/components/transition-card";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -26,6 +29,7 @@ import { loadAnalysis } from "@/lib/data";
 import type { StepStatus } from "@/lib/engine/ladder";
 import { formatINR, formatINRCompact, formatMonths } from "@/lib/format";
 import { STATUS_BADGE } from "@/lib/labels";
+import { monthStatus } from "@/lib/month-status";
 import { buildReminders } from "@/lib/reminders";
 
 export const metadata: Metadata = { title: "Home" };
@@ -59,7 +63,8 @@ const STEP_ICON: Record<StepStatus, React.ReactNode> = {
 
 export default async function DashboardPage() {
   const { raw, data, analysis, today } = await loadAnalysis();
-  const { budget, ladder, goals, completeness, nextFocus } = analysis;
+  const status = monthStatus(raw, data, today);
+  const { budget, ladder, goals, nextFocus } = analysis;
   const aiOn = raw.profile.ai_enabled && aiConfigured();
   const reminders = buildReminders({
     todayISO: today,
@@ -118,7 +123,13 @@ export default async function DashboardPage() {
         </div>
       )}
 
+      <MoneyNowCard status={status} />
+
       <NextFocusCard focus={nextFocus} aiOn={aiOn} />
+
+      {analysis.transition && <TransitionCard plan={analysis.transition} />}
+
+      <SetupChecklist data={data} />
 
       <InstallHint />
 
@@ -165,43 +176,7 @@ export default async function DashboardPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
-                <CardTitle>Profile completeness</CardTitle>
-                <span className="tabular text-sm font-semibold">
-                  {completeness.score}%
-                </span>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Progress
-                value={completeness.score}
-                label="Profile completeness"
-              />
-              {completeness.topMissing.length > 0 ? (
-                <ul className="space-y-2 text-sm">
-                  {completeness.topMissing.map((m) => (
-                    <li key={m.key}>
-                      <Link
-                        href={`/details/${m.key}`}
-                        className="font-medium text-primary underline-offset-2 hover:underline"
-                      >
-                        {m.label}
-                      </Link>
-                      <span className="text-muted-foreground"> {m.why}</span>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  {completeness.reason}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>This month</CardTitle>
+                <CardTitle>Monthly budget</CardTitle>
                 <Link
                   href="/budget"
                   className="text-sm text-primary underline-offset-2 hover:underline"

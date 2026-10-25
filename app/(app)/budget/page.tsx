@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BudgetChart } from "@/components/budget-chart";
 import { DebtPlanCard } from "@/components/debt-plan";
 import { MoneyPlanCard } from "@/components/money-plan";
+import { TransitionCard } from "@/components/transition-card";
 import { buildMoneyPlan } from "@/lib/engine/plan";
 import { BudgetRatios, type RatioValues } from "@/components/forms/settings-forms";
 import { Badge } from "@/components/ui/badge";
@@ -63,6 +64,25 @@ export default async function BudgetPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Budget</h1>
         <p className="text-sm text-muted-foreground">{budget.reason}</p>
       </div>
+
+      <Card className="border-primary/40 bg-primary-soft">
+        <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-5 sm:pt-5">
+          <div className="min-w-0 flex-1 space-y-0.5">
+            <p className="font-semibold">
+              {data.expenses.length ? "Redo your budget in 4 questions" : "Build your budget in 4 questions"}
+            </p>
+            <p className="text-sm text-muted-foreground">Your pay, must-pay costs and how much to save. We do the rest.</p>
+          </div>
+          <Link
+            href="/budget/build"
+            className="inline-flex h-10 items-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:opacity-90"
+          >
+            {data.expenses.length ? "Redo my budget" : "Build my budget"}
+          </Link>
+        </CardContent>
+      </Card>
+
+      {analysis.transition && <TransitionCard plan={analysis.transition} />}
 
       <MoneyPlanCard plan={plan} />
 

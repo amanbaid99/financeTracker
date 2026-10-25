@@ -42,6 +42,7 @@ export default async function EditHoldingPage({ params }: { params: Promise<{ id
               sipStepUpPct: h.sip_step_up_pct === null ? "" : String(Number(h.sip_step_up_pct)),
               expectedReturn: h.expected_return_pct === null ? "" : String(Number(h.expected_return_pct)),
               goal,
+              purpose: (h.purpose as "spending" | "bills" | "savings" | null) ?? "savings",
             }}
           />
         </CardContent>

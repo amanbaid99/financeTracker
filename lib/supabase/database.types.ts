@@ -288,8 +288,10 @@ export type Database = {
           kind: Database["public"]["Enums"]["holding_kind"];
           monthly_sip: number | null;
           name: string | null;
+          purpose: string | null;
           sip_step_up_pct: number | null;
           source: Database["public"]["Enums"]["holding_source"];
+          transition_fund: boolean;
           updated_at: string;
           user_id: string;
         };
@@ -302,8 +304,10 @@ export type Database = {
           kind: Database["public"]["Enums"]["holding_kind"];
           monthly_sip?: number | null;
           name?: string | null;
+          purpose?: string | null;
           sip_step_up_pct?: number | null;
           source?: Database["public"]["Enums"]["holding_source"];
+          transition_fund?: boolean;
           updated_at?: string;
           user_id?: string;
         };
@@ -315,8 +319,10 @@ export type Database = {
           kind?: Database["public"]["Enums"]["holding_kind"];
           monthly_sip?: number | null;
           name?: string | null;
+          purpose?: string | null;
           sip_step_up_pct?: number | null;
           source?: Database["public"]["Enums"]["holding_source"];
+          transition_fund?: boolean;
           updated_at?: string;
           user_id?: string;
         };

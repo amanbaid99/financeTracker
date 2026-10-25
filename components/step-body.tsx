@@ -26,7 +26,7 @@ import type { StepSlug } from "@/lib/onboarding";
 import { asAccent, asTheme } from "@/lib/theme";
 
 export const INTRO: Record<StepSlug, string> = {
-  basics: "A few details to get started. Only your name, age and at least one income are required.",
+  basics: "Three quick steps to get your plan. Everything else can be added later from your home screen.",
   household: "Who depends on your income changes how big your safety net should be.",
   income: "Your plan is built on the money you can count on every month.",
   expenses: "Your essentials set the size of your emergency fund. Skip this and we'll estimate half your income.",
@@ -35,7 +35,7 @@ export const INTRO: Record<StepSlug, string> = {
   holdings: "What you already have counts toward your safety net and goals.",
   goals: "Goals give your savings a job to do.",
   risk: "Three quick questions so long-term goals use a mix you're comfortable with.",
-  finish: "One last thing before your plan.",
+  finish: "One last thing. Then your home screen shows what to add next, whenever you have a minute.",
 };
 
 /** The form for one profile section, used by onboarding and by My details. */

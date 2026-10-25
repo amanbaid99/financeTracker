@@ -1,6 +1,9 @@
 import type { GoalStatus } from "@/lib/engine/goals";
 import type { GoalType, HoldingKind, IncomeType, LiabilityKind } from "@/lib/engine/types";
 
+/** Must-pay cost categories the budget builder asks about. */
+export const MUST_PAY = ["Rent", "Groceries", "Utilities and phone", "Transport", "Family support", "Other fixed costs"];
+
 export const INCOME_TYPE_LABELS: Record<IncomeType, string> = {
   stable_salary: "Salary (same every month)",
   variable_salary: "Salary with incentives or commission",

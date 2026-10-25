@@ -1,3 +1,4 @@
+/** Every profile section with its title. Also used by the My details edit pages. */
 export const STEPS = [
   { slug: "basics", title: "The basics", optional: false },
   { slug: "household", title: "Your household", optional: true },
@@ -13,18 +14,28 @@ export const STEPS = [
 
 export type StepSlug = (typeof STEPS)[number]["slug"];
 
+/**
+ * First-time onboarding asks only for the minimum. Everything else is added
+ * later from the "Finish setting up" checklist on the home screen.
+ */
+export const ONBOARDING_FLOW: StepSlug[] = ["basics", "income", "finish"];
+
 export function stepIndex(slug: string): number {
   return STEPS.findIndex((s) => s.slug === slug);
 }
 
+export function flowIndex(slug: string): number {
+  return ONBOARDING_FLOW.indexOf(slug as StepSlug);
+}
+
 export function nextHref(slug: StepSlug, editing: boolean): string {
-  if (editing) return "/details";
-  const i = stepIndex(slug);
-  return i >= 0 && i < STEPS.length - 1 ? `/onboarding/${STEPS[i + 1].slug}` : "/dashboard";
+  const i = flowIndex(slug);
+  if (editing || i === -1) return "/details";
+  return i < ONBOARDING_FLOW.length - 1 ? `/onboarding/${ONBOARDING_FLOW[i + 1]}` : "/dashboard";
 }
 
 export function prevHref(slug: StepSlug, editing: boolean): string | null {
-  if (editing) return "/details";
-  const i = stepIndex(slug);
-  return i > 0 ? `/onboarding/${STEPS[i - 1].slug}` : null;
+  const i = flowIndex(slug);
+  if (editing || i === -1) return "/details";
+  return i > 0 ? `/onboarding/${ONBOARDING_FLOW[i - 1]}` : null;
 }

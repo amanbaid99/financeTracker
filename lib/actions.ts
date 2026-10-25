@@ -232,6 +232,73 @@ export async function saveExpenses(input: z.input<typeof expenseSchema>[]): Prom
   }
 }
 
+const budgetAnswersSchema = z.object({
+  /** Monthly take-home pay. Null leaves income as it is. */
+  income: money.nullable(),
+  /** Stream to update with the new amount; omit to update/create the main salary. */
+  incomeStreamId: uuid.nullable().optional(),
+  /** Must-pay costs by name. Amounts of 0 remove that line. */
+  expenses: z.array(z.object({ category: z.string().trim().min(1).max(60), amount: money })).max(20),
+  /** Savings target as a share of income, e.g. 30. Null keeps the default. */
+  savingsPct: z.number().min(0).max(80).nullable(),
+});
+
+/**
+ * Saves the answers from the budget builder: take-home pay, must-pay costs
+ * and how much to save. Other expense lines the user added stay as they are.
+ */
+export async function saveBudgetAnswers(input: z.input<typeof budgetAnswersSchema>): Promise<ActionResult> {
+  try {
+    const v = budgetAnswersSchema.parse(input);
+    const { supabase, userId } = await session();
+
+    if (v.income !== null) {
+      if (v.incomeStreamId) {
+        const { error } = await supabase
+          .from("income_streams")
+          .update({ amount_monthly: v.income })
+          .eq("id", v.incomeStreamId)
+          .eq("user_id", userId);
+        if (error) throw new Error(error.message);
+      } else {
+        const { error } = await supabase
+          .from("income_streams")
+          .insert({ user_id: userId, label: "Salary", type: "stable_salary", amount_monthly: v.income });
+        if (error) throw new Error(error.message);
+      }
+      await markAnswered(supabase, userId, "income");
+    }
+
+    const { data: existing } = await supabase.from("expenses").select("id, category").eq("user_id", userId);
+    for (const e of v.expenses) {
+      const match = existing?.find((x) => x.category.toLowerCase() === e.category.toLowerCase());
+      if (match && e.amount === 0) {
+        await supabase.from("expenses").delete().eq("id", match.id).eq("user_id", userId);
+      } else if (match) {
+        await supabase.from("expenses").update({ amount_monthly: e.amount }).eq("id", match.id).eq("user_id", userId);
+      } else if (e.amount > 0) {
+        await supabase
+          .from("expenses")
+          .insert({ user_id: userId, category: e.category, amount_monthly: e.amount, is_essential: true });
+      }
+    }
+    await markAnswered(supabase, userId, "expenses");
+
+    const { data: s } = await supabase.from("settings").select("config_overrides").eq("user_id", userId).single();
+    const next = mergeOverrides((s?.config_overrides ?? {}) as Obj, {
+      budget: { savingsMinPct: v.savingsPct === null || v.savingsPct === 20 ? null : v.savingsPct / 100 },
+    });
+    const { error } = await supabase
+      .from("settings")
+      .update({ config_overrides: next as Database["public"]["Tables"]["settings"]["Update"]["config_overrides"] })
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
 const insuranceSchema = z.object({
   id: uuid.nullable().optional(),
   kind: z.enum(["health", "term", "other"]),
@@ -307,6 +374,7 @@ const holdingSchema = z.object({
   monthlySip: optMoney,
   sipStepUpPct: z.number().min(0).max(50).nullable().optional(),
   expectedReturnPct: z.number().min(0).max(30).nullable().optional(),
+  purpose: z.enum(["spending", "bills", "savings"]).nullable().optional(),
   /**
    * Optional goal for this holding, set from the holdings form. Only sent when
    * the user changed it. "none" removes links; a goal links 100% of the holding.
@@ -351,6 +419,7 @@ async function upsertHolding(
     monthly_sip: r.monthlySip ?? null,
     sip_step_up_pct: r.monthlySip ? (r.sipStepUpPct ?? null) : null,
     expected_return_pct: r.expectedReturnPct ?? null,
+    purpose: r.kind === "savings" ? (r.purpose ?? null) : null,
   };
   const res = r.id
     ? await supabase.from("holdings").update(row).eq("id", r.id).eq("user_id", userId).select("id").single()
@@ -754,9 +823,21 @@ export async function updateBankBalance(input: { holdingId: string; value: numbe
   }
 }
 
-export async function addBankAccount(input: { label: string; value: number }): Promise<ActionResult> {
+const purposeSchema = z.enum(["spending", "bills", "savings"]);
+
+export async function addBankAccount(input: {
+  label: string;
+  value: number;
+  purpose?: "spending" | "bills" | "savings";
+}): Promise<ActionResult> {
   try {
-    const v = z.object({ label: z.string().trim().min(1, "name the account").max(80), value: money }).parse(input);
+    const v = z
+      .object({
+        label: z.string().trim().min(1, "name the account").max(80),
+        value: money,
+        purpose: purposeSchema.default("savings"),
+      })
+      .parse(input);
     const { supabase, userId } = await session();
     const { error } = await supabase.from("holdings").insert({
       user_id: userId,
@@ -764,9 +845,48 @@ export async function addBankAccount(input: { label: string; value: number }): P
       name: v.label,
       category: "savings_account",
       current_value: v.value,
+      purpose: v.purpose,
     });
     if (error) throw new Error(error.message);
     await markAnswered(supabase, userId, "holdings");
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** Sets what a bank account is for: spending, bills or savings. */
+export async function setAccountPurpose(input: {
+  holdingId: string;
+  purpose: "spending" | "bills" | "savings";
+}): Promise<ActionResult> {
+  try {
+    const v = z.object({ holdingId: uuid, purpose: purposeSchema }).parse(input);
+    const { supabase, userId } = await session();
+    const { error } = await supabase
+      .from("holdings")
+      .update({ purpose: v.purpose })
+      .eq("id", v.holdingId)
+      .eq("user_id", userId)
+      .eq("kind", "savings");
+    if (error) throw new Error(error.message);
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** Picks (or unpicks) a holding to live on while between incomes. */
+export async function setTransitionFund(input: { holdingId: string; on: boolean }): Promise<ActionResult> {
+  try {
+    const v = z.object({ holdingId: uuid, on: z.boolean() }).parse(input);
+    const { supabase, userId } = await session();
+    const { error } = await supabase
+      .from("holdings")
+      .update({ transition_fund: v.on })
+      .eq("id", v.holdingId)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
     return done();
   } catch (e) {
     return fail(e);

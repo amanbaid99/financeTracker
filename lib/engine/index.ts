@@ -4,6 +4,7 @@ import { mergeConfig, type EngineConfig } from "./config";
 import { allocateToGoals, analyzeGoal, type GoalAnalysis } from "./goals";
 import { simulatePayoff, type DebtPayoffPlan } from "./debt";
 import { currentStep, evaluateLadder, isHighInterest, liquidAssets, SECTION_LABELS, type LadderStep } from "./ladder";
+import { buildTransitionPlan, type TransitionPlan } from "./transition";
 import type { FinanceData } from "./types";
 
 export * from "./types";
@@ -41,6 +42,8 @@ export interface Analysis {
   noIncome: boolean;
   /** Liquid savings free for emergencies, and how many months of essentials they cover. */
   runway: { liquid: number; months: number | null };
+  /** With no income: the holdings you live on, in order, and how long they last. */
+  transition: TransitionPlan | null;
   /** Order and timeline for clearing debts, with the extra money available each month. */
   debtPlan: DebtPayoffPlan;
 }
@@ -89,7 +92,8 @@ export function analyze(data: FinanceData, overrides: unknown, todayISO: string)
     : stepNeedMonthly(step, cfg) + existingSips;
   const budget = computeBudget(data, cfg, { todayISO, savingsNeed });
   const noIncome = budget.expectedIncome <= 0;
-  const liquid = liquidAssets(data);
+  const transition = noIncome ? buildTransitionPlan(data, budget.essentials.total, todayISO) : null;
+  const liquid = transition ? Math.max(0, transition.total - transition.cardDues) : liquidAssets(data);
   const runway = {
     liquid,
     months: budget.essentials.total > 0 ? Math.floor((liquid / budget.essentials.total) * 10) / 10 : null,
@@ -136,6 +140,7 @@ export function analyze(data: FinanceData, overrides: unknown, todayISO: string)
     retirementBaseline,
     noIncome,
     runway,
+    transition,
     debtPlan,
   };
 }

@@ -72,16 +72,25 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await page.getByLabel("Age", { exact: true }).fill("30");
   await page.getByLabel("City type", { exact: true }).selectOption("metro");
   await page.getByRole("radio", { name: "Beige" }).click();
+  await expect(page.getByText("Step 1 of 3")).toBeVisible();
   await page.getByRole("button", { name: "Save and continue" }).click();
-  await expect(page).toHaveURL(/household/);
+  await expect(page).toHaveURL(/income/);
   await expect(page.locator("html")).toHaveAttribute("data-theme", "beige");
 
-  await page.getByRole("button", { name: "Skip for now" }).click();
-  await expect(page).toHaveURL(/income/);
   await page.getByLabel("Monthly amount", { exact: true }).fill("100000");
   await page.getByRole("button", { name: "Save and continue" }).click();
 
-  await expect(page).toHaveURL(/expenses/);
+  await expect(page).toHaveURL(/finish/);
+  await page.getByRole("checkbox", { name: /I understand/ }).check();
+  await page.getByRole("button", { name: "Show my next focus" }).click();
+
+  // Straight to the home screen, with a checklist for everything else.
+  await expect(page).toHaveURL(/dashboard/);
+  await expect(page.getByText("Finish setting up")).toBeVisible();
+  await expect(page.getByText("0 of 7")).toBeVisible();
+  await page.getByRole("link", { name: /Monthly expenses/ }).click();
+
+  await expect(page).toHaveURL(/details\/expenses/);
   await page.getByLabel("Rent per month", { exact: true }).fill("40000");
   // Typing a custom cost name key by key keeps focus in the field.
   await page.getByRole("button", { name: "Add a cost" }).click();
@@ -89,9 +98,10 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await expect(page.getByLabel("Expense name", { exact: true })).toHaveValue("School fees");
   await page.getByLabel("School fees per month", { exact: true }).pressSequentially("5000");
   await expect(page.getByLabel("School fees per month", { exact: true })).toHaveValue("5,000");
-  await page.getByRole("button", { name: "Save and continue" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page).toHaveURL(/\/details$/);
 
-  await expect(page).toHaveURL(/insurance/);
+  await page.goto("/details/insurance");
   // A health policy for parents, paid monthly: budgeted, but not your own cover.
   await page.getByRole("button", { name: "Policy for parents / family" }).click();
   await expect(page.getByLabel("Who it covers", { exact: true })).toHaveValue("others");
@@ -100,13 +110,16 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await page.getByLabel("Paid", { exact: true }).selectOption("monthly");
   await page.getByLabel("Debit day", { exact: true }).selectOption("7");
   await expect(page.getByLabel("Count this in my monthly budget")).toBeChecked();
-  await page.getByRole("button", { name: "Save and continue" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page).toHaveURL(/\/details$/);
 
-  await expect(page).toHaveURL(/liabilities/);
+  await page.goto("/details/liabilities");
   await page.getByLabel("No loans or card dues", { exact: true }).check();
-  await page.getByRole("button", { name: "Save and continue" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page).toHaveURL(/\/details$/);
 
-  await expect(page).toHaveURL(/holdings/);
+  // The multi-row savings form is still available for adding several at once.
+  await page.goto("/onboarding/holdings");
   await page.getByLabel("Current value", { exact: true }).fill("20000");
   await page.getByLabel("Monthly SIP or deposit", { exact: true }).fill("5000");
   await page.getByLabel("Yearly step-up (%)", { exact: true }).fill("10");
@@ -116,20 +129,16 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await page.getByLabel("Goal for this money", { exact: true }).selectOption("new");
   await page.getByLabel("Goal name", { exact: true }).fill("Bike");
   await page.getByLabel("Target amount (today's ₹)", { exact: true }).fill("100000");
-  await page.getByRole("button", { name: "Save and continue" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page).toHaveURL(/\/details$/);
 
-  await expect(page).toHaveURL(/goals/);
+  await page.goto("/onboarding/goals");
   await expect(page.getByText("Bike")).toBeVisible();
   await page.getByRole("button", { name: "Add retirement goal" }).click();
   await expect(page.getByText("Retirement").first()).toBeVisible();
-  await page.getByRole("button", { name: "Continue" }).click();
 
-  await expect(page).toHaveURL(/risk/);
-  await page.getByRole("button", { name: "Skip for now" }).click();
-
-  await expect(page).toHaveURL(/finish/);
-  await page.getByRole("checkbox", { name: /I understand/ }).check();
-  await page.getByRole("button", { name: "Show my next focus" }).click();
+  await page.goto("/dashboard");
+  await expect(page.getByText("5 of 7")).toBeVisible();
 
   // Dashboard: starter buffer is next. Essentials are 47k (40k rent + 5k school
   // fees + 2k parents' premium). The 20k savings is earmarked for the Bike goal,
@@ -205,19 +214,23 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await page.reload();
   await expect(page.getByLabel("Mark Travel card bill as paid")).toBeChecked();
 
-  await page.getByRole("tab", { name: "Bank & dues" }).click();
-  // The card bill was ticked as paid, so it's no longer deducted.
-  await expect(page.getByText("Card bills still to pay")).toBeVisible();
+  await page.screenshot({ path: "test-results/month-bills-375.png", fullPage: true });
+
+  // Home shows money right now; add a spending account there.
+  await page.goto("/dashboard");
+  await expect(page.getByText("Your money right now")).toBeVisible();
+  await expect(page.getByText("Card bills to pay")).toBeVisible();
+  await page.locator("summary", { hasText: "Bank accounts" }).click();
   await page.getByRole("button", { name: "Add bank account" }).click();
   await page.getByLabel("Account nickname").fill("Salary account");
   await page.getByLabel("Current balance").fill("80000");
+  await expect(page.getByLabel("What this account is for")).toHaveValue("spending");
   await page.getByRole("button", { name: "Add account" }).click();
-  await expect(page.getByLabel("Salary account balance")).toHaveValue("80,000");
+  await expect(page.getByLabel("What Salary account is for")).toHaveValue("spending");
+  await expect(page.getByText("Spending money left this month")).toBeVisible();
   const o = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-  expect(o, "/month overflows at 375px").toBeLessThanOrEqual(0);
-  await page.screenshot({ path: "test-results/month-bank-375.png", fullPage: true });
-  await page.goto("/month");
-  await page.screenshot({ path: "test-results/month-bills-375.png", fullPage: true });
+  expect(o, "/dashboard overflows at 375px").toBeLessThanOrEqual(0);
+  await page.screenshot({ path: "test-results/home-money-375.png", fullPage: true });
 
   // A goal with no deadline gets an estimated date.
   await page.goto("/goals/new");
@@ -259,6 +272,22 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await expect(page.getByText(/Snowball method/)).toBeVisible();
   await page.screenshot({ path: "test-results/money-plan-375.png", fullPage: true });
 
+  // Budget from four questions.
+  await page.getByRole("link", { name: "Redo my budget" }).click();
+  await expect(page.getByText("How much reaches your bank each month?")).toBeVisible();
+  await expect(page.getByLabel("Monthly take-home pay")).toHaveValue("1,00,000");
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(page.getByLabel("Rent per month")).toHaveValue("40,000");
+  await page.getByLabel("Groceries per month").fill("8000");
+  await page.getByRole("button", { name: "Next" }).click();
+  await page.getByRole("button", { name: /Focused · 30%/ }).click();
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(page.getByRole("heading", { name: "Here's your budget" })).toBeVisible();
+  await page.screenshot({ path: "test-results/budget-builder-375.png", fullPage: true });
+  await page.getByRole("button", { name: "Use this budget" }).click();
+  await expect(page).toHaveURL(/\/budget$/);
+  await expect(page.getByText("at least 30%")).toBeVisible();
+
   // Salary 0: between-incomes mode with runway.
   await page.goto("/details/income");
   await page.getByLabel("Monthly amount", { exact: true }).fill("0");
@@ -267,6 +296,15 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page.getByRole("heading", { name: "You're between incomes" })).toBeVisible();
   await expect(page.getByText("Savings last")).toBeVisible();
+  // Pick what to live on while between jobs.
+  await expect(page.getByText("Living on your savings")).toBeVisible();
+  const pick = page.getByRole("button", { name: "Use Salary account while between jobs" });
+  await pick.click();
+  await expect(pick).toHaveAttribute("aria-pressed", "true");
+  await page.reload();
+  await expect(page.getByText("Change which holdings you live on")).toBeVisible();
+  await expect(page.getByText("Use in this order")).toBeVisible();
+  await page.screenshot({ path: "test-results/between-jobs-375.png", fullPage: true });
   await page.goto("/budget");
   await expect(page.getByText(/No income right now/).first()).toBeVisible();
 
@@ -279,7 +317,7 @@ test("invite-only sign in, onboarding and Next Focus", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "You're between incomes" })).toHaveCount(0);
 
   // Quick update: change a bank balance and a loan in one save.
-  await page.getByRole("link", { name: "Update", exact: true }).click();
+  await page.getByRole("banner").getByRole("link", { name: "Update", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Quick update" })).toBeVisible();
   await page.getByLabel("Salary account balance today").fill("90000");
   await page.getByLabel(/Credit card debt.*amount still owed/).fill("25000");

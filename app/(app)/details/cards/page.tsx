@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Credit cards" };
 export default async function CardsPage({ searchParams }: { searchParams: Promise<{ from?: string }> }) {
   const { from } = await searchParams;
   const raw = await loadRaw();
-  const back = from === "month" ? "/month?tab=bank" : "/details";
+  const back = from === "month" ? "/month" : from === "home" ? "/dashboard" : "/details";
   return (
     <main className="mx-auto max-w-xl space-y-5">
       <Link href={back} className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">

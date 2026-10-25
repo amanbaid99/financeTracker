@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  CalendarCheck,
   Home,
   PiggyBank,
   RefreshCw,
@@ -17,7 +16,6 @@ import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/dashboard", label: "Home", icon: Home },
-  { href: "/month", label: "This month", icon: CalendarCheck },
   { href: "/budget", label: "Budget", icon: Wallet },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/holdings", label: "Holdings", icon: PiggyBank },
@@ -79,7 +77,7 @@ export function AppNav() {
         aria-label="Main"
         className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       >
-        <ul className="mx-auto grid max-w-md grid-cols-6">
+        <ul className="mx-auto grid max-w-md grid-cols-5">
           {LINKS.map((l) => (
             <li key={l.href}>
               <Link

@@ -117,6 +117,10 @@ export interface Holding {
   sipStepUpPct?: number | null;
   /** Planning return % a year. Null uses the category default from config. */
   expectedReturnPct?: number | null;
+  /** For bank accounts: what the money is for. Null means savings. */
+  purpose?: "spending" | "bills" | "savings" | null;
+  /** Picked to live on while between incomes. */
+  transitionFund?: boolean;
 }
 
 export type GoalType =
