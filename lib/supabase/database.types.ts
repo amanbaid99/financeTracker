@@ -182,8 +182,6 @@ export type Database = {
           name: string;
           period: string;
           reward: string | null;
-          spent: number;
-          spent_as_of: string | null;
           target: number;
           user_id: string;
         };
@@ -196,8 +194,6 @@ export type Database = {
           name: string;
           period: string;
           reward?: string | null;
-          spent?: number;
-          spent_as_of?: string | null;
           target: number;
           user_id?: string;
         };
@@ -209,8 +205,6 @@ export type Database = {
           name?: string;
           period?: string;
           reward?: string | null;
-          spent?: number;
-          spent_as_of?: string | null;
           target?: number;
           user_id?: string;
         };
@@ -264,6 +258,8 @@ export type Database = {
           outstanding: number;
           rewards: string | null;
           statement_day: number | null;
+          unbilled: number;
+          unbilled_as_of: string | null;
           user_id: string;
           year_start: string | null;
         };
@@ -279,6 +275,8 @@ export type Database = {
           outstanding?: number;
           rewards?: string | null;
           statement_day?: number | null;
+          unbilled?: number;
+          unbilled_as_of?: string | null;
           user_id?: string;
           year_start?: string | null;
         };
@@ -293,6 +291,8 @@ export type Database = {
           outstanding?: number;
           rewards?: string | null;
           statement_day?: number | null;
+          unbilled?: number;
+          unbilled_as_of?: string | null;
           user_id?: string;
           year_start?: string | null;
         };

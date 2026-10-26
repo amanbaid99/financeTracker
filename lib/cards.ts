@@ -1,5 +1,10 @@
 // Credit card milestones: which period counts now, how much is spent in it,
 // and the pace needed to hit the target. Pure functions; "today" is passed in.
+//
+// Spend toward a milestone is the card's logged bills in the period, plus any
+// spend not on a bill yet that the person typed in for the card ("unbilled").
+// Unbilled spend stops counting once a later bill is logged, since that bill
+// now includes it.
 
 export type Period =
   | "card_year"
@@ -23,9 +28,7 @@ export interface Milestone {
   period: Period;
   deadline: string | null;
   reward: string | null;
-  spent: number;
-  /** When `spent` was last updated. */
-  spentAsOf: string | null;
+  createdAt: string;
 }
 
 export interface Bill {
@@ -51,6 +54,38 @@ export interface Card {
   milestones: Milestone[];
   /** Newest month first. */
   bills: Bill[];
+  /** Spend since the last logged bill, typed in by the person. */
+  unbilled: number;
+  unbilledAsOf: string | null;
+}
+
+/** What a milestone needs from its card to count spend. */
+export type CardSpend = Pick<
+  Card,
+  "yearStart" | "bills" | "unbilled" | "unbilledAsOf"
+>;
+
+/** First day of the month after an ISO month. */
+const nextMonth = (isoMonth: string) => {
+  const [y, m] = isoMonth.split("-").map(Number);
+  return m === 12
+    ? `${y + 1}-01-01`
+    : `${y}-${String(m + 1).padStart(2, "0")}-01`;
+};
+
+/**
+ * Unbilled spend that still counts: typed after the latest logged bill's
+ * month, so a newer bill hasn't already included it.
+ */
+export function liveUnbilled(
+  card: Pick<Card, "bills" | "unbilled" | "unbilledAsOf">,
+): number {
+  if (!card.unbilled || !card.unbilledAsOf) return 0;
+  const latest = card.bills.reduce<string | null>(
+    (a, b) => (!a || b.month > a ? b.month : a),
+    null,
+  );
+  return !latest || card.unbilledAsOf >= nextMonth(latest) ? card.unbilled : 0;
 }
 
 export type MilestoneStatus =
@@ -64,10 +99,14 @@ export interface MilestoneState extends Milestone {
   /** The period counting now; null end means no deadline. */
   start: string | null;
   end: string | null;
-  /** Spend counted in this period (an update from an earlier period counts as 0). */
+  /** Spend counted in this period: bills plus unbilled. */
   spentNow: number;
-  /** True when the spend was entered before this period began. */
-  stale: boolean;
+  /** From logged bills in this period. */
+  billed: number;
+  /** How many bills were counted. */
+  billCount: number;
+  /** Unbilled spend that counts here. */
+  unbilledNow: number;
   progress: number;
   remaining: number;
   daysLeft: number | null;
@@ -125,21 +164,45 @@ export function periodBounds(
   }
 }
 
+/** First day of the month an ISO date falls in. */
+const monthOf = (isoDate: string) => `${isoDate.slice(0, 7)}-01`;
+
+/**
+ * Bills that count toward a period: statement months from the month the
+ * period starts in, up to its end.
+ */
+export function billsInPeriod(
+  bills: Bill[],
+  start: string,
+  end: string | null,
+): Bill[] {
+  const from = monthOf(start);
+  return bills.filter((b) => b.month >= from && (!end || b.month <= end));
+}
+
 export function milestoneState(
   m: Milestone,
   todayISO: string,
-  yearStart: string | null,
+  card: CardSpend = {
+    yearStart: null,
+    bills: [],
+    unbilled: 0,
+    unbilledAsOf: null,
+  },
 ): MilestoneState {
   const { start, end } = periodBounds(
     m.period,
     todayISO,
-    yearStart,
+    card.yearStart,
     m.deadline,
   );
-  const stale = Boolean(
-    start && m.spent > 0 && (!m.spentAsOf || m.spentAsOf < start),
-  );
-  const spentNow = stale ? 0 : m.spent;
+  // A one-off milestone counts from when it was added.
+  const from = start ?? m.createdAt.slice(0, 10);
+  const counted = billsInPeriod(card.bills, from, end);
+  const billed = counted.reduce((a, b) => a + b.amount, 0);
+  const live = liveUnbilled(card);
+  const unbilledNow = live && card.unbilledAsOf! >= from ? live : 0;
+  const spentNow = billed + unbilledNow;
   const remaining = Math.max(0, m.target - spentNow);
   const progress = Math.min(1, spentNow / m.target);
   const daysLeft = end ? Math.max(0, days(todayISO, end) + 1) : null;
@@ -161,7 +224,9 @@ export function milestoneState(
     start,
     end,
     spentNow,
-    stale,
+    billed,
+    billCount: counted.length,
+    unbilledNow,
     progress,
     remaining,
     daysLeft,

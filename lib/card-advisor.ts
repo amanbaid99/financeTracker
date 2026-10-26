@@ -65,7 +65,7 @@ export function adviseCards(
 
   const open = cards.flatMap((c) =>
     c.milestones
-      .map((m) => milestoneState(m, todayISO, c.yearStart))
+      .map((m) => milestoneState(m, todayISO, c))
       .filter((s) => s.end && s.status !== "achieved" && s.status !== "missed")
       .map((s) => ({ card: c, s })),
   );

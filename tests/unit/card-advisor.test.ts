@@ -12,15 +12,14 @@ const bills = (amounts: number[]) =>
     paid: true,
     note: null,
   }));
-const ms = (id: string, target: number, spent: number, reward: string) => ({
+const ms = (id: string, target: number, reward: string) => ({
   id,
   name: reward,
   target,
   period: "card_year" as const,
   deadline: null,
   reward,
-  spent,
-  spentAsOf: TODAY,
+  createdAt: "2026-01-01T00:00:00Z",
 });
 
 // The real HSBC TravelOne and SBI PhonePe numbers, newest bill first.
@@ -32,8 +31,11 @@ const hsbc: Card = {
   rewards: null,
   benefits: [],
   bestFor: ["travel", "international"],
-  milestones: [ms("h1", 800000, 361310, "Annual fee waived"), ms("h2", 1200000, 361310, "10000 bonus points")],
+  milestones: [ms("h1", 800000, "Annual fee waived"), ms("h2", 1200000, "10000 bonus points")],
+  // Spend now comes from the bills themselves.
   bills: bills([56053, 45856, 68589, 26843, 35872, 74100, 6364, 40333, 7300]),
+  unbilled: 0,
+  unbilledAsOf: null,
 };
 const sbi: Card = {
   id: "sbi",
@@ -43,8 +45,10 @@ const sbi: Card = {
   rewards: null,
   benefits: [],
   bestFor: ["upi", "bills"],
-  milestones: [ms("s1", 300000, 250275, "Annual fee waived"), ms("s2", 500000, 250275, "5000 voucher")],
+  milestones: [ms("s1", 300000, "Annual fee waived"), ms("s2", 500000, "5000 voucher")],
   bills: bills([48834, 32874, 20722, 35746, 65323, 35872, 10904]),
+  unbilled: 0,
+  unbilledAsOf: null,
 };
 
 describe("adviseCards", () => {
@@ -77,7 +81,7 @@ describe("adviseCards", () => {
   });
 
   it("with no bills, nothing is chased and no amount is guessed", () => {
-    const none = adviseCards([{ ...sbi, bills: [] }], TODAY);
+    const none = adviseCards([{ ...sbi, bills: [], unbilled: 250275, unbilledAsOf: TODAY }], TODAY);
     expect(none.capacity).toBeNull();
     expect(none.plan.every((p) => p.status === "unlikely")).toBe(true);
   });

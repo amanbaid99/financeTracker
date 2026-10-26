@@ -203,7 +203,6 @@ function ReviewStep({
           period: m.value.period,
           deadline: null,
           reward: m.value.reward,
-          spent: 0,
         });
         if (!r.ok) return setError(r.error);
       }

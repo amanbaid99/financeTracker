@@ -2,6 +2,7 @@
 
 import { Lightbulb } from "lucide-react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   adviseCards,
   SPEND_CATEGORIES,
@@ -12,13 +13,10 @@ import type { Card } from "@/lib/cards";
 import { formatDate, formatINR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
-const STATUS: Record<PlanStatus, { text: string; tone: string }> = {
-  chase: { text: "Within reach", tone: "text-success" },
-  stretch: { text: "Possible with extra spend", tone: "text-warning" },
-  unlikely: {
-    text: "Out of reach at your usual spend",
-    tone: "text-muted-foreground",
-  },
+const STATUS: Record<PlanStatus, { short: string; tone: string }> = {
+  chase: { short: "Within reach", tone: "text-success" },
+  stretch: { short: "Needs extra spend", tone: "text-warning" },
+  unlikely: { short: "Out of reach", tone: "text-muted-foreground" },
 };
 
 /** Which card to use next, from milestones, deadlines and usual monthly spend. */
@@ -30,6 +28,7 @@ export function CardAdvisor({
   today: string;
 }) {
   const [category, setCategory] = useState<SpendCategory | null>(null);
+  const [showAll, setShowAll] = useState(false);
   const a = adviseCards(cards, today, category);
   if (!a.plan.length && !cards.some((c) => c.bestFor.length)) return null;
 
@@ -94,26 +93,49 @@ export function CardAdvisor({
 
       {a.plan.length > 0 && (
         <ul className="divide-y text-sm" aria-label="Milestone plan">
-          {a.plan.map((p) => (
-            <li key={p.milestone.id} className="space-y-0.5 py-2">
-              <p className="font-medium">
-                {p.cardLabel}: {p.milestone.reward || p.milestone.name}
-              </p>
-              {a.capacity !== null && (
-                <p className={cn("text-xs font-medium", STATUS[p.status].tone)}>
-                  {STATUS[p.status].text}
+          {a.plan
+            .filter(
+              (p) => showAll || a.capacity === null || p.status !== "unlikely",
+            )
+            .map((p) => (
+              <li key={p.milestone.id} className="space-y-0.5 py-2">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="min-w-0 font-medium">
+                    {p.cardLabel}: {p.milestone.reward || p.milestone.name}
+                  </p>
+                  {a.capacity !== null && (
+                    <span
+                      className={cn(
+                        "shrink-0 text-xs font-medium",
+                        STATUS[p.status].tone,
+                      )}
+                    >
+                      {STATUS[p.status].short}
+                    </span>
+                  )}
+                </div>
+                <p className="tabular text-xs text-muted-foreground">
+                  {formatINR(p.milestone.remaining)} more by{" "}
+                  {formatDate(p.milestone.end)}
+                  {p.perMonth > 0
+                    ? ` · about ${formatINR(p.perMonth)} a month`
+                    : ""}
                 </p>
-              )}
-              <p className="tabular text-xs text-muted-foreground">
-                {formatINR(p.milestone.remaining)} more by{" "}
-                {formatDate(p.milestone.end)}
-                {p.perMonth > 0
-                  ? ` · about ${formatINR(p.perMonth)} a month`
-                  : ""}
-              </p>
-            </li>
-          ))}
+              </li>
+            ))}
         </ul>
+      )}
+      {a.capacity !== null && a.plan.some((p) => p.status === "unlikely") && (
+        <Button
+          type="button"
+          variant="link"
+          size="sm"
+          onClick={() => setShowAll(!showAll)}
+        >
+          {showAll
+            ? "Hide out of reach"
+            : `Show ${a.plan.filter((p) => p.status === "unlikely").length} out of reach`}
+        </Button>
       )}
 
       {a.capacity !== null && (

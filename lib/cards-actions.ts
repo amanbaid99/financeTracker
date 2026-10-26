@@ -106,7 +106,6 @@ const milestoneSchema = z
     period: z.enum(["card_year", "calendar_year", "quarter", "month", "once"]),
     deadline: isoDate.nullable(),
     reward: z.string().trim().max(120).nullable(),
-    spent: money,
   })
   .refine((v) => v.period !== "once" || v.deadline, {
     message: "pick the date it must be done by",
@@ -126,8 +125,6 @@ export async function saveMilestone(
       period: v.period,
       deadline: v.period === "once" ? v.deadline : null,
       reward: v.reward || null,
-      spent: v.spent,
-      spent_as_of: todayIST(),
     };
     const res = v.id
       ? await supabase
@@ -149,18 +146,20 @@ export async function saveMilestone(
   }
 }
 
-/** Updates the spend counted so far in the milestone's current period. */
-export async function updateMilestoneSpend(input: {
-  id: string;
-  spent: number;
+/** Spend on the card since its last logged bill; counts toward every milestone. */
+export async function updateUnbilled(input: {
+  cardId: string;
+  amount: number;
 }): Promise<Result> {
   try {
-    const v = z.object({ id: z.string().uuid(), spent: money }).parse(input);
+    const v = z
+      .object({ cardId: z.string().uuid(), amount: money })
+      .parse(input);
     const { supabase, userId } = await session();
     const { error } = await supabase
-      .from("card_milestones")
-      .update({ spent: v.spent, spent_as_of: todayIST() })
-      .eq("id", v.id)
+      .from("credit_cards")
+      .update({ unbilled: v.amount, unbilled_as_of: todayIST() })
+      .eq("id", v.cardId)
       .eq("user_id", userId);
     if (error) throw new Error(error.message);
     return done();

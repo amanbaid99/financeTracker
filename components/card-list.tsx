@@ -3,11 +3,11 @@
 import {
   Check,
   ChevronDown,
+  Circle,
   CreditCard,
   FileText,
   Pencil,
   Plus,
-  Receipt,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
@@ -22,6 +22,7 @@ import { Progress } from "@/components/ui/progress";
 import {
   averageBill,
   headlineMilestone,
+  liveUnbilled,
   nextUnpaid,
   milestoneState,
   PERIOD_LABELS,
@@ -39,19 +40,11 @@ import {
   saveCard,
   saveMilestone,
   setBillPaid,
-  updateMilestoneSpend,
+  updateUnbilled,
 } from "@/lib/cards-actions";
 import { SPEND_CATEGORIES, type SpendCategory } from "@/lib/card-advisor";
 import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
 import { cn } from "@/lib/utils";
-
-const PERIOD_WORD: Record<Period, string> = {
-  card_year: "card year",
-  calendar_year: "year",
-  quarter: "quarter",
-  month: "month",
-  once: "period",
-};
 
 function useRun(onDone?: (id?: string) => void) {
   const router = useRouter();
@@ -78,12 +71,12 @@ function useRun(onDone?: (id?: string) => void) {
   return { pending, run, errorText };
 }
 
+const MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
+const monthLabel = (iso: string) =>
+  `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
+const shortMonth = (iso: string) => MONTHS[Number(iso.slice(5, 7)) - 1];
+
 function statusLine(s: MilestoneState): { text: string; tone: string } {
-  if (s.stale)
-    return {
-      text: `New ${PERIOD_WORD[s.period]}: update your spend`,
-      tone: "text-warning",
-    };
   const what = s.reward || s.name;
   switch (s.status) {
     case "achieved":
@@ -105,18 +98,17 @@ function statusLine(s: MilestoneState): { text: string; tone: string } {
 
 function MilestoneRow({
   s,
+  noCardYear,
   onEdit,
 }: {
   s: MilestoneState;
+  noCardYear: boolean;
   onEdit: () => void;
 }) {
-  const [spent, setSpent] = useState<number | null>(s.spentNow);
-  const { pending, run, errorText } = useRun();
-  const dirty = (spent ?? 0) !== s.spentNow || s.stale;
   const tone =
     s.status === "achieved"
       ? "success"
-      : s.status === "behind" || s.stale
+      : s.status === "behind"
         ? "warning"
         : s.status === "missed"
           ? "danger"
@@ -125,18 +117,22 @@ function MilestoneRow({
   if (s.status === "achieved") pace = "Reached";
   else if (s.status === "missed") pace = "The date has passed";
   else if (s.neededPerMonth !== null)
-    pace = `About ${formatINR(s.neededPerMonth)} a month to make it`;
+    pace = `about ${formatINR(s.neededPerMonth)} a month`;
+
+  const sources: string[] = [];
+  if (s.billCount > 0)
+    sources.push(s.billCount === 1 ? `1 bill` : `${s.billCount} bills`);
+  if (s.unbilledNow > 0)
+    sources.push(`${formatINR(s.unbilledNow)} not billed yet`);
 
   return (
-    <li className="space-y-2 py-3">
+    <li className="space-y-1.5 py-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-medium">{s.name}</p>
+          <p className="text-sm font-medium">{s.reward || s.name}</p>
           <p className="text-xs text-muted-foreground">
-            {s.reward ? `${s.reward} · ` : ""}
-            {s.period === "once"
-              ? `by ${formatDate(s.end)}`
-              : `${PERIOD_LABELS[s.period].toLowerCase()}, ends ${formatDate(s.end)}`}
+            {formatINR(s.spentNow)} of {formatINR(s.target)}
+            {s.end ? ` by ${formatDate(s.end)}` : ""}
           </p>
         </div>
         <Button
@@ -155,41 +151,84 @@ function MilestoneRow({
         label={`${s.name} progress`}
       />
       <p className="tabular text-xs text-muted-foreground">
-        {formatINR(s.spentNow)} of {formatINR(s.target)}
-        {s.remaining > 0 ? ` · ${formatINR(s.remaining)} to go` : ""}
-        {pace ? ` · ${pace}` : ""}
+        {s.remaining > 0 ? `${formatINR(s.remaining)} to go` : ""}
+        {s.remaining > 0 && pace ? " · " : ""}
+        {pace}
       </p>
-      {s.stale && (
-        <p className="rounded-lg bg-warning-soft p-2 text-xs text-warning">
-          A new {PERIOD_WORD[s.period]} started on {formatDate(s.start)}. Enter
-          what you&apos;ve spent since then.
-        </p>
-      )}
-      <form
-        className="flex items-end gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          run(() => updateMilestoneSpend({ id: s.id, spent: spent ?? 0 }));
-        }}
-      >
+      <p className="text-xs text-muted-foreground">
+        {sources.length
+          ? `Counted from ${sources.join(" + ")}`
+          : "No bills logged in this period yet"}
+        {s.period === "card_year" && noCardYear
+          ? ". Using Jan to Dec; set the card year in About this card."
+          : ""}
+      </p>
+    </li>
+  );
+}
+
+/** Spend since the last bill, once per card; counts toward every milestone. */
+function UnbilledRow({ card }: { card: Card }) {
+  const live = liveUnbilled(card);
+  const [editing, setEditing] = useState(false);
+  const [amount, setAmount] = useState<number | null>(live || null);
+  const { pending, run, errorText } = useRun(() => setEditing(false));
+  const latest = card.bills[0]?.month;
+  const label = latest
+    ? `Spent since your ${shortMonth(latest)} bill`
+    : "Spent so far, not billed yet";
+
+  if (!editing)
+    return (
+      <div className="flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2 text-sm">
+        <span className="min-w-0">
+          <span className="text-muted-foreground">{label}: </span>
+          <span className="tabular font-medium">{formatINR(live)}</span>
+        </span>
+        <Button
+          type="button"
+          variant="link"
+          size="sm"
+          onClick={() => setEditing(true)}
+          aria-label={`Edit ${label}`}
+        >
+          {live ? "Change" : "Add"}
+        </Button>
+      </div>
+    );
+  return (
+    <form
+      className="space-y-2 rounded-lg bg-muted p-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        run(() => updateUnbilled({ cardId: card.id, amount: amount ?? 0 }));
+      }}
+    >
+      <p className="text-xs text-muted-foreground">
+        Counts toward this card&apos;s milestones until you log the next bill.
+      </p>
+      <div className="flex items-end gap-2">
         <MoneyInput
           className="flex-1"
-          aria-label={`${s.name}: spent so far`}
-          value={spent}
-          onChange={setSpent}
-          placeholder="Spent so far"
+          aria-label={label}
+          value={amount}
+          onChange={setAmount}
+          placeholder="0"
         />
-        <Button
-          type="submit"
-          size="sm"
-          variant={dirty ? "default" : "outline"}
-          disabled={pending || !dirty}
-        >
-          {pending ? "Saving…" : "Update"}
+        <Button type="submit" size="sm" disabled={pending}>
+          {pending ? "Saving…" : "Save"}
         </Button>
-      </form>
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          onClick={() => setEditing(false)}
+        >
+          Cancel
+        </Button>
+      </div>
       {errorText}
-    </li>
+    </form>
   );
 }
 
@@ -380,9 +419,6 @@ function MilestoneSheet({
   );
   const [deadline, setDeadline] = useState(milestone?.deadline ?? "");
   const [reward, setReward] = useState(milestone?.reward ?? "");
-  const [spent, setSpent] = useState<number | null>(
-    milestone?.spentNow ?? null,
-  );
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { pending, run, errorText } = useRun(onClose);
 
@@ -404,7 +440,6 @@ function MilestoneSheet({
               period,
               deadline: period === "once" ? deadline || null : null,
               reward: reward.trim() || null,
-              spent: spent ?? 0,
             }),
           );
         }}
@@ -480,14 +515,9 @@ function MilestoneSheet({
             placeholder="e.g. 10,000 bonus points"
           />
         </Field>
-        <Field label="Spent so far this period" htmlFor="m-spent">
-          <MoneyInput
-            id="m-spent"
-            value={spent}
-            onChange={setSpent}
-            placeholder="0"
-          />
-        </Field>
+        <p className="text-xs text-muted-foreground">
+          Progress is counted from the bills you log for this card.
+        </p>
         {errorText}
         <Button type="submit" className="w-full" disabled={pending}>
           {pending ? "Saving…" : milestone ? "Save milestone" : "Add milestone"}
@@ -513,31 +543,44 @@ function MilestoneSheet({
   );
 }
 
-const MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
-const monthLabel = (iso: string) =>
-  `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
+/** The month after the latest bill, or this month if that's in the future. */
+function nextBillMonth(card: Card, today: string): string {
+  const latest = card.bills[0]?.month;
+  if (!latest) return today.slice(0, 7);
+  const [y, m] = latest.split("-").map(Number);
+  const next =
+    m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
+  return next > today.slice(0, 7) ? today.slice(0, 7) : next;
+}
 
 function BillSheet({
-  cardId,
+  card,
   bill,
   today,
   onClose,
 }: {
-  cardId: string;
+  card: Card;
   bill: Bill | null;
   today: string;
   onClose: () => void;
 }) {
-  const [month, setMonth] = useState((bill?.month ?? today).slice(0, 7));
+  const [month, setMonth] = useState(
+    bill ? bill.month.slice(0, 7) : nextBillMonth(card, today),
+  );
   const [amount, setAmount] = useState<number | null>(bill?.amount ?? null);
   const [dueDate, setDueDate] = useState(bill?.dueDate ?? "");
-  const [paid, setPaid] = useState(bill?.paid ?? false);
+  // Bills for past months are usually paid already.
+  const [paid, setPaid] = useState(bill?.paid ?? month < today.slice(0, 7));
   const [note, setNote] = useState(bill?.note ?? "");
+  const [more, setMore] = useState(Boolean(bill?.dueDate || bill?.note));
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { pending, run, errorText } = useRun(onClose);
 
   return (
-    <Sheet title={bill ? "Edit bill" : "Log a bill"} onClose={onClose}>
+    <Sheet
+      title={bill ? "Edit bill" : `Log a ${card.label} bill`}
+      onClose={onClose}
+    >
       <form
         className="space-y-4"
         onSubmit={(e) => {
@@ -545,7 +588,7 @@ function BillSheet({
           run(() =>
             saveBill({
               id: bill?.id ?? null,
-              cardId,
+              cardId: card.id,
               month,
               amount: amount ?? 0,
               dueDate: dueDate || null,
@@ -575,30 +618,46 @@ function BillSheet({
             />
           </Field>
         </div>
-        <Field label="Due date (optional)" htmlFor="b-due">
-          <Input
-            id="b-due"
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
-        </Field>
-        <Field label="Note (optional)" htmlFor="b-note">
-          <Input
-            id="b-note"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            maxLength={120}
-            placeholder="e.g. Flights for Goa"
-          />
-        </Field>
         <label className="flex items-center gap-2 text-sm">
           <Checkbox
             checked={paid}
             onChange={(e) => setPaid(e.target.checked)}
           />
-          Already paid
+          Paid
         </label>
+        {more ? (
+          <>
+            <Field label="Due date (optional)" htmlFor="b-due">
+              <Input
+                id="b-due"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+              />
+            </Field>
+            <Field label="Note (optional)" htmlFor="b-note">
+              <Input
+                id="b-note"
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                maxLength={120}
+                placeholder="e.g. Flights for Goa"
+              />
+            </Field>
+          </>
+        ) : (
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            onClick={() => setMore(true)}
+          >
+            Add due date or note
+          </Button>
+        )}
+        <p className="text-xs text-muted-foreground">
+          The bill counts toward this card&apos;s milestones.
+        </p>
         {errorText}
         <Button type="submit" className="w-full" disabled={pending}>
           {pending ? "Saving…" : bill ? "Save bill" : "Log bill"}
@@ -636,9 +695,17 @@ function BillRow({
   const { pending, run, errorText } = useRun();
   const overdue = !bill.paid && bill.dueDate !== null && bill.dueDate < today;
   const name = monthLabel(bill.month);
+  const sub = [
+    bill.dueDate && !bill.paid
+      ? `${overdue ? "Overdue, was due" : "Due"} ${formatDate(bill.dueDate)}`
+      : "",
+    bill.note ?? "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   return (
-    <li className="space-y-1 py-2.5">
-      <div className="flex items-center gap-2">
+    <li className="py-2">
+      <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={onEdit}
@@ -646,43 +713,45 @@ function BillRow({
           className="min-w-0 flex-1 text-left"
         >
           <p className="flex items-baseline justify-between gap-2 text-sm">
-            <span className="font-medium">{name}</span>
+            <span>{name}</span>
             <span className="tabular font-medium">
               {formatINR(bill.amount)}
             </span>
           </p>
-          <p
-            className={cn(
-              "truncate text-xs",
-              overdue ? "text-danger" : "text-muted-foreground",
-            )}
-          >
-            {bill.dueDate
-              ? `${overdue ? "Overdue, was due" : "Due"} ${formatDate(bill.dueDate)}`
-              : "No due date"}
-            {bill.note ? ` · ${bill.note}` : ""}
-          </p>
+          {sub && (
+            <p
+              className={cn(
+                "truncate text-xs",
+                overdue ? "text-danger" : "text-muted-foreground",
+              )}
+            >
+              {sub}
+            </p>
+          )}
         </button>
-        <Button
+        <button
           type="button"
-          size="sm"
-          variant={bill.paid ? "secondary" : "outline"}
           disabled={pending}
           aria-pressed={bill.paid}
           aria-label={`${name} bill ${bill.paid ? "paid" : "not paid"}`}
+          title={bill.paid ? "Paid. Tap to mark unpaid." : "Tap to mark paid"}
           onClick={() =>
             run(() => setBillPaid({ id: bill.id, paid: !bill.paid }))
           }
-          className={cn("w-20", bill.paid && "text-success")}
+          className={cn(
+            "inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-medium",
+            bill.paid
+              ? "bg-success-soft text-success"
+              : "border text-muted-foreground",
+          )}
         >
           {bill.paid ? (
-            <>
-              <Check /> Paid
-            </>
+            <Check className="size-3.5" aria-hidden />
           ) : (
-            "Mark paid"
+            <Circle className="size-3.5" aria-hidden />
           )}
-        </Button>
+          {bill.paid ? "Paid" : "Unpaid"}
+        </button>
       </div>
       {errorText}
     </li>
@@ -702,20 +771,26 @@ function BillsSection({
 }) {
   const [all, setAll] = useState(false);
   const avg = averageBill(card.bills);
-  const shown = all ? card.bills : card.bills.slice(0, 6);
+  const shown = all ? card.bills : card.bills.slice(0, 3);
   return (
     <section className="space-y-1" aria-label={`${card.label} bills`}>
-      <div className="flex items-baseline justify-between gap-2">
-        <h3 className="text-sm font-semibold">Monthly bills</h3>
-        {avg !== null && (
-          <span className="text-xs text-muted-foreground">
-            Avg {formatINR(avg)} a month
-          </span>
-        )}
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold">
+          Bills
+          {avg !== null && (
+            <span className="font-normal text-muted-foreground">
+              {" "}
+              · avg {formatINR(avg)}/month
+            </span>
+          )}
+        </h3>
+        <Button type="button" size="sm" variant="outline" onClick={onLog}>
+          <Plus /> Log bill
+        </Button>
       </div>
       {card.bills.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          Log each month&apos;s statement to see what you spend on this card.
+          Log each statement and it counts toward your milestones.
         </p>
       ) : (
         <ul className="divide-y">
@@ -729,7 +804,7 @@ function BillsSection({
           ))}
         </ul>
       )}
-      {card.bills.length > 6 && (
+      {card.bills.length > 3 && (
         <Button
           type="button"
           variant="link"
@@ -739,14 +814,106 @@ function BillsSection({
           {all ? "Show fewer" : `Show all ${card.bills.length} bills`}
         </Button>
       )}
-      <Button
+    </section>
+  );
+}
+
+function AboutCard({
+  card,
+  today,
+  onEdit,
+  onFeatures,
+}: {
+  card: Card;
+  today: string;
+  onEdit: () => void;
+  onFeatures: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const year = card.yearStart
+    ? periodBounds("card_year", today, card.yearStart, null)
+    : null;
+  return (
+    <section aria-label={`About ${card.label}`} className="border-t pt-3">
+      <button
         type="button"
-        variant="outline"
-        className="w-full"
-        onClick={onLog}
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+        className="flex w-full items-center justify-between text-sm font-semibold"
       >
-        <Receipt /> Log bill
-      </Button>
+        About this card
+        <ChevronDown
+          className={cn(
+            "size-4 text-muted-foreground transition-transform",
+            open && "rotate-180",
+          )}
+          aria-hidden
+        />
+      </button>
+      {open && (
+        <div className="mt-3 space-y-3 text-sm">
+          <dl className="space-y-1">
+            <div>
+              <dt className="inline text-muted-foreground">Annual fee: </dt>
+              <dd className="inline">
+                {card.annualFee ? formatINR(card.annualFee) : "None"}
+              </dd>
+            </div>
+            <div>
+              <dt className="inline text-muted-foreground">Card year: </dt>
+              <dd className="inline">
+                {year
+                  ? `${formatDate(year.start)} to ${formatDate(year.end)}`
+                  : "Not set (Jan to Dec is used)"}
+              </dd>
+            </div>
+            {card.rewards && (
+              <div>
+                <dt className="inline text-muted-foreground">Rewards: </dt>
+                <dd className="inline">{card.rewards}</dd>
+              </div>
+            )}
+          </dl>
+          {card.bestFor.length > 0 && (
+            <div
+              className="flex flex-wrap gap-1.5"
+              aria-label={`${card.label} is best for`}
+            >
+              {card.bestFor.map((b) => (
+                <span
+                  key={b}
+                  className="rounded-full bg-primary-soft px-2.5 py-0.5 text-xs text-primary"
+                >
+                  {SPEND_CATEGORIES[b as SpendCategory] ?? b}
+                </span>
+              ))}
+            </div>
+          )}
+          {card.benefits.length > 0 && (
+            <ul
+              className="list-disc space-y-0.5 pl-5"
+              aria-label={`${card.label} benefits`}
+            >
+              {card.benefits.map((b) => (
+                <li key={b}>{b}</li>
+              ))}
+            </ul>
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            <Button type="button" variant="outline" size="sm" onClick={onEdit}>
+              <Pencil /> Edit card
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onFeatures}
+            >
+              <FileText /> Read features
+            </Button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
@@ -754,7 +921,7 @@ function BillsSection({
 type SheetState =
   | { kind: "card"; card: Card | null }
   | { kind: "milestone"; cardId: string; milestone: MilestoneState | null }
-  | { kind: "bill"; cardId: string; bill: Bill | null }
+  | { kind: "bill"; card: Card; bill: Bill | null }
   | { kind: "features"; card: Card | null }
   | null;
 
@@ -783,8 +950,6 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
         </Button>
       </div>
 
-      {cards.length > 0 && <CardAdvisor cards={cards} today={today} />}
-
       {cards.length === 0 ? (
         <div className="space-y-2 rounded-2xl border bg-card p-6 text-center">
           <CreditCard className="mx-auto size-8 text-primary" aria-hidden />
@@ -792,16 +957,14 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
             Track your cards&apos; benefits and milestones
           </p>
           <p className="text-sm text-muted-foreground">
-            Add a card, list what it gives you, and track spend milestones like
-            fee waivers and bonus points.
+            Add a card, log its monthly bills, and see how close you are to fee
+            waivers and bonus points.
           </p>
         </div>
       ) : (
         <ul className="space-y-3">
           {cards.map((c) => {
-            const states = c.milestones.map((m) =>
-              milestoneState(m, today, c.yearStart),
-            );
+            const states = c.milestones.map((m) => milestoneState(m, today, c));
             const head = headlineMilestone(states);
             const line = head
               ? statusLine(head)
@@ -811,9 +974,6 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
                 };
             const due = nextUnpaid(c.bills);
             const isOpen = open === c.id;
-            const year = c.yearStart
-              ? periodBounds("card_year", today, c.yearStart, null)
-              : null;
             return (
               <li
                 key={c.id}
@@ -880,107 +1040,20 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
                 </button>
 
                 {isOpen && (
-                  <div className="space-y-5 border-t px-4 pb-4 pt-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <dl className="min-w-0 space-y-1 text-sm">
-                        {year && (
-                          <div>
-                            <dt className="inline text-muted-foreground">
-                              Card year:{" "}
-                            </dt>
-                            <dd className="inline">
-                              {formatDate(year.start)} to {formatDate(year.end)}
-                            </dd>
-                          </div>
-                        )}
-                        {c.rewards && (
-                          <div>
-                            <dt className="inline text-muted-foreground">
-                              Rewards:{" "}
-                            </dt>
-                            <dd className="inline">{c.rewards}</dd>
-                          </div>
-                        )}
-                      </dl>
-                      <div className="flex shrink-0 flex-col gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSheet({ kind: "card", card: c })}
-                        >
-                          <Pencil /> Edit
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            setSheet({ kind: "features", card: c })
-                          }
-                        >
-                          <FileText /> Read features
-                        </Button>
-                      </div>
-                    </div>
-
-                    <BillsSection
-                      card={c}
-                      today={today}
-                      onLog={() =>
-                        setSheet({ kind: "bill", cardId: c.id, bill: null })
-                      }
-                      onEdit={(b) =>
-                        setSheet({ kind: "bill", cardId: c.id, bill: b })
-                      }
-                    />
-
-                    {c.bestFor.length > 0 && (
-                      <div
-                        className="flex flex-wrap gap-1.5"
-                        aria-label={`${c.label} is best for`}
-                      >
-                        {c.bestFor.map((b) => (
-                          <span
-                            key={b}
-                            className="rounded-full bg-primary-soft px-2.5 py-0.5 text-xs text-primary"
-                          >
-                            {SPEND_CATEGORIES[b as SpendCategory] ?? b}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {c.benefits.length > 0 && (
-                      <section
-                        className="space-y-1"
-                        aria-label={`${c.label} benefits`}
-                      >
-                        <h3 className="text-sm font-semibold">Benefits</h3>
-                        <ul className="list-disc space-y-0.5 pl-5 text-sm">
-                          {c.benefits.map((b) => (
-                            <li key={b}>{b}</li>
-                          ))}
-                        </ul>
-                      </section>
-                    )}
-
-                    <section
-                      className="space-y-1"
-                      aria-label={`${c.label} milestones`}
-                    >
-                      <h3 className="text-sm font-semibold">Milestones</h3>
+                  <div className="space-y-4 border-t px-4 pb-4 pt-2">
+                    <section aria-label={`${c.label} milestones`}>
                       {states.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">
-                          Add spend milestones like a fee waiver or bonus points
-                          to track your progress.
+                        <p className="py-3 text-sm text-muted-foreground">
+                          Add a milestone like a fee waiver or bonus points.
+                          Your logged bills count toward it automatically.
                         </p>
                       ) : (
                         <ul className="divide-y">
                           {states.map((s) => (
                             <MilestoneRow
-                              key={`${s.id}-${s.spent}-${s.spentAsOf}`}
+                              key={s.id}
                               s={s}
+                              noCardYear={!c.yearStart}
                               onEdit={() =>
                                 setSheet({
                                   kind: "milestone",
@@ -994,7 +1067,8 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
                       )}
                       <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost"
+                        size="sm"
                         className="w-full"
                         onClick={() =>
                           setSheet({
@@ -1007,6 +1081,31 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
                         <Plus /> Add milestone
                       </Button>
                     </section>
+
+                    {states.length > 0 && (
+                      <UnbilledRow
+                        key={`${c.unbilled}-${c.unbilledAsOf}-${c.bills[0]?.month}`}
+                        card={c}
+                      />
+                    )}
+
+                    <BillsSection
+                      card={c}
+                      today={today}
+                      onLog={() =>
+                        setSheet({ kind: "bill", card: c, bill: null })
+                      }
+                      onEdit={(b) =>
+                        setSheet({ kind: "bill", card: c, bill: b })
+                      }
+                    />
+
+                    <AboutCard
+                      card={c}
+                      today={today}
+                      onEdit={() => setSheet({ kind: "card", card: c })}
+                      onFeatures={() => setSheet({ kind: "features", card: c })}
+                    />
                   </div>
                 )}
               </li>
@@ -1014,6 +1113,8 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
           })}
         </ul>
       )}
+
+      {cards.length > 0 && <CardAdvisor cards={cards} today={today} />}
 
       {sheet?.kind === "card" && (
         <CardSheet
@@ -1034,7 +1135,7 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
       )}
       {sheet?.kind === "bill" && (
         <BillSheet
-          cardId={sheet.cardId}
+          card={sheet.card}
           bill={sheet.bill}
           today={today}
           onClose={close}

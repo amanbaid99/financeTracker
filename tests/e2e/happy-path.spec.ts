@@ -684,42 +684,46 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Add card" }).click();
   const cardRow = page.getByRole("button", { name: /Regalia Gold/ });
   await expect(cardRow).toHaveAttribute("aria-expanded", "true");
+  // Card details are tucked under "About this card".
+  await page.getByRole("button", { name: "About this card" }).click();
   await expect(page.getByText("Fuel surcharge waiver")).toBeVisible();
+  // A fee waiver milestone: progress comes from the bills you log.
   await page.getByRole("button", { name: "Add milestone" }).click();
   await page.getByRole("button", { name: "+ Annual fee waiver" }).click();
   await page.getByLabel("Spend target").fill("400000");
-  await page.getByLabel("Spent so far this period").fill("100000");
   await page
     .getByRole("button", { name: "Add milestone", exact: true })
     .last()
     .click();
+  const feeBar = page.getByRole("progressbar", {
+    name: "Annual fee waiver progress",
+  });
+  await expect(feeBar).toHaveAttribute("aria-valuenow", "0");
   await expect(
-    page.getByRole("progressbar", { name: "Annual fee waiver progress" }),
-  ).toHaveAttribute("aria-valuenow", "25");
-  await page.getByLabel("Annual fee waiver: spent so far").fill("400000");
-  await page.getByRole("button", { name: "Update", exact: true }).click();
-  await expect(
-    page.getByRole("progressbar", { name: "Annual fee waiver progress" }),
-  ).toHaveAttribute("aria-valuenow", "100");
-  await expect(page.getByText("Annual fee waived: reached")).toBeVisible();
-  // Monthly bills: log one, mark it paid.
+    page.getByText("No bills logged in this period yet"),
+  ).toBeVisible();
+  // Log a bill: it counts toward the milestone.
   await page.getByRole("button", { name: "Log bill" }).click();
   await page.getByLabel("Statement month").fill("2026-09");
-  await page.getByLabel("Bill amount").fill("23450");
+  await page.getByLabel("Bill amount").fill("100000");
+  await page.getByRole("checkbox", { name: "Paid" }).uncheck();
+  await page.getByRole("button", { name: "Add due date or note" }).click();
   await page.getByLabel("Due date (optional)").fill("2026-10-05");
   await page
     .getByRole("button", { name: "Log bill", exact: true })
     .last()
     .click();
+  await expect(feeBar).toHaveAttribute("aria-valuenow", "25");
+  await expect(page.getByText("Counted from 1 bill")).toBeVisible();
   const bills = page.getByRole("region", { name: "Regalia Gold bills" });
   await expect(bills).toContainText("Sep 2026");
-  await expect(bills).toContainText("₹23,450");
-  await expect(page.getByText("Bill ₹23,450 due")).toBeVisible();
+  await expect(bills).toContainText("₹1,00,000");
+  await expect(page.getByText("Bill ₹1,00,000 due")).toBeVisible();
   await bills.getByRole("button", { name: "Sep 2026 bill not paid" }).click();
   await expect(
     bills.getByRole("button", { name: "Sep 2026 bill paid" }),
   ).toBeVisible();
-  await expect(page.getByText("Bill ₹23,450 due")).toHaveCount(0);
+  await expect(page.getByText("Bill ₹1,00,000 due")).toHaveCount(0);
   // Logging the same month again doesn't overwrite it.
   await page.getByRole("button", { name: "Log bill" }).click();
   await page.getByLabel("Statement month").fill("2026-09");
@@ -732,12 +736,20 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     page.getByText("That month already has a bill. Edit it instead."),
   ).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
-  await expect(bills).toContainText("₹23,450");
+  await expect(bills).toContainText("₹1,00,000");
+  // Spend since the last bill tops it up, once for the whole card.
+  await page
+    .getByRole("button", { name: "Edit Spent since your Sep bill" })
+    .click();
+  await page.getByLabel("Spent since your Sep bill").fill("300000");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(feeBar).toHaveAttribute("aria-valuenow", "100");
+  await expect(page.getByText("Annual fee waived: reached")).toBeVisible();
+  await expect(
+    page.getByText("Counted from 1 bill + ₹3,00,000 not billed yet"),
+  ).toBeVisible();
   // Read features: two readings, checked against the text; nothing saved
   // until chosen. Turning on AI is asked for right here.
-  await page
-    .getByRole("region", { name: "Regalia Gold bills" })
-    .waitFor();
   await page.getByRole("button", { name: "Read features" }).click();
   await page.getByRole("tab", { name: "Describe it" }).click();
   await page
@@ -780,10 +792,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(
     page.getByLabel("Regalia Gold is best for"),
   ).toContainText("Travel");
-  // Which card to use: the bonus is out of reach at the usual spend.
+  // Which card to use: the bonus is reachable at the usual spend.
   const advisor = page.getByRole("region", { name: "Which card to use" });
-  await expect(advisor).toContainText("Out of reach at your usual spend");
-  await expect(advisor).toContainText("Based on your usual ₹23,450 a month");
+  await expect(advisor).toContainText("Use Regalia Gold");
+  await expect(advisor).toContainText("Within reach");
+  await expect(advisor).toContainText("Based on your usual ₹1,00,000 a month");
 
   await page.screenshot({ path: "test-results/cards-375.png", fullPage: true });
 

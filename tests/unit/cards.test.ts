@@ -5,6 +5,7 @@ import {
   milestoneState,
   nextUnpaid,
   periodBounds,
+  type CardSpend,
   type Milestone,
 } from "@/lib/cards";
 
@@ -16,9 +17,23 @@ const m = (over: Partial<Milestone>): Milestone => ({
   period: "card_year",
   deadline: null,
   reward: "10,000 points",
-  spent: 0,
-  spentAsOf: TODAY,
+  createdAt: "2026-01-01T00:00:00Z",
   ...over,
+});
+const bill = (month: string, amount: number) => ({
+  id: month,
+  month,
+  amount,
+  dueDate: null,
+  paid: true,
+  note: null,
+});
+/** A card where `amount` was typed as unbilled spend today, with no bills. */
+const spend = (amount: number, yearStart: string | null = null): CardSpend => ({
+  yearStart,
+  bills: [],
+  unbilled: amount,
+  unbilledAsOf: TODAY,
 });
 
 describe("card periods", () => {
@@ -54,69 +69,68 @@ describe("card periods", () => {
 
 describe("milestone progress", () => {
   it("shows progress, what's left and the monthly pace", () => {
-    const s = milestoneState(m({ spent: 160_000 }), TODAY, "2023-03-12");
+    const s = milestoneState(m({}), TODAY, spend(160_000, "2023-03-12"));
     expect(s.progress).toBeCloseTo(0.4);
     expect(s.remaining).toBe(240_000);
     expect(s.daysLeft).toBe(138); // 25 Oct to 11 Mar, inclusive
     expect(s.neededPerMonth).toBeGreaterThan(52_000);
     expect(s.neededPerMonth).toBeLessThan(54_000);
     expect(s.status).toBe("behind"); // 62% of the card year gone, 40% spent
-    expect(
-      milestoneState(m({ spent: 300_000 }), TODAY, "2023-03-12").status,
-    ).toBe("on_pace");
-    expect(
-      milestoneState(m({ spent: 400_000 }), TODAY, "2023-03-12"),
-    ).toMatchObject({ status: "achieved", neededPerMonth: null });
+    expect(milestoneState(m({}), TODAY, spend(300_000, "2023-03-12")).status).toBe("on_pace");
+    expect(milestoneState(m({}), TODAY, spend(400_000, "2023-03-12"))).toMatchObject({
+      status: "achieved",
+      neededPerMonth: null,
+    });
   });
 
-  it("starts a new period from zero and flags the old number", () => {
-    const s = milestoneState(
-      m({
-        period: "quarter",
-        target: 100_000,
-        spent: 80_000,
-        spentAsOf: "2026-09-28",
-      }),
-      TODAY,
-      null,
-    );
-    expect(s).toMatchObject({ stale: true, spentNow: 0, remaining: 100_000 });
+  it("counts logged bills from the month the period starts", () => {
+    // Card year from 12 March 2026: the February bill belongs to last year.
+    const card: CardSpend = {
+      yearStart: "2023-03-12",
+      bills: [bill("2026-09-01", 50_000), bill("2026-03-01", 30_000), bill("2026-02-01", 99_000)],
+      unbilled: 0,
+      unbilledAsOf: null,
+    };
+    expect(milestoneState(m({}), TODAY, card)).toMatchObject({
+      billed: 80_000,
+      billCount: 2,
+      spentNow: 80_000,
+    });
+  });
+
+  it("adds spend since the last bill, until the next bill is logged", () => {
+    const bills = [bill("2026-09-01", 50_000)];
+    const card: CardSpend = { yearStart: null, bills, unbilled: 20_000, unbilledAsOf: "2026-10-20" };
+    expect(milestoneState(m({}), TODAY, card)).toMatchObject({ billed: 50_000, unbilledNow: 20_000, spentNow: 70_000 });
+    // The October bill now includes that spend.
+    const later = { ...card, bills: [bill("2026-10-01", 25_000), ...bills] };
+    expect(milestoneState(m({}), TODAY, later)).toMatchObject({ unbilledNow: 0, spentNow: 75_000 });
+  });
+
+  it("starts a new period from zero", () => {
+    const card: CardSpend = {
+      yearStart: null,
+      bills: [bill("2026-09-01", 80_000)],
+      unbilled: 5_000,
+      unbilledAsOf: "2026-09-28",
+    };
+    expect(milestoneState(m({ period: "quarter", target: 100_000 }), TODAY, card)).toMatchObject({
+      spentNow: 0,
+      remaining: 100_000,
+    });
   });
 
   it("handles one-off milestones with and without a date", () => {
-    const due = milestoneState(
-      m({
-        period: "once",
-        deadline: "2026-12-15",
-        target: 50_000,
-        spent: 10_000,
-      }),
-      TODAY,
-      null,
-    );
+    const due = milestoneState(m({ period: "once", deadline: "2026-12-15", target: 50_000 }), TODAY, spend(10_000));
     expect(due).toMatchObject({ daysLeft: 52, status: "no_end" });
-    expect(
-      milestoneState(
-        m({ period: "once", deadline: "2026-10-01", spent: 0 }),
-        TODAY,
-        null,
-      ).status,
-    ).toBe("missed");
+    expect(milestoneState(m({ period: "once", deadline: "2026-10-01" }), TODAY).status).toBe("missed");
   });
 
   it("puts the soonest open milestone on the card's row", () => {
     const states = [
-      milestoneState(m({ id: "year", spent: 100_000 }), TODAY, "2023-03-12"),
-      milestoneState(
-        m({ id: "q", period: "quarter", target: 50_000, spent: 10_000 }),
-        TODAY,
-        null,
-      ),
-      milestoneState(
-        m({ id: "done", period: "month", target: 10_000, spent: 20_000 }),
-        TODAY,
-        null,
-      ),
+      milestoneState(m({ id: "year" }), TODAY, spend(100_000, "2023-03-12")),
+      milestoneState(m({ id: "q", period: "quarter", target: 50_000 }), TODAY, spend(10_000)),
+      milestoneState(m({ id: "done", period: "month", target: 10_000 }), TODAY, spend(20_000)),
     ];
     expect(headlineMilestone(states)?.id).toBe("q");
   });
