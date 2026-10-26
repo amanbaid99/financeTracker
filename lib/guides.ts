@@ -41,6 +41,8 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Update spent so far whenever you check your statement. The bar shows if you're on pace.",
       "Tap Log bill to record each month's statement, then Mark paid once you've paid it.",
       "When a new card year or quarter starts, the milestone resets and asks for your new spend.",
+      "Which card to use suggests where to put your spend so you don't miss a milestone, based on your usual monthly bills.",
+      "Read features fills in a card from its features PDF or your description. You tick what to keep.",
     ],
   },
   ask: {
@@ -85,6 +87,14 @@ export const RELEASES: Release[] = [
       {
         title: "Monthly bills",
         text: "Log each statement, mark it paid and see your average monthly spend per card.",
+      },
+      {
+        title: "Which card to use",
+        text: "See which card to put your spend on so you hit milestones before they reset, and which ones are out of reach.",
+      },
+      {
+        title: "Set up a card from its features",
+        text: "Upload the card's features PDF or describe it. Each fact is double checked and you choose what to keep.",
       },
       {
         title: "Guides",

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { SPEND_CATEGORY_KEYS } from "@/lib/card-advisor";
 import { todayIST } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 
@@ -44,6 +45,7 @@ const cardSchema = z.object({
   yearStart: isoDate.nullable(),
   rewards: z.string().trim().max(200).nullable(),
   benefits: z.array(z.string().trim().min(1).max(120)).max(30),
+  bestFor: z.array(z.enum(SPEND_CATEGORY_KEYS)).max(8).optional(),
 });
 
 export async function saveCard(
@@ -58,6 +60,7 @@ export async function saveCard(
       year_start: v.yearStart,
       rewards: v.rewards || null,
       benefits: v.benefits,
+      ...(v.bestFor ? { best_for: [...new Set(v.bestFor)] } : {}),
     };
     const res = v.id
       ? await supabase

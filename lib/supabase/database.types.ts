@@ -256,6 +256,7 @@ export type Database = {
         Row: {
           annual_fee: number | null;
           benefits: string[];
+          best_for: string[];
           created_at: string;
           due_day: number | null;
           id: string;
@@ -270,6 +271,7 @@ export type Database = {
         Insert: {
           annual_fee?: number | null;
           benefits?: string[];
+          best_for?: string[];
           created_at?: string;
           due_day?: number | null;
           id?: string;
@@ -283,6 +285,7 @@ export type Database = {
         Update: {
           annual_fee?: number | null;
           benefits?: string[];
+          best_for?: string[];
           created_at?: string;
           due_day?: number | null;
           id?: string;

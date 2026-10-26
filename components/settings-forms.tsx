@@ -119,8 +119,8 @@ export function AskSettings({ enabled }: { enabled: boolean }) {
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
         {enabled
-          ? "Ask is on. Your goals and investments are sent as codes with rounded amounts, never your names or PAN."
-          : "Ask is off. Nothing is sent to AI."}
+          ? "AI is on for Ask and reading card features. Your goals and investments are sent as codes with rounded amounts, and card documents with personal numbers masked. Never your names or PAN."
+          : "AI is off for Ask and reading card features. Nothing is sent to AI."}
       </p>
       <div className="flex items-center gap-3">
         <Button

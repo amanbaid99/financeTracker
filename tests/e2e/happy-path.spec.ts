@@ -548,7 +548,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
 
   // Portfolio: everything held, split by asset class, with growth.
   await page.getByRole("link", { name: "Portfolio" }).click();
-  await expect(page.getByRole("heading", { name: "Portfolio" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Portfolio", exact: true })).toBeVisible();
   await expect(page.getByText("Where your money is")).toBeVisible();
   await expect(
     page
@@ -729,6 +729,58 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   ).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await expect(bills).toContainText("₹23,450");
+  // Read features: two readings, checked against the text; nothing saved
+  // until chosen. Turning on AI is asked for right here.
+  await page
+    .getByRole("region", { name: "Regalia Gold bills" })
+    .waitFor();
+  await page.getByRole("button", { name: "Read features" }).click();
+  await page.getByRole("tab", { name: "Describe it" }).click();
+  await page
+    .getByLabel("What does your card give you?")
+    .fill(
+      "Regalia Gold, my card 4111 1111 1111 1111. Annual fee Rs 2,500 waived on spends of Rs 4 lakh in a card year. 4 reward points per Rs 150 spent. 12 complimentary lounge visits a year. Spend Rs 8 lakh in a card year for 10,000 bonus points.",
+    );
+  await page.getByRole("button", { name: "Read features" }).last().click();
+  await expect(page.getByText("Allow AI to read this?")).toBeVisible();
+  await page.getByRole("button", { name: "Allow and read" }).click();
+  const found = page.getByRole("dialog", { name: "Check what was found" });
+  await expect(found).toContainText("confirmed");
+  const sentCard = JSON.stringify(
+    await (await fetch("http://127.0.0.1:5329/last-card")).json(),
+  );
+  expect(sentCard).not.toContain("4111");
+  expect(sentCard).toContain("[number]");
+  await expect(
+    found.getByRole("checkbox", { name: "Keep benefit Free golf every month" }),
+  ).not.toBeChecked();
+  await expect(
+    found.getByRole("checkbox", {
+      name: "Keep benefit 12 complimentary lounge visits a year",
+    }),
+  ).toBeChecked();
+  await expect(
+    found.getByRole("checkbox", { name: "Keep milestone Annual fee waiver" }),
+  ).toBeDisabled();
+  await expect(
+    found.getByRole("checkbox", { name: "Keep milestone Milestone bonus" }),
+  ).toBeChecked();
+  await page.screenshot({ path: "test-results/card-features-375.png", fullPage: true });
+  await found.getByRole("button", { name: "Save to card" }).click();
+  await expect(found).toHaveCount(0);
+  await expect(page.getByText("12 complimentary lounge visits a year")).toBeVisible();
+  await expect(page.getByText("Free golf every month")).toHaveCount(0);
+  await expect(
+    page.getByRole("progressbar", { name: "Milestone bonus progress" }),
+  ).toBeVisible();
+  await expect(
+    page.getByLabel("Regalia Gold is best for"),
+  ).toContainText("Travel");
+  // Which card to use: the bonus is out of reach at the usual spend.
+  const advisor = page.getByRole("region", { name: "Which card to use" });
+  await expect(advisor).toContainText("Out of reach at your usual spend");
+  await expect(advisor).toContainText("Based on your usual ₹23,450 a month");
+
   await page.screenshot({ path: "test-results/cards-375.png", fullPage: true });
 
   // Guides in Settings: read what's new, and replay the section guides.

@@ -242,6 +242,10 @@ export function AskConsent() {
             your nicknames or your goal names.
           </li>
           <li>Your questions, as you type them.</li>
+          <li>
+            Card feature documents or descriptions you choose to read in Cards,
+            with card numbers, emails and phone numbers masked.
+          </li>
         </ul>
         <p className="font-medium">Never sent</p>
         <ul className="list-disc space-y-1 pl-5 text-muted-foreground">

@@ -46,6 +46,8 @@ export interface Card {
   yearStart: string | null;
   rewards: string | null;
   benefits: string[];
+  /** Spend categories this card suits (keys of SPEND_CATEGORIES). */
+  bestFor: string[];
   milestones: Milestone[];
   /** Newest month first. */
   bills: Bill[];

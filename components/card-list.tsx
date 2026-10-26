@@ -4,12 +4,15 @@ import {
   Check,
   ChevronDown,
   CreditCard,
+  FileText,
   Pencil,
   Plus,
   Receipt,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
+import { CardAdvisor } from "@/components/card-advisor";
+import { CardFeaturesSheet } from "@/components/card-features";
 import { Field } from "@/components/forms/field";
 import { MoneyInput } from "@/components/money-input";
 import { Sheet } from "@/components/sheet";
@@ -38,6 +41,7 @@ import {
   setBillPaid,
   updateMilestoneSpend,
 } from "@/lib/cards-actions";
+import { SPEND_CATEGORIES, type SpendCategory } from "@/lib/card-advisor";
 import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -716,6 +720,7 @@ type SheetState =
   | { kind: "card"; card: Card | null }
   | { kind: "milestone"; cardId: string; milestone: MilestoneState | null }
   | { kind: "bill"; cardId: string; bill: Bill | null }
+  | { kind: "features"; card: Card | null }
   | null;
 
 export function CardList({ cards, today }: { cards: Card[]; today: string }) {
@@ -727,13 +732,23 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
 
   return (
     <div className="space-y-4">
-      <Button
-        type="button"
-        className="w-full"
-        onClick={() => setSheet({ kind: "card", card: null })}
-      >
-        <Plus /> Add a card
-      </Button>
+      <div className="grid grid-cols-2 gap-2">
+        <Button
+          type="button"
+          onClick={() => setSheet({ kind: "card", card: null })}
+        >
+          <Plus /> Add a card
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setSheet({ kind: "features", card: null })}
+        >
+          <FileText /> From features
+        </Button>
+      </div>
+
+      {cards.length > 0 && <CardAdvisor cards={cards} today={today} />}
 
       {cards.length === 0 ? (
         <div className="space-y-2 rounded-2xl border bg-card p-6 text-center">
@@ -852,14 +867,26 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
                           </div>
                         )}
                       </dl>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSheet({ kind: "card", card: c })}
-                      >
-                        <Pencil /> Edit
-                      </Button>
+                      <div className="flex shrink-0 flex-col gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSheet({ kind: "card", card: c })}
+                        >
+                          <Pencil /> Edit
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setSheet({ kind: "features", card: c })
+                          }
+                        >
+                          <FileText /> Read features
+                        </Button>
+                      </div>
                     </div>
 
                     <BillsSection
@@ -872,6 +899,22 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
                         setSheet({ kind: "bill", cardId: c.id, bill: b })
                       }
                     />
+
+                    {c.bestFor.length > 0 && (
+                      <div
+                        className="flex flex-wrap gap-1.5"
+                        aria-label={`${c.label} is best for`}
+                      >
+                        {c.bestFor.map((b) => (
+                          <span
+                            key={b}
+                            className="rounded-full bg-primary-soft px-2.5 py-0.5 text-xs text-primary"
+                          >
+                            {SPEND_CATEGORIES[b as SpendCategory] ?? b}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                     {c.benefits.length > 0 && (
                       <section
@@ -950,6 +993,9 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
           milestone={sheet.milestone}
           onClose={close}
         />
+      )}
+      {sheet?.kind === "features" && (
+        <CardFeaturesSheet card={sheet.card} onClose={close} />
       )}
       {sheet?.kind === "bill" && (
         <BillSheet

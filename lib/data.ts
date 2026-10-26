@@ -169,7 +169,7 @@ export const loadCards = cache(
       supabase
         .from("credit_cards")
         .select(
-          "id, label, annual_fee, year_start, rewards, benefits, created_at",
+          "id, label, annual_fee, year_start, rewards, benefits, best_for, created_at",
         )
         .order("created_at"),
       supabase
@@ -195,6 +195,7 @@ export const loadCards = cache(
         yearStart: c.year_start,
         rewards: c.rewards,
         benefits: c.benefits ?? [],
+        bestFor: c.best_for ?? [],
         milestones: ms
           .filter((m) => m.card_id === c.id)
           .map((m) => ({

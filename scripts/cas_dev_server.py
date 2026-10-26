@@ -1,6 +1,6 @@
 """Local stand-in for the Vercel Python function, for `next dev` and e2e tests.
 
-Serves POST /api/cas_parse on 127.0.0.1:5328 with the same handler that runs
+Serves POST /api/cas_parse and /api/pdf_text on 127.0.0.1:5328 with the same handler that runs
 on Vercel. With CAS_FAKE_FIXTURE set to a JSON file, a statement uploaded with
 the password "fixture" returns that file's contents instead of parsing
 (sign-in is still checked). This script is never deployed.
@@ -24,6 +24,7 @@ if os.path.exists(_env_file):
 
 import _casreader  # noqa: E402
 import cas_parse  # noqa: E402
+import pdf_text  # noqa: E402
 
 fixture = os.environ.get("CAS_FAKE_FIXTURE")
 if fixture:
@@ -40,7 +41,10 @@ if fixture:
 
 class Handler(cas_parse.handler):
     def do_POST(self):  # noqa: N802
-        if self.path.split("?")[0] != "/api/cas_parse":
+        path = self.path.split("?")[0]
+        if path == "/api/pdf_text":
+            return pdf_text.handler.do_POST(self)
+        if path != "/api/cas_parse":
             return self._send(404, {"ok": False, "code": "not_found", "message": "Not found."})
         return super().do_POST()
 

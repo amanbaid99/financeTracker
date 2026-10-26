@@ -17,7 +17,10 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const dev = process.env.CAS_PARSER_DEV_URL;
     return dev
-      ? [{ source: "/api/cas_parse", destination: `${dev}/api/cas_parse` }]
+      ? ["/api/cas_parse", "/api/pdf_text"].map((p) => ({
+          source: p,
+          destination: `${dev}${p}`,
+        }))
       : [];
   },
   turbopack: {

@@ -44,6 +44,10 @@ export default function PrivacyPage() {
             for loan goals, planned payments for a bills fund, and your money plan amounts.
           </li>
           <li>
+            For credit cards: the name you give each card, its fee, card year, rewards, benefits, spend milestones and
+            the monthly bill amounts you log. Never the card number.
+          </li>
+          <li>
             From a statement you import: each fund&apos;s name, ISIN, category, value and SIP. Nothing else from the
             statement is kept.
           </li>
@@ -106,6 +110,13 @@ export default function PrivacyPage() {
           names you typed are replaced by codes and put back only on your screen. Your name, email, PAN, folio and
           account numbers are never sent. Chats aren&apos;t saved; only a count of questions is kept for the daily
           limit. You can turn Ask off in Settings.
+        </p>
+        <p>
+          <b>Reading card features</b> uses the same switch as Ask. When you upload a card&apos;s features PDF or
+          describe your card, its text is sent to two AI models (and a paid one if they disagree) to pull out the fee,
+          rewards, benefits and milestones. Before anything is sent, card numbers, emails, phone numbers and PAN-like
+          codes are masked. The PDF and text aren&apos;t kept. You check every result, and nothing is saved until you
+          choose what to keep.
         </p>
         <p>
           Some free AI models may keep or learn from what they receive. Nothing sent identifies you, but don&apos;t
