@@ -207,6 +207,9 @@ function CardSheet({
   const [yearStart, setYearStart] = useState(card?.yearStart ?? "");
   const [rewards, setRewards] = useState(card?.rewards ?? "");
   const [benefits, setBenefits] = useState((card?.benefits ?? []).join("\n"));
+  const [bestFor, setBestFor] = useState<SpendCategory[]>(
+    (card?.bestFor ?? []) as SpendCategory[],
+  );
   const [confirmDelete, setConfirmDelete] = useState(false);
   const { pending, run, errorText } = useRun((id) => {
     onSaved(id);
@@ -230,6 +233,7 @@ function CardSheet({
                 .split("\n")
                 .map((b) => b.trim())
                 .filter(Boolean),
+              bestFor,
             }),
           );
         }}
@@ -287,6 +291,37 @@ function CardSheet({
             className="w-full rounded-lg border border-input bg-card px-3 py-2 text-base sm:text-sm"
           />
         </Field>
+        <fieldset className="space-y-1.5">
+          <legend className="text-sm font-medium">Best for</legend>
+          <div className="flex flex-wrap gap-2">
+            {(Object.keys(SPEND_CATEGORIES) as SpendCategory[]).map((c) => {
+              const on = bestFor.includes(c);
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() =>
+                    setBestFor((s) =>
+                      on ? s.filter((x) => x !== c) : [...s, c],
+                    )
+                  }
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs",
+                    on
+                      ? "border-primary bg-primary-soft text-primary"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {SPEND_CATEGORIES[c]}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Used to suggest which card to use.
+          </p>
+        </fieldset>
         {errorText}
         <Button type="submit" className="w-full" disabled={pending}>
           {pending ? "Saving…" : card ? "Save card" : "Add card"}

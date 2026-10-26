@@ -677,6 +677,10 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page
     .getByLabel("Benefits, one per line")
     .fill("4 lounge visits a quarter\nFuel surcharge waiver");
+  await page.getByRole("button", { name: "Travel", exact: true }).click();
+  await expect(
+    page.getByRole("button", { name: "Travel", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "Add card" }).click();
   const cardRow = page.getByRole("button", { name: /Regalia Gold/ });
   await expect(cardRow).toHaveAttribute("aria-expanded", "true");
