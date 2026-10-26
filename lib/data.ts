@@ -164,7 +164,7 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
 export const loadCards = cache(
   async (): Promise<{ cards: Card[]; today: string }> => {
     const { supabase } = await requireUser();
-    const [cards, milestones] = await Promise.all([
+    const [cards, milestones, bills] = await Promise.all([
       supabase
         .from("credit_cards")
         .select(
@@ -177,8 +177,14 @@ export const loadCards = cache(
           "id, card_id, name, target, period, deadline, reward, spent, spent_as_of",
         )
         .order("created_at"),
+      supabase
+        .from("card_bills")
+        .select("id, card_id, month, amount, due_date, paid, note")
+        .order("month", { ascending: false })
+        .limit(500),
     ]);
     const ms = check(milestones);
+    const bs = check(bills);
     return {
       today: todayIST(),
       cards: check(cards).map((c) => ({
@@ -199,6 +205,16 @@ export const loadCards = cache(
             reward: m.reward,
             spent: m.spent,
             spentAsOf: m.spent_as_of,
+          })),
+        bills: bs
+          .filter((b) => b.card_id === c.id)
+          .map((b) => ({
+            id: b.id,
+            month: b.month,
+            amount: b.amount,
+            dueDate: b.due_date,
+            paid: b.paid,
+            note: b.note,
           })),
       })),
     };

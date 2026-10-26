@@ -102,7 +102,12 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: /^House/ }).click();
   await expect(page.getByLabel("Name")).toHaveValue("House");
   await page.getByLabel("How much do you need?").fill("2000000");
-  await page.getByLabel("By when?").fill("2031-10-25");
+  // Exactly five years out, so the plan suggests an equity index fund.
+  const inFiveYears = new Date(Date.now() + 5.5 * 3_600_000);
+  inFiveYears.setUTCFullYear(inFiveYears.getUTCFullYear() + 5);
+  await page
+    .getByLabel("By when?")
+    .fill(inFiveYears.toISOString().slice(0, 10));
   await page.getByLabel(/grow the target with inflation/).uncheck();
   await page.getByRole("button", { name: "Create goal" }).click();
   // Back on the list with the new goal expanded.
@@ -664,6 +669,37 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     page.getByRole("progressbar", { name: "Annual fee waiver progress" }),
   ).toHaveAttribute("aria-valuenow", "100");
   await expect(page.getByText("Annual fee waived: reached")).toBeVisible();
+  // Monthly bills: log one, mark it paid.
+  await page.getByRole("button", { name: "Log bill" }).click();
+  await page.getByLabel("Statement month").fill("2026-09");
+  await page.getByLabel("Bill amount").fill("23450");
+  await page.getByLabel("Due date (optional)").fill("2026-10-05");
+  await page
+    .getByRole("button", { name: "Log bill", exact: true })
+    .last()
+    .click();
+  const bills = page.getByRole("region", { name: "Regalia Gold bills" });
+  await expect(bills).toContainText("Sep 2026");
+  await expect(bills).toContainText("₹23,450");
+  await expect(page.getByText("Bill ₹23,450 due")).toBeVisible();
+  await bills.getByRole("button", { name: "Sep 2026 bill not paid" }).click();
+  await expect(
+    bills.getByRole("button", { name: "Sep 2026 bill paid" }),
+  ).toBeVisible();
+  await expect(page.getByText("Bill ₹23,450 due")).toHaveCount(0);
+  // Logging the same month again doesn't overwrite it.
+  await page.getByRole("button", { name: "Log bill" }).click();
+  await page.getByLabel("Statement month").fill("2026-09");
+  await page.getByLabel("Bill amount").fill("1");
+  await page
+    .getByRole("button", { name: "Log bill", exact: true })
+    .last()
+    .click();
+  await expect(
+    page.getByText("That month already has a bill. Edit it instead."),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(bills).toContainText("₹23,450");
   await page.screenshot({ path: "test-results/cards-375.png", fullPage: true });
 
   // Theme from Settings.

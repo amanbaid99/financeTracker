@@ -128,6 +128,51 @@ export type Database = {
         };
         Relationships: [];
       };
+      card_bills: {
+        Row: {
+          amount: number;
+          card_id: string;
+          created_at: string;
+          due_date: string | null;
+          id: string;
+          month: string;
+          note: string | null;
+          paid: boolean;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          amount: number;
+          card_id: string;
+          created_at?: string;
+          due_date?: string | null;
+          id?: string;
+          month: string;
+          note?: string | null;
+          paid?: boolean;
+          user_id?: string;
+        };
+        Update: {
+          amount?: number;
+          card_id?: string;
+          created_at?: string;
+          due_date?: string | null;
+          id?: string;
+          month?: string;
+          note?: string | null;
+          paid?: boolean;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "card_bills_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "credit_cards";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       card_milestones: {
         Row: {
           card_id: string;

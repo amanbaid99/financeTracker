@@ -1,28 +1,41 @@
 "use client";
 
-import { ChevronDown, CreditCard, Pencil, Plus } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  CreditCard,
+  Pencil,
+  Plus,
+  Receipt,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import { Field } from "@/components/forms/field";
 import { MoneyInput } from "@/components/money-input";
 import { Sheet } from "@/components/sheet";
 import { Button } from "@/components/ui/button";
-import { Input, Select } from "@/components/ui/input";
+import { Checkbox, Input, Select } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
+  averageBill,
   headlineMilestone,
+  nextUnpaid,
   milestoneState,
   PERIOD_LABELS,
   periodBounds,
+  type Bill,
   type Card,
   type MilestoneState,
   type Period,
 } from "@/lib/cards";
 import {
+  deleteBill,
   deleteCard,
   deleteMilestone,
+  saveBill,
   saveCard,
   saveMilestone,
+  setBillPaid,
   updateMilestoneSpend,
 } from "@/lib/cards-actions";
 import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
@@ -461,9 +474,248 @@ function MilestoneSheet({
   );
 }
 
+const MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
+const monthLabel = (iso: string) =>
+  `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
+
+function BillSheet({
+  cardId,
+  bill,
+  today,
+  onClose,
+}: {
+  cardId: string;
+  bill: Bill | null;
+  today: string;
+  onClose: () => void;
+}) {
+  const [month, setMonth] = useState((bill?.month ?? today).slice(0, 7));
+  const [amount, setAmount] = useState<number | null>(bill?.amount ?? null);
+  const [dueDate, setDueDate] = useState(bill?.dueDate ?? "");
+  const [paid, setPaid] = useState(bill?.paid ?? false);
+  const [note, setNote] = useState(bill?.note ?? "");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const { pending, run, errorText } = useRun(onClose);
+
+  return (
+    <Sheet title={bill ? "Edit bill" : "Log a bill"} onClose={onClose}>
+      <form
+        className="space-y-4"
+        onSubmit={(e) => {
+          e.preventDefault();
+          run(() =>
+            saveBill({
+              id: bill?.id ?? null,
+              cardId,
+              month,
+              amount: amount ?? 0,
+              dueDate: dueDate || null,
+              paid,
+              note: note.trim() || null,
+            }),
+          );
+        }}
+      >
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Statement month" htmlFor="b-month">
+            <Input
+              id="b-month"
+              type="month"
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              required
+            />
+          </Field>
+          <Field label="Bill amount" htmlFor="b-amount">
+            <MoneyInput
+              id="b-amount"
+              value={amount}
+              onChange={setAmount}
+              placeholder="0"
+              required
+            />
+          </Field>
+        </div>
+        <Field label="Due date (optional)" htmlFor="b-due">
+          <Input
+            id="b-due"
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+          />
+        </Field>
+        <Field label="Note (optional)" htmlFor="b-note">
+          <Input
+            id="b-note"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            maxLength={120}
+            placeholder="e.g. Flights for Goa"
+          />
+        </Field>
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox
+            checked={paid}
+            onChange={(e) => setPaid(e.target.checked)}
+          />
+          Already paid
+        </label>
+        {errorText}
+        <Button type="submit" className="w-full" disabled={pending}>
+          {pending ? "Saving…" : bill ? "Save bill" : "Log bill"}
+        </Button>
+        {bill && (
+          <Button
+            type="button"
+            variant={confirmDelete ? "destructive" : "ghost"}
+            size="sm"
+            className="w-full"
+            disabled={pending}
+            onClick={() =>
+              confirmDelete
+                ? run(() => deleteBill(bill.id))
+                : setConfirmDelete(true)
+            }
+          >
+            {confirmDelete ? "Tap again to delete" : "Delete bill"}
+          </Button>
+        )}
+      </form>
+    </Sheet>
+  );
+}
+
+function BillRow({
+  bill,
+  today,
+  onEdit,
+}: {
+  bill: Bill;
+  today: string;
+  onEdit: () => void;
+}) {
+  const { pending, run, errorText } = useRun();
+  const overdue = !bill.paid && bill.dueDate !== null && bill.dueDate < today;
+  const name = monthLabel(bill.month);
+  return (
+    <li className="space-y-1 py-2.5">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label={`Edit ${name} bill`}
+          className="min-w-0 flex-1 text-left"
+        >
+          <p className="flex items-baseline justify-between gap-2 text-sm">
+            <span className="font-medium">{name}</span>
+            <span className="tabular font-medium">
+              {formatINR(bill.amount)}
+            </span>
+          </p>
+          <p
+            className={cn(
+              "truncate text-xs",
+              overdue ? "text-danger" : "text-muted-foreground",
+            )}
+          >
+            {bill.dueDate
+              ? `${overdue ? "Overdue, was due" : "Due"} ${formatDate(bill.dueDate)}`
+              : "No due date"}
+            {bill.note ? ` · ${bill.note}` : ""}
+          </p>
+        </button>
+        <Button
+          type="button"
+          size="sm"
+          variant={bill.paid ? "secondary" : "outline"}
+          disabled={pending}
+          aria-pressed={bill.paid}
+          aria-label={`${name} bill ${bill.paid ? "paid" : "not paid"}`}
+          onClick={() =>
+            run(() => setBillPaid({ id: bill.id, paid: !bill.paid }))
+          }
+          className={cn("w-20", bill.paid && "text-success")}
+        >
+          {bill.paid ? (
+            <>
+              <Check /> Paid
+            </>
+          ) : (
+            "Mark paid"
+          )}
+        </Button>
+      </div>
+      {errorText}
+    </li>
+  );
+}
+
+function BillsSection({
+  card,
+  today,
+  onLog,
+  onEdit,
+}: {
+  card: Card;
+  today: string;
+  onLog: () => void;
+  onEdit: (b: Bill) => void;
+}) {
+  const [all, setAll] = useState(false);
+  const avg = averageBill(card.bills);
+  const shown = all ? card.bills : card.bills.slice(0, 6);
+  return (
+    <section className="space-y-1" aria-label={`${card.label} bills`}>
+      <div className="flex items-baseline justify-between gap-2">
+        <h3 className="text-sm font-semibold">Monthly bills</h3>
+        {avg !== null && (
+          <span className="text-xs text-muted-foreground">
+            Avg {formatINR(avg)} a month
+          </span>
+        )}
+      </div>
+      {card.bills.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Log each month&apos;s statement to see what you spend on this card.
+        </p>
+      ) : (
+        <ul className="divide-y">
+          {shown.map((b) => (
+            <BillRow
+              key={`${b.id}-${b.paid}`}
+              bill={b}
+              today={today}
+              onEdit={() => onEdit(b)}
+            />
+          ))}
+        </ul>
+      )}
+      {card.bills.length > 6 && (
+        <Button
+          type="button"
+          variant="link"
+          size="sm"
+          onClick={() => setAll(!all)}
+        >
+          {all ? "Show fewer" : `Show all ${card.bills.length} bills`}
+        </Button>
+      )}
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        onClick={onLog}
+      >
+        <Receipt /> Log bill
+      </Button>
+    </section>
+  );
+}
+
 type SheetState =
   | { kind: "card"; card: Card | null }
   | { kind: "milestone"; cardId: string; milestone: MilestoneState | null }
+  | { kind: "bill"; cardId: string; bill: Bill | null }
   | null;
 
 export function CardList({ cards, today }: { cards: Card[]; today: string }) {
@@ -507,6 +759,7 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
                   text: "Add a milestone to track",
                   tone: "text-muted-foreground",
                 };
+            const due = nextUnpaid(c.bills);
             const isOpen = open === c.id;
             const year = c.yearStart
               ? periodBounds("card_year", today, c.yearStart, null)
@@ -558,6 +811,14 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
                     >
                       {line.text}
                     </p>
+                    {due && (
+                      <p className="truncate text-xs text-muted-foreground">
+                        Bill {formatINR(due.amount)}
+                        {due.dueDate
+                          ? ` due ${formatDate(due.dueDate)}`
+                          : " unpaid"}
+                      </p>
+                    )}
                   </div>
                   <ChevronDown
                     className={cn(
@@ -600,6 +861,17 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
                         <Pencil /> Edit
                       </Button>
                     </div>
+
+                    <BillsSection
+                      card={c}
+                      today={today}
+                      onLog={() =>
+                        setSheet({ kind: "bill", cardId: c.id, bill: null })
+                      }
+                      onEdit={(b) =>
+                        setSheet({ kind: "bill", cardId: c.id, bill: b })
+                      }
+                    />
 
                     {c.benefits.length > 0 && (
                       <section
@@ -676,6 +948,14 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
         <MilestoneSheet
           cardId={sheet.cardId}
           milestone={sheet.milestone}
+          onClose={close}
+        />
+      )}
+      {sheet?.kind === "bill" && (
+        <BillSheet
+          cardId={sheet.cardId}
+          bill={sheet.bill}
+          today={today}
           onClose={close}
         />
       )}

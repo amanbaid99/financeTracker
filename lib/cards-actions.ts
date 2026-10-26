@@ -180,3 +180,88 @@ export async function deleteMilestone(id: string): Promise<Result> {
     return fail(e);
   }
 }
+
+const billSchema = z.object({
+  id: z.string().uuid().nullable(),
+  cardId: z.string().uuid(),
+  month: z.string().regex(/^\d{4}-\d{2}$/, "pick the statement month"),
+  amount: money,
+  dueDate: isoDate.nullable(),
+  paid: z.boolean(),
+  note: z.string().trim().max(120).nullable(),
+});
+
+/** Logs a month's bill. A month already logged must be edited instead. */
+export async function saveBill(
+  input: z.input<typeof billSchema>,
+): Promise<Result> {
+  try {
+    const v = billSchema.parse(input);
+    const { supabase, userId } = await session();
+    const row = {
+      card_id: v.cardId,
+      month: `${v.month}-01`,
+      amount: v.amount,
+      due_date: v.dueDate,
+      paid: v.paid,
+      note: v.note || null,
+    };
+    const res = v.id
+      ? await supabase
+          .from("card_bills")
+          .update(row)
+          .eq("id", v.id)
+          .eq("user_id", userId)
+          .select("id")
+          .single()
+      : await supabase
+          .from("card_bills")
+          .insert({ ...row, user_id: userId })
+          .select("id")
+          .single();
+    if (res.error) {
+      if (res.error.code === "23505")
+        throw new Error("That month already has a bill. Edit it instead.");
+      throw new Error(res.error.message);
+    }
+    return done(res.data.id);
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function setBillPaid(input: {
+  id: string;
+  paid: boolean;
+}): Promise<Result> {
+  try {
+    const v = z
+      .object({ id: z.string().uuid(), paid: z.boolean() })
+      .parse(input);
+    const { supabase, userId } = await session();
+    const { error } = await supabase
+      .from("card_bills")
+      .update({ paid: v.paid })
+      .eq("id", v.id)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+export async function deleteBill(id: string): Promise<Result> {
+  try {
+    const { supabase, userId } = await session();
+    const { error } = await supabase
+      .from("card_bills")
+      .delete()
+      .eq("id", z.string().uuid().parse(id))
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}

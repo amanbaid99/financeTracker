@@ -171,6 +171,12 @@ describe("row level security", () => {
         target: 100000,
         period: "card_year",
       });
+    await a.from("card_bills").insert({
+      user_id: idA,
+      card_id: cardA,
+      month: "2026-09-01",
+      amount: 12000,
+    });
     await a
       .from("planned_expenses")
       .insert({ user_id: idA, name: "Gym", amount: 12000, every_months: 12 });
@@ -207,6 +213,7 @@ describe("row level security", () => {
     "ai_requests",
     "credit_cards",
     "card_milestones",
+    "card_bills",
     "planned_expenses",
     "bill_status",
     "month_bills",
@@ -297,6 +304,16 @@ describe("row level security", () => {
         target: 1,
         period: "month",
       });
+    expect(error).toBeTruthy();
+  });
+
+  it("user B cannot log a bill on user A's card", async () => {
+    const { error } = await b.from("card_bills").insert({
+      user_id: idB,
+      card_id: cardA,
+      month: "2026-10-01",
+      amount: 1,
+    });
     expect(error).toBeTruthy();
   });
 
