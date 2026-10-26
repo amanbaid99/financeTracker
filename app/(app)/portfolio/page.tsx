@@ -1,4 +1,5 @@
 import { FileUp } from "lucide-react";
+import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AllocationBar } from "@/components/allocation-bar";
@@ -23,7 +24,10 @@ export default async function PortfolioPage() {
   if (p.holdings.length === 0) {
     return (
       <main className="space-y-5">
-        <h1 className="text-2xl font-semibold tracking-tight">Portfolio</h1>
+        <div className="flex items-center gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Portfolio</h1>
+          <GuideButton id="portfolio" />
+        </div>
         <div className="space-y-3 rounded-2xl border bg-card p-6 text-center">
           <p className="font-semibold">Nothing here yet</p>
           <p className="text-sm text-muted-foreground">
@@ -43,7 +47,10 @@ export default async function PortfolioPage() {
   return (
     <main className="space-y-5">
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Portfolio</h1>
+        <div className="flex items-center gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Portfolio</h1>
+          <GuideButton id="portfolio" />
+        </div>
         <p className="text-sm text-muted-foreground">
           Everything you hold, across all your goals.
         </p>

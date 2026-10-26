@@ -829,19 +829,25 @@ export type Database = {
       settings: {
         Row: {
           config_overrides: NonNullable<Json>;
+          seen_guides: string[];
           updated_at: string;
           user_id: string;
+          whats_new_seen: string | null;
         };
         ComputedFields: never;
         Insert: {
           config_overrides?: NonNullable<Json>;
+          seen_guides?: string[];
           updated_at?: string;
           user_id: string;
+          whats_new_seen?: string | null;
         };
         Update: {
           config_overrides?: NonNullable<Json>;
+          seen_guides?: string[];
           updated_at?: string;
           user_id?: string;
+          whats_new_seen?: string | null;
         };
         Relationships: [];
       };

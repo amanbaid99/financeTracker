@@ -1,6 +1,7 @@
 // Sign-in and goal tracking happy path against the LOCAL Supabase stack.
 // Signs in with the real email code read from the local mail catcher (Mailpit).
 import { createClient } from "@supabase/supabase-js";
+import { GUIDES } from "../../lib/guides";
 import { expect, test } from "@playwright/test";
 
 const SUPABASE_URL = process.env.SUPABASE_URL ?? "http://127.0.0.1:54321";
@@ -40,6 +41,12 @@ test.beforeAll(async () => {
   if (error) throw error;
 });
 
+const GUIDE_TITLES = new RegExp(
+  `^(${Object.values(GUIDES)
+    .map((g) => g.title)
+    .join("|")})$`,
+);
+
 test("invite-only sign in and goal tracking", async ({ page }) => {
   // Home Screen app: manifest and icons are public, and the login page links them.
   const manifest = await page.request.get("/manifest.webmanifest");
@@ -72,6 +79,28 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Code from the email", { exact: true }).fill(code);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/goals$/);
+  // First visit: the Goals guide pops up once, and (i) brings it back.
+  // A new user gets no "What's new".
+  const goalsGuide = page.getByRole("dialog", { name: "How goals work" });
+  await expect(goalsGuide).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "What's new" })).toHaveCount(0);
+  const savedSeen = page.waitForResponse((r) => r.request().method() === "POST");
+  await goalsGuide.getByRole("button", { name: "Got it" }).click();
+  await savedSeen;
+  await expect(goalsGuide).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText("What are you saving for?")).toBeVisible();
+  await expect(goalsGuide).toHaveCount(0);
+  await page.getByRole("button", { name: "Guide: How goals work" }).click();
+  await expect(goalsGuide).toBeVisible();
+  await goalsGuide.getByRole("button", { name: "Got it" }).click();
+  // Other sections' guides pop up on first visit; close them as they come.
+  const sectionGuide = page.getByRole("dialog", { name: GUIDE_TITLES });
+  const closeGuides = async () =>
+    page.addLocatorHandler(sectionGuide, async (d) => {
+      await d.getByRole("button", { name: "Got it" }).click();
+    });
+  await closeGuides();
   // Old pages a Home Screen app may still open go to Goals.
   for (const old of [
     "/dashboard",
@@ -701,6 +730,24 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await expect(bills).toContainText("₹23,450");
   await page.screenshot({ path: "test-results/cards-375.png", fullPage: true });
+
+  // Guides in Settings: read what's new, and replay the section guides.
+  await page.removeLocatorHandler(sectionGuide);
+  await page.getByRole("link", { name: "Settings" }).click();
+  await page.getByRole("button", { name: "See what's new" }).click();
+  const whatsNew = page.getByRole("dialog", { name: "What's new" });
+  await expect(whatsNew).toContainText("Monthly bills");
+  await whatsNew.getByRole("button", { name: "Got it" }).click();
+  await page.getByRole("button", { name: "Show guides again" }).click();
+  await expect(
+    page.getByText("Guides will show again when you open each section."),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Cards", exact: true }).click();
+  const cardsGuide = page.getByRole("dialog", { name: "Tracking your cards" });
+  await expect(cardsGuide).toContainText("Log bill");
+  await page.screenshot({ path: "test-results/guide-375.png" });
+  await cardsGuide.getByRole("button", { name: "Got it" }).click();
+  await closeGuides();
 
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();

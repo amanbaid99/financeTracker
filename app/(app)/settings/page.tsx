@@ -6,6 +6,7 @@ import {
   AskSettings,
   ThemeSettings,
 } from "@/components/settings-forms";
+import { GuideSettings } from "@/components/guide-settings";
 import { InviteSettings } from "@/components/invite-settings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadGoals, requireUser } from "@/lib/data";
@@ -70,6 +71,14 @@ export default async function SettingsPage() {
         </CardHeader>
         <CardContent>
           <AskSettings enabled={profile?.ai_enabled ?? false} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>Guides</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <GuideSettings />
         </CardContent>
       </Card>
       <Card>

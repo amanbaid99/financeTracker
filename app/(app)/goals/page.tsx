@@ -1,4 +1,5 @@
 import { FileUp, Plus } from "lucide-react";
+import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { CasGuideButton } from "@/components/cas-guide";
@@ -61,7 +62,12 @@ export default async function GoalsPage({
     <main className="space-y-5">
       <div className="space-y-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Your goals</h1>
+          <div className="flex items-center gap-1">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              Your goals
+            </h1>
+            <GuideButton id="goals" />
+          </div>
           {goals.length > 0 && (
             <p className="text-sm text-muted-foreground">
               {formatINRCompact(saved)} saved

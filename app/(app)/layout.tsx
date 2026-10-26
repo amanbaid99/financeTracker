@@ -3,13 +3,19 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppTabs } from "@/components/app-tabs";
 import { DisclaimerFooter } from "@/components/disclaimer";
+import { GuidesProvider } from "@/components/guides";
 import { Logo } from "@/components/logo";
-import { needsPrivacyConsent } from "@/lib/data";
+import { loadOnboarding, needsPrivacyConsent } from "@/lib/data";
 
-export default async function AppLayout({ children }: { children: React.ReactNode }) {
+export default async function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   if (await needsPrivacyConsent()) redirect("/consent");
+  const { seenGuides, releases } = await loadOnboarding();
   return (
-    <>
+    <GuidesProvider seenGuides={seenGuides} releases={releases}>
       <header className="sticky top-0 z-30 border-b bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur">
         <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-2 px-4">
           <Link href="/goals" aria-label="Tracker home">
@@ -29,6 +35,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         {children}
         <DisclaimerFooter />
       </div>
-    </>
+    </GuidesProvider>
   );
 }

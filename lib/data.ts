@@ -2,6 +2,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import type { Card, Period } from "@/lib/cards";
+import { pendingReleases, type Release } from "@/lib/guides";
 import { todayIST } from "@/lib/dates";
 import { PRIVACY_VERSION } from "@/lib/legal";
 import { createClient } from "@/lib/supabase/server";
@@ -217,6 +218,22 @@ export const loadCards = cache(
             note: b.note,
           })),
       })),
+    };
+  },
+);
+
+/** Which guides this person has seen and which launches they haven't read. */
+export const loadOnboarding = cache(
+  async (): Promise<{ seenGuides: string[]; releases: Release[] }> => {
+    const { supabase, user } = await requireUser();
+    const { data } = await supabase
+      .from("settings")
+      .select("seen_guides, whats_new_seen")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    return {
+      seenGuides: data?.seen_guides ?? [],
+      releases: pendingReleases(data?.whats_new_seen ?? null, user.created_at),
     };
   },
 );

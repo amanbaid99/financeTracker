@@ -1,4 +1,5 @@
 import { ChevronLeft } from "lucide-react";
+import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ImportFlow } from "@/components/import-flow";
@@ -15,9 +16,12 @@ export default function ImportPage() {
         <ChevronLeft className="size-4" aria-hidden /> Your goals
       </Link>
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Import a statement
-        </h1>
+        <div className="flex items-center gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            Import a statement
+          </h1>
+          <GuideButton id="import" />
+        </div>
         <p className="text-sm text-muted-foreground">
           Upload your CAS and we&apos;ll update every fund&apos;s value in one
           go. You check everything before it&apos;s saved.
