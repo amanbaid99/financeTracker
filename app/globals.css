@@ -169,3 +169,43 @@
 .tabular {
   font-variant-numeric: tabular-nums;
 }
+
+/* Tab and settings loading hints (components/nav-pending.tsx). They appear
+   only after 120ms so fast switches don't flash. */
+@keyframes nav-pending-in {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes nav-pending-slide {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(200%);
+  }
+}
+@keyframes nav-pending-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.nav-pending {
+  animation: nav-pending-in 150ms ease-out 120ms forwards;
+}
+.nav-pending .nav-pending-bar {
+  animation: nav-pending-slide 900ms ease-in-out infinite;
+}
+.nav-pending-spin {
+  animation: nav-pending-spin 900ms linear 120ms infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nav-pending .nav-pending-bar {
+    animation: none;
+    width: 100%;
+  }
+  .nav-pending-spin {
+    animation: none;
+    opacity: 0.5;
+  }
+}

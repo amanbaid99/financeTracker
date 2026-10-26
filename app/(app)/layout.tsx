@@ -1,10 +1,10 @@
-import { Settings } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AppTabs } from "@/components/app-tabs";
 import { DisclaimerFooter } from "@/components/disclaimer";
 import { GuidesProvider } from "@/components/guides";
 import { Logo } from "@/components/logo";
+import { SettingsLink } from "@/components/nav-pending";
 import { loadOnboarding, needsPrivacyConsent } from "@/lib/data";
 
 export default async function AppLayout({
@@ -24,13 +24,7 @@ export default async function AppLayout({
           <Link href="/goals" aria-label="Tracker home">
             <Logo />
           </Link>
-          <Link
-            href="/settings"
-            aria-label="Settings"
-            className="inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            <Settings className="size-5" aria-hidden />
-          </Link>
+          <SettingsLink />
         </div>
         <AppTabs />
       </header>

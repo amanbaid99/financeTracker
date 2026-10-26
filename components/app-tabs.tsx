@@ -3,6 +3,7 @@
 import { CreditCard, MessageCircle, PieChart, Target } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { TabPending } from "@/components/nav-pending";
 import { cn } from "@/lib/utils";
 
 const TABS = [
@@ -38,7 +39,7 @@ export function AppTabs() {
                 href={t.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex items-center justify-center gap-1.5 border-b-2 py-2.5 text-sm font-medium",
+                  "relative flex items-center justify-center gap-1.5 border-b-2 py-2.5 text-sm font-medium",
                   active
                     ? "border-primary text-foreground"
                     : "border-transparent text-muted-foreground hover:text-foreground",
@@ -46,6 +47,7 @@ export function AppTabs() {
               >
                 <t.icon className="size-4" aria-hidden />
                 {t.label}
+                <TabPending />
               </Link>
             </li>
           );
