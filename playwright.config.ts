@@ -26,7 +26,6 @@ export default defineConfig({
       env: {
         OPENROUTER_API_KEY: "test-key",
         OPENROUTER_BASE_URL: "http://127.0.0.1:5329/api/v1",
-        OPENROUTER_FREE_MODELS: "test/free-a,test/free-b",
       },
     },
     {

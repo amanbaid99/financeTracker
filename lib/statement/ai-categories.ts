@@ -4,24 +4,28 @@ import "server-only";
 // Only scheme names are sent: public fund names, never amounts, units, PAN,
 // folio numbers or anything else from the statement.
 //
-// Two free models must give the same answer. If they disagree, a paid model
-// (when allowed) breaks the tie, but only by agreeing with one of them.
-// Anything still unsettled is left for the user to pick.
+// Two models from different makers must give the same answer (free ones
+// first; see router.ts). If they disagree, a paid model (when allowed) breaks
+// the tie, but only by agreeing with one of them. Anything still unsettled is
+// left for the user to pick.
 
-import { chatOnce, openRouterSettings, type AiSettings } from "@/lib/ai/openrouter";
+import { openRouterSettings, type AiSettings } from "@/lib/ai/openrouter";
+import { AiRouter, sharedRouter } from "@/lib/ai/router";
 import { FUND_CATEGORIES } from "@/lib/instruments";
 
 export type { AiSettings };
 
-export type AiVerdict = { category: string; how: "two models agreed" | "checked by a third model" } | null;
+export type AiVerdict = {
+  category: string;
+  how: "two models agreed" | "checked by a third model";
+} | null;
 
 const ALLOWED = [...FUND_CATEGORIES.map((c) => c.value), "gold"];
 
-/** Category checks need two free models (or a paid tie-breaker) to work. */
-export function aiSettings(env: NodeJS.ProcessEnv = process.env): AiSettings | null {
-  const s = openRouterSettings(env);
-  if (!s || (s.freeModels.length < 2 && !s.allowPaid)) return null;
-  return s;
+export function aiSettings(
+  env: NodeJS.ProcessEnv = process.env,
+): AiSettings | null {
+  return openRouterSettings(env);
 }
 
 function prompt(names: string[]): string {
@@ -41,21 +45,19 @@ function prompt(names: string[]): string {
 
 type Fetch = typeof fetch;
 
-/** One model's answers by index; empty when the call fails. */
-async function ask(model: string, names: string[], s: AiSettings, fetchImpl: Fetch): Promise<Map<number, string>> {
+/** One model's answers by index. */
+function parse(text: string | undefined): Map<number, string> {
   const out = new Map<number, string>();
-  const text = await chatOnce(model, [{ role: "user", content: prompt(names) }], s, {
-    json: true,
-    timeoutMs: 30_000,
-    fetchImpl,
-  });
   if (!text) return out;
   try {
-    const json = JSON.parse(text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1)) as {
+    const json = JSON.parse(
+      text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1),
+    ) as {
       results?: { i?: number; category?: string | null }[];
     };
     for (const r of json.results ?? []) {
-      if (typeof r.i === "number" && r.category && ALLOWED.includes(r.category)) out.set(r.i, r.category);
+      if (typeof r.i === "number" && r.category && ALLOWED.includes(r.category))
+        out.set(r.i, r.category);
     }
   } catch {
     // A garbled answer counts as no answer.
@@ -67,13 +69,20 @@ async function ask(model: string, names: string[], s: AiSettings, fetchImpl: Fet
 export async function aiCategories(
   names: string[],
   settings: AiSettings | null = aiSettings(),
-  fetchImpl: Fetch = fetch,
+  fetchImpl?: Fetch,
+  opts: { userMayPay?: boolean } = {},
 ): Promise<AiVerdict[]> {
   const verdicts: AiVerdict[] = names.map(() => null);
   if (!settings || names.length === 0) return verdicts;
-  const [a, b] = await Promise.all(
-    settings.freeModels.slice(0, 2).map((m) => ask(m, names, settings, fetchImpl)),
-  );
+  const router = fetchImpl
+    ? new AiRouter(settings, fetchImpl)
+    : sharedRouter(settings);
+  const msg = (list: string[]) => [
+    { role: "user" as const, content: prompt(list) },
+  ];
+
+  const readings = await router.readings("categorize", msg(names), 2, opts);
+  const [a, b] = readings.map((r) => parse(r.text));
   const open: number[] = [];
   names.forEach((_, i) => {
     const x = a?.get(i);
@@ -81,12 +90,21 @@ export async function aiCategories(
     if (x && x === y) verdicts[i] = { category: x, how: "two models agreed" };
     else open.push(i);
   });
-  if (open.length && settings.allowPaid && settings.paidModel) {
-    const paid = await ask(settings.paidModel, open.map((i) => names[i]), settings, fetchImpl);
+  if (open.length && readings.length === 2) {
+    const tie = await router.tieBreak(
+      "categorize",
+      msg(open.map((i) => names[i])),
+      {
+        ...opts,
+        notFrom: readings.map((r) => r.model),
+      },
+    );
+    const z = parse(tie?.text);
     open.forEach((i, j) => {
-      const z = paid.get(j);
-      // The tie-breaker must side with one of the free models.
-      if (z && (z === a?.get(i) || z === b?.get(i))) verdicts[i] = { category: z, how: "checked by a third model" };
+      const c = z.get(j);
+      // The tie-breaker must side with one of the two readings.
+      if (c && (c === a?.get(i) || c === b?.get(i)))
+        verdicts[i] = { category: c, how: "checked by a third model" };
     });
   }
   return verdicts;

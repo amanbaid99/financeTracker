@@ -6,7 +6,8 @@ import { z } from "zod";
 import { FUND_CATEGORIES, KINDS } from "@/lib/instruments";
 import { createClient } from "@/lib/supabase/server";
 import { freePercent } from "@/lib/tracker";
-import { aiCategories } from "./ai-categories";
+import { userMayPay } from "@/lib/ai/budget";
+import { aiCategories, aiSettings } from "./ai-categories";
 import {
   applyAiCategories,
   buildReview,
@@ -33,21 +34,39 @@ export type PrepareResult =
       rows: ReviewRow[];
       goals: { id: string; name: string }[];
       /** The user's investments, for "this is…" choices. */
-      investments: { id: string; name: string; isFund: boolean; value: number; sip: number; category: string | null }[];
+      investments: {
+        id: string;
+        name: string;
+        isFund: boolean;
+        value: number;
+        sip: number;
+        category: string | null;
+      }[];
     }
   | { ok: false; error: string };
 
 /** Matches a read statement to the user's investments and settles categories. */
-export async function prepareImport(input: ParsedStatement): Promise<PrepareResult> {
+export async function prepareImport(
+  input: ParsedStatement,
+): Promise<PrepareResult> {
   const parsed = parsedStatementSchema.safeParse(input);
-  if (!parsed.success) return { ok: false, error: "The statement came back in an unexpected shape. Try again." };
+  if (!parsed.success)
+    return {
+      ok: false,
+      error: "The statement came back in an unexpected shape. Try again.",
+    };
   const statement = parsed.data;
   const { supabase } = await session();
   const [holdings, goals] = await Promise.all([
-    supabase.from("holdings").select("id, kind, name, category, current_value, monthly_sip, expected_return_pct, isin"),
+    supabase
+      .from("holdings")
+      .select(
+        "id, kind, name, category, current_value, monthly_sip, expected_return_pct, isin",
+      ),
     supabase.from("goals").select("id, name").order("created_at"),
   ]);
-  if (holdings.error || goals.error) return { ok: false, error: "Couldn't load your investments. Try again." };
+  if (holdings.error || goals.error)
+    return { ok: false, error: "Couldn't load your investments. Try again." };
   const existing: ExistingInvestment[] = holdings.data.map((h) => ({
     id: h.id,
     kind: h.kind,
@@ -55,13 +74,22 @@ export async function prepareImport(input: ParsedStatement): Promise<PrepareResu
     category: h.category,
     value: h.current_value,
     monthlySip: h.monthly_sip ?? 0,
-    returnPct: h.expected_return_pct === null ? null : Number(h.expected_return_pct),
+    returnPct:
+      h.expected_return_pct === null ? null : Number(h.expected_return_pct),
     isin: h.isin,
   }));
 
   let rows = buildReview(statement, existing);
   const unplaced = rows.filter((r) => !r.category);
-  const verdicts = await aiCategories(unplaced.map((r) => r.name));
+  const settings = aiSettings();
+  const verdicts = await aiCategories(
+    unplaced.map((r) => r.name),
+    settings,
+    undefined,
+    {
+      userMayPay: settings ? await userMayPay(supabase, settings) : false,
+    },
+  );
   const settled = new Map<string, NonNullable<(typeof verdicts)[number]>>();
   unplaced.forEach((r, i) => {
     const v = verdicts[i];
@@ -105,9 +133,17 @@ const choiceSchema = z
     goalId: z.string().uuid().nullable(),
   })
   .superRefine((c, ctx) => {
-    if (c.action === "update" && !c.investmentId) ctx.addIssue({ code: "custom", message: "pick which investment" });
-    if (c.action !== "skip" && c.kind === "mutual_fund" && !(c.category && fundValues.has(c.category))) {
-      ctx.addIssue({ code: "custom", message: `pick what kind of fund “${c.name}” is` });
+    if (c.action === "update" && !c.investmentId)
+      ctx.addIssue({ code: "custom", message: "pick which investment" });
+    if (
+      c.action !== "skip" &&
+      c.kind === "mutual_fund" &&
+      !(c.category && fundValues.has(c.category))
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: `pick what kind of fund “${c.name}” is`,
+      });
     }
   });
 
@@ -116,16 +152,29 @@ export type ImportChoice = z.input<typeof choiceSchema>;
 /** Saves the reviewed rows: updates matched investments, adds new ones, links goals. */
 export async function applyImport(
   choices: ImportChoice[],
-): Promise<{ ok: true; updated: number; added: number } | { ok: false; error: string }> {
+): Promise<
+  { ok: true; updated: number; added: number } | { ok: false; error: string }
+> {
   const parsed = z.array(choiceSchema).max(300).safeParse(choices);
   if (!parsed.success) {
     const first = parsed.error.issues[0];
-    return { ok: false, error: first?.message ? `Please ${first.message}.` : "Check your choices and try again." };
+    return {
+      ok: false,
+      error: first?.message
+        ? `Please ${first.message}.`
+        : "Check your choices and try again.",
+    };
   }
   const { supabase, userId } = await session();
-  const links = await supabase.from("goal_allocations").select("goal_id, holding_id, percent");
+  const links = await supabase
+    .from("goal_allocations")
+    .select("goal_id, holding_id, percent");
   if (links.error) return { ok: false, error: links.error.message };
-  const current = links.data.map((l) => ({ goalId: l.goal_id, investmentId: l.holding_id, percent: Number(l.percent) }));
+  const current = links.data.map((l) => ({
+    goalId: l.goal_id,
+    investmentId: l.holding_id,
+    percent: Number(l.percent),
+  }));
   const now = new Date().toISOString();
   let updated = 0;
   let added = 0;
@@ -134,7 +183,11 @@ export async function applyImport(
     for (const c of parsed.data) {
       if (c.action === "skip") continue;
       const category =
-        c.kind === "mutual_fund" ? c.category : c.kind === "stock" ? "direct_equity" : (c.category ?? c.kind);
+        c.kind === "mutual_fund"
+          ? c.category
+          : c.kind === "stock"
+            ? "direct_equity"
+            : (c.category ?? c.kind);
       let id: string;
       if (c.action === "update") {
         const patch: {
@@ -178,12 +231,20 @@ export async function applyImport(
         id = res.data.id;
         added++;
       }
-      if (c.goalId && !current.some((l) => l.goalId === c.goalId && l.investmentId === id)) {
+      if (
+        c.goalId &&
+        !current.some((l) => l.goalId === c.goalId && l.investmentId === id)
+      ) {
         const free = freePercent(id, current);
         if (free >= 1) {
           const ins = await supabase
             .from("goal_allocations")
-            .insert({ user_id: userId, goal_id: c.goalId, holding_id: id, percent: free });
+            .insert({
+              user_id: userId,
+              goal_id: c.goalId,
+              holding_id: id,
+              percent: free,
+            });
           if (ins.error) throw new Error(ins.error.message);
           current.push({ goalId: c.goalId, investmentId: id, percent: free });
         }
@@ -191,7 +252,11 @@ export async function applyImport(
     }
   } catch (e) {
     revalidatePath("/", "layout");
-    return { ok: false, error: e instanceof Error ? e.message : "Something went wrong while saving." };
+    return {
+      ok: false,
+      error:
+        e instanceof Error ? e.message : "Something went wrong while saving.",
+    };
   }
   revalidatePath("/", "layout");
   return { ok: true, updated, added };

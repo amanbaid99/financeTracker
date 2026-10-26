@@ -111,17 +111,24 @@ AI is off unless `OPENROUTER_API_KEY` is set, and each user also has to opt in. 
 engine already calculated; it never calculates, never names funds, and every answer is labelled as not advice.
 
 1. Sign up at [openrouter.ai](https://openrouter.ai) and create an API key under **Keys**. Give the key a
-   **credit limit** (for example $2) so a bug can never run up a bill.
-2. Pick models on the [models page](https://openrouter.ai/models):
-   - Free models have ids ending in `:free`. Put two or three in `OPENROUTER_FREE_MODELS`, comma-separated. They
-     are tried in order.
-   - Pick one low-cost paid model for `OPENROUTER_PAID_MODEL` and set `OPENROUTER_ALLOW_PAID=true` if you want a
-     fallback. The paid model is only used when every free model fails. Add a few dollars of credit for it.
+   **credit limit** (for example $5) so a bug can never run up a bill. Buying at least 10 credits once raises
+   the free-model limit from 50 to 1,000 requests a day.
+2. Set `OPENROUTER_API_KEY` in Vercel and redeploy. That's all that's required. Models are picked
+   automatically (`lib/ai/router.ts`):
+   - Free models come from OpenRouter's live model list, ranked by size, recency, context and JSON support.
+     Checks that need agreement (fund categories, card features) use two free models from different makers.
+   - A model that fails is rested for a while (a minute after a rate limit, longer after errors).
+   - Paid models are used only when free ones fail, disagree, or today's free quota is nearly used. The paid
+     pick is the cheap paid version of a good free model, under a price cap.
+   - Paid spend is capped by `AI_PAID_DAILY_USD` (default $0.50 a day) and `AI_PAID_PER_USER_DAILY`
+     (default 10 requests per person). Set `OPENROUTER_ALLOW_PAID=false` to never use paid models.
+   - Optional: `OPENROUTER_FREE_MODELS` and `OPENROUTER_PAID_MODEL` name models to try first.
 3. Privacy setting: most free models only run if you allow providers that may log or train on prompts
-   (**Settings > Privacy** on OpenRouter). Tracker only sends anonymised, rounded numbers, so this is low risk.
-   If you turn it on, also set `OPENROUTER_FREE_ALLOW_DATA_COLLECTION=true`. Paid requests always ask OpenRouter
-   to use only providers that don't store or train on data.
-4. `AI_DAILY_LIMIT` caps requests per user per day (default 20).
+   (**Settings > Privacy** on OpenRouter). Tracker only sends anonymised, rounded numbers and masked card
+   documents, so this is low risk. If you turn it on, also set `OPENROUTER_FREE_ALLOW_DATA_COLLECTION=true`.
+   Otherwise free models that need it are skipped. Paid requests always ask OpenRouter to use only providers
+   that don't store or train on data.
+4. `AI_DAILY_LIMIT` caps requests per user per day for each feature (default 20).
 
 What the AI receives (see `lib/ai/facts.ts`): step names, rounded gaps and monthly amounts, goal **types** (not
 the names you typed), years to goal, planning return, categories and statuses. It never receives a name, email,

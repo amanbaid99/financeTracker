@@ -156,12 +156,15 @@ describe("AI category agreement", () => {
     allowPaid: true,
     allowDataCollection: false,
     siteUrl: "http://x",
+    paidDailyUsd: 0.5,
+    paidPerUserDaily: 10,
   };
   const reply = (results: { i: number; category: string | null }[]) =>
     new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ results }) } }] }));
 
   function fakeFetch(answers: Record<string, { i: number; category: string | null }[]>) {
-    return vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+    return vi.fn(async (url: string | URL | Request, init?: RequestInit) => {
+      if (!String(url).endsWith("/chat/completions")) return new Response("{}", { status: 404 });
       const body = JSON.parse(String(init?.body));
       return reply(answers[body.model] ?? []);
     }) as unknown as typeof fetch;
@@ -177,8 +180,11 @@ describe("AI category agreement", () => {
       { category: "flexi_cap", how: "two models agreed" },
       { category: "gilt", how: "two models agreed" },
     ]);
-    expect(f).toHaveBeenCalledTimes(2); // no paid call needed
-    const sent = JSON.parse(String((f as unknown as { mock: { calls: [string, RequestInit][] } }).mock.calls[0][1].body));
+    const chats = (f as unknown as { mock: { calls: [string, RequestInit][] } }).mock.calls.filter(([u]) =>
+      String(u).endsWith("/chat/completions"),
+    );
+    expect(chats).toHaveLength(2); // no paid call needed
+    const sent = JSON.parse(String(chats[0][1].body));
     expect(sent.provider).toEqual({ data_collection: "deny" });
     expect(sent.messages[0].content).not.toMatch(/₹|units|PAN|folio/i);
   });

@@ -37,6 +37,32 @@ function reply(res, content) {
 
 http
   .createServer((req, res) => {
+    // Model list and key status, as the router reads them.
+    if (req.method === "GET" && req.url === "/api/v1/models") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      const free = (id) => ({
+        id,
+        context_length: 128000,
+        created: Math.floor(Date.now() / 1000),
+        pricing: { prompt: "0", completion: "0" },
+        supported_parameters: ["response_format"],
+      });
+      return res.end(
+        JSON.stringify({ data: [free("test/free-a"), free("other/free-b")] }),
+      );
+    }
+    if (req.method === "GET" && req.url === "/api/v1/key") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(
+        JSON.stringify({
+          data: {
+            free_model_daily_requests: { remaining: 900 },
+            usage_daily: 0,
+            limit_remaining: null,
+          },
+        }),
+      );
+    }
     if (req.method === "GET" && req.url === "/last-card") {
       res.writeHead(200, { "Content-Type": "application/json" });
       return res.end(JSON.stringify(lastCard));

@@ -1,7 +1,9 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { chatOnce, openRouterSettings } from "@/lib/ai/openrouter";
+import { userMayPay } from "@/lib/ai/budget";
+import { openRouterSettings } from "@/lib/ai/openrouter";
+import { sharedRouter } from "@/lib/ai/router";
 import {
   combine,
   EXTRACT_PROMPT,
@@ -78,19 +80,21 @@ export async function extractCardFeatures(input: {
     { role: "system" as const, content: EXTRACT_PROMPT },
     { role: "user" as const, content: `Document:\n"""\n${text}\n"""` },
   ];
-  const read = async (model: string) => {
-    const reply = await chatOnce(model, messages, settings, { json: true });
-    return reply ? parseExtraction(reply) : null;
-  };
-
-  const free = settings.freeModels.slice(0, 2);
-  const readings = (await Promise.all(free.map(read))).filter(
-    (r): r is Extracted => r !== null,
-  );
-  let usedPaid = false;
-  const paid = settings.allowPaid ? settings.paidModel : null;
-  if (paid && (readings.length < 2 || needsTieBreak(readings))) {
-    const r = await read(paid);
+  const router = sharedRouter(settings);
+  const mayPay = await userMayPay(supabase, settings);
+  const answers = await router.readings("card_features", messages, 2, {
+    userMayPay: mayPay,
+  });
+  const readings = answers
+    .map((a) => parseExtraction(a.text))
+    .filter((r): r is Extracted => r !== null);
+  let usedPaid = answers.some((a) => a.tier === "paid");
+  if (readings.length === 2 && needsTieBreak(readings)) {
+    const tie = await router.tieBreak("card_features", messages, {
+      userMayPay: mayPay,
+      notFrom: answers.map((a) => a.model),
+    });
+    const r = tie ? parseExtraction(tie.text) : null;
     if (r) {
       readings.push(r);
       usedPaid = true;
@@ -100,7 +104,11 @@ export async function extractCardFeatures(input: {
   await supabase.from("ai_requests").insert({
     user_id: userId,
     feature: "card_features",
-    model: usedPaid ? paid! : (free[0] ?? "none"),
+    model:
+      answers
+        .map((a) => a.model)
+        .join(", ")
+        .slice(0, 200) || "none",
     tier: usedPaid ? "paid" : "free",
     ok: readings.length > 0,
   });

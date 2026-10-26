@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { chatWithFallback, openRouterSettings } from "@/lib/ai/openrouter";
+import { userMayPay } from "@/lib/ai/budget";
+import { openRouterSettings } from "@/lib/ai/openrouter";
+import { sharedRouter } from "@/lib/ai/router";
 import { loadGoals } from "@/lib/data";
 import { AI_CONSENT_VERSION } from "@/lib/legal";
 import { createClient } from "@/lib/supabase/server";
@@ -21,14 +23,12 @@ export async function setAskEnabled(
   on: boolean,
 ): Promise<{ ok: boolean; error?: string }> {
   const { supabase, userId } = await session();
-  const consent = await supabase
-    .from("consents")
-    .insert({
-      user_id: userId,
-      kind: "ai_processing",
-      version: AI_CONSENT_VERSION,
-      granted: on,
-    });
+  const consent = await supabase.from("consents").insert({
+    user_id: userId,
+    kind: "ai_processing",
+    version: AI_CONSENT_VERSION,
+    granted: on,
+  });
   if (consent.error) return { ok: false, error: consent.error.message };
   const res = await supabase
     .from("profiles")
@@ -95,21 +95,21 @@ export async function askQuestion(history: AskTurn[]): Promise<AskResult> {
     plan,
     todayISO: today,
   });
-  const reply = await chatWithFallback(
+  const reply = await sharedRouter(settings).answer(
+    "ask",
     [
       { role: "system", content: `${ASK_INSTRUCTIONS}\n\nFacts:\n${facts}` },
       ...parsed.data
         .slice(-10)
         .map((t) => ({ role: t.role, content: t.content })),
     ],
-    settings,
+    { userMayPay: await userMayPay(supabase, settings) },
   );
 
   await supabase.from("ai_requests").insert({
     user_id: userId,
     feature: "ask",
-    model:
-      reply?.model ?? settings.freeModels[0] ?? settings.paidModel ?? "none",
+    model: reply?.model ?? "none",
     tier: reply?.tier ?? "free",
     ok: Boolean(reply),
   });

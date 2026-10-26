@@ -1,7 +1,7 @@
 import "server-only";
 
-// Shared OpenRouter settings and one chat call. Free models are tried in
-// order; a paid model is used only when allowed and every free one fails.
+// OpenRouter settings from the environment. Which model answers each request
+// is decided in router.ts.
 
 export interface AiSettings {
   apiKey: string;
@@ -12,6 +12,10 @@ export interface AiSettings {
   allowDataCollection: boolean;
   siteUrl: string;
   dailyLimit: number;
+  /** Most the app spends on paid models a day, across everyone, in $. */
+  paidDailyUsd: number;
+  /** Paid requests one person can trigger a day. */
+  paidPerUserDaily: number;
 }
 
 function list(v: string | undefined): string[] {
@@ -27,10 +31,15 @@ export function openRouterSettings(
 ): AiSettings | null {
   const apiKey = env.OPENROUTER_API_KEY?.trim();
   if (!apiKey) return null;
+  // Models are picked automatically (see router.ts); these only add preferences.
   const freeModels = list(env.OPENROUTER_FREE_MODELS);
   const paidModel = env.OPENROUTER_PAID_MODEL?.trim() || null;
-  const allowPaid = env.OPENROUTER_ALLOW_PAID === "true" && Boolean(paidModel);
-  if (!freeModels.length && !allowPaid) return null;
+  // Paid fallback is on unless turned off; spend is capped below.
+  const allowPaid = env.OPENROUTER_ALLOW_PAID !== "false";
+  const num = (v: string | undefined, d: number) => {
+    const n = Number(v);
+    return v && Number.isFinite(n) && n >= 0 ? n : d;
+  };
   return {
     apiKey,
     baseUrl: (
@@ -42,68 +51,12 @@ export function openRouterSettings(
     allowDataCollection: env.OPENROUTER_FREE_ALLOW_DATA_COLLECTION === "true",
     siteUrl: env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
     dailyLimit: Math.max(1, Number(env.AI_DAILY_LIMIT ?? 20) || 20),
+    paidDailyUsd: num(env.AI_PAID_DAILY_USD, 0.5),
+    paidPerUserDaily: num(env.AI_PAID_PER_USER_DAILY, 10),
   };
 }
 
 export interface ChatMessage {
   role: "system" | "user" | "assistant";
   content: string;
-}
-
-type Fetch = typeof fetch;
-
-/** One model's reply text, or null if the call failed. */
-export async function chatOnce(
-  model: string,
-  messages: ChatMessage[],
-  s: AiSettings,
-  opts: { json?: boolean; timeoutMs?: number; fetchImpl?: Fetch } = {},
-): Promise<string | null> {
-  const fetchImpl = opts.fetchImpl ?? fetch;
-  try {
-    const res = await fetchImpl(`${s.baseUrl}/chat/completions`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${s.apiKey}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": s.siteUrl,
-        "X-Title": "Tracker",
-      },
-      body: JSON.stringify({
-        model,
-        temperature: opts.json ? 0 : 0.3,
-        ...(opts.json ? { response_format: { type: "json_object" } } : {}),
-        messages,
-        ...(s.allowDataCollection
-          ? {}
-          : { provider: { data_collection: "deny" } }),
-      }),
-      signal: AbortSignal.timeout(opts.timeoutMs ?? 45_000),
-    });
-    if (!res.ok) return null;
-    const data = (await res.json()) as {
-      choices?: { message?: { content?: string } }[];
-    };
-    const text = data.choices?.[0]?.message?.content?.trim();
-    return text || null;
-  } catch {
-    return null;
-  }
-}
-
-/** Free models in order, then the paid one if allowed. */
-export async function chatWithFallback(
-  messages: ChatMessage[],
-  s: AiSettings,
-  fetchImpl?: Fetch,
-): Promise<{ text: string; model: string; tier: "free" | "paid" } | null> {
-  for (const model of s.freeModels) {
-    const text = await chatOnce(model, messages, s, { fetchImpl });
-    if (text) return { text, model, tier: "free" };
-  }
-  if (s.allowPaid && s.paidModel) {
-    const text = await chatOnce(s.paidModel, messages, s, { fetchImpl });
-    if (text) return { text, model: s.paidModel, tier: "paid" };
-  }
-  return null;
 }
