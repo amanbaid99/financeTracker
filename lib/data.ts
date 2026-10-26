@@ -13,12 +13,25 @@ import {
   type TrackedGoal,
 } from "@/lib/tracker";
 
-/** The signed-in user, or a redirect to /login. Cached per request. */
+/**
+ * The signed-in user, or a redirect to /login. Cached per request.
+ *
+ * Reads the verified sign-in token (checked locally against Supabase's
+ * signing keys, so no extra network call), the same check the proxy makes.
+ * Every query still goes through row level security with this token.
+ */
 export const requireUser = cache(async () => {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) redirect("/login");
-  return { supabase, user: data.user };
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (!claims?.sub) redirect("/login");
+  return {
+    supabase,
+    user: {
+      id: claims.sub,
+      email: typeof claims.email === "string" ? claims.email : null,
+    },
+  };
 });
 
 /** True when the user hasn't accepted the current privacy policy version. */
@@ -227,14 +240,28 @@ export const loadCards = cache(
 export const loadOnboarding = cache(
   async (): Promise<{ seenGuides: string[]; releases: Release[] }> => {
     const { supabase, user } = await requireUser();
-    const { data } = await supabase
-      .from("settings")
-      .select("seen_guides, whats_new_seen")
-      .eq("user_id", user.id)
-      .maybeSingle();
+    // When someone joined: their first privacy acceptance, made at sign-up.
+    const [settings, joined] = await Promise.all([
+      supabase
+        .from("settings")
+        .select("seen_guides, whats_new_seen")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("consents")
+        .select("created_at")
+        .eq("kind", "privacy_policy")
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    const data = settings.data;
     return {
       seenGuides: data?.seen_guides ?? [],
-      releases: pendingReleases(data?.whats_new_seen ?? null, user.created_at),
+      releases: pendingReleases(
+        data?.whats_new_seen ?? null,
+        joined.data?.created_at ?? new Date().toISOString(),
+      ),
     };
   },
 );

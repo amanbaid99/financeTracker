@@ -12,8 +12,11 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  if (await needsPrivacyConsent()) redirect("/consent");
-  const { seenGuides, releases } = await loadOnboarding();
+  const [needsConsent, { seenGuides, releases }] = await Promise.all([
+    needsPrivacyConsent(),
+    loadOnboarding(),
+  ]);
+  if (needsConsent) redirect("/consent");
   return (
     <GuidesProvider seenGuides={seenGuides} releases={releases}>
       <header className="sticky top-0 z-30 border-b bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur">
