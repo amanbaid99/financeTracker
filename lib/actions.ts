@@ -87,7 +87,7 @@ const goalSchema = z
         z.object({
           name: z.string().trim().min(1, "name each payment").max(60),
           amount: money.min(1, "add each payment's amount"),
-          everyMonths: z.number().int().min(1).max(60),
+          everyMonths: z.number().int().min(0).max(60),
           nextDue: isoDate,
         }),
       )

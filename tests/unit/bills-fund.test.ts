@@ -62,3 +62,52 @@ describe("bills fund", () => {
     expect(s.after.status).toBe("on_track");
   });
 });
+
+describe("one-time payments", () => {
+  const once = (name: string, amount: number, nextDue: string): Bill => ({ name, amount, everyMonths: 0, nextDue });
+  const yearly = (name: string, amount: number, nextDue: string): Bill => ({ name, amount, everyMonths: 12, nextDue });
+  // A real list: three months of expenses and EMIs paid once each, a
+  // settlement, and yearly insurance.
+  const real: Bill[] = [
+    once("Nov expenses", 25_000, "2026-11-01"),
+    once("IDFC emi 1", 13_711, "2026-11-03"),
+    once("HDFC emi 1", 15_015, "2026-11-15"),
+    once("Dec expenses", 25_000, "2026-12-01"),
+    once("IDFC emi 2", 13_711, "2026-12-03"),
+    once("HDFC emi 2", 15_015, "2026-12-15"),
+    once("Fnf", 30_000, "2027-01-01"),
+    once("Jan expenses", 25_000, "2027-01-01"),
+    once("IDFC emi 3", 13_711, "2027-01-03"),
+    once("HDFC emi 3", 15_015, "2027-01-15"),
+    yearly("My Health insurance", 15_000, "2027-02-01"),
+    yearly("Gym", 20_000, "2027-03-01"),
+    yearly("Moms health insurance", 25_000, "2027-03-01"),
+    yearly("Dads health insurance", 20_000, "2027-09-01"),
+    yearly("My Term insurance", 30_000, "2027-10-01"),
+  ];
+
+  it("counts each once, so the balance covers everything with nothing going in", () => {
+    const s = billsFundState(real, 380_278, 0, "2026-10-27");
+    expect(s.firstShort).toBeNull();
+    expect(s.upcoming.filter((e) => e.name === "Nov expenses")).toHaveLength(1);
+    expect(s.upcoming.every((e) => e.covered)).toBe(true);
+  });
+
+  it("the same list as monthly payments runs short, which is what went wrong", () => {
+    const monthly = real.map((b) => (b.everyMonths === 0 ? { ...b, everyMonths: 1 } : b));
+    expect(billsFundState(monthly, 380_278, 0, "2026-10-27").firstShort).not.toBeNull();
+  });
+
+  it("drops a one-time payment once its date has passed", () => {
+    const s = billsFundState([once("Laptop", 60_000, "2026-09-01")], 0, 0, TODAY);
+    expect(s.bills).toHaveLength(0);
+    expect(s.upcoming).toHaveLength(0);
+    expect(s.monthlyNeed).toBe(0);
+    expect(rollForward("2026-09-01", 0, TODAY)).toBe("2026-09-01");
+  });
+
+  it("asks to save a near one-off over the months left", () => {
+    const s = billsFundState([once("Wedding gift", 30_000, "2027-01-25")], 0, 0, TODAY);
+    expect(s.monthlyNeed).toBe(10_000); // 3 months to go
+  });
+});

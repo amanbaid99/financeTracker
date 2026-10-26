@@ -23,6 +23,7 @@ const PRESETS: { name: string; everyMonths: number }[] = [
 ];
 
 const EVERY = [
+  [0, "One time"],
   [1, "Monthly"],
   [3, "Quarterly"],
   [6, "Half-yearly"],
@@ -57,7 +58,8 @@ export function BillsEditor({
       <p className="text-sm font-medium">Payments this fund covers</p>
       {rows.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          Add each payment once. Due dates move on by themselves after you pay.
+          Add each payment once. Repeating ones move to their next date by
+          themselves; one-time payments drop off after their date.
         </p>
       )}
       <ul className="space-y-3">
@@ -104,7 +106,9 @@ export function BillsEditor({
               </Select>
             </div>
             <label className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span className="shrink-0">Next due</span>
+              <span className="shrink-0">
+                {r.everyMonths === 0 ? "Due on" : "Next due"}
+              </span>
               <Input
                 aria-label={`${r.name || `Payment ${i + 1}`} next due`}
                 type="date"
