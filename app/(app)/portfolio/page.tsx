@@ -3,6 +3,8 @@ import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AllocationBar } from "@/components/allocation-bar";
+import { PortfolioHoldings } from "@/components/portfolio-holdings";
+import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadGoals } from "@/lib/data";
@@ -18,8 +20,31 @@ const slotOf = (key: string) =>
   ASSET_CLASSES.find((c) => c.key === key)?.slot ?? 7;
 
 export default async function PortfolioPage() {
-  const { investments } = await loadGoals();
+  const { investments, links, goals } = await loadGoals();
   const p = buildPortfolio(investments);
+  const goalNames = new Map(goals.map((g) => [g.id, g.name]));
+  // Every investment, with the goals it counts toward (if any).
+  const updatable = investments.map((i) => ({
+    investment: i,
+    goals: links
+      .filter((l) => l.investmentId === i.id)
+      .map((l) => goalNames.get(l.goalId) ?? ""),
+  }));
+  const actions = (
+    <div className="grid grid-cols-2 gap-2">
+      {updatable.length > 0 ? <UpdateButton items={updatable} /> : <span />}
+      <Link
+        href="/import"
+        className={buttonVariants({
+          size: "sm",
+          variant: "outline",
+          className: "w-full",
+        })}
+      >
+        <FileUp /> Import CAS
+      </Link>
+    </div>
+  );
 
   if (p.holdings.length === 0) {
     return (
@@ -31,12 +56,19 @@ export default async function PortfolioPage() {
         <div className="space-y-3 rounded-2xl border bg-card p-6 text-center">
           <p className="font-semibold">Nothing here yet</p>
           <p className="text-sm text-muted-foreground">
-            Import a CAS statement, or add investments to your goals, to see
+            Import a CAS statement, or add your investments and savings, to see
             everything you hold in one place.
           </p>
           <Link href="/import" className={buttonVariants()}>
             <FileUp /> Import a CAS statement
           </Link>
+        </div>
+        <div className="overflow-hidden rounded-2xl border bg-card">
+          <PortfolioHoldings
+            holdings={[]}
+            investments={investments}
+            links={links}
+          />
         </div>
       </main>
     );
@@ -55,6 +87,7 @@ export default async function PortfolioPage() {
           Everything you hold, across all your goals.
         </p>
       </div>
+      {actions}
 
       <Card>
         <CardContent className="space-y-2 pt-5 sm:pt-5">
@@ -143,43 +176,11 @@ export default async function PortfolioPage() {
           <CardTitle>Holdings</CardTitle>
         </CardHeader>
         <CardContent className="p-0 sm:p-0">
-          <ul className="divide-y" aria-label="Holdings">
-            {p.holdings.map((h) => (
-              <li
-                key={h.id}
-                className="flex items-start gap-3 px-5 py-3 sm:px-6"
-              >
-                <span
-                  className={cn(
-                    "mt-1.5 size-2.5 shrink-0 rounded-sm",
-                    swatchFor(slotOf(h.assetClass)),
-                  )}
-                  aria-hidden
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{h.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {h.kindLabel} · {pct(h.share)}
-                    {h.monthlySip > 0 ? ` · ${formatINR(h.monthlySip)}/mo` : ""}
-                  </p>
-                </div>
-                <div className="shrink-0 text-right">
-                  <p className="tabular text-sm">{formatINR(h.value)}</p>
-                  {h.gain !== null && h.gainPct !== null && (
-                    <p
-                      className={cn(
-                        "tabular text-xs",
-                        h.gain >= 0 ? "text-success" : "text-danger",
-                      )}
-                    >
-                      {signed(h.gain)} ({h.gain >= 0 ? "+" : "−"}
-                      {pct(Math.abs(h.gainPct))})
-                    </p>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
+          <PortfolioHoldings
+            holdings={p.holdings}
+            investments={investments}
+            links={links}
+          />
         </CardContent>
       </Card>
     </main>

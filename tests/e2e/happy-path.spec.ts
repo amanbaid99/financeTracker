@@ -585,6 +585,15 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     () => document.documentElement.scrollWidth - window.innerWidth,
   );
   expect(o, "/portfolio overflows at 375px").toBeLessThanOrEqual(0);
+  // Edit, update or import right from Portfolio.
+  await expect(page.getByRole("link", { name: "Import CAS" })).toHaveAttribute("href", "/import");
+  await page.getByRole("button", { name: "Edit Index SIP" }).click();
+  await expect(page.getByRole("dialog", { name: "Index SIP" })).toBeVisible();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
+  await page.getByRole("button", { name: "Update", exact: true }).click();
+  await expect(page.getByText("Type in what each investment is worth today.")).toBeVisible();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Add an investment or saving" })).toBeVisible();
   await page.screenshot({
     path: "test-results/portfolio-375.png",
     fullPage: true,
