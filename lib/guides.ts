@@ -81,12 +81,8 @@ export const RELEASES: Release[] = [
     title: "A calmer, simpler app",
     items: [
       {
-        title: "Home",
-        text: "Opens on your total and only what needs you today: a goal behind, a bill due, a milestone within reach.",
-      },
-      {
         title: "Tabs at the bottom",
-        text: "Home, Goals, Portfolio, Cards and Ask, right under your thumb.",
+        text: "Goals, Portfolio, Cards and Ask, right under your thumb.",
       },
       {
         title: "One + button",

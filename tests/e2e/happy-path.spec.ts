@@ -85,10 +85,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText("wrong or has expired")).toBeVisible();
   await page.getByLabel("Code from the email", { exact: true }).fill(code);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page).toHaveURL(/\/home$/);
-  await expect(page.getByText("All good. Nothing needs you right now.")).toBeVisible();
-  await page.screenshot({ path: "test-results/home-empty-375.png", fullPage: true });
-  await tab("Goals").click();
+  await expect(page).toHaveURL(/\/goals$/);
   // First visit: the Goals guide pops up once, and (i) brings it back.
   // A new user gets no "What's new".
   const goalsGuide = page.getByRole("dialog", { name: "How goals work" });
@@ -120,9 +117,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     "/update",
   ]) {
     await page.goto(old);
-    await expect(page).toHaveURL(/\/home$/);
+    await expect(page).toHaveURL(/\/goals$/);
   }
-  await tab("Goals").click();
   // The session is stored in long-lived, server-set cookies (not capped at 7 days).
   const authCookies = (await page.context().cookies()).filter((c) =>
     c.name.includes("auth-token"),
@@ -818,16 +814,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
 
   await page.screenshot({ path: "test-results/cards-375.png", fullPage: true });
 
-  // Home: the total, what needs you, and one line per section.
-  await tab("Home").click();
-  await expect(page.getByText("saved and invested")).toBeVisible();
-  const needs = page.getByRole("region", { name: "Needs you" });
-  await expect(needs).toContainText("All good");
-  await expect(
-    page.getByRole("link", { name: /^Cards Regalia Gold: ₹4,00,000 to/ }),
-  ).toBeVisible();
-  await page.screenshot({ path: "test-results/home-375.png", fullPage: true });
   // The + menu: log a card bill from anywhere.
+  await tab("Goals").click();
+  await expect(page.getByRole("heading", { name: "Goals", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Add or update" }).click();
   await expect(
     page.getByRole("dialog", { name: "What would you like to do?" }),
@@ -839,7 +828,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   ).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page).toHaveURL(/\/cards$/);
-  await needs.waitFor({ state: "detached" });
 
   // Guides in Settings: read what's new, and replay the section guides.
   await page.removeLocatorHandler(sectionGuide);

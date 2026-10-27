@@ -8,10 +8,10 @@ const nextConfig: NextConfig = {
   // Pages from earlier versions. A Home Screen app can still open these
   // (iPhone remembers the start page it was added with), so send them to Goals.
   async redirects() {
-    const old = ["/dashboard", "/budget", "/holdings", "/details", "/month", "/update", "/onboarding"];
+    const old = ["/dashboard", "/budget", "/holdings", "/details", "/month", "/update", "/onboarding", "/home"];
     return old.flatMap((p) => [
-      { source: p, destination: "/home", permanent: false },
-      { source: `${p}/:rest*`, destination: "/home", permanent: false },
+      { source: p, destination: "/goals", permanent: false },
+      { source: `${p}/:rest*`, destination: "/goals", permanent: false },
     ]);
   },
   async rewrites() {

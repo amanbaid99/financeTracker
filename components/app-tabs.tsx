@@ -2,7 +2,6 @@
 
 import {
   CreditCard,
-  House,
   MessageCircle,
   PieChart,
   Target,
@@ -13,7 +12,6 @@ import { TabPending } from "@/components/nav-pending";
 import { cn } from "@/lib/utils";
 
 const TABS = [
-  { href: "/home", label: "Home", icon: House, match: ["/home"] },
   {
     href: "/goals",
     label: "Goals",
@@ -38,7 +36,7 @@ export function AppTabs() {
       aria-label="Main"
       className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur"
     >
-      <ul className="mx-auto grid max-w-3xl grid-cols-5">
+      <ul className="mx-auto grid max-w-3xl grid-cols-4">
         {TABS.map((t) => {
           const active = t.match.some(
             (m) => path === m || path.startsWith(`${m}/`),
