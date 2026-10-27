@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { deleteGoal } from "@/lib/actions";
 import type { Suggestion } from "@/lib/allocate";
 import { goalHeadline } from "@/lib/goal-summary";
+import { waysToFund, type WaysToFund } from "@/lib/fund-goal";
 import { formatINR } from "@/lib/format";
 import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
 
@@ -99,18 +100,114 @@ export function InvestmentRow({
   );
 }
 
-type Open = { investment: Investment | null; percent: number | null } | null;
+type Open = {
+  investment: Investment | null;
+  percent: number | null;
+  /** Start on "One I already have" with this one picked. */
+  pick?: string;
+  /** Start a new one filled in from a suggestion. */
+  prefill?: { fundCategory: string; value: number; monthlySip: number };
+} | null;
+
+/** For a goal with nothing linked: existing investments that fit, or a new one. */
+function FundSuggestions({
+  ways,
+  showFresh,
+  onLink,
+  onNew,
+}: {
+  ways: WaysToFund;
+  showFresh: boolean;
+  onLink: (investmentId: string) => void;
+  onNew: () => void;
+}) {
+  const f = ways.fresh;
+  return (
+    <div className="space-y-3 rounded-lg bg-primary-soft p-3 text-sm">
+      <p className="flex items-center gap-1.5 font-semibold text-primary">
+        <Sparkles className="size-4" aria-hidden /> How to save for it
+      </p>
+      {ways.existing.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-xs text-muted-foreground">
+            From what you already have
+          </p>
+          <ul className="divide-y divide-primary/15">
+            {ways.existing.map((o) => (
+              <li
+                key={o.investment.id}
+                className="flex items-center gap-3 py-2"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">
+                    {investmentTitle(o.investment)}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    {formatINR(o.freeValue)}
+                    {o.freePercent < 100
+                      ? ` free (${o.freePercent}%)`
+                      : ""} · {o.why}
+                  </span>
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  aria-label={`Link ${investmentTitle(o.investment)}`}
+                  onClick={() => onLink(o.investment.id)}
+                >
+                  Link
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {showFresh && f && (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">
+            {ways.existing.length > 0
+              ? "Or start something new"
+              : "Start something new"}
+          </p>
+          <p>
+            {f.monthly > 0 ? (
+              <>
+                A <b>{formatINR(f.monthly)} a month</b> SIP in{" "}
+              </>
+            ) : (
+              "Put money in "
+            )}
+            {/^[aeiou]/i.test(f.categoryLabel) ? "an" : "a"}{" "}
+            {f.categoryLabel.toLowerCase()} ({f.why}).
+          </p>
+          <Button type="button" size="sm" onClick={onNew}>
+            <Plus /> Add it
+          </Button>
+        </div>
+      )}
+      <p className="text-xs text-muted-foreground">
+        Suggestions only. Nothing is linked or added until you save.
+      </p>
+    </div>
+  );
+}
 
 export function GoalInvestments({
   goal,
   investments,
   links,
+  hasPlanSuggestion = false,
 }: {
   goal: TrackedGoal;
   investments: Investment[];
   links: Link[];
+  /** The money plan already suggests a new investment for this goal. */
+  hasPlanSuggestion?: boolean;
 }) {
   const [open, setOpen] = useState<Open>(null);
+  const ways =
+    goal.lines.length === 0 ? waysToFund(goal, investments, links) : null;
   const close = useCallback(() => setOpen(null), []);
   return (
     <section className="space-y-2" aria-labelledby="inv-h">
@@ -118,10 +215,34 @@ export function GoalInvestments({
         Saving for it in
       </h2>
       {goal.lines.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Nothing yet. Add the mutual funds, stocks or deposits you&apos;re
-          putting toward this goal.
-        </p>
+        ways &&
+        (ways.existing.length > 0 || (ways.fresh && !hasPlanSuggestion)) ? (
+          <FundSuggestions
+            ways={ways}
+            showFresh={!hasPlanSuggestion}
+            onLink={(id) =>
+              setOpen({ investment: null, percent: null, pick: id })
+            }
+            onNew={() =>
+              setOpen({
+                investment: null,
+                percent: null,
+                prefill: ways.fresh
+                  ? {
+                      fundCategory: ways.fresh.category,
+                      value: 0,
+                      monthlySip: ways.fresh.monthly,
+                    }
+                  : undefined,
+              })
+            }
+          />
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Nothing yet. Add the mutual funds, stocks or deposits you&apos;re
+            putting toward this goal.
+          </p>
+        )
       ) : (
         <ul className="divide-y">
           {goal.lines.map((l) => (
@@ -156,6 +277,9 @@ export function GoalInvestments({
           investments={investments}
           links={links}
           onClose={close}
+          pickExisting={open.pick}
+          prefill={open.prefill}
+          fromPlan={false}
         />
       )}
     </section>

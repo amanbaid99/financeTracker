@@ -152,7 +152,18 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     "aria-expanded",
     "true",
   );
-  await expect(page.getByText(/^Nothing yet/)).toBeVisible();
+  // Nothing linked yet: a suggestion for what to save it in.
+  await expect(page.getByText("How to save for it")).toBeVisible();
+  await expect(
+    page.getByText(/SIP in an equity index fund \(5\+ years away/),
+  ).toBeVisible();
+  await page.screenshot({ path: "test-results/fund-suggest-375.png" });
+  await page.getByRole("button", { name: "Add it" }).click();
+  await expect(
+    page.getByText("Filled in from the suggestion."),
+  ).toBeVisible();
+  await expect(page.getByLabel("Fund category")).toHaveValue("equity_index");
+  await page.getByRole("button", { name: "Close", exact: true }).click();
 
   // A mutual fund, 60% for this goal.
   await page.getByRole("button", { name: "Add investment" }).click();

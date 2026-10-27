@@ -151,6 +151,7 @@ export function GoalList({
                   goal={g}
                   investments={investments}
                   links={links}
+                  hasPlanSuggestion={suggestions.some((x) => x.goalId === g.id)}
                 />
 
                 <button

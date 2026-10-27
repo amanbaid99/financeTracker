@@ -51,9 +51,15 @@ export function InvestmentSheet({
   links,
   onClose,
   prefill,
+  fromPlan = !!prefill,
+  pickExisting,
 }: {
-  /** Pre-filled from a money plan suggestion; saving takes it out of the plan's savings. */
+  /** Pre-filled values for a new investment. */
   prefill?: { fundCategory: string; value: number; monthlySip: number };
+  /** The prefill came from the money plan; saving takes it out of the plan's savings. */
+  fromPlan?: boolean;
+  /** Open on "One I already have" with this investment picked. */
+  pickExisting?: string;
   goalId: string | null;
   goalName?: string;
   /** Investments already on this goal. */
@@ -69,8 +75,14 @@ export function InvestmentSheet({
   const available = goalId
     ? investments.filter((i) => !linkedIds.includes(i.id) && free(i.id) > 0)
     : [];
-  const [mode, setMode] = useState<"new" | "existing">("new");
-  const [pickId, setPickId] = useState(available[0]?.id ?? "");
+  const startOnExisting =
+    !!pickExisting && available.some((i) => i.id === pickExisting);
+  const [mode, setMode] = useState<"new" | "existing">(
+    startOnExisting ? "existing" : "new",
+  );
+  const [pickId, setPickId] = useState(
+    startOnExisting ? pickExisting! : (available[0]?.id ?? ""),
+  );
   const picked =
     mode === "existing"
       ? (available.find((i) => i.id === pickId) ?? null)
@@ -93,9 +105,18 @@ export function InvestmentSheet({
     investment?.monthlySip || prefill?.monthlySip || null,
   );
   const [ret, setRet] = useState(investment?.returnPct?.toString() ?? "");
-  const [invested, setInvested] = useState<number | null>(investment?.invested ?? null);
+  const [invested, setInvested] = useState<number | null>(
+    investment?.invested ?? null,
+  );
   const [percent, setPercent] = useState(
-    String(initialPercent ?? (investment ? free(investment.id) : 100)),
+    String(
+      initialPercent ??
+        (investment
+          ? free(investment.id)
+          : startOnExisting
+            ? free(pickExisting!)
+            : 100),
+    ),
   );
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState("");
@@ -149,7 +170,7 @@ export function InvestmentSheet({
         returnPct: ret.trim() === "" ? null : Number(ret),
         invested,
         percent: pct,
-        fromPlan: !!prefill,
+        fromPlan,
       }),
     );
   }
@@ -193,8 +214,9 @@ export function InvestmentSheet({
       >
         {prefill && (
           <p className="rounded-lg bg-primary-soft p-3 text-sm">
-            Filled in from your plan. Change anything to match what you actually
-            invested.
+            {fromPlan
+              ? "Filled in from your plan. Change anything to match what you actually invested."
+              : "Filled in from the suggestion. Change anything to match what you actually invested."}
           </p>
         )}
         {!investment && !prefill && available.length > 0 && (
@@ -334,7 +356,11 @@ export function InvestmentSheet({
                   htmlFor="i-invested"
                   hint="What you've put in so far. Shows how much it has grown."
                 >
-                  <MoneyInput id="i-invested" value={invested} onChange={setInvested} />
+                  <MoneyInput
+                    id="i-invested"
+                    value={invested}
+                    onChange={setInvested}
+                  />
                 </Field>
                 {shareField}
               </div>
