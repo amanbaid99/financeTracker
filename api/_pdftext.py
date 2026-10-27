@@ -7,7 +7,6 @@ pages are read and the text is capped, since feature documents are short.
 
 from __future__ import annotations
 
-import io
 import re
 
 MAX_PAGES = 30
@@ -34,25 +33,32 @@ def mask(text: str) -> str:
 
 
 def pdf_text(pdf: bytes, password: str = "") -> str:
-    from pypdf import PdfReader
-    from pypdf.errors import PdfReadError
+    # pypdfium2 comes with casparser, so the server already has it.
+    import pypdfium2 as pdfium
 
     if not pdf.startswith(b"%PDF"):
         raise TextError("not_pdf", "This isn't a PDF.")
     try:
-        reader = PdfReader(io.BytesIO(pdf))
-        if reader.is_encrypted and not reader.decrypt(password or ""):
-            raise TextError("password", "This PDF needs a password.")
-        parts = []
-        for page in reader.pages[:MAX_PAGES]:
-            parts.append(page.extract_text() or "")
+        doc = pdfium.PdfDocument(pdf, password=password or None)
+    except pdfium.PdfiumError as e:
+        if "password" in str(e).lower():
+            raise TextError("password", "This PDF needs a password.") from None
+        raise TextError("unreadable", "Couldn't read this PDF.") from None
+    parts: list[str] = []
+    try:
+        for i in range(min(len(doc), MAX_PAGES)):
+            page = doc[i]
+            textpage = page.get_textpage()
+            parts.append(textpage.get_text_range() or "")
+            textpage.close()
+            page.close()
             if sum(len(p) for p in parts) > MAX_CHARS:
                 break
-    except TextError:
-        raise
-    except (PdfReadError, ValueError, KeyError):
+    except pdfium.PdfiumError:
         raise TextError("unreadable", "Couldn't read this PDF.") from None
-    text = re.sub(r"[ \t]+", " ", "\n".join(parts))
+    finally:
+        doc.close()
+    text = re.sub(r"[ \t]+", " ", "\n".join(parts).replace("\r", "\n"))
     text = re.sub(r"\n{3,}", "\n\n", text).strip()
     if len(text) < 40:
         raise TextError("no_text", "No text found. It may be a scanned image; paste the features instead.")

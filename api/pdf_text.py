@@ -39,6 +39,11 @@ class handler(BaseHTTPRequestHandler):  # noqa: N801 - name required by Vercel
             text = pdf_text(pdf, password)
         except TextError as e:
             return self._send(422, {"ok": False, "code": e.code, "message": e.message})
+        except Exception:  # noqa: BLE001 - always answer in JSON, never log the file
+            return self._send(
+                500,
+                {"ok": False, "code": "failed", "message": "Couldn't read this PDF. Try Describe it instead."},
+            )
         return self._send(200, {"ok": True, "text": text})
 
     def do_GET(self) -> None:  # noqa: N802
