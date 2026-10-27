@@ -1,6 +1,6 @@
 "use client";
 
-import { RefreshCw } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import { investmentTitle } from "@/components/investment-sheet";
@@ -42,11 +42,11 @@ export function UpdateButton({
     <>
       <Button
         type="button"
-        variant="ghost"
         size="sm"
+        className="w-full"
         onClick={() => setOpen(true)}
       >
-        <RefreshCw /> Update
+        <Plus /> Update
       </Button>
       {open && <UpdateSheet items={items} onClose={close} />}
     </>

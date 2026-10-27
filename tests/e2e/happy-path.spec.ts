@@ -432,7 +432,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   const PP = "Parag Parikh Flexi Cap Fund - Direct Plan Growth";
   const LIQ = "Edelweiss Liquid Fund - Direct Growth";
   const MYST = "Quant Mystery Opportunities Fund - Direct Growth";
-  await quick("Import statement");
+  await page.getByRole("link", { name: "Import CAS" }).click();
   await page.getByRole("button", { name: "How to get your statement" }).click();
   await expect(
     page.getByRole("heading", { name: "Getting your CAS" }),

@@ -1,4 +1,4 @@
-import { Plus } from "lucide-react";
+import { FileUp, Plus } from "lucide-react";
 import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -59,7 +59,7 @@ export default async function GoalsPage({
 
   return (
     <main className="space-y-4">
-      <div className="flex items-end justify-between gap-2">
+      <div className="space-y-3">
         <div className="min-w-0">
           <div className="flex items-center gap-1">
             <h1 className="text-2xl font-semibold tracking-tight">Goals</h1>
@@ -72,8 +72,29 @@ export default async function GoalsPage({
             </p>
           )}
         </div>
-        {updatable.length > 0 && (
-          <UpdateButton items={updatable} autoOpen={action === "update"} />
+        {goals.length > 0 && (
+          <div className="grid grid-cols-2 gap-2">
+            {updatable.length > 0 ? (
+              <UpdateButton items={updatable} autoOpen={action === "update"} />
+            ) : (
+              <Link
+                href="/goals/new"
+                className={buttonVariants({ size: "sm", className: "w-full" })}
+              >
+                <Plus /> New goal
+              </Link>
+            )}
+            <Link
+              href="/import"
+              className={buttonVariants({
+                size: "sm",
+                variant: "outline",
+                className: "w-full",
+              })}
+            >
+              <FileUp /> Import CAS
+            </Link>
+          </div>
         )}
       </div>
 
