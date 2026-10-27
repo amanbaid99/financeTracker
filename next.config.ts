@@ -10,8 +10,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     const old = ["/dashboard", "/budget", "/holdings", "/details", "/month", "/update", "/onboarding"];
     return old.flatMap((p) => [
-      { source: p, destination: "/goals", permanent: false },
-      { source: `${p}/:rest*`, destination: "/goals", permanent: false },
+      { source: p, destination: "/home", permanent: false },
+      { source: `${p}/:rest*`, destination: "/home", permanent: false },
     ]);
   },
   async rewrites() {

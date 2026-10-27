@@ -377,7 +377,7 @@ export function ImportFlow() {
         {group("Will add", adds)}
         {group("Already up to date", same, "text-muted-foreground")}
         {group("Will skip", skips, "text-muted-foreground")}
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur">
+        <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-20 border-t bg-background/95 px-4 py-3 backdrop-blur">
           <div className="mx-auto max-w-3xl space-y-2">
             {error && (
               <p role="alert" className="text-sm text-danger">
@@ -655,7 +655,7 @@ export function ImportFlow() {
         })}
       </ul>
 
-      <div className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] backdrop-blur">
+      <div className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-20 border-t bg-background/95 px-4 py-3 backdrop-blur">
         <div className="mx-auto max-w-3xl">
           <Button
             type="button"

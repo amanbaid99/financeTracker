@@ -25,44 +25,114 @@ function Row({
   );
 }
 
-/** What it takes: the plain-language plan for a savings goal. */
-export function SavingsPlan({ g }: { g: TrackedGoal }) {
+/** One sentence: where this goal stands and what to do. */
+function savingsVerdict(g: TrackedGoal): {
+  text: React.ReactNode;
+  tone: string;
+} {
   const needed = g.monthlySip + g.extraSipNeeded;
-  return (
-    <dl className="divide-y">
-      <Row label="Going in each month" value={formatINR(g.monthlySip)} />
-      {g.targetDate ? (
+  if (g.status === "reached")
+    return {
+      text: "Goal reached. You have enough saved.",
+      tone: "bg-success-soft text-success",
+    };
+  if (g.status === "overdue")
+    return {
+      text: "The target date has passed. Edit the goal to set a new one.",
+      tone: "bg-danger-soft text-danger",
+    };
+  if (g.targetDate) {
+    if (g.extraSipNeeded > 0)
+      return {
+        text: (
+          <>
+            Put <b>{formatINR(needed)} a month</b> into it to be on time
+            {g.monthlySip > 0
+              ? `, ${formatINR(g.extraSipNeeded)} more than now`
+              : ""}
+            .
+          </>
+        ),
+        tone: "bg-warning-soft text-warning",
+      };
+    return {
+      text: (
         <>
-          {g.projected !== null && (
-            <Row
-              label={`Expected by ${monthYear(g.targetDate)}`}
-              value={formatINR(g.projected)}
-            />
-          )}
-          {g.status !== "reached" && (
-            <Row
-              label="Needed each month to be on time"
-              value={formatINR(needed)}
-              strong={g.extraSipNeeded > 0}
-            />
-          )}
+          On track. Expected <b>{formatINR(g.projected ?? g.futureTarget)}</b>{" "}
+          by {monthYear(g.targetDate)}.
         </>
-      ) : (
-        g.status !== "reached" && (
-          <Row
-            label="You'll get there"
-            value={
-              g.monthsToReach === null
-                ? "Not at this pace"
-                : `${monthYear(g.reachDate)} (${formatMonths(g.monthsToReach)})`
-            }
-          />
-        )
+      ),
+      tone: "bg-success-soft text-success",
+    };
+  }
+  return g.monthsToReach === null
+    ? {
+        text: "Not reached at this pace. Add a SIP to get there.",
+        tone: "bg-warning-soft text-warning",
+      }
+    : {
+        text: (
+          <>
+            At this pace you get there around <b>{monthYear(g.reachDate)}</b>.
+          </>
+        ),
+        tone: "bg-success-soft text-success",
+      };
+}
+
+/** What it takes: the plain-language plan for a savings goal. */
+export function SavingsPlan({
+  g,
+  details = true,
+}: {
+  g: TrackedGoal;
+  details?: boolean;
+}) {
+  const needed = g.monthlySip + g.extraSipNeeded;
+  const v = savingsVerdict(g);
+  return (
+    <div className="space-y-3">
+      <p className={cn("rounded-lg p-3 text-sm", v.tone)}>{v.text}</p>
+      {details && (
+        <dl className="expand-in divide-y">
+          <Row label="Going in each month" value={formatINR(g.monthlySip)} />
+          {g.targetDate ? (
+            <>
+              {g.projected !== null && (
+                <Row
+                  label={`Expected by ${monthYear(g.targetDate)}`}
+                  value={formatINR(g.projected)}
+                />
+              )}
+              {g.status !== "reached" && (
+                <Row
+                  label="Needed each month to be on time"
+                  value={formatINR(needed)}
+                  strong={g.extraSipNeeded > 0}
+                />
+              )}
+            </>
+          ) : (
+            g.status !== "reached" && (
+              <Row
+                label="You'll get there"
+                value={
+                  g.monthsToReach === null
+                    ? "Not at this pace"
+                    : `${monthYear(g.reachDate)} (${formatMonths(g.monthsToReach)})`
+                }
+              />
+            )
+          )}
+          {g.lines.length > 0 && (
+            <Row
+              label="Expected growth"
+              value={`about ${g.returnPct}% a year`}
+            />
+          )}
+        </dl>
       )}
-      {g.lines.length > 0 && (
-        <Row label="Expected growth" value={`about ${g.returnPct}% a year`} />
-      )}
-    </dl>
+    </div>
   );
 }
 
@@ -96,7 +166,13 @@ function SavingLine({ g }: { g: TrackedGoal }) {
   );
 }
 
-export function LoanPlan({ g }: { g: TrackedGoal }) {
+export function LoanPlan({
+  g,
+  details = true,
+}: {
+  g: TrackedGoal;
+  details?: boolean;
+}) {
   const l = g.loanState!;
   const needed = g.monthlySip + g.extraSipNeeded;
   const withFee = l.feeRate > 0 ? ", charges included" : "";
@@ -143,41 +219,49 @@ export function LoanPlan({ g }: { g: TrackedGoal }) {
 
   return (
     <div className="space-y-3">
-      <dl className="divide-y">
-        <Row label="Owed today" value={formatINR(l.balance)} strong />
-        <Row label="EMI" value={`${formatINR(l.emi)} at ${l.ratePct}%`} />
-        {l.nextEmi && <Row label="Next EMI" value={formatDate(l.nextEmi)} />}
-        <Row
-          label="This month: interest"
-          value={formatINR(l.interestThisMonth)}
-        />
-        <Row
-          label="This month: principal"
-          value={formatINR(l.principalThisMonth)}
-        />
-        <Row
-          label="Closes on its own"
-          value={
-            l.monthsLeft === null
-              ? "Never at this EMI"
-              : `${monthYear(l.endDate)} (${l.monthsLeft} EMIs)`
-          }
-        />
-        {l.interestLeft !== null && (
-          <Row
-            label="Interest still to pay"
-            value={formatINR(l.interestLeft)}
-          />
-        )}
-        <Row label="Foreclosure charge" value={feeLabel} />
-      </dl>
       <p className="rounded-lg bg-muted p-3 text-sm">{plan}</p>
+      {details && (
+        <dl className="expand-in divide-y">
+          <Row label="Owed today" value={formatINR(l.balance)} strong />
+          <Row label="EMI" value={`${formatINR(l.emi)} at ${l.ratePct}%`} />
+          {l.nextEmi && <Row label="Next EMI" value={formatDate(l.nextEmi)} />}
+          <Row
+            label="This month: interest"
+            value={formatINR(l.interestThisMonth)}
+          />
+          <Row
+            label="This month: principal"
+            value={formatINR(l.principalThisMonth)}
+          />
+          <Row
+            label="Closes on its own"
+            value={
+              l.monthsLeft === null
+                ? "Never at this EMI"
+                : `${monthYear(l.endDate)} (${l.monthsLeft} EMIs)`
+            }
+          />
+          {l.interestLeft !== null && (
+            <Row
+              label="Interest still to pay"
+              value={formatINR(l.interestLeft)}
+            />
+          )}
+          <Row label="Foreclosure charge" value={feeLabel} />
+        </dl>
+      )}
     </div>
   );
 }
 
 /** Bills fund: what it should hold, what to put in, and the payments coming up. */
-export function BillsPlan({ g }: { g: TrackedGoal }) {
+export function BillsPlan({
+  g,
+  details = true,
+}: {
+  g: TrackedGoal;
+  details?: boolean;
+}) {
   const b = g.billsFund!;
   if (!b.bills.length) {
     return (
@@ -188,45 +272,10 @@ export function BillsPlan({ g }: { g: TrackedGoal }) {
   }
   const diff = g.current - b.shouldHold;
   const dm = (iso: string) => formatDate(iso).split(" ").slice(0, 2).join(" ");
+  const upcoming = details ? b.upcoming.slice(0, 12) : b.upcoming.slice(0, 3);
   return (
     <div className="space-y-4">
-      <dl className="divide-y">
-        <Row label="Should hold today" value={formatINR(b.shouldHold)} />
-        <Row
-          label="In the fund"
-          value={
-            <>
-              {formatINR(g.current)}{" "}
-              <span
-                className={cn(
-                  "text-xs",
-                  diff >= 0 ? "text-success" : "text-warning",
-                )}
-              >
-                {diff === 0
-                  ? "on track"
-                  : diff > 0
-                    ? `${formatINR(diff)} ahead`
-                    : `${formatINR(-diff)} behind`}
-              </span>
-            </>
-          }
-        />
-        <Row
-          label="Put in each month"
-          value={formatINR(b.monthlyNeed)}
-          strong={g.monthlySip < b.monthlyNeed}
-        />
-        <Row label="Going in now" value={formatINR(g.monthlySip)} />
-        {b.topUpNow > 0 && (
-          <Row
-            label="Top up now to cover the year"
-            value={formatINR(b.topUpNow)}
-            strong
-          />
-        )}
-      </dl>
-      {b.firstShort && (
+      {b.firstShort ? (
         <p className="rounded-lg bg-warning-soft p-3 text-sm text-warning">
           At {formatINR(g.monthlySip)} a month you&apos;ll be{" "}
           {formatINR(b.firstShort.shortBy)} short for {b.firstShort.name} on{" "}
@@ -235,11 +284,53 @@ export function BillsPlan({ g }: { g: TrackedGoal }) {
             ? `Add ${formatINR(b.topUpNow)} now and put in ${formatINR(b.monthlyNeed)} a month to cover everything.`
             : `Put in ${formatINR(b.monthlyNeed)} a month to cover everything.`}
         </p>
+      ) : (
+        <p className="rounded-lg bg-success-soft p-3 text-sm text-success">
+          Everything due in the next year is covered.
+        </p>
+      )}
+      {details && (
+        <dl className="expand-in divide-y">
+          <Row label="Should hold today" value={formatINR(b.shouldHold)} />
+          <Row
+            label="In the fund"
+            value={
+              <>
+                {formatINR(g.current)}{" "}
+                <span
+                  className={cn(
+                    "text-xs",
+                    diff >= 0 ? "text-success" : "text-warning",
+                  )}
+                >
+                  {diff === 0
+                    ? "on track"
+                    : diff > 0
+                      ? `${formatINR(diff)} ahead`
+                      : `${formatINR(-diff)} behind`}
+                </span>
+              </>
+            }
+          />
+          <Row
+            label="Put in each month"
+            value={formatINR(b.monthlyNeed)}
+            strong={g.monthlySip < b.monthlyNeed}
+          />
+          <Row label="Going in now" value={formatINR(g.monthlySip)} />
+          {b.topUpNow > 0 && (
+            <Row
+              label="Top up now to cover the year"
+              value={formatINR(b.topUpNow)}
+              strong
+            />
+          )}
+        </dl>
       )}
       <div className="space-y-1">
         <p className="text-sm font-semibold">Coming up</p>
         <ul className="divide-y text-sm">
-          {b.upcoming.slice(0, 6).map((e) => (
+          {upcoming.map((e) => (
             <li
               key={`${e.name}-${e.date}`}
               className="flex items-baseline justify-between gap-3 py-2"

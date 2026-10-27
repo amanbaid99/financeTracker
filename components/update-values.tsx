@@ -8,6 +8,8 @@ import { MoneyInput } from "@/components/money-input";
 import { Sheet } from "@/components/sheet";
 import { Button } from "@/components/ui/button";
 import { updateValues } from "@/lib/actions";
+import { clearParam } from "@/lib/clear-param";
+import { useQuickAction } from "@/components/quick-add";
 import { formatINR } from "@/lib/format";
 import type { Investment } from "@/lib/tracker";
 import { cn } from "@/lib/utils";
@@ -19,12 +21,31 @@ export interface UpdateItem {
 }
 
 /** Button that opens one panel to type in today's value of every investment. */
-export function UpdateButton({ items }: { items: UpdateItem[] }) {
-  const [open, setOpen] = useState(false);
-  const close = useCallback(() => setOpen(false), []);
+export function UpdateButton({
+  items,
+  autoOpen = false,
+}: {
+  items: UpdateItem[];
+  /** Open straight away (from the + menu). */
+  autoOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(autoOpen);
+  const close = useCallback(() => {
+    setOpen(false);
+    clearParam("do");
+  }, []);
+  useQuickAction(
+    "update",
+    useCallback(() => setOpen(true), []),
+  );
   return (
     <>
-      <Button type="button" variant="outline" className="w-full" onClick={() => setOpen(true)}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        onClick={() => setOpen(true)}
+      >
         <RefreshCw /> Update
       </Button>
       {open && <UpdateSheet items={items} onClose={close} />}

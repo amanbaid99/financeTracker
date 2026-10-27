@@ -1,12 +1,19 @@
 "use client";
 
-import { CreditCard, MessageCircle, PieChart, Target } from "lucide-react";
+import {
+  CreditCard,
+  House,
+  MessageCircle,
+  PieChart,
+  Target,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { TabPending } from "@/components/nav-pending";
 import { cn } from "@/lib/utils";
 
 const TABS = [
+  { href: "/home", label: "Home", icon: House, match: ["/home"] },
   {
     href: "/goals",
     label: "Goals",
@@ -23,12 +30,15 @@ const TABS = [
   { href: "/ask", label: "Ask", icon: MessageCircle, match: ["/ask"] },
 ];
 
-/** The main sections, as a row of tabs under the header. */
+/** The main sections, as a tab bar fixed to the bottom of the screen. */
 export function AppTabs() {
   const path = usePathname();
   return (
-    <nav aria-label="Main" className="mx-auto w-full max-w-3xl px-4">
-      <ul className="grid grid-cols-4">
+    <nav
+      aria-label="Main"
+      className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+    >
+      <ul className="mx-auto grid max-w-3xl grid-cols-5">
         {TABS.map((t) => {
           const active = t.match.some(
             (m) => path === m || path.startsWith(`${m}/`),
@@ -37,15 +47,23 @@ export function AppTabs() {
             <li key={t.href}>
               <Link
                 href={t.href}
+                transitionTypes={["tab"]}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex items-center justify-center gap-1.5 border-b-2 py-2.5 text-sm font-medium",
+                  "press relative flex flex-col items-center gap-0.5 pb-2 pt-2 text-[11px] font-medium",
                   active
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground",
+                    ? "text-primary"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
-                <t.icon className="size-4" aria-hidden />
+                <span
+                  className={cn(
+                    "flex h-7 w-12 items-center justify-center rounded-full transition-colors",
+                    active && "bg-primary-soft",
+                  )}
+                >
+                  <t.icon className="size-5" aria-hidden />
+                </span>
                 {t.label}
                 <TabPending />
               </Link>

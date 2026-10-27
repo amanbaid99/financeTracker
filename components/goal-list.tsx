@@ -45,6 +45,7 @@ export function GoalList({
   initialOpen: string | null;
 }) {
   const [open, setOpen] = useState<string | null>(initialOpen);
+  const [details, setDetails] = useState(false);
 
   return (
     <ul className="space-y-3">
@@ -56,7 +57,7 @@ export function GoalList({
           <li
             key={g.id}
             className={cn(
-              "rounded-2xl border bg-card",
+              "rounded-2xl border bg-card transition-colors",
               isOpen && "border-primary",
             )}
           >
@@ -64,8 +65,11 @@ export function GoalList({
               type="button"
               aria-expanded={isOpen}
               aria-controls={panelId}
-              onClick={() => setOpen(isOpen ? null : g.id)}
-              className="flex w-full items-center gap-3 p-4 text-left"
+              onClick={() => {
+                setOpen(isOpen ? null : g.id);
+                setDetails(false);
+              }}
+              className="press flex w-full items-center gap-3 p-4 text-left"
             >
               <GoalIcon type={g.type} />
               <div className="min-w-0 flex-1 space-y-1.5">
@@ -100,7 +104,10 @@ export function GoalList({
             </button>
 
             {isOpen && (
-              <div id={panelId} className="space-y-5 border-t px-4 pb-4 pt-4">
+              <div
+                id={panelId}
+                className="expand-in space-y-5 border-t px-4 pb-4 pt-4"
+              >
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="tabular text-2xl font-semibold tracking-tight">
@@ -124,11 +131,11 @@ export function GoalList({
                 </div>
 
                 {g.loanState ? (
-                  <LoanPlan g={g} />
+                  <LoanPlan g={g} details={details} />
                 ) : g.billsFund ? (
-                  <BillsPlan g={g} />
+                  <BillsPlan g={g} details={details} />
                 ) : (
-                  <SavingsPlan g={g} />
+                  <SavingsPlan g={g} details={details} />
                 )}
 
                 {suggestions.find((x) => x.goalId === g.id) && (
@@ -146,7 +153,22 @@ export function GoalList({
                   links={links}
                 />
 
-                <DeleteGoalButton id={g.id} />
+                <button
+                  type="button"
+                  aria-expanded={details}
+                  onClick={() => setDetails(!details)}
+                  className="flex w-full items-center justify-center gap-1 text-sm font-medium text-primary"
+                >
+                  {details ? "Hide details" : "Show details"}
+                  <ChevronDown
+                    className={cn(
+                      "size-4 transition-transform",
+                      details && "rotate-180",
+                    )}
+                    aria-hidden
+                  />
+                </button>
+                {details && <DeleteGoalButton id={g.id} />}
               </div>
             )}
           </li>

@@ -15,7 +15,7 @@ export function TabPending() {
     <span
       aria-hidden
       className={cn(
-        "pointer-events-none absolute inset-x-0 -bottom-0.5 h-0.5 overflow-hidden opacity-0",
+        "pointer-events-none absolute inset-x-3 top-0 h-0.5 overflow-hidden opacity-0",
         pending && "nav-pending",
       )}
     >
@@ -42,6 +42,7 @@ export function SettingsLink() {
   return (
     <Link
       href="/settings"
+      transitionTypes={["tab"]}
       aria-label="Settings"
       className="inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
     >

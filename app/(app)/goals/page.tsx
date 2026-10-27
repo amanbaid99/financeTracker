@@ -1,8 +1,7 @@
-import { FileUp, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CasGuideButton } from "@/components/cas-guide";
 import { GoalList } from "@/components/goal-list";
 import { MoneyPlanCard } from "@/components/money-plan";
 import { UpdateButton } from "@/components/update-values";
@@ -18,9 +17,9 @@ export const metadata: Metadata = { title: "Goals" };
 export default async function GoalsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ open?: string }>;
+  searchParams: Promise<{ open?: string; do?: string }>;
 }) {
-  const { open } = await searchParams;
+  const { open, do: action } = await searchParams;
   const {
     goals,
     investments,
@@ -59,13 +58,11 @@ export default async function GoalsPage({
     .filter((x) => x.goals.length > 0);
 
   return (
-    <main className="space-y-5">
-      <div className="space-y-3">
-        <div>
+    <main className="space-y-4">
+      <div className="flex items-end justify-between gap-2">
+        <div className="min-w-0">
           <div className="flex items-center gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              Your goals
-            </h1>
+            <h1 className="text-2xl font-semibold tracking-tight">Goals</h1>
             <GuideButton id="goals" />
           </div>
           {goals.length > 0 && (
@@ -75,26 +72,9 @@ export default async function GoalsPage({
             </p>
           )}
         </div>
-        <div
-          className={updatable.length > 0 ? "grid grid-cols-2 gap-2" : "flex"}
-        >
-          {updatable.length > 0 && <UpdateButton items={updatable} />}
-          <Link
-            href="/goals/new"
-            className={buttonVariants({ className: "w-full" })}
-          >
-            <Plus /> New goal
-          </Link>
-        </div>
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <Link
-            href="/import"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary underline-offset-2 hover:underline"
-          >
-            <FileUp className="size-4" aria-hidden /> Import a CAS statement
-          </Link>
-          <CasGuideButton label="How to get it" />
-        </div>
+        {updatable.length > 0 && (
+          <UpdateButton items={updatable} autoOpen={action === "update"} />
+        )}
       </div>
 
       {goals.length === 0 ? (
@@ -107,14 +87,18 @@ export default async function GoalsPage({
           <Link href="/goals/new" className={buttonVariants()}>
             <Plus /> Add your first goal
           </Link>
+          <p className="text-xs text-muted-foreground">
+            Have mutual funds?{" "}
+            <Link
+              href="/import"
+              className="text-primary underline underline-offset-2"
+            >
+              Import a CAS statement
+            </Link>
+          </p>
         </div>
       ) : (
         <>
-          <MoneyPlanCard
-            plan={plan}
-            sipsNow={sipsNow}
-            unassigned={unassigned}
-          />
           <GoalList
             suggestions={plan?.suggestions ?? []}
             goals={sortGoals(goals)}
@@ -122,6 +106,12 @@ export default async function GoalsPage({
             links={links}
             today={today}
             initialOpen={open ?? null}
+          />
+          <MoneyPlanCard
+            plan={plan}
+            sipsNow={sipsNow}
+            unassigned={unassigned}
+            autoOpen={action === "plan"}
           />
         </>
       )}

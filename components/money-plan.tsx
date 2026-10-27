@@ -9,6 +9,8 @@ import { Sheet } from "@/components/sheet";
 import { Button } from "@/components/ui/button";
 import { savePlan } from "@/lib/actions";
 import type { MoneyPlan } from "@/lib/allocate";
+import { clearParam } from "@/lib/clear-param";
+import { useQuickAction } from "@/components/quick-add";
 import { formatINR, formatINRCompact } from "@/lib/format";
 
 function PlanForm({
@@ -121,13 +123,23 @@ export function MoneyPlanCard({
   plan,
   sipsNow,
   unassigned,
+  autoOpen = false,
 }: {
   plan: MoneyPlan | null;
   sipsNow: number;
   unassigned: number;
+  /** Open the form straight away (from the + menu). */
+  autoOpen?: boolean;
 }) {
-  const [open, setOpen] = useState(false);
-  const close = useCallback(() => setOpen(false), []);
+  const [open, setOpen] = useState(autoOpen);
+  const close = useCallback(() => {
+    setOpen(false);
+    clearParam("do");
+  }, []);
+  useQuickAction(
+    "plan",
+    useCallback(() => setOpen(true), []),
+  );
   const form = open && (
     <PlanForm
       plan={plan}
@@ -137,28 +149,8 @@ export function MoneyPlanCard({
     />
   );
 
-  if (!plan) {
-    return (
-      <>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="flex w-full items-center gap-3 rounded-2xl border border-dashed p-4 text-left hover:border-primary"
-        >
-          <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary">
-            <Sparkles className="size-5" aria-hidden />
-          </span>
-          <span className="min-w-0">
-            <span className="block font-semibold">Plan my money</span>
-            <span className="block text-xs text-muted-foreground">
-              Enter what you can invest and get a split across your goals.
-            </span>
-          </span>
-        </button>
-        {form}
-      </>
-    );
-  }
+  // With no plan yet, the way in is "Plan my money" in the + menu.
+  if (!plan) return form || null;
 
   const { suggestions } = plan;
   let footer: { text: string; tone: string };

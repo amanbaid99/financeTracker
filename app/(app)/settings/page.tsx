@@ -29,10 +29,10 @@ export default async function SettingsPage() {
   return (
     <main className="space-y-5">
       <Link
-        href="/goals"
+        href="/home"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ChevronLeft className="size-4" aria-hidden /> Goals
+        <ChevronLeft className="size-4" aria-hidden /> Home
       </Link>
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>

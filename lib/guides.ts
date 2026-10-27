@@ -77,6 +77,32 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    date: "2026-10-27",
+    title: "A calmer, simpler app",
+    items: [
+      {
+        title: "Home",
+        text: "Opens on your total and only what needs you today: a goal behind, a bill due, a milestone within reach.",
+      },
+      {
+        title: "Tabs at the bottom",
+        text: "Home, Goals, Portfolio, Cards and Ask, right under your thumb.",
+      },
+      {
+        title: "One + button",
+        text: "Add a goal, update values, log a card bill, plan your money or import a statement from anywhere.",
+      },
+      {
+        title: "Less on each screen",
+        text: "Goals show a one-line verdict. Tap Show details for the numbers.",
+      },
+      {
+        title: "Ten accent colours",
+        text: "Pick yours in Settings, under Look.",
+      },
+    ],
+  },
+  {
     date: "2026-10-26",
     title: "Credit cards",
     items: [

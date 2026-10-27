@@ -74,27 +74,58 @@
   color-scheme: dark;
 }
 
-/* Accents: deeper shades on light themes, lighter shades on black. */
+/* Accents: deeper shades on light themes, lighter shades on black. Every
+   pair is checked for 4.5:1 contrast (text, buttons, soft chips). */
 :root,
 [data-accent="green"] {
-  --primary: #15803d;
+  --primary: #137a3a;
   --primary-foreground: #ffffff;
   --primary-soft: #dcfce7;
+}
+[data-accent="teal"] {
+  --primary: #0f766e;
+  --primary-foreground: #ffffff;
+  --primary-soft: #ccfbf1;
 }
 [data-accent="blue"] {
   --primary: #1d4ed8;
   --primary-foreground: #ffffff;
   --primary-soft: #dbeafe;
 }
-[data-accent="terracotta"] {
-  --primary: #b4471f;
+[data-accent="indigo"] {
+  --primary: #4338ca;
   --primary-foreground: #ffffff;
-  --primary-soft: #f8e1d6;
+  --primary-soft: #e0e7ff;
 }
 [data-accent="violet"] {
   --primary: #6d28d9;
   --primary-foreground: #ffffff;
   --primary-soft: #ede9fe;
+}
+[data-accent="plum"] {
+  --primary: #86198f;
+  --primary-foreground: #ffffff;
+  --primary-soft: #fae8ff;
+}
+[data-accent="rose"] {
+  --primary: #be123c;
+  --primary-foreground: #ffffff;
+  --primary-soft: #ffe4e6;
+}
+[data-accent="terracotta"] {
+  --primary: #a8411c;
+  --primary-foreground: #ffffff;
+  --primary-soft: #f8e1d6;
+}
+[data-accent="gold"] {
+  --primary: #8a5a00;
+  --primary-foreground: #ffffff;
+  --primary-soft: #fbefc9;
+}
+[data-accent="graphite"] {
+  --primary: #3f3f46;
+  --primary-foreground: #ffffff;
+  --primary-soft: #e4e4e7;
 }
 [data-theme="black"][data-accent="green"],
 [data-theme="black"]:not([data-accent]) {
@@ -102,20 +133,50 @@
   --primary-foreground: #0b0b0c;
   --primary-soft: #12301f;
 }
+[data-theme="black"][data-accent="teal"] {
+  --primary: #2dd4bf;
+  --primary-foreground: #0b0b0c;
+  --primary-soft: #0f2f2c;
+}
 [data-theme="black"][data-accent="blue"] {
   --primary: #60a5fa;
   --primary-foreground: #0b0b0c;
   --primary-soft: #132541;
+}
+[data-theme="black"][data-accent="indigo"] {
+  --primary: #818cf8;
+  --primary-foreground: #0b0b0c;
+  --primary-soft: #1d1f45;
+}
+[data-theme="black"][data-accent="violet"] {
+  --primary: #a78bfa;
+  --primary-foreground: #0b0b0c;
+  --primary-soft: #261a45;
+}
+[data-theme="black"][data-accent="plum"] {
+  --primary: #e879f9;
+  --primary-foreground: #0b0b0c;
+  --primary-soft: #3a1340;
+}
+[data-theme="black"][data-accent="rose"] {
+  --primary: #fb7185;
+  --primary-foreground: #0b0b0c;
+  --primary-soft: #3d1220;
 }
 [data-theme="black"][data-accent="terracotta"] {
   --primary: #fb923c;
   --primary-foreground: #0b0b0c;
   --primary-soft: #3a2010;
 }
-[data-theme="black"][data-accent="violet"] {
-  --primary: #a78bfa;
+[data-theme="black"][data-accent="gold"] {
+  --primary: #facc15;
   --primary-foreground: #0b0b0c;
-  --primary-soft: #261a45;
+  --primary-soft: #332b0a;
+}
+[data-theme="black"][data-accent="graphite"] {
+  --primary: #d4d4d8;
+  --primary-foreground: #0b0b0c;
+  --primary-soft: #27272a;
 }
 
 @theme inline {
@@ -207,5 +268,79 @@
   .nav-pending-spin {
     animation: none;
     opacity: 0.5;
+  }
+}
+
+/* Motion. Short and soft; everything calms down with reduced motion. */
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes expand-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.sheet-backdrop {
+  animation: fade-in 180ms ease-out;
+}
+.sheet-panel {
+  animation: sheet-up 240ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.expand-in {
+  animation: expand-in 200ms ease-out;
+}
+.press {
+  transition: transform 120ms ease-out, background-color 150ms, border-color 150ms;
+}
+.press:active {
+  transform: scale(0.98);
+}
+
+/* Tab changes: the page content fades and rises a touch; the header and
+   tab bar stay put. (React ViewTransition in app/(app)/layout.tsx.) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+}
+@keyframes tab-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes tab-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+::view-transition-old(.tab-fade) {
+  animation: tab-out 120ms ease-in both;
+}
+::view-transition-new(.tab-fade) {
+  animation: tab-in 200ms ease-out 60ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-backdrop,
+  .sheet-panel,
+  .expand-in {
+    animation: none;
+  }
+  .press:active {
+    transform: none;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }

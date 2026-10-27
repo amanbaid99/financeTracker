@@ -35,5 +35,5 @@ export async function finishSignIn(supabase: Supabase, userId: string, consentVe
     store.set(THEME_COOKIE, profile.theme, THEME_COOKIE_OPTIONS);
     store.set(ACCENT_COOKIE, profile.accent, THEME_COOKIE_OPTIONS);
   }
-  return "/goals";
+  return "/home";
 }

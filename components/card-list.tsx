@@ -44,6 +44,8 @@ import {
 } from "@/lib/cards-actions";
 import { SPEND_CATEGORIES, type SpendCategory } from "@/lib/card-advisor";
 import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
+import { clearParam } from "@/lib/clear-param";
+import { useQuickAction } from "@/components/quick-add";
 import { cn } from "@/lib/utils";
 
 function useRun(onDone?: (id?: string) => void) {
@@ -236,10 +238,13 @@ function CardSheet({
   card,
   onClose,
   onSaved,
+  onFeatures,
 }: {
   card: Card | null;
   onClose: () => void;
   onSaved: (id?: string) => void;
+  /** New cards only: switch to filling it in from a features PDF. */
+  onFeatures?: () => void;
 }) {
   const [label, setLabel] = useState(card?.label ?? "");
   const [fee, setFee] = useState<number | null>(card?.annualFee ?? null);
@@ -257,6 +262,23 @@ function CardSheet({
 
   return (
     <Sheet title={card ? "Edit card" : "Add a card"} onClose={onClose}>
+      {!card && onFeatures && (
+        <button
+          type="button"
+          onClick={onFeatures}
+          className="press mb-4 flex w-full items-center gap-3 rounded-xl bg-primary-soft p-3 text-left text-sm text-primary"
+        >
+          <FileText className="size-4 shrink-0" aria-hidden />
+          <span>
+            <span className="block font-medium">
+              Fill it in from its features
+            </span>
+            <span className="block text-xs">
+              Upload the PDF or describe the card
+            </span>
+          </span>
+        </button>
+      )}
       <form
         className="space-y-4"
         onSubmit={(e) => {
@@ -923,33 +945,58 @@ type SheetState =
   | { kind: "milestone"; cardId: string; milestone: MilestoneState | null }
   | { kind: "bill"; card: Card; bill: Bill | null }
   | { kind: "features"; card: Card | null }
+  | { kind: "pick" }
   | null;
 
-export function CardList({ cards, today }: { cards: Card[]; today: string }) {
+export function CardList({
+  cards,
+  today,
+  initialOpen = null,
+  action = null,
+}: {
+  cards: Card[];
+  today: string;
+  initialOpen?: string | null;
+  /** From the + menu: "bill" logs a bill, "card" adds a card. */
+  action?: string | null;
+}) {
   const [open, setOpen] = useState<string | null>(
-    cards.length === 1 ? cards[0].id : null,
+    initialOpen ?? (cards.length === 1 ? cards[0].id : null),
   );
-  const [sheet, setSheet] = useState<SheetState>(null);
-  const close = useCallback(() => setSheet(null), []);
+  const [sheet, setSheet] = useState<SheetState>(() => {
+    if (action === "card" || (action === "bill" && cards.length === 0))
+      return { kind: "card", card: null };
+    if (action === "bill")
+      return cards.length === 1
+        ? { kind: "bill", card: cards[0], bill: null }
+        : { kind: "pick" };
+    return null;
+  });
+  const close = useCallback(() => {
+    setSheet(null);
+    clearParam("do");
+  }, []);
+  useQuickAction(
+    "card",
+    useCallback(() => setSheet({ kind: "card", card: null }), []),
+  );
+  useQuickAction(
+    "bill",
+    useCallback(
+      () =>
+        setSheet(
+          cards.length === 0
+            ? { kind: "card", card: null }
+            : cards.length === 1
+              ? { kind: "bill", card: cards[0], bill: null }
+              : { kind: "pick" },
+        ),
+      [cards],
+    ),
+  );
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-2">
-        <Button
-          type="button"
-          onClick={() => setSheet({ kind: "card", card: null })}
-        >
-          <Plus /> Add a card
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setSheet({ kind: "features", card: null })}
-        >
-          <FileText /> From features
-        </Button>
-      </div>
-
       {cards.length === 0 ? (
         <div className="space-y-2 rounded-2xl border bg-card p-6 text-center">
           <CreditCard className="mx-auto size-8 text-primary" aria-hidden />
@@ -960,6 +1007,21 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
             Add a card, log its monthly bills, and see how close you are to fee
             waivers and bonus points.
           </p>
+          <div className="grid grid-cols-2 gap-2 pt-2">
+            <Button
+              type="button"
+              onClick={() => setSheet({ kind: "card", card: null })}
+            >
+              <Plus /> Add a card
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSheet({ kind: "features", card: null })}
+            >
+              <FileText /> From features
+            </Button>
+          </div>
         </div>
       ) : (
         <ul className="space-y-3">
@@ -986,7 +1048,7 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
                   type="button"
                   aria-expanded={isOpen}
                   onClick={() => setOpen(isOpen ? null : c.id)}
-                  className="flex w-full items-center gap-3 p-4 text-left"
+                  className="press flex w-full items-center gap-3 p-4 text-left"
                 >
                   <span
                     className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary"
@@ -1040,7 +1102,7 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
                 </button>
 
                 {isOpen && (
-                  <div className="space-y-4 border-t px-4 pb-4 pt-2">
+                  <div className="expand-in space-y-4 border-t px-4 pb-4 pt-2">
                     <section aria-label={`${c.label} milestones`}>
                       {states.length === 0 ? (
                         <p className="py-3 text-sm text-muted-foreground">
@@ -1121,6 +1183,7 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
           card={sheet.card}
           onClose={close}
           onSaved={(id) => id && setOpen(id)}
+          onFeatures={() => setSheet({ kind: "features", card: null })}
         />
       )}
       {sheet?.kind === "milestone" && (
@@ -1129,6 +1192,34 @@ export function CardList({ cards, today }: { cards: Card[]; today: string }) {
           milestone={sheet.milestone}
           onClose={close}
         />
+      )}
+      {sheet?.kind === "pick" && (
+        <Sheet title="Which card's bill?" onClose={close}>
+          <ul className="space-y-2">
+            {cards.map((c) => (
+              <li key={c.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(c.id);
+                    setSheet({ kind: "bill", card: c, bill: null });
+                  }}
+                  className="press flex w-full items-center gap-3 rounded-xl border p-3 text-left hover:border-primary"
+                >
+                  <CreditCard className="size-5 text-primary" aria-hidden />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">{c.label}</span>
+                    <span className="block text-xs text-muted-foreground">
+                      {c.bills[0]
+                        ? `Last bill: ${monthLabel(c.bills[0].month)}`
+                        : "No bills yet"}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Sheet>
       )}
       {sheet?.kind === "features" && (
         <CardFeaturesSheet card={sheet.card} onClose={close} />

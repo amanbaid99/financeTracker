@@ -5,22 +5,29 @@ import { loadCards } from "@/lib/data";
 
 export const metadata: Metadata = { title: "Credit cards" };
 
-export default async function CardsPage() {
-  const { cards, today } = await loadCards();
+export default async function CardsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ open?: string; do?: string }>;
+}) {
+  const [{ cards, today }, { open, do: action }] = await Promise.all([
+    loadCards(),
+    searchParams,
+  ]);
   return (
-    <main className="space-y-5">
+    <main className="space-y-4">
       <div>
         <div className="flex items-center gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            Credit cards
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Cards</h1>
           <GuideButton id="cards" />
         </div>
-        <p className="text-sm text-muted-foreground">
-          Benefits, rewards and spend milestones for each card.
-        </p>
       </div>
-      <CardList cards={cards} today={today} />
+      <CardList
+        cards={cards}
+        today={today}
+        initialOpen={open ?? null}
+        action={action ?? null}
+      />
     </main>
   );
 }
