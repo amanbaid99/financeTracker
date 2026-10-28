@@ -367,7 +367,11 @@ export function SuggestionBox({
       ) : one ? (
         <p>
           Put <b>{what}</b> into your <b>{investmentTitle(one.investment)}</b>
-          {one.similar ? ` (close enough to ${kind}, ${s.why})` : ` (${s.why})`}
+          {one.note
+            ? ` (${one.note})`
+            : one.similar
+              ? ` (close enough to ${kind}, ${s.why})`
+              : ` (${s.why})`}
           .
         </p>
       ) : (
@@ -391,6 +395,7 @@ export function SuggestionBox({
                   </span>
                   <span className="tabular block text-xs text-muted-foreground">
                     {amounts(sh.lump, sh.monthly)}
+                    {sh.note ? ` · ${sh.note}` : ""}
                   </span>
                 </span>
                 <Button

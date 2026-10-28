@@ -26,6 +26,8 @@ export interface SipLine {
   category: string;
   /** Your fund isn't exactly that kind, but close enough. */
   similar: boolean;
+  /** Why this holding is in the plan, when "close enough" doesn't say it. */
+  note: string | null;
   monthly: number;
   parts: SipPart[];
 }
@@ -46,12 +48,14 @@ const STAND_INS: Record<string, string[]> = {
     "debt_fund",
     "arbitrage",
     "liquid_fund",
+    "gold",
   ],
   balanced_advantage: [
     "balanced_advantage",
     "aggressive_hybrid",
     "multi_asset",
     "conservative_hybrid",
+    "gold",
   ],
   equity_index: [
     "equity_index",
@@ -60,15 +64,40 @@ const STAND_INS: Record<string, string[]> = {
     "elss",
     "mid_small_cap",
     "international",
+    "gold",
   ],
 };
+
+/** Gold spreads the risk but can swing, so it gets at most this share of a goal. */
+const GOLD_CAP = 0.2;
+
+/** An ETF you buy on the exchange (named "… ETF" or "… BeES"). */
+function isEtf(i: Investment): boolean {
+  return /\betf\b|bees\b/i.test(i.name ?? "");
+}
+
+/** What an ETF tracks, from its name. */
+function etfKind(name: string): string {
+  if (/gold|silver/i.test(name)) return "gold";
+  if (/liquid/i.test(name)) return "liquid_fund";
+  if (/mid|small/i.test(name)) return "mid_small_cap";
+  return "equity_index";
+}
 
 /** The kind of fund an investment is, for matching ("savings_account" for a bank account). */
 function kindOf(i: Investment): string | null {
   const k = asKind(i.kind);
+  // ETFs: any amount from one unit (often ₹100 or so), sold any day.
+  if (k !== "mutual_fund" && isEtf(i)) return etfKind(i.name ?? "");
   if (k === "mutual_fund") return i.category;
   if (k === "savings") return "savings_account";
-  return null; // stocks, FDs, PPF, EPF, NPS, gold: not something to SIP into here
+  return null; // stocks, FDs, PPF, EPF, NPS, physical gold: not something to SIP into here
+}
+
+/** Smallest amount worth putting in, and the step amounts round to. */
+function sizeOf(i: Investment, lump: boolean): number {
+  if (isEtf(i) && asKind(i.kind) !== "mutual_fund") return 100;
+  return lump ? 1000 : 500;
 }
 
 /** How well `i` suits `category`: 0 exact, higher is looser, null not at all. */
@@ -131,20 +160,53 @@ export interface FundShare {
   similar: boolean;
   /** Share of this fund that counts toward the goal, %. */
   percent: number;
+  /** Why it's here, when "close enough" doesn't say it (an ETF, capped gold). */
+  note: string | null;
+}
+
+function noteFor(i: Investment): string | null {
+  if (kindOf(i) === "gold")
+    return "gold, to spread the risk. Kept to a fifth of this goal as it can swing";
+  if (isEtf(i)) return "an ETF, buy units each month";
+  return null;
 }
 
 /** Exact match 3 parts, close stand-ins 2, looser ones 1. */
 const weightOf = (r: number) => (r === 0 ? 3 : r <= 2 ? 2 : 1);
 
-/** Splits `total` by `weights` in steps of `step`, at least one step each; the biggest share takes the rounding. */
-function splitAmount(total: number, weights: number[], step: number): number[] {
+/**
+ * Splits `total` by `weights`. Each part rounds to its own step and gets at
+ * least one step; gold is held to GOLD_CAP; the rounding goes to the biggest
+ * part it fits.
+ */
+function splitAmount(
+  total: number,
+  weights: number[],
+  steps: number[],
+  gold: boolean[],
+): number[] {
   if (total <= 0) return weights.map(() => 0);
   const sum = weights.reduce((a, b) => a + b, 0);
-  const parts = weights.map((w) =>
-    Math.max(step, Math.round((total * w) / sum / step) * step),
+  const parts = weights.map((w, k) =>
+    Math.max(steps[k], Math.round((total * w) / sum / steps[k]) * steps[k]),
   );
-  const biggest = parts.indexOf(Math.max(...parts));
-  parts[biggest] += total - parts.reduce((a, b) => a + b, 0);
+  parts.forEach((p, k) => {
+    if (!gold[k] || parts.length === 1) return;
+    const cap = Math.max(
+      steps[k],
+      Math.floor((total * GOLD_CAP) / steps[k]) * steps[k],
+    );
+    parts[k] = Math.min(p, cap);
+  });
+  const rest = total - parts.reduce((a, b) => a + b, 0);
+  if (rest) {
+    const order = parts
+      .map((p, k) => k)
+      .filter((k) => !gold[k] || parts.length === 1)
+      .sort((a, b) => parts[b] - parts[a]);
+    const k = order.find((k) => rest % steps[k] === 0) ?? order[0] ?? 0;
+    parts[k] += rest;
+  }
   return parts;
 }
 
@@ -155,9 +217,10 @@ function splitAmount(total: number, weights: number[], step: number): number[] {
  *   it spreads across different funds rather than copies of one;
  * - funds that are only this goal's come before funds shared with others;
  * - a savings account only if no mutual fund suits;
- * - up to three funds, weighted by how well each fits (3, 2 or 1 parts),
- *   in steps of ₹500 a month with at least ₹500 each;
- * - small amounts (under ₹1,000 a month) go into the single best fund.
+ * - up to three funds, weighted by how well each fits (3, 2 or 1 parts);
+ * - each gets at least what it can take: ₹500 a month (₹1,000 of a lump
+ *   sum) for a fund, ₹100 for an ETF, which you can buy a unit at a time;
+ * - gold (a gold ETF) gets at most a fifth, as it can swing.
  * With none of the goal's own funds suitable, it uses one fund no goal uses
  * yet. Returns [] when nothing you hold suits.
  */
@@ -208,6 +271,7 @@ export function splitForGoal(
             lump,
             similar: spare.r > 0,
             percent: 100,
+            note: noteFor(spare.i),
           },
         ]
       : [];
@@ -228,26 +292,41 @@ export function splitForGoal(
     seen.add(k);
     return true;
   });
-  // Each fund gets at least ₹500 a month (or ₹1,000 of a lump sum), so
-  // small amounts stay in one fund.
-  const maxFunds = Math.min(
-    3,
-    Math.max(
-      1,
-      monthly > 0 ? Math.floor(monthly / 500) : Math.floor(lump / 1000),
-    ),
-  );
-  cands = cands.slice(0, maxFunds);
+  // Add funds, best first, while each can still get its smallest amount.
+  const lumpOnly = monthly <= 0;
+  const amount = lumpOnly ? lump : monthly;
+  const picked: Cand[] = [];
+  let need = 0;
+  for (const c of cands) {
+    if (picked.length === 3) break;
+    const min = sizeOf(c.i, lumpOnly);
+    if (picked.length && need + min > amount) continue;
+    picked.push(c);
+    need += min;
+  }
+  cands = picked;
 
   const weights = cands.map((c) => weightOf(c.r));
-  const monthlies = splitAmount(monthly, weights, 500);
-  const lumps = splitAmount(lump, weights, 1000);
+  const gold = cands.map((c) => kindOf(c.i) === "gold");
+  const monthlies = splitAmount(
+    monthly,
+    weights,
+    cands.map((c) => sizeOf(c.i, false)),
+    gold,
+  );
+  const lumps = splitAmount(
+    lump,
+    weights,
+    cands.map((c) => sizeOf(c.i, true)),
+    gold,
+  );
   return cands.map((c, k) => ({
     investment: c.i,
     monthly: monthlies[k],
     lump: lumps[k],
     similar: c.r > 0,
     percent: c.pct,
+    note: noteFor(c.i),
   }));
 }
 
@@ -291,6 +370,7 @@ export function sipPlan(
           label: `New ${categoryLabel(s.category).toLowerCase()}`,
           category: s.category,
           similar: false,
+          note: null,
           monthly: 0,
           parts: [],
         }),
@@ -308,6 +388,7 @@ export function sipPlan(
             sh.investment.name?.trim() || categoryLabel(kindOf(sh.investment)),
           category: s.category,
           similar: sh.similar,
+          note: sh.note,
           monthly: 0,
           parts: [],
         }),

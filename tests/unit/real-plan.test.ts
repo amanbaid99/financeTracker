@@ -31,7 +31,7 @@ const investments: Investment[] = [
   inv("epf", "epf", "epf_vpf", 200000),
   inv("n50", "mutual_fund", "equity_index", 2603),
   inv("elss", "mutual_fund", "elss", 20614),
-  inv("goldetf", "stock", "direct_equity", 6047, 8),
+  { ...inv("goldetf", "stock", "direct_equity", 6047, 8), name: "Gold etf" },
   inv("arb", "mutual_fund", "liquid_fund", 5009),
   inv("us", "stock", "direct_equity", 47000),
   inv("flexi", "mutual_fund", "flexi_cap", 2457),
@@ -263,7 +263,7 @@ describe("SIP plan", () => {
       "Sinking fund": ["dsp1", false],
       Travel: ["au", true], // its savings account
       "Emergency fund": ["axis", false],
-      Marriage: ["arb", true], // a liquid fund it already has, in place of short debt
+      Marriage: ["Gold etf", true], // arb (liquid, in place of short debt) plus up to a fifth in gold
     });
     expect(sips.every((l) => l.investment !== null)).toBe(true);
   });
@@ -358,6 +358,36 @@ describe("smart split", () => {
     expect(splitForGoal("g", "equity_index", 800, 0, funds, links)).toHaveLength(1);
     const lump = splitForGoal("g", "equity_index", 0, 50000, funds, links);
     expect(lump.map((s) => s.lump)).toEqual([30000, 20000]);
+  });
+
+  it("counts a gold ETF, held to a fifth of the goal", async () => {
+    const { splitForGoal } = await import("@/lib/sip-plan");
+    // Marriage: an arbitrage-like liquid fund plus your gold ETF.
+    const out = splitForGoal("mar", "short_debt_fund", 10000, 0, investments, links);
+    expect(out.map((s) => [s.investment.name, s.monthly])).toEqual([
+      ["arb", 8000],
+      ["Gold etf", 2000],
+    ]);
+    expect(out[1].note).toMatch(/^gold/);
+  });
+
+  it("an ETF takes small amounts, from ₹100", async () => {
+    const { splitForGoal } = await import("@/lib/sip-plan");
+    const etf = { ...f("nifty", "direct_equity", 5000, 0, "stock"), name: "Nifty 50 ETF" };
+    const funds = [f("flexi", "flexi_cap"), etf];
+    const out = splitForGoal("g", "equity_index", 700, 0, funds, linkAll("g", ["flexi", "nifty"]));
+    // The fund needs its ₹500 minimum; the ETF takes the rest.
+    expect(out.map((s) => [s.investment.id, s.monthly])).toEqual([
+      ["nifty", 200],
+      ["flexi", 500],
+    ]);
+  });
+
+  it("leaves gold out of money needed any day", async () => {
+    const { splitForGoal } = await import("@/lib/sip-plan");
+    const gold = { ...f("g1", "direct_equity", 5000, 0, "stock"), name: "Gold ETF" };
+    const out = splitForGoal("g", "liquid_fund", 6000, 0, [f("liq", "liquid_fund"), gold], linkAll("g", ["liq", "g1"]));
+    expect(out.map((s) => s.investment.id)).toEqual(["liq"]);
   });
 
   it("the SIP plan lists each fund's share under its goal", async () => {

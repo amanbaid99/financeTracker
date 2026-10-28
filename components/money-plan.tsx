@@ -155,9 +155,11 @@ function SipList({
             </div>
             <p className="text-xs text-muted-foreground">
               {l.investment
-                ? l.similar
-                  ? `Yours · close enough to ${/^[aeiou]/i.test(categoryLabel(l.category)) ? "an" : "a"} ${categoryLabel(l.category).toLowerCase()}`
-                  : "Yours"
+                ? l.note
+                  ? `Yours · ${l.note}`
+                  : l.similar
+                    ? `Yours · close enough to ${/^[aeiou]/i.test(categoryLabel(l.category)) ? "an" : "a"} ${categoryLabel(l.category).toLowerCase()}`
+                    : "Yours"
                 : "You don't hold one yet"}
             </p>
             <ul className="mt-1.5 space-y-0.5 text-xs text-muted-foreground">
@@ -186,8 +188,8 @@ function SipList({
         </p>
       )}
       <p className="text-xs text-muted-foreground">
-        Start or raise these SIPs. When a goal&apos;s date passes, stop its
-        part or move it to the next goal.
+        Start or raise these SIPs. When a goal&apos;s date passes, stop its part
+        or move it to the next goal.
         {sipsNow > 0
           ? ` Your current ${formatINR(sipsNow)} of SIPs keep going.`
           : ""}
