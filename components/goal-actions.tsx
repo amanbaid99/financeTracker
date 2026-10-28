@@ -15,7 +15,7 @@ import { deleteGoal } from "@/lib/actions";
 import type { Suggestion } from "@/lib/allocate";
 import { goalHeadline } from "@/lib/goal-summary";
 import { waysToFund, type WaysToFund } from "@/lib/fund-goal";
-import { pickFund } from "@/lib/sip-plan";
+import { splitForGoal, type FundShare } from "@/lib/sip-plan";
 import { formatINR } from "@/lib/format";
 import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
 
@@ -332,76 +332,124 @@ export function SuggestionBox({
   investments: Investment[];
   links: Link[];
 }) {
-  const [open, setOpen] = useState(false);
-  const close = useCallback(() => setOpen(false), []);
-  // One of your own funds that suits it, if you have one.
-  const pick = pickFund(goal.id, s.category, investments, links);
-  const what = [
-    s.lump ? `${formatINR(s.lump)} now` : "",
-    s.monthly ? `${formatINR(s.monthly)} a month` : "",
-  ]
-    .filter(Boolean)
-    .join(" and ");
+  // null: closed; "new": a new fund; otherwise the share being recorded.
+  const [open, setOpen] = useState<FundShare | "new" | null>(null);
+  const close = useCallback(() => setOpen(null), []);
+  // Spread across the funds you already hold for it, where they suit.
+  const shares = splitForGoal(
+    goal.id,
+    s.category,
+    s.monthly,
+    s.lump,
+    investments,
+    links,
+  );
+  const amounts = (lump: number, monthly: number) =>
+    [
+      lump ? `${formatINR(lump)} now` : "",
+      monthly ? `${formatINR(monthly)} a month` : "",
+    ]
+      .filter(Boolean)
+      .join(" and ");
+  const what = amounts(s.lump, s.monthly);
   const kind = `${/^[aeiou]/i.test(s.categoryLabel) ? "an" : "a"} ${s.categoryLabel.toLowerCase()}`;
-  const linkPct = pick
-    ? (links.find(
-        (l) => l.goalId === goal.id && l.investmentId === pick.investment.id,
-      )?.percent ?? null)
-    : null;
+  const one = shares.length === 1 ? shares[0] : null;
+
   return (
     <div className="space-y-2 rounded-lg bg-primary-soft p-3 text-sm">
       <p className="flex items-center gap-1.5 font-semibold text-primary">
         <Sparkles className="size-4" aria-hidden /> Suggested
       </p>
-      {pick ? (
-        <p>
-          Put <b>{what}</b> into your <b>{investmentTitle(pick.investment)}</b>
-          {pick.similar
-            ? ` (close enough to ${kind}, ${s.why})`
-            : ` (${s.why})`}
-          .
-        </p>
-      ) : (
+      {shares.length === 0 ? (
         <p>
           Put <b>{what}</b> into {kind} ({s.why}).
         </p>
+      ) : one ? (
+        <p>
+          Put <b>{what}</b> into your <b>{investmentTitle(one.investment)}</b>
+          {one.similar ? ` (close enough to ${kind}, ${s.why})` : ` (${s.why})`}
+          .
+        </p>
+      ) : (
+        <>
+          <p>
+            Put <b>{what}</b>, spread across your funds that suit {kind} (
+            {s.why}):
+          </p>
+          <ul
+            className="divide-y divide-primary/15"
+            aria-label="Split across your funds"
+          >
+            {shares.map((sh) => (
+              <li
+                key={sh.investment.id}
+                className="flex items-center gap-3 py-2"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">
+                    {investmentTitle(sh.investment)}
+                  </span>
+                  <span className="tabular block text-xs text-muted-foreground">
+                    {amounts(sh.lump, sh.monthly)}
+                  </span>
+                </span>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  aria-label={`Record ${investmentTitle(sh.investment)}`}
+                  onClick={() => setOpen(sh)}
+                >
+                  Done
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
       <p className="text-muted-foreground">
         With this: {goalHeadline(s.after).text}.
       </p>
-      <Button type="button" size="sm" onClick={() => setOpen(true)}>
-        I&apos;ve invested this
-      </Button>
-      {open &&
-        (pick ? (
-          <InvestmentSheet
-            goalId={goal.id}
-            goalName={goal.name}
-            linkedIds={goal.lines.map((l) => l.investment.id)}
-            investment={pick.investment}
-            percent={linkPct}
-            investments={investments}
-            links={links}
-            onClose={close}
-            topUp={{ value: s.lump, sip: s.monthly }}
-          />
-        ) : (
-          <InvestmentSheet
-            goalId={goal.id}
-            goalName={goal.name}
-            linkedIds={goal.lines.map((l) => l.investment.id)}
-            investment={null}
-            percent={null}
-            investments={investments}
-            links={links}
-            onClose={close}
-            prefill={{
-              fundCategory: s.category,
-              value: s.lump,
-              monthlySip: s.monthly,
-            }}
-          />
-        ))}
+      {shares.length <= 1 && (
+        <Button type="button" size="sm" onClick={() => setOpen(one ?? "new")}>
+          I&apos;ve invested this
+        </Button>
+      )}
+      {open === "new" && (
+        <InvestmentSheet
+          goalId={goal.id}
+          goalName={goal.name}
+          linkedIds={goal.lines.map((l) => l.investment.id)}
+          investment={null}
+          percent={null}
+          investments={investments}
+          links={links}
+          onClose={close}
+          prefill={{
+            fundCategory: s.category,
+            value: s.lump,
+            monthlySip: s.monthly,
+          }}
+        />
+      )}
+      {open && open !== "new" && (
+        <InvestmentSheet
+          goalId={goal.id}
+          goalName={goal.name}
+          linkedIds={goal.lines.map((l) => l.investment.id)}
+          investment={open.investment}
+          percent={
+            links.find(
+              (l) =>
+                l.goalId === goal.id && l.investmentId === open.investment.id,
+            )?.percent ?? null
+          }
+          investments={investments}
+          links={links}
+          onClose={close}
+          topUp={{ value: open.lump, sip: open.monthly }}
+        />
+      )}
     </div>
   );
 }

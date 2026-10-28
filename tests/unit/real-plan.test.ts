@@ -300,3 +300,70 @@ describe("SIP plan", () => {
     expect(pickFund("house", "liquid_fund", investments, links)).toBeNull();
   });
 });
+
+describe("smart split", () => {
+  const f = (id: string, category: string, value = 10000, sip = 0, kind = "mutual_fund"): Investment => ({
+    id,
+    kind,
+    name: id,
+    category,
+    value,
+    monthlySip: sip,
+    returnPct: null,
+  });
+  const linkAll = (goalId: string, ids: string[], percent = 100): Link[] =>
+    ids.map((investmentId) => ({ goalId, investmentId, percent }));
+
+  it("spreads a long-term goal across different kinds of equity fund, weighted by fit", async () => {
+    const { splitForGoal } = await import("@/lib/sip-plan");
+    const funds = [f("index", "equity_index"), f("flexi", "flexi_cap"), f("mid", "mid_small_cap")];
+    const out = splitForGoal("g", "equity_index", 12000, 0, funds, linkAll("g", ["index", "flexi", "mid"]));
+    // 3 : 2 : 1 parts of ₹12,000.
+    expect(out.map((s) => [s.investment.id, s.monthly])).toEqual([
+      ["index", 6000],
+      ["flexi", 4000],
+      ["mid", 2000],
+    ]);
+  });
+
+  it("keeps one fund per kind, so two index funds aren't counted as spreading", async () => {
+    const { splitForGoal } = await import("@/lib/sip-plan");
+    const funds = [f("idx1", "equity_index", 5000), f("idx2", "equity_index", 50000), f("flexi", "flexi_cap")];
+    const out = splitForGoal("g", "equity_index", 10000, 0, funds, linkAll("g", ["idx1", "idx2", "flexi"]));
+    expect(out.map((s) => s.investment.id)).toEqual(["idx2", "flexi"]);
+    expect(out.reduce((a, s) => a + s.monthly, 0)).toBe(10000);
+  });
+
+  it("skips funds that don't suit the timeline and savings accounts when a fund will do", async () => {
+    const { splitForGoal } = await import("@/lib/sip-plan");
+    const funds = [f("liq", "liquid_fund"), f("arb", "arbitrage"), f("elss", "elss"), f("bank", "savings_account", 50000, 0, "savings")];
+    const out = splitForGoal("g", "liquid_fund", 9000, 0, funds, linkAll("g", ["liq", "arb", "elss", "bank"]));
+    expect(out.map((s) => [s.investment.id, s.monthly])).toEqual([
+      ["liq", 6500],
+      ["arb", 2500],
+    ]);
+  });
+
+  it("prefers funds only this goal uses over shared ones", async () => {
+    const { splitForGoal } = await import("@/lib/sip-plan");
+    const funds = [f("own", "liquid_fund"), f("shared", "overnight_fund")];
+    const links = [...linkAll("g", ["own"]), ...linkAll("g", ["shared"], 60), ...linkAll("other", ["shared"], 40)];
+    expect(splitForGoal("g", "liquid_fund", 6000, 0, funds, links).map((s) => s.investment.id)).toEqual(["own"]);
+  });
+
+  it("small amounts stay in one fund; lump sums split in ₹1,000 steps", async () => {
+    const { splitForGoal } = await import("@/lib/sip-plan");
+    const funds = [f("index", "equity_index"), f("flexi", "flexi_cap")];
+    const links = linkAll("g", ["index", "flexi"]);
+    expect(splitForGoal("g", "equity_index", 800, 0, funds, links)).toHaveLength(1);
+    const lump = splitForGoal("g", "equity_index", 0, 50000, funds, links);
+    expect(lump.map((s) => s.lump)).toEqual([30000, 20000]);
+  });
+
+  it("the SIP plan lists each fund's share under its goal", async () => {
+    const { sipPlan } = await import("@/lib/sip-plan");
+    const plan = planMoney({ goals: tracked, investments, links, lump: 0, monthlyTotal: 65000, todayISO: TODAY });
+    const sips = sipPlan(plan.suggestions, investments, links);
+    expect(sips.reduce((s, l) => s + l.monthly, 0)).toBe(65000);
+  });
+});
