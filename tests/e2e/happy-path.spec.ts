@@ -371,7 +371,18 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByText("Suggested", { exact: true })).toBeVisible();
   await expect(page.getByText(/into an equity index fund/)).toBeVisible();
+  // The plan as SIPs to start: one per fund type, with the goals it's for.
+  await expect(page.getByRole("tab", { name: "SIPs to start" })).toHaveAttribute(
+    "aria-selected",
+    "true",
+  );
+  const sipList = page.getByRole("list", { name: "SIPs to start" });
+  await expect(sipList).toContainText("Equity index fund");
+  await expect(sipList).toContainText("House");
+  await expect(sipList).toContainText(/until \w{3} \d{4}/);
   await page.screenshot({ path: "test-results/plan-375.png", fullPage: true });
+  await page.getByRole("tab", { name: "By goal" }).click();
+  await expect(sipList).toHaveCount(0);
   await page.getByRole("button", { name: "I've invested this" }).click();
   await expect(page.getByText("Filled in from your plan.")).toBeVisible();
   await expect(page.getByLabel("Fund category")).toHaveValue("equity_index");

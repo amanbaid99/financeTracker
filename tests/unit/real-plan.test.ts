@@ -239,3 +239,20 @@ describe("real goal list", () => {
     expect(byId("hdfc1").extraSipNeeded).toBe(0);
   });
 });
+
+describe("SIP plan", () => {
+  it("groups the plan into one SIP per kind of fund, with when each part stops", async () => {
+    const { sipPlan } = await import("@/lib/sip-plan");
+    const plan = planMoney({ goals: tracked, investments, links, lump: 0, monthlyTotal: 65000, todayISO: TODAY });
+    const sips = sipPlan(plan.suggestions);
+    expect(sips.reduce((s, l) => s + l.monthly, 0)).toBe(65000);
+    const liquid = sips.find((l) => l.category === "liquid_fund")!;
+    expect(liquid.parts.map((p) => [p.goalName, p.until])).toEqual([
+      ["JOB transition", "2027-01-15"],
+      ["Travel", "2027-06-30"],
+      ["Emergency fund", "2027-12-31"],
+      ["Sinking fund", null],
+    ]);
+    expect(sips.find((l) => l.category === "short_debt_fund")?.parts[0].goalName).toBe("Marriage");
+  });
+});

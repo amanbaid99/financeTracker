@@ -8,8 +8,9 @@ import { MoneyInput } from "@/components/money-input";
 import { Sheet } from "@/components/sheet";
 import { Button } from "@/components/ui/button";
 import { savePlan } from "@/lib/actions";
-import type { MoneyPlan } from "@/lib/allocate";
+import type { MoneyPlan, Suggestion } from "@/lib/allocate";
 import { clearParam } from "@/lib/clear-param";
+import { sipPlan, type SipLine } from "@/lib/sip-plan";
 import { useQuickAction } from "@/components/quick-add";
 import { formatINR, formatINRCompact } from "@/lib/format";
 
@@ -119,6 +120,70 @@ function PlanForm({
 }
 
 /** The money plan: what you can invest and how it splits across goals. */
+const monthYearOf = (iso: string) => {
+  const [y, m] = iso.split("-").map(Number);
+  return `${"Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ")[m - 1]} ${y}`;
+};
+
+/** The plan as SIPs: one per kind of fund, with the goals each one is for. */
+function SipList({
+  sips,
+  lump,
+  sipsNow,
+}: {
+  sips: SipLine[];
+  /** Goals that also get a lump sum now. */
+  lump: Suggestion[];
+  sipsNow: number;
+}) {
+  const once = lump.filter((s) => s.lump > 0);
+  return (
+    <div className="space-y-3 text-sm">
+      <ul className="space-y-3" aria-label="SIPs to start">
+        {sips.map((l) => (
+          <li key={l.category} className="rounded-xl border p-3">
+            <div className="flex items-baseline justify-between gap-3">
+              <span className="font-medium">{l.categoryLabel}</span>
+              <span className="tabular shrink-0 font-semibold">
+                {formatINR(l.monthly)}/mo
+              </span>
+            </div>
+            <ul className="mt-1.5 space-y-0.5 text-xs text-muted-foreground">
+              {l.parts.map((p) => (
+                <li key={p.goalId} className="flex justify-between gap-3">
+                  <span className="min-w-0 truncate">
+                    {p.goalName}
+                    {p.until ? ` · until ${monthYearOf(p.until)}` : ""}
+                  </span>
+                  <span className="tabular shrink-0">
+                    {formatINR(p.monthly)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </li>
+        ))}
+      </ul>
+      {once.length > 0 && (
+        <p className="text-xs text-muted-foreground">
+          Also put in now:{" "}
+          {once
+            .map((s) => `${formatINRCompact(s.lump)} for ${s.goalName}`)
+            .join(", ")}
+          .
+        </p>
+      )}
+      <p className="text-xs text-muted-foreground">
+        Start one SIP for each fund type. When a goal&apos;s date passes, stop
+        its part or move it to the next goal.
+        {sipsNow > 0
+          ? ` Your current ${formatINR(sipsNow)} of SIPs keep going.`
+          : ""}
+      </p>
+    </div>
+  );
+}
+
 export function MoneyPlanCard({
   plan,
   sipsNow,
@@ -132,6 +197,7 @@ export function MoneyPlanCard({
   autoOpen?: boolean;
 }) {
   const [open, setOpen] = useState(autoOpen);
+  const [view, setView] = useState<"sips" | "goals">("sips");
   const close = useCallback(() => {
     setOpen(false);
     clearParam("do");
@@ -153,6 +219,7 @@ export function MoneyPlanCard({
   if (!plan) return form || null;
 
   const { suggestions } = plan;
+  const sips = sipPlan(suggestions);
   let footer: { text: string; tone: string };
   if (plan.stillShortMonthly > 0) {
     footer = {
@@ -200,7 +267,38 @@ export function MoneyPlanCard({
           <Pencil className="size-4" aria-hidden />
         </Button>
       </div>
-      {suggestions.length === 0 ? (
+      {suggestions.length > 0 && sips.length > 0 && (
+        <div
+          className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+          role="tablist"
+          aria-label="Show the plan"
+        >
+          {(
+            [
+              ["sips", "SIPs to start"],
+              ["goals", "By goal"],
+            ] as const
+          ).map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              role="tab"
+              aria-selected={view === v}
+              onClick={() => setView(v)}
+              className={`rounded-md px-2 py-1.5 text-sm ${view === v ? "bg-card font-medium shadow-sm" : "text-muted-foreground"}`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+      {view === "sips" && sips.length > 0 ? (
+        <SipList
+          sips={sips}
+          lump={plan.lump > 0 ? suggestions : []}
+          sipsNow={plan.sipsNow}
+        />
+      ) : suggestions.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {plan.lump || plan.monthlyFree
             ? "Your goals don't need anything extra right now."
