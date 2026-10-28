@@ -370,23 +370,37 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     ),
   ).toBeVisible();
   await expect(page.getByText("Suggested", { exact: true })).toBeVisible();
-  await expect(page.getByText(/into an equity index fund/)).toBeVisible();
-  // The plan as SIPs to start: one per fund type, with the goals it's for.
+  // You already hold a fund that suits House, so the plan names it.
+  await expect(
+    page.getByText(/into your Index SIP \(close enough to an equity index fund/),
+  ).toBeVisible();
+  // The plan as SIPs to start, in your own funds.
   await expect(page.getByRole("tab", { name: "SIPs to start" })).toHaveAttribute(
     "aria-selected",
     "true",
   );
   const sipList = page.getByRole("list", { name: "SIPs to start" });
-  await expect(sipList).toContainText("Equity index fund");
+  await expect(sipList).toContainText("Index SIP");
+  await expect(sipList).toContainText("close enough to an equity index fund");
   await expect(sipList).toContainText("House");
   await expect(sipList).toContainText(/until \w{3} \d{4}/);
   await page.screenshot({ path: "test-results/plan-375.png", fullPage: true });
   await page.getByRole("tab", { name: "By goal" }).click();
   await expect(sipList).toHaveCount(0);
+  // "I've invested this" opens your fund with the plan's amounts added.
   await page.getByRole("button", { name: "I've invested this" }).click();
-  await expect(page.getByText("Filled in from your plan.")).toBeVisible();
-  await expect(page.getByLabel("Fund category")).toHaveValue("equity_index");
+  const raise = page.getByRole("dialog", { name: "Index SIP" });
+  await expect(raise).toContainText(
+    "Raised by your plan: +₹2,80,000 now, +₹16,000 a month",
+  );
+  await expect(raise.getByLabel("Monthly SIP")).toHaveValue("26,000");
+  await page.getByRole("button", { name: "Close", exact: true }).click();
+  // Set it up as a separate fund instead, and take the savings out of the plan.
+  await page.getByRole("button", { name: "Add investment" }).click();
+  await page.getByLabel("Fund category").selectOption("equity_index");
   await page.getByLabel("Nickname (optional)").fill("Planned index fund");
+  await page.getByLabel("Value today").fill("280000");
+  await page.getByLabel("Monthly SIP").fill("16000");
   await page
     .getByRole("dialog")
     .getByRole("button", { name: "Add investment" })
@@ -394,6 +408,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Edit Planned index fund" }),
   ).toBeVisible();
+  await page.getByRole("button", { name: "Edit money plan" }).click();
+  await page.getByLabel("Savings to put toward goals now").fill("0");
+  await page.getByRole("button", { name: "Suggest a split" }).click();
   await expect(page.getByText(/^₹0 now · /)).toBeVisible();
 
   // Bills fund: one liquid fund for known payments.

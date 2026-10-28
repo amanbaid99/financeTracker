@@ -53,7 +53,10 @@ export function InvestmentSheet({
   prefill,
   fromPlan = !!prefill,
   pickExisting,
+  topUp,
 }: {
+  /** From the money plan, for one of your own funds: add this now and to its SIP. */
+  topUp?: { value: number; sip: number };
   /** Pre-filled values for a new investment. */
   prefill?: { fundCategory: string; value: number; monthlySip: number };
   /** The prefill came from the money plan; saving takes it out of the plan's savings. */
@@ -99,10 +102,14 @@ export function InvestmentSheet({
   );
   const [name, setName] = useState(investment?.name ?? "");
   const [value, setValue] = useState<number | null>(
-    investment?.value ?? (prefill?.value || null),
+    investment
+      ? investment.value + (topUp?.value ?? 0)
+      : prefill?.value || null,
   );
   const [sip, setSip] = useState<number | null>(
-    investment?.monthlySip || prefill?.monthlySip || null,
+    investment
+      ? investment.monthlySip + (topUp?.sip ?? 0) || null
+      : prefill?.monthlySip || null,
   );
   const [ret, setRet] = useState(investment?.returnPct?.toString() ?? "");
   const [invested, setInvested] = useState<number | null>(
@@ -171,6 +178,14 @@ export function InvestmentSheet({
         invested,
         percent: pct,
         fromPlan,
+        // Money added to one of your funds from the plan's savings.
+        planUsed:
+          investment && topUp?.value
+            ? Math.min(
+                topUp.value,
+                Math.max(0, (value ?? 0) - investment.value),
+              )
+            : undefined,
       }),
     );
   }
@@ -212,6 +227,16 @@ export function InvestmentSheet({
           save();
         }}
       >
+        {investment && topUp && (
+          <p className="rounded-lg bg-primary-soft p-3 text-sm">
+            Raised by your plan
+            {topUp.value ? `: +${formatINR(topUp.value)} now` : ":"}
+            {topUp.sip
+              ? `${topUp.value ? "," : ""} +${formatINR(topUp.sip)} a month`
+              : ""}
+            . Change anything to match what you actually did.
+          </p>
+        )}
         {prefill && (
           <p className="rounded-lg bg-primary-soft p-3 text-sm">
             {fromPlan

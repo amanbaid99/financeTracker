@@ -241,18 +241,62 @@ describe("real goal list", () => {
 });
 
 describe("SIP plan", () => {
-  it("groups the plan into one SIP per kind of fund, with when each part stops", async () => {
+  it("puts each goal's SIP into a fund you already hold where one suits it", async () => {
     const { sipPlan } = await import("@/lib/sip-plan");
-    const plan = planMoney({ goals: tracked, investments, links, lump: 0, monthlyTotal: 65000, todayISO: TODAY });
-    const sips = sipPlan(plan.suggestions);
+    const plan = planMoney({
+      goals: tracked,
+      investments,
+      links,
+      lump: 0,
+      monthlyTotal: 65000,
+      todayISO: TODAY,
+    });
+    const sips = sipPlan(plan.suggestions, investments, links);
     expect(sips.reduce((s, l) => s + l.monthly, 0)).toBe(65000);
-    const liquid = sips.find((l) => l.category === "liquid_fund")!;
-    expect(liquid.parts.map((p) => [p.goalName, p.until])).toEqual([
-      ["JOB transition", "2027-01-15"],
-      ["Travel", "2027-06-30"],
-      ["Emergency fund", "2027-12-31"],
-      ["Sinking fund", null],
-    ]);
-    expect(sips.find((l) => l.category === "short_debt_fund")?.parts[0].goalName).toBe("Marriage");
+    const where = Object.fromEntries(
+      sips.flatMap((l) =>
+        l.parts.map((p) => [p.goalName, [l.label, l.similar]]),
+      ),
+    );
+    expect(where).toEqual({
+      "JOB transition": ["dsp2", false], // the liquid fund already saving for it
+      "Sinking fund": ["dsp1", false],
+      Travel: ["au", true], // its savings account
+      "Emergency fund": ["axis", false],
+      Marriage: ["arb", true], // a liquid fund it already has, in place of short debt
+    });
+    expect(sips.every((l) => l.investment !== null)).toBe(true);
+  });
+
+  it("names a kind of fund only when you hold nothing suitable", async () => {
+    const { sipPlan } = await import("@/lib/sip-plan");
+    const plan = planMoney({
+      goals: tracked,
+      investments,
+      links,
+      lump: 0,
+      monthlyTotal: 65000,
+      todayISO: TODAY,
+    });
+    const sips = sipPlan(plan.suggestions, [], []);
+    expect(sips.map((l) => l.label)).toContain("New liquid fund");
+    expect(sips.every((l) => l.investment === null)).toBe(true);
+  });
+
+  it("uses a fund no goal uses yet before suggesting a new one", async () => {
+    const { pickFund } = await import("@/lib/sip-plan");
+    const spare = {
+      ...investments[0],
+      id: "spare",
+      kind: "mutual_fund",
+      category: "liquid_fund",
+      name: "Spare liquid",
+    };
+    expect(
+      pickFund("house", "liquid_fund", [...investments, spare], links)
+        ?.investment.id,
+    ).toBe("spare");
+    // Funds already used by another goal aren't borrowed.
+    expect(pickFund("house", "liquid_fund", investments, links)).toBeNull();
   });
 });

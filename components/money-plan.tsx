@@ -10,7 +10,9 @@ import { Button } from "@/components/ui/button";
 import { savePlan } from "@/lib/actions";
 import type { MoneyPlan, Suggestion } from "@/lib/allocate";
 import { clearParam } from "@/lib/clear-param";
+import { categoryLabel } from "@/lib/categories";
 import { sipPlan, type SipLine } from "@/lib/sip-plan";
+import type { Investment, Link } from "@/lib/tracker";
 import { useQuickAction } from "@/components/quick-add";
 import { formatINR, formatINRCompact } from "@/lib/format";
 
@@ -141,13 +143,23 @@ function SipList({
     <div className="space-y-3 text-sm">
       <ul className="space-y-3" aria-label="SIPs to start">
         {sips.map((l) => (
-          <li key={l.category} className="rounded-xl border p-3">
+          <li
+            key={l.investment?.id ?? `new-${l.category}`}
+            className="rounded-xl border p-3"
+          >
             <div className="flex items-baseline justify-between gap-3">
-              <span className="font-medium">{l.categoryLabel}</span>
+              <span className="min-w-0 truncate font-medium">{l.label}</span>
               <span className="tabular shrink-0 font-semibold">
                 {formatINR(l.monthly)}/mo
               </span>
             </div>
+            <p className="text-xs text-muted-foreground">
+              {l.investment
+                ? l.similar
+                  ? `Yours · close enough to ${/^[aeiou]/i.test(categoryLabel(l.category)) ? "an" : "a"} ${categoryLabel(l.category).toLowerCase()}`
+                  : "Yours"
+                : "You don't hold one yet"}
+            </p>
             <ul className="mt-1.5 space-y-0.5 text-xs text-muted-foreground">
               {l.parts.map((p) => (
                 <li key={p.goalId} className="flex justify-between gap-3">
@@ -174,8 +186,8 @@ function SipList({
         </p>
       )}
       <p className="text-xs text-muted-foreground">
-        Start one SIP for each fund type. When a goal&apos;s date passes, stop
-        its part or move it to the next goal.
+        Start or raise these SIPs. When a goal&apos;s date passes, stop its
+        part or move it to the next goal.
         {sipsNow > 0
           ? ` Your current ${formatINR(sipsNow)} of SIPs keep going.`
           : ""}
@@ -188,11 +200,16 @@ export function MoneyPlanCard({
   plan,
   sipsNow,
   unassigned,
+  investments = [],
+  links = [],
   autoOpen = false,
 }: {
   plan: MoneyPlan | null;
   sipsNow: number;
   unassigned: number;
+  /** Your investments and goal links, to name your own funds in the SIP plan. */
+  investments?: Investment[];
+  links?: Link[];
   /** Open the form straight away (from the + menu). */
   autoOpen?: boolean;
 }) {
@@ -219,7 +236,7 @@ export function MoneyPlanCard({
   if (!plan) return form || null;
 
   const { suggestions } = plan;
-  const sips = sipPlan(suggestions);
+  const sips = sipPlan(suggestions, investments, links);
   let footer: { text: string; tone: string };
   if (plan.stillShortMonthly > 0) {
     footer = {

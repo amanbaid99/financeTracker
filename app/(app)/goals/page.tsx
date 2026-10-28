@@ -130,6 +130,8 @@ export default async function GoalsPage({
           />
           <MoneyPlanCard
             plan={plan}
+            investments={investments}
+            links={links}
             sipsNow={sipsNow}
             unassigned={unassigned}
             autoOpen={action === "plan"}

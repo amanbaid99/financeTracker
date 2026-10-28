@@ -234,6 +234,8 @@ const investmentSchema = z.object({
   percent: z.number().min(1, "use at least 1%").max(100),
   /** Recorded from a money plan suggestion: its value comes out of the plan's savings. */
   fromPlan: z.boolean().optional(),
+  /** Added to an existing fund from the plan: this much comes out of the plan's savings. */
+  planUsed: money.optional(),
 });
 
 export async function saveInvestment(
@@ -307,7 +309,8 @@ export async function saveInvestment(
         if (error) throw new Error(error.message);
       }
     }
-    if (v.fromPlan && !v.investmentId && v.value > 0) {
+    const used = v.planUsed ?? (v.fromPlan && !v.investmentId ? v.value : 0);
+    if (used > 0) {
       const { data: p } = await supabase
         .from("profiles")
         .select("plan_lump_sum")
@@ -316,7 +319,7 @@ export async function saveInvestment(
       if (p?.plan_lump_sum) {
         const { error } = await supabase
           .from("profiles")
-          .update({ plan_lump_sum: Math.max(0, p.plan_lump_sum - v.value) })
+          .update({ plan_lump_sum: Math.max(0, p.plan_lump_sum - used) })
           .eq("user_id", userId);
         if (error) throw new Error(error.message);
       }
