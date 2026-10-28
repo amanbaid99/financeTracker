@@ -1,6 +1,7 @@
 // Splits money the user can invest across their goals: savings available now
 // and a monthly amount. Suggestions only; nothing is saved until the user acts.
 
+import { billsMonthlyNeed } from "./bills-fund";
 import { categoryLabel } from "./categories";
 import { sortGoals } from "./goal-summary";
 import { RETURN_BY_CATEGORY } from "./instruments";
@@ -120,11 +121,14 @@ export function planMoney(opts: {
   for (const g of active.filter((x) => x.billsFund)) {
     const a = alloc.get(g.id)!;
     const b = g.billsFund!;
+    // Only what's missing: a top-up now if there's savings to use, then the
+    // monthly amount that covers the rest given what's already in the fund.
     a.lump = Math.min(lumpLeft, roundUp(b.topUpNow, 1000));
     lumpLeft -= a.lump;
+    const need = billsMonthlyNeed(b.bills, g.current + a.lump, todayISO);
     a.monthly = Math.min(
       monthlyLeft,
-      roundUp(Math.max(0, b.monthlyNeed - g.monthlySip), 500),
+      roundUp(Math.max(0, need - g.monthlySip), 500),
     );
     monthlyLeft -= a.monthly;
   }

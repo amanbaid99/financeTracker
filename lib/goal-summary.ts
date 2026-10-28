@@ -8,20 +8,32 @@ export type Tone = "success" | "warning" | "danger" | "muted";
 export const monthYear = (iso: string | null) =>
   formatDate(iso).split(" ").slice(1).join(" ");
 
-const dayMonth = (iso: string) => formatDate(iso).split(" ").slice(0, 2).join(" ");
+const dayMonth = (iso: string) =>
+  formatDate(iso).split(" ").slice(0, 2).join(" ");
 
 export function goalHeadline(g: TrackedGoal): { text: string; tone: Tone } {
   const bf = g.billsFund;
   if (bf) {
-    if (!bf.bills.length) return { text: "Add the payments this fund covers", tone: "muted" };
-    if (bf.firstShort)
-      return {
-        text: `${formatINR(bf.firstShort.shortBy)} short for ${bf.firstShort.name} on ${dayMonth(bf.firstShort.date)}`,
-        tone: "warning",
-      };
+    if (!bf.bills.length)
+      return { text: "Add the payments this fund covers", tone: "muted" };
+    if (bf.short)
+      // A monthly amount can fix it: say so, like other goals do. Otherwise
+      // (a payment due before the next deposit) show the gap and its date.
+      return bf.monthlyNeed > g.monthlySip
+        ? {
+            text: `Needs ${formatINR(bf.monthlyNeed - g.monthlySip)} more a month`,
+            tone: "warning",
+          }
+        : {
+            text: `${formatINR(bf.short.amount)} short by ${dayMonth(bf.short.by)}`,
+            tone: "warning",
+          };
     const next = bf.upcoming[0];
     return next
-      ? { text: `Next: ${next.name} on ${dayMonth(next.date)}, covered`, tone: "success" }
+      ? {
+          text: `Next: ${next.name} on ${dayMonth(next.date)}, covered`,
+          tone: "success",
+        }
       : { text: "Nothing due in the next year", tone: "success" };
   }
   const loan = g.type === "loan_payoff";

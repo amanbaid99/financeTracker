@@ -270,19 +270,17 @@ export function BillsPlan({
       </p>
     );
   }
-  const diff = g.current - b.shouldHold;
+  const diff = g.current - b.needsToday;
   const dm = (iso: string) => formatDate(iso).split(" ").slice(0, 2).join(" ");
   const upcoming = details ? b.upcoming.slice(0, 12) : b.upcoming.slice(0, 3);
   return (
     <div className="space-y-4">
-      {b.firstShort ? (
+      {b.short ? (
         <p className="rounded-lg bg-warning-soft p-3 text-sm text-warning">
           At {formatINR(g.monthlySip)} a month you&apos;ll be{" "}
-          {formatINR(b.firstShort.shortBy)} short for {b.firstShort.name} on{" "}
-          {formatDate(b.firstShort.date)}.{" "}
-          {b.topUpNow > 0
-            ? `Add ${formatINR(b.topUpNow)} now and put in ${formatINR(b.monthlyNeed)} a month to cover everything.`
-            : `Put in ${formatINR(b.monthlyNeed)} a month to cover everything.`}
+          <b>{formatINR(b.short.amount)}</b> short by {formatDate(b.short.by)}.
+          Add {formatINR(b.short.amount)} now, or put in{" "}
+          <b>{formatINR(b.monthlyNeed)} a month</b>, to cover everything.
         </p>
       ) : (
         <p className="rounded-lg bg-success-soft p-3 text-sm text-success">
@@ -291,7 +289,7 @@ export function BillsPlan({
       )}
       {details && (
         <dl className="expand-in divide-y">
-          <Row label="Should hold today" value={formatINR(b.shouldHold)} />
+          <Row label="Needs today" value={formatINR(b.needsToday)} />
           <Row
             label="In the fund"
             value={
@@ -313,7 +311,7 @@ export function BillsPlan({
             }
           />
           <Row
-            label="Put in each month"
+            label="Put in each month to cover it"
             value={formatINR(b.monthlyNeed)}
             strong={g.monthlySip < b.monthlyNeed}
           />

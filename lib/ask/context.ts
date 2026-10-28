@@ -58,7 +58,7 @@ function goalLine(
   } else if (g.billsFund) {
     const b = g.billsFund;
     parts.push(
-      `fund for planned payments; should hold ${rough(b.shouldHold)} today; needs ${rough(b.monthlyNeed)} a month`,
+      `fund for planned payments; needs ${rough(b.needsToday)} today; needs ${rough(b.monthlyNeed)} a month${b.short ? `; short ${rough(b.short.amount)} at current pace` : ""}`,
     );
   } else {
     parts.push(

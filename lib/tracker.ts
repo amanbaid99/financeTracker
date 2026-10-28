@@ -190,7 +190,8 @@ export function trackGoal(
 
   if (goal.type === "loan_payoff" && goal.loan)
     return trackLoan(base, goal.loan, todayISO);
-  if (goal.type === "bills_fund") return trackBills(base, goal.bills ?? [], todayISO);
+  if (goal.type === "bills_fund")
+    return trackBills(base, goal.bills ?? [], todayISO);
 
   const futureTarget =
     months !== null && goal.inflationPct
@@ -264,7 +265,9 @@ function trackLoan(
   const loan = loanState(input, todayISO);
   const { current, monthlySip, returnPct, months, lines } = base;
   // EMIs paid between now and the target date (the balance drops on each).
-  const emisToDate = base.targetDate ? emisBetween(todayISO, base.targetDate, loan.emiDay) : null;
+  const emisToDate = base.targetDate
+    ? emisBetween(todayISO, base.targetDate, loan.emiDay)
+    : null;
   const owedAfter = (k: number) =>
     Math.round(balanceAfter(loan.balance, loan.ratePct, loan.emi, k));
   // Closing costs what's owed plus the foreclosure charge on it.
@@ -383,23 +386,36 @@ export function freePercent(
 
 /** A bills fund: on track while every payment in the next year is covered. */
 function trackBills(
-  base: Pick<TrackedGoal, keyof GoalInput | "lines" | "current" | "monthlySip" | "returnPct" | "months">,
+  base: Pick<
+    TrackedGoal,
+    | keyof GoalInput
+    | "lines"
+    | "current"
+    | "monthlySip"
+    | "returnPct"
+    | "months"
+  >,
   bills: Bill[],
   todayISO: string,
 ): TrackedGoal {
   const state = billsFundState(bills, base.current, base.monthlySip, todayISO);
   const status: GoalStatus = !bills.length
     ? "no_investments"
-    : state.firstShort
+    : state.short
       ? "behind"
       : !base.lines.length
         ? "no_investments"
         : "on_track";
   return {
     ...base,
-    target: state.shouldHold,
-    futureTarget: state.shouldHold,
-    progress: state.shouldHold > 0 ? Math.min(1, base.current / state.shouldHold) : bills.length ? 1 : 0,
+    target: state.needsToday,
+    futureTarget: state.needsToday,
+    progress:
+      state.needsToday > 0
+        ? Math.min(1, base.current / state.needsToday)
+        : bills.length
+          ? 1
+          : 0,
     projected: null,
     extraSipNeeded: Math.max(0, state.monthlyNeed - base.monthlySip),
     monthsToReach: null,

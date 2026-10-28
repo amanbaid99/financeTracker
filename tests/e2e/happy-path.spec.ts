@@ -411,10 +411,13 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     page.getByRole("button", { name: /^Bills fund/ }),
   ).toHaveAttribute("aria-expanded", "true");
   await page.getByRole("button", { name: "Show details" }).click();
-  await expect(page.getByText("Should hold today")).toBeVisible();
-  await expect(page.getByText("Put in each month")).toBeVisible();
-  await expect(page.getByText("₹4,000", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText(/short for Gym on/).first()).toBeVisible();
+  await expect(page.getByText("Needs today")).toBeVisible();
+  await expect(page.getByText("Put in each month to cover it")).toBeVisible();
+  // Empty fund: the card asks for a monthly amount, the details explain
+  // the gap and both ways to close it.
+  const billsCard = page.getByRole("button", { name: /^Bills fund/ });
+  await expect(billsCard).toContainText(/Needs ₹[\d,]+ more a month/);
+  await expect(page.getByText(/short by \d+ \w+ \d{4}\. Add ₹[\d,]+ now, or put in/)).toBeVisible();
 
   // Link one liquid fund: payments show as covered.
   await page.getByRole("button", { name: "Add investment" }).click();
