@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = { title: "Portfolio" };
 
 const pct = (n: number) => `${(n * 100).toFixed(Math.abs(n) < 0.1 ? 1 : 0)}%`;
-const signed = (n: number) => `${n >= 0 ? "+" : "−"}${formatINR(Math.abs(n))}`;
 const slotOf = (key: string) =>
   ASSET_CLASSES.find((c) => c.key === key)?.slot ?? 7;
 
@@ -101,32 +100,6 @@ export default async function PortfolioPage() {
               : ""}
             {pct(equity)} in equity
           </p>
-          {p.growth && (
-            <div className="mt-3 space-y-1 rounded-lg bg-muted p-3 text-sm">
-              <p>
-                <span className="text-muted-foreground">
-                  Invested {formatINR(p.growth.invested)} · now{" "}
-                </span>
-                {formatINR(p.growth.value)}
-              </p>
-              <p
-                className={cn(
-                  "tabular font-semibold",
-                  p.growth.gain >= 0 ? "text-success" : "text-danger",
-                )}
-              >
-                {signed(p.growth.gain)} ({p.growth.gain >= 0 ? "+" : "−"}
-                {pct(Math.abs(p.growth.gainPct))}){" "}
-                {p.growth.gain >= 0 ? "grown" : "down"}
-              </p>
-              {p.growth.known < p.growth.of && (
-                <p className="text-xs text-muted-foreground">
-                  On {p.growth.known} of {p.growth.of} holdings. Add the amount
-                  invested to the others, or import a CAS, to include them.
-                </p>
-              )}
-            </div>
-          )}
         </CardContent>
       </Card>
 

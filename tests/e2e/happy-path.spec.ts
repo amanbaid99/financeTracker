@@ -602,7 +602,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   ).toBeDisabled();
   await page.getByRole("button", { name: "Go back" }).click();
 
-  // Portfolio: everything held, split by asset class, with growth.
+  // Portfolio: everything held, split by asset class.
   await tab("Portfolio").click();
   await expect(page.getByRole("heading", { name: "Portfolio", exact: true })).toBeVisible();
   await expect(page.getByText("Where your money is")).toBeVisible();
@@ -611,7 +611,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
       .getByRole("group", { name: "Where your money is" })
       .getByRole("button", { name: /^Equity:/ }),
   ).toBeVisible();
-  await expect(page.getByText(/grown$/)).toBeVisible();
   await expect(page.getByRole("list", { name: "Holdings" })).toContainText(
     "Index SIP",
   );
