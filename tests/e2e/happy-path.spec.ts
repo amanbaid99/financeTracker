@@ -308,7 +308,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText(/grown at 6% a year/)).toBeVisible();
 
   // Update amounts for everything in one go.
-  await page.getByRole("button", { name: "Update", exact: true }).click();
+  await page.getByRole("button", { name: "Update values", exact: true }).click();
   await expect(
     page.getByText("Type in what each investment is worth today."),
   ).toBeVisible();
@@ -374,6 +374,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(
     page.getByText(/into your Index SIP \(close enough to an equity index fund/),
   ).toBeVisible();
+  await page.getByText(/^Review your plan/).click();
   // The plan as SIPs to start, in your own funds.
   await expect(page.getByRole("tab", { name: "SIPs to start" })).toHaveAttribute(
     "aria-selected",
@@ -381,9 +382,17 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   );
   const sipList = page.getByRole("list", { name: "SIPs to start" });
   await expect(sipList).toContainText("Index SIP");
-  await expect(sipList).toContainText("close enough to an equity index fund");
+  await expect(sipList).toContainText("Increase");
+  await expect(sipList).toContainText("/mo total");
+  const showAll = page.getByRole("button", { name: /^Show all \d+ changes$/ });
+  if (await showAll.isVisible()) await showAll.click();
+  for (const summary of await sipList.locator("summary").all()) await summary.click();
   await expect(sipList).toContainText("House");
-  await expect(sipList).toContainText(/until \w{3} \d{4}/);
+  await expect(sipList).toContainText(/review in \w{3} \d{4}/);
+  await page.getByRole("button", { name: "Simple", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Simple", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(sipList).toContainText("Index SIP");
+  await page.getByRole("button", { name: "Diversified", exact: true }).click();
   await page.screenshot({ path: "test-results/plan-375.png", fullPage: true });
   await page.getByRole("tab", { name: "By goal" }).click();
   await expect(sipList).toHaveCount(0);
@@ -631,7 +640,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Edit Index SIP" }).click();
   await expect(page.getByRole("dialog", { name: "Index SIP" })).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
-  await page.getByRole("button", { name: "Update", exact: true }).click();
+  await page.getByRole("button", { name: "Update values", exact: true }).click();
   await expect(page.getByText("Type in what each investment is worth today.")).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page.getByRole("button", { name: "Add an investment or saving" })).toBeVisible();

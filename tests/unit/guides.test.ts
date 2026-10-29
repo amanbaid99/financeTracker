@@ -5,7 +5,7 @@ describe("what's new", () => {
   it("shows releases launched after joining that haven't been read", () => {
     expect(
       pendingReleases(null, "2026-10-20T10:00:00Z").map((r) => r.date),
-    ).toEqual(RELEASES.filter((r) => r.date > "2026-10-20").map((r) => r.date));
+    ).toEqual(RELEASES.filter((r) => r.date > "2026-10-20").slice(0, 3).map((r) => r.date));
   });
   it("shows nothing to someone who joined after the latest launch", () => {
     expect(pendingReleases(null, `${LATEST_RELEASE}T09:00:00Z`)).toEqual([]);

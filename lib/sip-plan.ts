@@ -32,6 +32,19 @@ export interface SipLine {
   parts: SipPart[];
 }
 
+export type SipStrategy = "simple" | "diversified";
+
+/** Amounts in a suggestion are additions to an existing monthly contribution. */
+export function sipAction(line: SipLine) {
+  const current = line.investment?.monthlySip ?? 0;
+  return {
+    kind: current > 0 ? "Increase" : "Start",
+    current,
+    extra: line.monthly,
+    total: current + line.monthly,
+  };
+}
+
 /** Kinds of fund that can stand in for the one the plan asks for, best first. */
 const STAND_INS: Record<string, string[]> = {
   liquid_fund: [
@@ -231,6 +244,7 @@ export function splitForGoal(
   lump: number,
   investments: Investment[],
   links: Link[],
+  strategy: SipStrategy = "diversified",
 ): FundShare[] {
   const pctOf = new Map(
     links
@@ -250,13 +264,17 @@ export function splitForGoal(
     investments.filter((i) => pctOf.has(i.id)),
     (i) => pctOf.get(i.id)!,
   );
+  if (strategy === "simple") cands = cands.filter((c) => kindOf(c.i) !== "gold");
   // Funds only this goal uses come first; shared ones only if that's all there is.
   if (cands.some((c) => c.pct >= 100))
     cands = cands.filter((c) => c.pct >= 100);
   if (!cands.length) {
     const spare = suitable(
       investments.filter(
-        (i) => !pctOf.has(i.id) && freePercent(i.id, links) >= 100,
+        (i) =>
+          !pctOf.has(i.id) &&
+          freePercent(i.id, links) >= 100 &&
+          (strategy !== "simple" || kindOf(i) !== "gold"),
       ),
       () => 100,
     ).sort(
@@ -284,6 +302,17 @@ export function splitForGoal(
     (a, b) =>
       a.r - b.r || b.i.monthlySip - a.i.monthlySip || b.i.value - a.i.value,
   );
+  if (strategy === "simple") {
+    const c = cands[0];
+    return [{
+      investment: c.i,
+      monthly,
+      lump,
+      similar: c.r > 0,
+      percent: c.pct,
+      note: noteFor(c.i),
+    }];
+  }
   // One fund per kind: two of the same kind isn't spreading the risk.
   const seen = new Set<string>();
   cands = cands.filter((c) => {
@@ -334,6 +363,7 @@ export function sipPlan(
   suggestions: Suggestion[],
   investments: Investment[] = [],
   links: Link[] = [],
+  strategy: SipStrategy = "diversified",
 ): SipLine[] {
   const lines = new Map<string, SipLine>();
   const add = (
@@ -361,6 +391,7 @@ export function sipPlan(
       0,
       investments,
       links,
+      strategy,
     );
     if (!shares.length) {
       add(
@@ -379,7 +410,7 @@ export function sipPlan(
       );
       continue;
     }
-    for (const sh of shares)
+    for (const sh of shares.filter((share) => share.monthly > 0))
       add(
         `inv:${sh.investment.id}`,
         () => ({

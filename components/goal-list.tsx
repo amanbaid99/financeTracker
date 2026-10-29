@@ -8,12 +8,13 @@ import {
   GoalInvestments,
   SuggestionBox,
 } from "@/components/goal-actions";
+import type { SipStrategy } from "@/lib/sip-plan";
 import type { Suggestion } from "@/lib/allocate";
 import { BillsPlan, LoanPlan, SavingsPlan } from "@/components/goal-details";
 import { GoalIcon } from "@/components/goal-icon";
 import { Progress } from "@/components/ui/progress";
 import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
-import { goalHeadline, TONE_BAR, TONE_TEXT } from "@/lib/goal-summary";
+import { goalHeadline, groupGoals, TONE_BAR, TONE_TEXT } from "@/lib/goal-summary";
 import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
 import { cn } from "@/lib/utils";
 
@@ -36,8 +37,10 @@ export function GoalList({
   today,
   initialOpen,
   suggestions = [],
+  strategy = "diversified",
 }: {
   suggestions?: Suggestion[];
+  strategy?: SipStrategy;
   goals: TrackedGoal[];
   investments: Investment[];
   links: Link[];
@@ -47,9 +50,10 @@ export function GoalList({
   const [open, setOpen] = useState<string | null>(initialOpen);
   const [details, setDetails] = useState(false);
 
-  return (
+  const groups = groupGoals(goals);
+  const renderGoals = (items: TrackedGoal[]) => (
     <ul className="space-y-3">
-      {goals.map((g) => {
+      {items.map((g) => {
         const h = goalHeadline(g);
         const isOpen = open === g.id;
         const panelId = `goal-${g.id}`;
@@ -57,7 +61,7 @@ export function GoalList({
           <li
             key={g.id}
             className={cn(
-              "rounded-2xl border bg-card transition-colors",
+              "rounded-2xl border border-border/70 bg-card transition-colors hover:border-primary/40",
               isOpen && "border-primary",
             )}
           >
@@ -69,34 +73,36 @@ export function GoalList({
                 setOpen(isOpen ? null : g.id);
                 setDetails(false);
               }}
-              className="press flex w-full items-center gap-3 p-4 text-left"
+              className="press flex w-full items-start gap-3 p-4 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
               <GoalIcon type={g.type} />
               <div className="min-w-0 flex-1 space-y-1.5">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="truncate font-semibold">{g.name}</span>
-                  <span className="tabular shrink-0 text-xs text-muted-foreground">
-                    {formatINRCompact(g.current)} /{" "}
-                    {formatINRCompact(g.futureTarget || g.target)}
+                <div className="space-y-1">
+                  <span className="block break-words text-base font-semibold leading-snug">{g.name}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {g.status === "reached" ? "Goal reached" : h.tone === "warning" || h.tone === "danger" ? "Needs attention" : g.emisCloseFirst ? "Covered by your EMIs" : g.status === "no_investments" ? "Ready to get started" : "Making progress"}
+                    {g.targetDate ? ` · ${formatDate(g.targetDate)}` : ""}
                   </span>
                 </div>
                 <Progress
+                  className="h-1.5"
                   value={g.progress * 100}
                   tone={TONE_BAR[h.tone]}
                   label={`${g.name} progress`}
                 />
                 <p
                   className={cn(
-                    "truncate text-xs font-medium",
+                    "break-words text-sm font-medium leading-relaxed",
                     TONE_TEXT[h.tone],
                   )}
                 >
                   {h.text}
                 </p>
+                {!g.emisCloseFirst && <p className="tabular text-xs text-muted-foreground">{formatINRCompact(g.current)} saved</p>}
               </div>
               <ChevronDown
                 className={cn(
-                  "size-4 shrink-0 text-muted-foreground transition-transform",
+                  "mt-1 size-4 shrink-0 text-muted-foreground transition-transform",
                   isOpen && "rotate-180",
                 )}
                 aria-hidden
@@ -140,6 +146,7 @@ export function GoalList({
 
                 {suggestions.find((x) => x.goalId === g.id) && (
                   <SuggestionBox
+                    strategy={strategy}
                     goal={g}
                     suggestion={suggestions.find((x) => x.goalId === g.id)!}
                     investments={investments}
@@ -176,5 +183,42 @@ export function GoalList({
         );
       })}
     </ul>
+  );
+
+  return (
+    <div className="space-y-6">
+      {groups.attention.length > 0 && (
+        <section aria-labelledby="attention-goals-h" className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="size-2 rounded-full bg-warning" aria-hidden />
+            <h2 id="attention-goals-h" className="font-semibold">A little attention</h2>
+            <span className="text-sm text-muted-foreground">{groups.attention.length}</span>
+          </div>
+          {renderGoals(groups.attention)}
+        </section>
+      )}
+      {groups.growing.length > 0 && (
+        <section aria-labelledby="growing-goals-h" className="space-y-3">
+          <h2 id="growing-goals-h" className="font-semibold">Keep going <span className="ml-1 text-sm font-normal text-muted-foreground">{groups.growing.length}</span></h2>
+          {renderGoals(groups.growing)}
+        </section>
+      )}
+      {([
+        ["loans", "Loans covered by EMIs", "Your regular payments are working toward these. Open a loan to see its timeline."],
+        ["reached", "Goals reached", "A moment to appreciate how far you've come."],
+      ] as const).map(([key, title, description]) => groups[key].length > 0 && (
+        <details key={key} open={groups[key].some((g) => g.id === initialOpen) || undefined}
+          className="group rounded-2xl border border-border/70 bg-muted/30 p-4">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium [&::-webkit-details-marker]:hidden">
+            <span>{title} <span className="ml-1 text-sm text-muted-foreground">{groups[key].length}</span></span>
+            <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden />
+          </summary>
+          <div className="mt-3 space-y-3">
+            <p className="text-sm text-muted-foreground">{description}</p>
+            {renderGoals(groups[key])}
+          </div>
+        </details>
+      ))}
+    </div>
   );
 }

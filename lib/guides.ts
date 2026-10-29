@@ -19,8 +19,11 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap Add a goal and pick a type: a purchase, a trip, an emergency fund, a bills fund or paying off a loan.",
       "Link the mutual funds, savings or deposits that pay for it. One investment can be split across goals.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
-      "Use Update to enter new values, or import a CAS statement to update every fund at once.",
-      "Plan my money suggests how to split your savings and monthly amount across goals. Nothing changes until you record it.",
+      "Goals needing attention come first. Loans covered by EMIs and reached goals are folded away, so you can focus on what needs you.",
+      "Use Update values to enter new amounts, or import a CAS statement to update every fund at once.",
+      "Plan my money is above your goals. Open Review your plan for SIP suggestions, or edit what you can invest. Nothing changes until you record it.",
+      "Your SIP list shows what to start or increase, with the current and new monthly amounts. Open See goal breakdown for the details, or Keep your existing SIPs to see what continues.",
+      "Compare Diversified with a Simple preview using one suitable holding per goal. The chosen split also appears inside each goal. Nothing is saved until you confirm.",
     ],
   },
   portfolio: {
@@ -76,6 +79,17 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-10-29",
+    title: "A little more clarity for your goals",
+    items: [
+      { title: "Know where to begin", text: "Your next step highlights goals that need attention. Your money plan is near the top, with the details folded away." },
+      { title: "More room for what matters", text: "Full goal names, clearer dates and quieter progress cards. Loans covered by EMIs and goals you've reached open when you need them." },
+      { title: "Clearer actions", text: "Update values says what it does. Plan my money is easy to find even before you have a plan." },
+      { title: "Know what changes", text: "See which SIPs to start or increase, with your current amount, the extra amount and the new total. Existing SIPs and goal breakdowns open when you need them." },
+      { title: "Compare a simpler preview", text: "Try one suitable holding per goal, or keep the diversified split. Compare without changing your recorded investments." },
+    ],
+  },
   {
     date: "2026-10-27",
     title: "A calmer, simpler app",

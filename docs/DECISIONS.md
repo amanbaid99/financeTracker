@@ -24,7 +24,7 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 - Bottom tab bar with four tabs: Goals, Portfolio, Cards, Ask. Settings is the gear in the header.
 - One + button for every add or update action (new goal, update values, log a card bill, plan my
   money, import, add a card). Pages keep only their main actions visible to stay uncluttered.
-- Goals page: "+ Update" and "Import CAS" side by side at the top. Portfolio has the same two, and
+- Goals page: "Update values" and "Import CAS" side by side at the top. Portfolio has the same two, and
   holdings open for editing when tapped.
 - Details are folded away ("Show details") so a goal shows its headline and verdict first.
 - Portfolio shows total value, SIPs and equity share. The "invested vs now" gain box was removed
@@ -33,6 +33,12 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 
 ## Goals and the money plan
 
+- Goals now lead with saved and monthly amounts, a next-step summary, and a compact money plan. Review your plan opens the SIP details. A visible Plan my money button is shown before a plan exists.
+- Goals that need attention or a first investment come first, ordered by the existing date and amount rules. Other active goals follow. Reached goals and loans covered by EMIs are folded away, except for an explicitly opened goal. Overdue loans stay visible. These are presentation groups, not changes to allocation priorities.
+- Goal cards show full names, a date, a plain status and one actionable headline. Detailed targets and calculations stay inside the expanded goal. A soft accent panel with a subtle circular motif gives the page a distinctive next-step area while respecting every theme and accent.
+
+- The SIP list distinguishes extra contributions from existing SIPs, shows current and new totals, and folds goal breakdowns and existing SIPs away. It initially shows three changes with an explicit count and a way to show all. This is a shorter list, not a phased investment plan.
+- Diversified remains the default. Simple is an unsaved strategy using one suitable non-gold holding per goal, combining the same holding across goals. It preserves goal ownership and never makes gold a sole holding. The chosen strategy also controls the goal-level confirmation form, so recording agrees with the preview. Switching strategies does not save anything.
 - A goal's investments are holdings linked with a percent, so one holding can pay for several
   goals.
 - A goal with nothing linked shows "How to save for it": holdings that suit its timeline, or a new

@@ -99,6 +99,22 @@ export const TONE_BAR: Record<
   muted: "primary",
 };
 
+/** Presentation groups only. Never change the funding order or calculations. */
+export function groupGoals(goals: TrackedGoal[]) {
+  const groups: Record<"attention" | "growing" | "loans" | "reached", TrackedGoal[]> = {
+    attention: [], growing: [], loans: [], reached: [],
+  };
+  for (const goal of sortGoals(goals)) {
+    const headline = goalHeadline(goal);
+    if (goal.status === "reached") groups.reached.push(goal);
+    else if (headline.tone === "warning" || headline.tone === "danger") groups.attention.push(goal);
+    else if (goal.loanState && goal.emisCloseFirst) groups.loans.push(goal);
+    else if (goal.status === "no_investments") groups.attention.push(goal);
+    else groups.growing.push(goal);
+  }
+  return groups;
+}
+
 /**
  * Goals with a date first, soonest first; then goals with no date. Within
  * each, the smaller amount comes first.

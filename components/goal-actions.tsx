@@ -15,7 +15,7 @@ import { deleteGoal } from "@/lib/actions";
 import type { Suggestion } from "@/lib/allocate";
 import { goalHeadline } from "@/lib/goal-summary";
 import { waysToFund, type WaysToFund } from "@/lib/fund-goal";
-import { splitForGoal, type FundShare } from "@/lib/sip-plan";
+import { splitForGoal, type FundShare, type SipStrategy } from "@/lib/sip-plan";
 import { formatINR } from "@/lib/format";
 import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
 
@@ -326,7 +326,9 @@ export function SuggestionBox({
   suggestion: s,
   investments,
   links,
+  strategy = "diversified",
 }: {
+  strategy?: SipStrategy;
   goal: TrackedGoal;
   suggestion: Suggestion;
   investments: Investment[];
@@ -343,6 +345,7 @@ export function SuggestionBox({
     s.lump,
     investments,
     links,
+    strategy,
   );
   const amounts = (lump: number, monthly: number) =>
     [

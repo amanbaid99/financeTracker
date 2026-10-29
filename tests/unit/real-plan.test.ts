@@ -397,3 +397,60 @@ describe("smart split", () => {
     expect(sips.reduce((s, l) => s + l.monthly, 0)).toBe(65000);
   });
 });
+
+describe("simple SIP preview", () => {
+  it("uses the same single holding and amounts for the goal confirmation, including a lump sum", async () => {
+    const { splitForGoal } = await import("@/lib/sip-plan");
+    const funds = investments.filter((i) => ["n50", "flexi", "mid"].includes(i.id));
+    const goalLinks = funds.map((i) => ({ goalId: "g", investmentId: i.id, percent: 100 }));
+    const shares = splitForGoal("g", "equity_index", 12000, 50000, funds, goalLinks, "simple");
+    expect(shares).toHaveLength(1);
+    expect(shares[0].investment.id).toBe("n50");
+    expect(shares[0].monthly).toBe(12000);
+    expect(shares[0].lump).toBe(50000);
+  });
+
+  const makePlan = () => planMoney({ goals: tracked, investments, links, lump: 0, monthlyTotal: 65000, todayISO: TODAY });
+
+  it("preserves every goal's extra monthly budget with one destination per goal", async () => {
+    const { sipPlan } = await import("@/lib/sip-plan");
+    const plan = makePlan();
+    const before = JSON.stringify({ investments, links, suggestions: plan.suggestions });
+    const simple = sipPlan(plan.suggestions, investments, links, "simple");
+    for (const s of plan.suggestions.filter((s) => s.monthly > 0)) {
+      const parts = simple.flatMap((line) => line.parts).filter((part) => part.goalId === s.goalId);
+      expect(parts).toHaveLength(1);
+      expect(parts[0].monthly).toBe(s.monthly);
+    }
+    expect(simple.reduce((sum, line) => sum + line.monthly, 0)).toBe(plan.monthlyFree);
+    expect(simple.length).toBeLessThan(sipPlan(plan.suggestions, investments, links).length);
+    expect(simple.some((line) => /gold/i.test(line.label))).toBe(false);
+    expect(JSON.stringify({ investments, links, suggestions: plan.suggestions })).toBe(before);
+  });
+
+  it("uses a category instead of making gold the sole holding", async () => {
+    const { sipPlan } = await import("@/lib/sip-plan");
+    const s = { ...makePlan().suggestions.find((s) => s.monthly > 0)!, category: "equity_index", monthly: 5000 };
+    const gold = investments.find((i) => i.id === "goldetf")!;
+    const lines = sipPlan([s], [gold], [{ goalId: s.goalId, investmentId: gold.id, percent: 100 }], "simple");
+    expect(lines).toHaveLength(1);
+    expect(lines[0].investment).toBeNull();
+    expect(lines[0].category).toBe("equity_index");
+    expect(lines[0].monthly).toBe(5000);
+  });
+
+  it("combines shared holdings and adds an increase to the current SIP only once", async () => {
+    const { sipPlan, sipAction } = await import("@/lib/sip-plan");
+    const s = { ...makePlan().suggestions.find((s) => s.monthly > 0)!, category: "liquid_fund", monthly: 3000 };
+    const fund = { ...investments.find((i) => i.id === "arb")!, monthlySip: 5000 };
+    const second = { ...s, goalId: "second", monthly: 2000 };
+    const lines = sipPlan([s, second], [fund], [
+      { goalId: s.goalId, investmentId: fund.id, percent: 50 },
+      { goalId: second.goalId, investmentId: fund.id, percent: 50 },
+    ], "simple");
+    expect(lines).toHaveLength(1);
+    expect(lines[0].parts).toHaveLength(2);
+    expect(sipAction(lines[0])).toEqual({ kind: "Increase", current: 5000, extra: 5000, total: 10000 });
+    expect(sipAction({ ...lines[0], investment: null })).toEqual({ kind: "Start", current: 0, extra: 5000, total: 5000 });
+  });
+});
