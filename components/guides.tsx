@@ -58,7 +58,7 @@ export function WhatsNewSheet({
     <Sheet title="What's new" onClose={onClose}>
       <div className="space-y-5">
         {releases.map((r) => (
-          <section key={r.date} className="space-y-3" aria-label={r.title}>
+          <section key={`${r.date}-${r.title}`} className="space-y-3" aria-label={r.title}>
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {r.title}
             </p>
@@ -92,11 +92,11 @@ export function WhatsNewSheet({
  * (i) button next to a page title. Opens the section's guide on the first
  * visit, and any time it's tapped after that.
  */
-export function GuideButton({ id }: { id: GuideId }) {
+export function GuideButton({ id, autoShow = true }: { id: GuideId; autoShow?: boolean }) {
   const { seen, markSeen, busy } = useContext(Ctx);
   const [tapped, setTapped] = useState(false);
   const first = !seen.has(id);
-  const open = tapped || (first && !busy);
+  const open = tapped || (autoShow && first && !busy);
 
   const close = useCallback(() => {
     setTapped(false);

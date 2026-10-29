@@ -1,4 +1,4 @@
-import { FileUp, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -45,7 +45,7 @@ export default async function GoalsPage({
     : null;
   const saved = goals.reduce((s, g) => s + g.current, 0);
   const sips = goals.reduce((s, g) => s + g.monthlySip, 0);
-  // Investments on at least one goal, with the goals they count toward.
+  // Every investment remains updatable from the + menu.
   const goalNames = new Map(goals.map((g) => [g.id, g.name]));
   const updatable = investments
     .map((i) => ({
@@ -53,8 +53,7 @@ export default async function GoalsPage({
       goals: links
         .filter((l) => l.investmentId === i.id)
         .map((l) => goalNames.get(l.goalId) ?? ""),
-    }))
-    .filter((x) => x.goals.length > 0);
+    }));
 
   return (
     <main className="space-y-5">
@@ -72,31 +71,10 @@ export default async function GoalsPage({
             </dl>
           )}
         </div>
-        {goals.length > 0 && (
-          <div className="grid grid-cols-2 gap-2">
-            {updatable.length > 0 ? (
-              <UpdateButton items={updatable} autoOpen={action === "update"} />
-            ) : (
-              <Link
-                href="/goals/new"
-                className={buttonVariants({ size: "sm", className: "w-full" })}
-              >
-                <Plus /> New goal
-              </Link>
-            )}
-            <Link
-              href="/import"
-              className={buttonVariants({
-                size: "sm",
-                variant: "outline",
-                className: "w-full",
-              })}
-            >
-              <FileUp /> Import CAS
-            </Link>
-          </div>
-        )}
+
       </div>
+
+      {updatable.length > 0 && <UpdateButton items={updatable} autoOpen={action === "update"} showButton={false} />}
 
       {goals.length === 0 ? (
         <div className="space-y-3 rounded-2xl border bg-card p-6 text-center">

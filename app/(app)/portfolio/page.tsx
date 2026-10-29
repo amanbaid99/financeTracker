@@ -22,7 +22,8 @@ const pct = (n: number) => `${(n * 100).toFixed(Math.abs(n) < 0.1 ? 1 : 0)}%`;
 const slotOf = (key: string) =>
   ASSET_CLASSES.find((c) => c.key === key)?.slot ?? 7;
 
-export default async function PortfolioPage() {
+export default async function PortfolioPage({ searchParams }: { searchParams: Promise<{ do?: string }> }) {
+  const { do: action } = await searchParams;
   const { investments, links, goals } = await loadGoals();
   const { supabase, user } = await requireUser();
   const [review, aiEnabled] = await Promise.all([
@@ -42,25 +43,11 @@ export default async function PortfolioPage() {
       .filter((l) => l.investmentId === i.id)
       .map((l) => goalNames.get(l.goalId) ?? ""),
   }));
-  const actions = (
-    <div className="grid grid-cols-2 gap-2">
-      {updatable.length > 0 ? <UpdateButton items={updatable} /> : <span />}
-      <Link
-        href="/import"
-        className={buttonVariants({
-          size: "sm",
-          variant: "outline",
-          className: "w-full",
-        })}
-      >
-        <FileUp /> Import CAS
-      </Link>
-    </div>
-  );
 
   if (p.holdings.length === 0) {
     return (
       <main className="space-y-5">
+        {updatable.length > 0 && <UpdateButton items={updatable} autoOpen={action === "update"} showButton={false} />}
         <div className="flex items-center gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">Portfolio</h1>
           <GuideButton id="portfolio" />
@@ -99,7 +86,7 @@ export default async function PortfolioPage() {
           Everything you hold, across all your goals.
         </p>
       </div>
-      {actions}
+      {updatable.length > 0 && <UpdateButton items={updatable} autoOpen={action === "update"} showButton={false} />}
 
       <Card>
         <CardContent className="space-y-2 pt-5 sm:pt-5">

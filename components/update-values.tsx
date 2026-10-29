@@ -24,10 +24,12 @@ export interface UpdateItem {
 export function UpdateButton({
   items,
   autoOpen = false,
+  showButton = true,
 }: {
   items: UpdateItem[];
   /** Open straight away (from the + menu). */
   autoOpen?: boolean;
+  showButton?: boolean;
 }) {
   const [open, setOpen] = useState(autoOpen);
   const close = useCallback(() => {
@@ -40,14 +42,14 @@ export function UpdateButton({
   );
   return (
     <>
-      <Button
+      {showButton && <Button
         type="button"
         size="sm"
         className="w-full"
         onClick={() => setOpen(true)}
       >
         <RefreshCw /> Update values
-      </Button>
+      </Button>}
       {open && <UpdateSheet items={items} onClose={close} />}
     </>
   );

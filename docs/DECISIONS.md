@@ -23,9 +23,9 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 
 - Bottom tab bar with four tabs: Goals, Portfolio, Cards, Ask. Settings is the gear in the header.
 - One + button for every add or update action (new goal, update values, log a card bill, plan my
-  money, import, add a card). Pages keep only their main actions visible to stay uncluttered.
-- Goals page: "Update values" and "Import CAS" side by side at the top. Portfolio has the same two, and
-  holdings open for editing when tapped.
+  money, import). Pages keep only their main actions visible to stay uncluttered.
+- Goals and Portfolio use the + menu for Update values and Import statement, without duplicate top buttons. Updates open in place on Portfolio. Holdings still open for editing when tapped.
+- Add a card lives only in the Cards tab, with a visible button even when cards exist. The + menu has a first-use hint and a replayable guide.
 - Details are folded away ("Show details") so a goal shows its headline and verdict first.
 - Portfolio shows total value, SIPs and equity share. The "invested vs now" gain box was removed
   at the owner's request; per-holding gains stay in the list.

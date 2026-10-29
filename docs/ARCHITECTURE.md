@@ -36,9 +36,9 @@ decisions are in [DECISIONS.md](DECISIONS.md).
 | --------------------------- | ---------------------------------------------------------------------- |
 | `/login`, `/auth/callback`  | Sign in (invite list checked by a database trigger), privacy consent   |
 | `/consent`                  | Re-accept the privacy policy after `PRIVACY_VERSION` changes           |
-| `/goals`                    | Start page. Goal list, + Update, Import CAS, the money plan            |
+| `/goals`                    | Start page. Goal list, money plan; updates and imports via +            |
 | `/goals/new`, `/goals/[id]` | New goal; one goal with its plan, investments and suggestions          |
-| `/portfolio`                | Total value, allocation bar, holdings (tap to edit), Update and Import |
+| `/portfolio`                | Total value, allocation bar, holdings (tap to edit); updates and imports via + |
 | `/cards`                    | Credit cards: milestones first, bills, card details, card advisor      |
 | `/ask`                      | Private Q&A about your own numbers (AI, opt-in)                        |
 | `/import`                   | CAS statement import with a review step                                |

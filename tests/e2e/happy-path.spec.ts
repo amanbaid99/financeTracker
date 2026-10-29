@@ -95,7 +95,17 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await goalsGuide.getByRole("button", { name: "Got it" }).click();
   await savedSeen;
   await expect(goalsGuide).toHaveCount(0);
+  await expect(page.getByRole("complementary", { name: "About the plus button" })).toBeVisible();
+  await page.getByRole("button", { name: "Add or update", exact: true }).click();
+  const shortcuts = page.getByRole("dialog", { name: "What would you like to do?" });
+  await expect(shortcuts.getByRole("link", { name: /^Add a card/ })).toHaveCount(0);
+  await shortcuts.getByRole("button", { name: "Guide: Using the plus button" }).click();
+  const plusGuide = page.getByRole("dialog", { name: "Using the plus button" });
+  await expect(plusGuide).toContainText("Add a new card in the Cards tab");
+  await plusGuide.getByRole("button", { name: "Got it" }).click();
+  await shortcuts.getByRole("button", { name: "Close", exact: true }).click();
   await page.reload();
+  await expect(page.getByRole("complementary", { name: "About the plus button" })).toHaveCount(0);
   await expect(page.getByText("What are you saving for?")).toBeVisible();
   await expect(goalsGuide).toHaveCount(0);
   await page.getByRole("button", { name: "Guide: How goals work" }).click();
@@ -308,7 +318,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText(/grown at 6% a year/)).toBeVisible();
 
   // Update amounts for everything in one go.
-  await page.getByRole("button", { name: "Update values", exact: true }).click();
+  await page.getByRole("button", { name: "Add or update", exact: true }).click();
+  await page.getByRole("link", { name: /^Update values/ }).click();
   await expect(
     page.getByText("Type in what each investment is worth today."),
   ).toBeVisible();
@@ -480,7 +491,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   const PP = "Parag Parikh Flexi Cap Fund - Direct Plan Growth";
   const LIQ = "Edelweiss Liquid Fund - Direct Growth";
   const MYST = "Quant Mystery Opportunities Fund - Direct Growth";
-  await page.getByRole("link", { name: "Import CAS" }).click();
+  await page.getByRole("button", { name: "Add or update", exact: true }).click();
+  await page.getByRole("link", { name: /^Import statement/ }).click();
   await page.getByRole("button", { name: "How to get your statement" }).click();
   await expect(
     page.getByRole("heading", { name: "Getting your CAS" }),
@@ -633,11 +645,12 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   );
   expect(o, "/portfolio overflows at 375px").toBeLessThanOrEqual(0);
   // Edit, update or import right from Portfolio.
-  await expect(page.getByRole("link", { name: "Import CAS" })).toHaveAttribute("href", "/import");
+  await expect(page.getByRole("link", { name: "Import CAS", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Edit Index SIP" }).click();
   await expect(page.getByRole("dialog", { name: "Index SIP" })).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
-  await page.getByRole("button", { name: "Update values", exact: true }).click();
+  await page.getByRole("button", { name: "Add or update", exact: true }).click();
+  await page.getByRole("link", { name: /^Update values/ }).click();
   await expect(page.getByText("Type in what each investment is worth today.")).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page.getByRole("button", { name: "Add an investment or saving" })).toBeVisible();
@@ -691,7 +704,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(review.getByText("Review complete. Here is what deserves a closer look.")).toBeVisible({ timeout: 30_000 });
   const reviewSent = JSON.stringify(await (await page.request.get("http://127.0.0.1:5329/last-review")).json());
   for (const name of ["Bank FD", "House", "Index SIP", email]) expect(reviewSent).not.toContain(name);
-  await page.getByRole("button", { name: "Update values", exact: true }).click();
+  await page.getByRole("button", { name: "Add or update", exact: true }).click();
+  await page.getByRole("link", { name: /^Update values/ }).click();
   const valueInput = page.getByRole("dialog", { name: "Update amounts" }).getByRole("textbox").first();
   const oldValue = Number((await valueInput.inputValue()).replace(/,/g, ""));
   await valueInput.fill(String(oldValue + 1));

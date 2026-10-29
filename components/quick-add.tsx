@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  CreditCard,
   FileUp,
   Plus,
   Receipt,
@@ -12,6 +11,7 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { GuideButton, useGuides } from "@/components/guides";
 import { Sheet } from "@/components/sheet";
 
 /** Event sent when a + action targets the page you're already on. */
@@ -59,19 +59,17 @@ const ACTIONS = [
     hint: "Update every fund from a CAS",
     icon: FileUp,
   },
-  {
-    href: "/cards?do=card",
-    label: "Add a card",
-    hint: "Benefits and milestones",
-    icon: CreditCard,
-  },
+
 ];
 
 /** One button for every "add" or "update" in the app. Hidden where it'd get in the way. */
 export function QuickAdd() {
   const path = usePathname();
+  const { seen, markSeen, busy } = useGuides();
+  const pageGuide = path.startsWith("/portfolio") ? "portfolio" : path.startsWith("/cards") ? "cards" : "goals";
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
+  const showHint = !open && !busy && seen.has(pageGuide) && !seen.has("quick-add");
   if (
     path.startsWith("/ask") ||
     path.startsWith("/settings") ||
@@ -82,9 +80,14 @@ export function QuickAdd() {
 
   return (
     <>
+      {showHint && <aside aria-label="About the plus button" className="fixed bottom-[calc(8.75rem+env(safe-area-inset-bottom))] right-4 z-30 w-64 rounded-2xl border bg-card p-4 shadow-lg sm:right-[max(1rem,calc(50%-24rem+1rem))]">
+        <p className="text-sm font-semibold">Your shortcuts are here</p>
+        <p className="mt-1 text-sm text-muted-foreground">Tap + to add a goal, update values, import a statement or log a bill. Add cards in the Cards tab.</p>
+        <button type="button" className="mt-2 min-h-10 text-sm font-medium text-primary" onClick={() => markSeen("quick-add")}>Got it</button>
+      </aside>}
       <button
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={() => { if (!seen.has("quick-add")) markSeen("quick-add"); setOpen(true); }}
         aria-label="Add or update"
         className="press fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-30 inline-flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/20 sm:right-[max(1rem,calc(50%-24rem+1rem))]"
       >
@@ -92,16 +95,21 @@ export function QuickAdd() {
       </button>
       {open && (
         <Sheet title="What would you like to do?" onClose={close}>
+          <div className="mb-3 flex items-center justify-between gap-2">
+            <p className="text-sm text-muted-foreground">Your everyday shortcuts</p>
+            <GuideButton id="quick-add" autoShow={false} />
+          </div>
           <ul className="grid grid-cols-2 gap-2">
             {ACTIONS.map((a) => (
               <li key={a.href}>
                 <Link
-                  href={a.href}
+                  href={a.href === "/goals?do=update" && path === "/portfolio" ? "/portfolio?do=update" : a.href}
                   transitionTypes={["tab"]}
                   onClick={(e) => {
                     close();
                     // Already on that page: open it in place, keeping what's open.
-                    const [to, query] = a.href.split("?");
+                    const href = a.href === "/goals?do=update" && path === "/portfolio" ? "/portfolio?do=update" : a.href;
+                    const [to, query] = href.split("?");
                     const action = new URLSearchParams(query).get("do");
                     if (action && to === path) {
                       e.preventDefault();

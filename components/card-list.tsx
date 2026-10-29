@@ -997,6 +997,7 @@ export function CardList({
 
   return (
     <div className="space-y-4">
+      {cards.length > 0 && <Button type="button" size="sm" onClick={() => setSheet({ kind: "card", card: null })}><Plus /> Add a card</Button>}
       {cards.length === 0 ? (
         <div className="space-y-2 rounded-2xl border bg-card p-6 text-center">
           <CreditCard className="mx-auto size-8 text-primary" aria-hidden />

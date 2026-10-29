@@ -2,7 +2,7 @@
 // "What's new" notes shown once after a launch. Plain data, safe to use
 // from server and client code.
 
-export type GuideId = "goals" | "portfolio" | "cards" | "ask" | "import";
+export type GuideId = "goals" | "portfolio" | "cards" | "ask" | "import" | "quick-add";
 
 export interface Guide {
   title: string;
@@ -11,6 +11,18 @@ export interface Guide {
 }
 
 export const GUIDES: Record<GuideId, Guide> = {
+  "quick-add": {
+    title: "Using the plus button",
+    intro: "Tap + near the bottom of the screen for your everyday actions.",
+    steps: [
+      "New goal adds something you want to save for.",
+      "Update values lets you enter the latest amounts for your investments.",
+      "Import statement reads a CAS. You review the results before saving.",
+      "Plan my money helps split what you can invest across goals.",
+      "Log a card bill records a statement for an existing card. Add a new card in the Cards tab.",
+      "You can reopen this guide from the info button inside the + menu.",
+    ],
+  },
   goals: {
     title: "How goals work",
     intro:
@@ -20,7 +32,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Link the mutual funds, savings or deposits that pay for it. One investment can be split across goals.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
       "Goals needing attention come first. Loans covered by EMIs and reached goals are folded away, so you can focus on what needs you.",
-      "Use Update values to enter new amounts, or import a CAS statement to update every fund at once.",
+      "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
       "Plan my money is above your goals. Open Review your plan for SIP suggestions, or edit what you can invest. Nothing changes until you record it.",
       "Your monthly plan tells you what amount to start or increase each investment to. Open What this supports to see the goals behind it.",
       "Plan details and options shows the goal breakdown and lets you compare one holding per goal with a spread across holdings. Nothing is saved until you confirm.",
@@ -33,7 +45,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Turn on automatic reviews for checks after imports and holding updates. AI prioritises anonymous checks. Review suggestions yourself before changing investments.",
       "The bar shows your split by asset class. Tap a part of it to see what's in it.",
       "Growth compares today's value with what you put in.",
-      "Values come from your goals and CAS imports. Update them from the Goals tab.",
+      "Tap + to update values or import a CAS statement. Tap a holding to edit it.",
     ],
   },
   cards: {
@@ -80,6 +92,11 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-10-29",
+    title: "Your shortcuts, in one place",
+    items: [{ title: "A clearer plus menu", text: "Update values and import statements from +. A first-use hint shows where to find them, with a guide in the menu. Add cards from the Cards tab." }],
+  },
   {
     date: "2026-10-29",
     title: "A closer look at your portfolio",
