@@ -1,5 +1,6 @@
 "use server";
 
+import { schedulePortfolioReview } from "@/lib/portfolio-review/service";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -251,6 +252,7 @@ export async function applyImport(
       }
     }
   } catch (e) {
+    if (updated + added > 0) await schedulePortfolioReview(supabase, userId, "cas");
     revalidatePath("/", "layout");
     return {
       ok: false,
@@ -259,5 +261,6 @@ export async function applyImport(
     };
   }
   revalidatePath("/", "layout");
+  if (updated + added > 0) await schedulePortfolioReview(supabase, userId, "cas");
   return { ok: true, updated, added };
 }

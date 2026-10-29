@@ -1,3 +1,7 @@
+import { PortfolioReview } from "@/components/portfolio-review";
+import { resultSchema } from "@/lib/portfolio-review/checks";
+import { aiAllowed } from "@/lib/portfolio-review/service";
+import { requireUser } from "@/lib/data";
 import { FileUp } from "lucide-react";
 import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
@@ -20,6 +24,15 @@ const slotOf = (key: string) =>
 
 export default async function PortfolioPage() {
   const { investments, links, goals } = await loadGoals();
+  const { supabase, user } = await requireUser();
+  const [review, aiEnabled] = await Promise.all([
+    supabase.from("portfolio_reviews").select("*").eq("user_id", user.id).maybeSingle(),
+    aiAllowed(supabase, user.id),
+  ]);
+  const parsedReview = resultSchema.safeParse(review.data?.result);
+  const reviewCard = <PortfolioReview available={!review.error} enabled={review.data?.enabled ?? false}
+    aiEnabled={aiEnabled} state={review.data?.state ?? "idle"} checkedAt={review.data?.checked_at ?? null}
+    reviewedAt={review.data?.reviewed_at ?? null} result={parsedReview.success ? parsedReview.data : null} />;
   const p = buildPortfolio(investments);
   const goalNames = new Map(goals.map((g) => [g.id, g.name]));
   // Every investment, with the goals it counts toward (if any).
@@ -102,6 +115,8 @@ export default async function PortfolioPage() {
           </p>
         </CardContent>
       </Card>
+
+      {reviewCard}
 
       <Card>
         <CardHeader>

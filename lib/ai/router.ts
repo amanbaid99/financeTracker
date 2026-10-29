@@ -17,7 +17,7 @@ import "server-only";
 
 import type { AiSettings, ChatMessage } from "@/lib/ai/openrouter";
 
-export type Task = "categorize" | "card_features" | "ask";
+export type Task = "categorize" | "card_features" | "ask" | "portfolio_review";
 
 interface Policy {
   json: boolean;
@@ -29,6 +29,9 @@ interface Policy {
 }
 
 export const POLICIES: Record<Task, Policy> = {
+  portfolio_review: {
+    json: true, maxTokens: 1500, timeoutMs: 20_000, minContext: 8_000, maxPaidInput: 1,
+  },
   categorize: {
     json: true,
     maxTokens: 1500,

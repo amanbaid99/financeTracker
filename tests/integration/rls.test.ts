@@ -198,8 +198,14 @@ describe("row level security", () => {
       });
   });
 
+  beforeAll(async () => {
+    const { error } = await a.from("portfolio_reviews").insert({ user_id: idA, enabled: true });
+    if (error) throw error;
+  });
+
   const tables = [
     "profiles",
+    "portfolio_reviews",
     "settings",
     "consents",
     "income_streams",
@@ -233,6 +239,19 @@ describe("row level security", () => {
       expect((data ?? []).filter((r) => r.user_id === idA)).toHaveLength(0);
     });
   }
+
+  it("cannot create, update or delete another user's portfolio review", async () => {
+    const insert = await b.from("portfolio_reviews").insert({ user_id: idA, enabled: true });
+    expect(insert.error).toBeTruthy();
+    const update = await b.from("portfolio_reviews").update({ enabled: false }).eq("user_id", idA).select("user_id");
+    expect(update.error).toBeNull();
+    expect(update.data).toEqual([]);
+    const deletion = await b.from("portfolio_reviews").delete().eq("user_id", idA).select("user_id");
+    expect(deletion.error).toBeNull();
+    expect(deletion.data).toEqual([]);
+    const own = await a.from("portfolio_reviews").select("enabled").eq("user_id", idA).single();
+    expect(own.data?.enabled).toBe(true);
+  });
 
   it("user A can read their own rows", async () => {
     const { data } = await a.from("holdings").select("id");

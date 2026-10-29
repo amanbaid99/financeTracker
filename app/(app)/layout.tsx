@@ -45,3 +45,6 @@ export default async function AppLayout({
     </GuidesProvider>
   );
 }
+
+// Background portfolio reviews may try a free model and a paid fallback.
+export const maxDuration = 180;

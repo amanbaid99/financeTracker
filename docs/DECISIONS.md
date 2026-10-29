@@ -37,7 +37,7 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 - Goals that need attention or a first investment come first, ordered by the existing date and amount rules. Other active goals follow. Reached goals and loans covered by EMIs are folded away, except for an explicitly opened goal. Overdue loans stay visible. These are presentation groups, not changes to allocation priorities.
 - Goal cards show full names, a date, a plain status and one actionable headline. Detailed targets and calculations stay inside the expanded goal. A soft accent panel with a subtle circular motif gives the page a distinctive next-step area while respecting every theme and accent.
 
-- The SIP list distinguishes extra contributions from existing SIPs, shows current and new totals, and folds goal breakdowns and existing SIPs away. It initially shows three changes with an explicit count and a way to show all. This is a shorter list, not a phased investment plan.
+- The SIP list leads with the extra monthly total, then one action per investment: Start an amount or Increase to the final monthly amount. Current amounts and increases are secondary. Goal breakdowns and existing investments are folded away. Strategy choices and the full goal breakdown live under Plan details and options, with no view tabs. It initially shows three changes with an explicit count and a way to show all. This is a shorter list, not a phased investment plan.
 - Diversified remains the default. Simple is an unsaved strategy using one suitable non-gold holding per goal, combining the same holding across goals. It preserves goal ownership and never makes gold a sole holding. The chosen strategy also controls the goal-level confirmation form, so recording agrees with the preview. Switching strategies does not save anything.
 - A goal's investments are holdings linked with a percent, so one holding can pay for several
   goals.
@@ -64,6 +64,11 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   to confirm before it's saved.
 
 ## AI
+
+- Portfolio reviews are a separate opt-in, also requiring AI to be enabled and current consent. Confirmed CAS imports trigger a full review. Holding and balance updates run basic checks; AI runs on first review or meaningful change. Changes are compared with the last successful AI review, so small changes accumulate: 10% total value, 5 percentage points in an asset class or holding, changed SIPs, holdings, goal status or flags.
+- The app calculates portfolio facts and findings. AI receives only codes, fixed asset categories, rounded totals and check types, then prioritises existing findings. Its entire output is validated; it cannot invent numbers, products or findings. Failure falls back to app checks without affecting a successful holdings save. No personal names, identifiers or CAS documents are sent.
+- Reviews run after the save response and are stored per user under RLS. A revision check stops an older job overwriting a newer one. Turning off reviews invalidates pending results. Failed and successful AI attempts count toward the review limit.
+- Rebalancing currently flags concentration and near-term risk, favouring new contributions before sales. No age-based target or automatic trades. Target allocation needs user confirmation based on goals, cash needs and risk comfort, with age as supporting context. Same-category funds do not prove underlying overlap.
 
 - Free models first; paid only as a fallback or tie-break, under a daily dollar cap and a per-user
   cap. The owner added credit to OpenRouter for this.

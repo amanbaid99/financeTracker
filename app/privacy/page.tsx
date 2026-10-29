@@ -124,6 +124,11 @@ export default function PrivacyPage() {
         </p>
       </Section>
 
+      <Section title="Automatic portfolio reviews">
+        <p>Portfolio reviews are off until you turn them on separately in Portfolio. They also require AI to be on. After you confirm a CAS import, the app runs a full review. Other holding updates run basic checks and use AI only for a major change.</p>
+        <p>Only anonymous codes, asset categories, rounded portfolio totals and app-calculated check types go to OpenRouter. Your names, account details, exact holding balances and CAS document are not sent for this review. AI prioritises calculated findings and cannot change your holdings or SIPs. The latest derived review and comparison snapshot are saved in your account. Turn off reviews in Portfolio to clear them. Deleting your account removes them.</p>
+      </Section>
+
       <Section title="Cookies">
         <p>
           Tracker uses only essential cookies: one to keep you signed in and two to remember your theme and colour. No

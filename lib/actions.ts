@@ -1,5 +1,6 @@
 "use server";
 
+import { schedulePortfolioReview } from "@/lib/portfolio-review/service";
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -324,6 +325,7 @@ export async function saveInvestment(
         if (error) throw new Error(error.message);
       }
     }
+    await schedulePortfolioReview(supabase, userId, "holding");
     return done(investmentId);
   } catch (e) {
     return fail(e);
@@ -395,6 +397,7 @@ export async function updateValues(
         .eq("user_id", userId);
       if (error) throw new Error(error.message);
     }
+    await schedulePortfolioReview(supabase, userId, "balance");
     return done();
   } catch (e) {
     return fail(e);
@@ -410,6 +413,7 @@ export async function deleteInvestment(id: string): Promise<ActionResult> {
       .eq("id", uuid.parse(id))
       .eq("user_id", userId);
     if (error) throw new Error(error.message);
+    await schedulePortfolioReview(supabase, userId, "holding");
     return done();
   } catch (e) {
     return fail(e);

@@ -22,14 +22,15 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Goals needing attention come first. Loans covered by EMIs and reached goals are folded away, so you can focus on what needs you.",
       "Use Update values to enter new amounts, or import a CAS statement to update every fund at once.",
       "Plan my money is above your goals. Open Review your plan for SIP suggestions, or edit what you can invest. Nothing changes until you record it.",
-      "Your SIP list shows what to start or increase, with the current and new monthly amounts. Open See goal breakdown for the details, or Keep your existing SIPs to see what continues.",
-      "Compare Diversified with a Simple preview using one suitable holding per goal. The chosen split also appears inside each goal. Nothing is saved until you confirm.",
+      "Your monthly plan tells you what amount to start or increase each investment to. Open What this supports to see the goals behind it.",
+      "Plan details and options shows the goal breakdown and lets you compare one holding per goal with a spread across holdings. Nothing is saved until you confirm.",
     ],
   },
   portfolio: {
     title: "Your portfolio",
     intro: "Everything you hold, across all goals, in one place.",
     steps: [
+      "Turn on automatic reviews for checks after imports and holding updates. AI prioritises anonymous checks. Review suggestions yourself before changing investments.",
       "The bar shows your split by asset class. Tap a part of it to see what's in it.",
       "Growth compares today's value with what you put in.",
       "Values come from your goals and CAS imports. Update them from the Goals tab.",
@@ -81,13 +82,18 @@ export interface Release {
 export const RELEASES: Release[] = [
   {
     date: "2026-10-29",
+    title: "A closer look at your portfolio",
+    items: [{ title: "Automatic portfolio checks", text: "Turn on reviews in Portfolio for a full check after confirmed CAS imports. Balance updates get a quick check, with AI used only for major changes. Review concentration and money needed soon before changing investments." }],
+  },
+  {
+    date: "2026-10-29",
     title: "A little more clarity for your goals",
     items: [
       { title: "Know where to begin", text: "Your next step highlights goals that need attention. Your money plan is near the top, with the details folded away." },
       { title: "More room for what matters", text: "Full goal names, clearer dates and quieter progress cards. Loans covered by EMIs and goals you've reached open when you need them." },
       { title: "Clearer actions", text: "Update values says what it does. Plan my money is easy to find even before you have a plan." },
-      { title: "Know what changes", text: "See which SIPs to start or increase, with your current amount, the extra amount and the new total. Existing SIPs and goal breakdowns open when you need them." },
-      { title: "Compare a simpler preview", text: "Try one suitable holding per goal, or keep the diversified split. Compare without changing your recorded investments." },
+      { title: "Know what changes", text: "One action per investment: start a monthly amount or increase to a new total. See the overall extra amount first, with explanations under details." },
+      { title: "Compare a simpler preview", text: "Open Plan details and options to compare one holding per goal with a spread across holdings. Your recorded investments stay the same." },
     ],
   },
   {

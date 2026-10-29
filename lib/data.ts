@@ -66,7 +66,7 @@ function check<T>(res: {
   return res.data as T;
 }
 
-export const loadGoals = cache(async (): Promise<GoalsData> => {
+export async function readGoals(): Promise<GoalsData> {
   const { supabase, user } = await requireUser();
   const [goals, holdings, allocations, profile, bills] = await Promise.all([
     supabase
@@ -172,7 +172,9 @@ export const loadGoals = cache(async (): Promise<GoalsData> => {
           }
         : null,
   };
-});
+}
+
+export const loadGoals = cache(readGoals);
 
 /** The user's credit cards with their milestones. */
 export const loadCards = cache(

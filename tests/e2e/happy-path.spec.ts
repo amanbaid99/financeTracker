@@ -376,26 +376,23 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   ).toBeVisible();
   await page.getByText(/^Review your plan/).click();
   // The plan as SIPs to start, in your own funds.
-  await expect(page.getByRole("tab", { name: "SIPs to start" })).toHaveAttribute(
-    "aria-selected",
-    "true",
-  );
   const sipList = page.getByRole("list", { name: "SIPs to start" });
   await expect(sipList).toContainText("Index SIP");
   await expect(sipList).toContainText("Increase");
-  await expect(sipList).toContainText("/mo total");
+  await expect(sipList).toContainText("/month");
   const showAll = page.getByRole("button", { name: /^Show all \d+ changes$/ });
   if (await showAll.isVisible()) await showAll.click();
   for (const summary of await sipList.locator("summary").all()) await summary.click();
   await expect(sipList).toContainText("House");
   await expect(sipList).toContainText(/review in \w{3} \d{4}/);
-  await page.getByRole("button", { name: "Simple", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Simple", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("group", { name: "SIP strategy" })).toBeHidden();
+  await page.getByText("Plan details and options", { exact: true }).click();
+  await page.getByRole("button", { name: "One holding per goal", exact: true }).click();
+  await expect(page.getByRole("button", { name: "One holding per goal", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(sipList).toContainText("Index SIP");
-  await page.getByRole("button", { name: "Diversified", exact: true }).click();
+  await page.getByRole("button", { name: "Spread across holdings", exact: true }).click();
   await page.screenshot({ path: "test-results/plan-375.png", fullPage: true });
-  await page.getByRole("tab", { name: "By goal" }).click();
-  await expect(sipList).toHaveCount(0);
+  await expect(sipList).toBeVisible();
   // "I've invested this" opens your fund with the plan's amounts added.
   await page.getByRole("button", { name: "I've invested this" }).click();
   const raise = page.getByRole("dialog", { name: "Index SIP" });
@@ -686,6 +683,23 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     expect(sent, `${name} was sent to the AI`).not.toContain(name);
   }
   expect(sent).toContain("[G1] house goal");
+  // Portfolio reviews are a separate opt-in. A full review is saved, but a tiny
+  // balance edit only refreshes the basic checks.
+  await tab("Portfolio").click();
+  const review = page.getByRole("region", { name: "Portfolio review" });
+  await review.getByRole("button", { name: "Turn on automatic reviews" }).click();
+  await expect(review.getByText("Review complete. Here is what deserves a closer look.")).toBeVisible({ timeout: 30_000 });
+  const reviewSent = JSON.stringify(await (await page.request.get("http://127.0.0.1:5329/last-review")).json());
+  for (const name of ["Bank FD", "House", "Index SIP", email]) expect(reviewSent).not.toContain(name);
+  await page.getByRole("button", { name: "Update values", exact: true }).click();
+  const valueInput = page.getByRole("dialog", { name: "Update amounts" }).getByRole("textbox").first();
+  const oldValue = Number((await valueInput.inputValue()).replace(/,/g, ""));
+  await valueInput.fill(String(oldValue + 1));
+  await page.getByRole("button", { name: "Save 1 change", exact: true }).click();
+  await expect(review.getByText("Quick check complete. No major change since the last AI review.")).toBeVisible({ timeout: 30_000 });
+  await review.getByRole("button", { name: "Turn off reviews" }).click();
+  await expect(review.getByRole("button", { name: "Turn on automatic reviews" })).toBeVisible();
+
   // Ask can be turned off in Settings.
   await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("button", { name: "Turn Ask off" }).click();

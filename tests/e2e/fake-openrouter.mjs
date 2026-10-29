@@ -5,6 +5,7 @@ import http from "node:http";
 
 let lastAsk = null;
 let lastCard = null;
+let lastReview = null;
 
 // Both free models give the same reading; one benefit isn't in the text,
 // so the app should flag it.
@@ -63,6 +64,10 @@ http
         }),
       );
     }
+    if (req.method === "GET" && req.url === "/last-review") {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      return res.end(JSON.stringify(lastReview));
+    }
     if (req.method === "GET" && req.url === "/last-card") {
       res.writeHead(200, { "Content-Type": "application/json" });
       return res.end(JSON.stringify(lastCard));
@@ -88,6 +93,11 @@ http
       ) {
         lastCard = data;
         return reply(res, JSON.stringify(CARD_READING));
+      }
+      if (messages[0]?.content?.includes("Prioritise a portfolio review")) {
+        lastReview = data;
+        const facts = JSON.parse(messages[1].content);
+        return reply(res, JSON.stringify({ order: facts.findings.map(f => f.code) }));
       }
       lastAsk = data;
       const asked = messages.filter((m) => m.role === "user").length;

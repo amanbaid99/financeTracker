@@ -120,6 +120,10 @@ unit tests in `tests/unit/`.
     in `lib/statement/categories.ts` can't place. Only public scheme names are sent.
 - Tests point `OPENROUTER_BASE_URL` at `tests/e2e/fake-openrouter.mjs`.
 
+## Portfolio reviews
+
+`lib/portfolio-review/checks.ts` computes findings and material-change thresholds. `service.ts` queues a revision in `portfolio_reviews`, then uses Next `after` for an uncached post-save read and optional AI prioritisation. `actions.ts` handles the separate opt-in and manual retries. Holding saves, deletions, value updates and confirmed CAS imports schedule checks. The Portfolio card polls while a review runs. AI only returns an ordering of known finding codes, checked before storage; failures retain deterministic checks. Apply migration `20261114000000_portfolio_reviews.sql` before enabling the feature. Existing holdings saves remain available if review storage is absent.
+
 ## Statement import
 
 1. `components/import-flow.tsx` posts the CAS PDF and password to `/api/cas_parse`

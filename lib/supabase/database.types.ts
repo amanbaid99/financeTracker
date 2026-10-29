@@ -762,6 +762,43 @@ export type Database = {
         };
         Relationships: [];
       };
+      portfolio_reviews: {
+        Row: {
+          user_id: string;
+          enabled: boolean;
+          revision: string;
+          state: string;
+          source: string;
+          checked_at: string | null;
+          reviewed_at: string | null;
+          baseline: Json | null;
+          result: Json | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          user_id?: string;
+          enabled?: boolean;
+          revision?: string;
+          state?: string;
+          source?: string;
+          checked_at?: string | null;
+          reviewed_at?: string | null;
+          baseline?: Json | null;
+          result?: Json | null;
+        };
+        Update: {
+          user_id?: string;
+          enabled?: boolean;
+          revision?: string;
+          state?: string;
+          source?: string;
+          checked_at?: string | null;
+          reviewed_at?: string | null;
+          baseline?: Json | null;
+          result?: Json | null;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           accent: string;

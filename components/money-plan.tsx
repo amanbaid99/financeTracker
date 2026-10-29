@@ -144,8 +144,7 @@ function SipList({
   return (
     <div className="space-y-3 text-sm">
       <p className="text-xs text-muted-foreground">
-        Bills first, then dated goals, then goals without a date. These amounts
-        are extra, on top of your current SIPs.
+        Make these changes with your investment provider. Keep your other monthly investments going.
       </p>
       <ul className="space-y-3" aria-label="SIPs to start">
         {visible.map((l) => {
@@ -154,21 +153,22 @@ function SipList({
             <li key={l.investment?.id ?? `new-${l.category}`} className="rounded-xl border p-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-xs font-medium text-primary">{action.kind}</p>
+
                   <p className="break-words font-medium">{l.label}</p>
                 </div>
-                <span className="tabular shrink-0 font-semibold">+{formatINR(action.extra)}/mo</span>
+
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {formatINR(action.current)}/mo now → {formatINR(action.total)}/mo total
+              <p className="mt-2 text-base font-semibold">
+                {action.current > 0 ? "Increase to " : "Start "}{formatINR(action.total)}/month
               </p>
-              {l.note && <p className="mt-1 text-xs text-muted-foreground">{l.note}</p>}
-              {l.similar && <p className="mt-1 text-xs text-muted-foreground">
-                Close enough to {categoryLabel(l.category).toLowerCase()}. Review whether this holding suits you.
+              {action.current > 0 && <p className="mt-1 text-xs text-muted-foreground">
+                Currently {formatINR(action.current)}/month. Add {formatINR(action.extra)}/month.
               </p>}
               {!l.investment && <p className="mt-1 text-xs text-muted-foreground">You don&apos;t hold one yet. Choose a suitable holding before starting.</p>}
               <details className="mt-2 text-xs text-muted-foreground">
-                <summary className="cursor-pointer py-1 text-primary">See goal breakdown ({l.parts.length})</summary>
+                <summary className="cursor-pointer py-1 text-primary">What this supports</summary>
+                {l.note && <p className="mt-1">{l.note}</p>}
+                {l.similar && <p className="mt-1">Review whether this holding suits a {categoryLabel(l.category).toLowerCase()} need.</p>}
                 <ul className="mt-1 space-y-1">
                   {l.parts.map((p) => (
                     <li key={p.goalId} className="flex justify-between gap-3">
@@ -191,7 +191,7 @@ function SipList({
       {sips.length > 3 && !showAll && <p className="text-xs text-muted-foreground">Showing 3 of {sips.length} changes. The monthly total includes the full list.</p>}
       {investments.some((i) => i.monthlySip > 0) && (
         <details className="text-xs text-muted-foreground">
-          <summary className="cursor-pointer py-1 text-primary">Keep your existing SIPs</summary>
+          <summary className="cursor-pointer py-1 text-primary">Your current monthly investments</summary>
           <ul className="mt-2 space-y-1">
             {investments.filter((i) => i.monthlySip > 0).map((i) => (
               <li key={i.id} className="flex justify-between gap-3">
@@ -213,8 +213,6 @@ function SipList({
         </p>
       )}
       <p className="text-xs text-muted-foreground">
-        Review these changes before setting them up with your investment provider.
-        When a goal is reached or its date arrives, review its contribution.
         Nothing is invested automatically. Not investment advice.
       </p>
     </div>
@@ -243,7 +241,6 @@ export function MoneyPlanCard({
   onStrategyChange: (strategy: SipStrategy) => void;
 }) {
   const [open, setOpen] = useState(autoOpen);
-  const [view, setView] = useState<"sips" | "goals">("sips");
   const close = useCallback(() => {
     setOpen(false);
     clearParam("do");
@@ -308,11 +305,8 @@ export function MoneyPlanCard({
             plan
           </h2>
           <p className="text-xs text-muted-foreground">
-            {formatINR(plan.lump)} now · {formatINR(plan.monthlyFree)} a month
-            free
-            {plan.sipsNow > 0
-              ? ` (after ${formatINR(plan.sipsNow)} of SIPs)`
-              : ""}
+            Monthly budget: {formatINR(plan.monthlyTotal)}, including your current investments.
+            {plan.lump > 0 ? ` Plus ${formatINR(plan.lump)} to invest now.` : ""}
           </p>
         </div>
         <Button
@@ -333,63 +327,29 @@ export function MoneyPlanCard({
         </summary>
         <div className="space-y-3 pt-3">
       {sips.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex gap-2" role="group" aria-label="SIP strategy">
-            {(["diversified", "simple"] as const).map((choice) => (
-              <button key={choice} type="button" aria-pressed={strategy === choice}
-                onClick={() => onStrategyChange(choice)}
-                className={`flex-1 rounded-lg border px-3 py-2 text-sm ${strategy === choice ? "border-primary bg-primary/10 font-medium" : "text-muted-foreground"}`}>
-                {choice === "simple" ? "Simple" : "Diversified"}
-              </button>
-            ))}
-          </div>
+        <>
+          <p className="font-semibold">Add {formatINR(extraMonthly)} a month</p>
           <p className="text-xs text-muted-foreground">
-            {strategy === "simple"
-              ? "One suitable holding per goal, combined where the same holding is used. Existing goal links stay in place."
-              : "Spread each goal across up to three suitable holdings you already own."}
-            {" "}Compare without saving. Open a goal to review and record the chosen split after you invest.
+            Your monthly investments would go from {formatINR(plan.sipsNow)} to {formatINR(plan.sipsNow + extraMonthly)}.
           </p>
-          <p className="text-sm font-medium">{formatINR(extraMonthly)} extra a month · {sips.length} {sips.length === 1 ? "change" : "changes"}</p>
-        </div>
-      )}
-      {suggestions.length > 0 && sips.length > 0 && (
-        <div
-          className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
-          role="tablist"
-          aria-label="Show the plan"
-        >
-          {(
-            [
-              ["sips", "SIPs to start"],
-              ["goals", "By goal"],
-            ] as const
-          ).map(([v, label]) => (
-            <button
-              key={v}
-              type="button"
-              role="tab"
-              aria-selected={view === v}
-              onClick={() => setView(v)}
-              className={`rounded-md px-2 py-1.5 text-sm ${view === v ? "bg-card font-medium shadow-sm" : "text-muted-foreground"}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      )}
-      {view === "sips" && sips.length > 0 ? (
         <SipList
           sips={sips}
           lump={plan.lump > 0 ? suggestions : []}
           investments={investments}
         />
-      ) : suggestions.length === 0 ? (
+        </>
+      )}
+      {suggestions.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {plan.lump || plan.monthlyFree
             ? "Your goals don't need anything extra right now."
             : "Add savings or a monthly amount to get suggestions."}
         </p>
       ) : (
+        <details className="border-t pt-3" open={sips.length === 0 || undefined}>
+          <summary className="cursor-pointer py-1 text-sm font-medium text-primary">Plan details and options</summary>
+          <div className="space-y-3 pt-3">
+            <p className="text-xs text-muted-foreground">How the extra money supports your goals:</p>
         <ul className="divide-y text-sm">
           {suggestions.map((s) => (
             <li
@@ -408,6 +368,21 @@ export function MoneyPlanCard({
             </li>
           ))}
         </ul>
+        {sips.length > 0 && <div className="space-y-2 border-t pt-3">
+          <p className="text-sm font-medium">How to split the extra money</p>
+          <div className="flex gap-2" role="group" aria-label="SIP strategy">
+            {(["diversified", "simple"] as const).map((choice) => (
+              <button key={choice} type="button" aria-pressed={strategy === choice}
+                onClick={() => onStrategyChange(choice)}
+                className={`flex-1 rounded-lg border px-3 py-2 text-sm ${strategy === choice ? "border-primary bg-primary/10 font-medium" : "text-muted-foreground"}`}>
+                {choice === "simple" ? "One holding per goal" : "Spread across holdings"}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">Preview only. Your saved investments stay the same. Open a goal to record a change after you invest.</p>
+        </div>}
+          </div>
+        </details>
       )}
         </div>
       </details>
