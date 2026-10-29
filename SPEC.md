@@ -1,5 +1,9 @@
 # Personal Finance Engine: Build Spec
 
+> **Historical.** This is the original build plan. The app has changed since: see
+> [docs/DECISIONS.md](docs/DECISIONS.md) for what's superseded and [AGENTS.md](AGENTS.md) for the
+> current rules. The guardrails below still apply.
+
 Oct 24, 2026 · @Aman Rajendra Baid
 
 ## Overview

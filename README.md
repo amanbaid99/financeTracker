@@ -1,52 +1,56 @@
 # Tracker
 
-A private, invite-only personal finance app that answers one question: **what should I put my next rupee toward?**
+A private, invite-only personal finance app (installable PWA) for tracking goals and the money that
+pays for them. It answers: **where should my next rupee go?**
 
-Budget, insurance, debt, emergency fund and goals all feed a rule-based priority ladder that produces a single
-"Next Focus" card. Suggestions are instrument **categories** only, never named funds. See [SPEC.md](SPEC.md).
+- **Goals**: purchases, trips, emergency and bills funds, loans to close early. Each goal shows
+  what's saved, where it's heading and the monthly amount that gets it there on time.
+- **Money plan**: splits savings and a monthly amount across goals, as SIPs in the funds you
+  already hold.
+- **Portfolio**: everything you hold by asset class; update values or import a CAS statement.
+- **Cards**: credit card milestones, monthly bills and which card to use next.
+- **Ask**: private questions about your own numbers, with names never sent to AI.
+
+Suggestions name kinds of fund, or funds you already hold, never new ones. Not investment advice.
+
+**Working on the code?** Start with [AGENTS.md](AGENTS.md), then
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/DECISIONS.md](docs/DECISIONS.md).
+[SPEC.md](SPEC.md) is the original spec, partly superseded.
 
 ## Stack
 
-- Next.js 16 (App Router) + TypeScript, Tailwind CSS v4, shadcn-style components, Recharts
-- Supabase Postgres + Auth (Google and email magic link), Row Level Security on every table
-- Finance rules as pure TypeScript in `lib/engine` with Vitest tests
-- Optional AI explanations through OpenRouter (free models first)
+- Next.js 16 (App Router) + React 19, TypeScript, Tailwind CSS v4
+- Supabase Postgres + Auth (email code and Google), Row Level Security on every table
+- Python functions on Vercel for reading CAS statements and PDFs
+- Finance logic as pure TypeScript in `lib/` with Vitest tests
+- Optional AI through OpenRouter, free models first
 
 ## Project layout
 
 ```
-app/
-  (auth)/login           sign in, with privacy consent
-  auth/callback          finishes sign-in, records consent
-  onboarding/[step]      stepper: basics, household, income, expenses, insurance, loans, holdings, goals, risk, finish
-  (app)/dashboard        Next Focus, ladder, completeness, budget, goals, reminders
-  (app)/budget | goals | goals/[id] | holdings | settings
-  privacy                privacy policy (public)
-  consent                re-accept when the policy version changes
-lib/
-  engine/                pure functions, no I/O: config, budget, ladder, goals, completeness, risk
-  ai/                    OpenRouter client, anonymised facts, output guard
-  supabase/              clients and generated types
-  actions.ts             server actions (validated with zod)
-supabase/migrations/     schema, RLS policies, invite trigger
-tests/engine, tests/unit Vitest
-tests/integration        RLS check with two real users (local Supabase)
-tests/e2e                Playwright happy path (local Supabase)
+app/(app)/            signed-in pages: goals, portfolio, cards, ask, import, settings
+app/(auth)/login      sign in, with privacy consent
+app/consent, privacy  policy re-acceptance and the public policy
+components/           UI (sheets, forms, goal and card views)
+lib/                  finance logic (tracker, allocate, sip-plan, bills-fund, cards, loan...),
+                      data loaders (data.ts) and server actions (*actions.ts)
+lib/ai/               OpenRouter settings and model router
+lib/ask/              Ask: anonymised context and the server action
+lib/statement/        CAS import: review rows, categories, AI category check
+api/                  Python functions: cas_parse.py, pdf_text.py
+supabase/migrations/  schema and RLS policies
+tests/unit            Vitest      tests/integration  RLS with two real users
+tests/python          pytest      tests/e2e          Playwright happy path
 ```
-
-All thresholds and percentages live in `lib/engine/config.ts`. Users can override the main ones in Settings
-(stored in `settings.config_overrides`).
 
 ## Local development
 
-Requires Node 22 and Docker.
+Requires Node 22, Python 3.12+ and Docker.
 
 ```bash
-npm install
-npx supabase start          # local Postgres, Auth and a mail catcher at http://127.0.0.1:54324
-npx supabase status -o env  # copy API_URL and PUBLISHABLE_KEY into .env.local
-cp .env.example .env.local  # then fill in the two Supabase values
-npm run dev
+npm run setup     # installs everything, starts local Supabase, writes .env.local
+npm run dev       # http://localhost:3000
+.venv-cas/bin/python scripts/cas_dev_server.py   # statement import, second terminal
 ```
 
 Add yourself to the invite list (local):
@@ -56,17 +60,15 @@ psql postgresql://postgres:postgres@127.0.0.1:54322/postgres \
   -c "insert into public.allowed_emails (email) values ('you@example.com');"
 ```
 
-Magic-link emails show up in the local mail catcher at http://127.0.0.1:54324.
+Sign-in codes show up in the local mail catcher at http://127.0.0.1:54324.
 
 ### Tests
 
 ```bash
-npm test             # engine + unit tests
-npm run lint
-npm run typecheck
-# These two need the local stack running. Keys come from `npx supabase status -o env`.
+npm run check            # lint, typecheck, unit and Python tests
+npm run test:e2e:local   # build + Playwright against local Supabase
+# RLS check. Keys come from `npx supabase status -o env`.
 SUPABASE_PUBLISHABLE_KEY=... SUPABASE_SECRET_KEY=... npm run test:rls
-npm run build && SUPABASE_SECRET_KEY=... npm run test:e2e
 ```
 
 ## Production setup
@@ -107,8 +109,8 @@ Never put the Supabase secret key in Vercel; the app does not need it.
 
 ### 3. AI explanations with OpenRouter (optional)
 
-AI is off unless `OPENROUTER_API_KEY` is set, and each user also has to opt in. It only explains numbers the
-engine already calculated; it never calculates, never names funds, and every answer is labelled as not advice.
+AI is off unless `OPENROUTER_API_KEY` is set, and each user also has to opt in. It explains numbers the app
+already calculated or reads documents for you to confirm; it never calculates, never names funds, and every answer is labelled as not advice.
 
 1. Sign up at [openrouter.ai](https://openrouter.ai) and create an API key under **Keys**. Give the key a
    **credit limit** (for example $5) so a bug can never run up a bill. Buying at least 10 credits once raises
@@ -130,18 +132,19 @@ engine already calculated; it never calculates, never names funds, and every ans
    that don't store or train on data.
 4. `AI_DAILY_LIMIT` caps requests per user per day for each feature (default 20).
 
-What the AI receives (see `lib/ai/facts.ts`): step names, rounded gaps and monthly amounts, goal **types** (not
-the names you typed), years to goal, planning return, categories and statuses. It never receives a name, email,
-age, date of birth, city, holding names, loan nicknames or income labels. A final check blocks any request
-that looks like it contains an email, PAN, phone number or one of your own typed names. Answers that mention a
-named fund, AMC or bank are hidden. Only the time, model and feature of each request are logged, never the
-content.
+What the AI receives (see `lib/ask/context.ts`): rounded amounts, goal **types**, years to goal, kinds of
+investment and statuses. Names you typed (goals, holdings, bills) become codes like `[G1]` and are put back
+only when the reply is shown to you. It never receives your name, email, PAN, phone, age or city. Card
+documents have card numbers, emails, phones and PAN masked first (`lib/card-extract.ts`), and statement
+categories send only public scheme names. The AI is told never to recommend a fund, AMC or stock. Only the
+time, model and feature of each request are logged, never the content.
 
 ## Privacy and consent
 
 - Login requires agreeing to the privacy policy; the acceptance is stored in `consents` with its version.
-- Onboarding ends with the not-investment-advice disclaimer ("I understand"), also stored in `consents`.
-- AI explanations are a separate opt-in, and turning them off is recorded too.
+- The not-investment-advice disclaimer is in the footer of every signed-in page. (The one-time "I understand"
+  step went away with onboarding; `DISCLAIMER_VERSION` is no longer checked.)
+- AI (Ask and card reading) is a separate opt-in, and turning them off is recorded too.
 - Changing `PRIVACY_VERSION` in `lib/legal/index.ts` asks every user to accept the new policy.
 - Settings > Delete account removes the auth user, which cascades to every row.
 - No bank or card numbers are collected, and PAN is never stored.
