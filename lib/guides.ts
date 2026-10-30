@@ -42,8 +42,8 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "Your portfolio",
     intro: "Everything you hold, across all goals, in one place.",
     steps: [
-      "Turn on automatic reviews for checks after imports and holding updates. AI prioritises anonymous checks. Review suggestions yourself before changing investments.",
-      "The bar shows your split by asset class. Tap a part of it to see what's in it.",
+      "Open View review for portfolio checks and settings. Turn on automatic reviews for checks after imports and holding updates. Review suggestions yourself before changing investments.",
+      "The bar shows your split by asset class. Tap a part or its label to see the amount. Open By kind for the detailed breakdown.",
       "Growth compares today's value with what you put in.",
       "Tap + to update values or import a CAS statement. Tap a holding to edit it.",
     ],
@@ -92,6 +92,11 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-10-30",
+    title: "Your holdings, sooner",
+    items: [{ title: "A shorter Portfolio tab", text: "Allocation is compact, with By kind under details. Portfolio review opens when you need it, bringing your holdings closer to the top." }],
+  },
   {
     date: "2026-10-30",
     title: "More room for your goals",

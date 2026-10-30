@@ -700,6 +700,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // balance edit only refreshes the basic checks.
   await tab("Portfolio").click();
   const review = page.getByRole("region", { name: "Portfolio review" });
+  await review.locator("summary").first().click();
   await review.getByRole("button", { name: "Turn on automatic reviews" }).click();
   await expect(review.getByText("Review complete. Here is what deserves a closer look.")).toBeVisible({ timeout: 30_000 });
   const reviewSent = JSON.stringify(await (await page.request.get("http://127.0.0.1:5329/last-review")).json());

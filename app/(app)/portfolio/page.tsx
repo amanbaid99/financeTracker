@@ -103,23 +103,15 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
         </CardContent>
       </Card>
 
-      {reviewCard}
-
       <Card>
         <CardHeader>
           <CardTitle>Where your money is</CardTitle>
         </CardHeader>
         <CardContent>
           <AllocationBar classes={p.classes} />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>By kind</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ul className="space-y-3 text-sm">
+          <details className="mt-3 border-t pt-3">
+            <summary className="cursor-pointer py-1 text-sm font-medium text-primary">By kind</summary>
+          <ul className="mt-3 space-y-3 text-sm">
             {p.kinds.map((k) => (
               <li key={k.label} className="space-y-1">
                 <div className="flex items-baseline justify-between gap-3">
@@ -143,8 +135,11 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
               </li>
             ))}
           </ul>
+          </details>
         </CardContent>
       </Card>
+
+      {reviewCard}
 
       <Card>
         <CardHeader>

@@ -33,14 +33,24 @@ export function PortfolioReview({ available, enabled, aiEnabled, state, checkedA
     router.refresh();
   });
   const waiting = state === "pending" && !timedOut;
-  return <section className="space-y-3 rounded-2xl border bg-card p-4" aria-labelledby="portfolio-review-h">
-    <h2 id="portfolio-review-h" className="font-semibold">Portfolio review</h2>
+  const summary = !available ? "Reviews are unavailable" : !enabled ? "Automatic reviews are off" : !aiEnabled ? "AI is off" : waiting ? "Review in progress" : timedOut ? "Review did not finish" : state === "basic" ? "No major change since your last review" : state === "ready" ? result?.findings.length ? `${result.findings.length} ${result.findings.length === 1 ? "check" : "checks"} to review` : "No flags in these checks" : state === "limited" ? "Basic checks ready. AI limit reached" : "AI unavailable. Basic checks only";
+  return <section className="rounded-2xl border bg-card" aria-labelledby="portfolio-review-h">
+    <h2 id="portfolio-review-h" className="sr-only">Portfolio review</h2>
+    <details className="group/review">
+      <summary className="flex min-h-16 cursor-pointer list-none items-center gap-3 rounded-2xl p-4 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold">Portfolio review</span>
+          <span role="status" className="block text-xs text-muted-foreground">{summary}</span>
+        </span>
+        <span className="shrink-0 text-sm font-medium text-primary"><span className="group-open/review:hidden">View review</span><span className="hidden group-open/review:inline">Hide review</span></span>
+      </summary>
+      <div className="space-y-3 border-t p-4">
     {!available ? <p className="text-sm text-muted-foreground">Automatic reviews are not available yet. Your holdings are saved as usual.</p> : !enabled ? <>
       <p className="text-sm text-muted-foreground">Get a full review after each confirmed CAS import. Other holding updates get a quick check, with AI used when something major changes.</p>
       <p className="text-xs text-muted-foreground">Only anonymous categories, rounded totals and calculated checks go to AI through OpenRouter. Names, account details and CAS documents stay out. Derived reviews are saved here. Nothing changes your investments.</p>
       {aiEnabled ? <Button size="sm" disabled={pending} onClick={() => act(() => setPortfolioReviewsEnabled(true))}>Turn on automatic reviews</Button> : <Link href="/ask" className="text-sm font-medium text-primary">Turn on AI in Ask to use reviews</Link>}
     </> : <>
-      <p role="status" className="text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground">
         {!aiEnabled ? "AI is off. Turn it on in Ask to resume automatic reviews." : waiting ? "Reviewing your updated portfolio. You can carry on using the app." : timedOut ? "The review did not finish. You can try again." : state === "basic" ? "Quick check complete. No major change since the last AI review." : state === "ready" ? "Review complete. Here is what deserves a closer look." : state === "limited" ? "Basic checks are ready. Today's AI review limit has been reached." : "AI review is unavailable. Any basic checks below still apply."}
       </p>
       {checkedAt && <p className="text-xs text-muted-foreground">Last check: {new Date(checkedAt).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", dateStyle: "medium", timeStyle: "short" })} IST{reviewedAt && state === "basic" ? `. Last AI review: ${new Date(reviewedAt).toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" })}.` : ""}</p>}
@@ -58,5 +68,7 @@ export function PortfolioReview({ available, enabled, aiEnabled, state, checkedA
     </>}
     {error && <p role="alert" className="text-sm text-danger">{error}</p>}
     <p className="text-xs text-muted-foreground">Not investment advice.</p>
+      </div>
+    </details>
   </section>;
 }
