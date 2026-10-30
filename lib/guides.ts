@@ -34,7 +34,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Goals needing attention come first. Loans covered by EMIs and reached goals are folded away, so you can focus on what needs you.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
       "Plan my money is above your goals. Open Review your plan for SIP suggestions, or edit what you can invest. Nothing changes until you record it.",
-      "Your monthly plan tells you what amount to start or increase each investment to. Open What this supports to see the goals behind it.",
+      "Enter one monthly investment budget, including what you already invest. One-time savings are optional. Each row shows the amount to set; tap it to see the current amount and goals behind it.",
       "Plan details and options shows the goal breakdown and lets you compare one holding per goal with a spread across holdings. Nothing is saved until you confirm.",
     ],
   },
@@ -92,6 +92,11 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-10-30",
+    title: "A simpler monthly plan",
+    items: [{ title: "One budget, clear amounts", text: "Start with one monthly budget. Each investment shows the amount to set, with its explanation and goals a tap away. Add a one-time amount only when you need it." }],
+  },
   {
     date: "2026-10-30",
     title: "Your holdings, sooner",

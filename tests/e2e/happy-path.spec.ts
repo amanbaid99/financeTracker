@@ -365,20 +365,19 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
 
   // Money plan: suggests a split, and recording it takes it out of the plan.
   await quick("Plan my money");
+  await page.getByText("Add a one-time amount", { exact: true }).click();
   await expect(
-    page.getByText(/in investments not linked to a goal/),
+    page.getByText(/is not linked to a goal/),
   ).toBeVisible();
   await page.getByRole("button", { name: "Use this amount" }).click();
   await expect(page.getByLabel("Savings to put toward goals now")).toHaveValue(
     "2,80,000",
   );
-  await page.getByLabel("Can invest each month, in total").fill("40000");
-  await page.getByRole("button", { name: "Suggest a split" }).click();
+  await page.getByLabel("Monthly investment budget").fill("40000");
+  await page.getByRole("button", { name: "Show my plan" }).click();
   await expect(page.getByText("Your money plan")).toBeVisible();
   await expect(
-    page.getByText(
-      "₹2,80,000 now · ₹30,000 a month free (after ₹10,000 of SIPs)",
-    ),
+    page.getByText(/\/month after these changes.*₹2,80,000 one time/),
   ).toBeVisible();
   await expect(page.getByText("Suggested", { exact: true })).toBeVisible();
   // You already hold a fund that suits House, so the plan names it.
@@ -387,7 +386,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   ).toBeVisible();
   await page.getByText(/^Review your plan/).click();
   // The plan as SIPs to start, in your own funds.
-  const sipList = page.getByRole("list", { name: "SIPs to start" });
+  const sipList = page.getByRole("list", { name: "Monthly investment changes" });
   await expect(sipList).toContainText("Index SIP");
   await expect(sipList).toContainText("Increase");
   await expect(sipList).toContainText("/month");
@@ -426,8 +425,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     page.getByRole("button", { name: "Edit Planned index fund" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Edit money plan" }).click();
+  if (!await page.getByLabel("Savings to put toward goals now").isVisible()) await page.getByText("Add a one-time amount", { exact: true }).click();
   await page.getByLabel("Savings to put toward goals now").fill("0");
-  await page.getByRole("button", { name: "Suggest a split" }).click();
+  await page.getByRole("button", { name: "Show my plan" }).click();
   await expect(page.getByText(/^₹0 now · /)).toBeVisible();
 
   // Bills fund: one liquid fund for known payments.
