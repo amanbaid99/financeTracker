@@ -95,7 +95,7 @@ export const RELEASES: Release[] = [
   {
     date: "2026-10-30",
     title: "Your holdings, sooner",
-    items: [{ title: "A shorter Portfolio tab", text: "Allocation is compact, with By kind under details. Portfolio review opens when you need it, bringing your holdings closer to the top." }],
+    items: [{ title: "A shorter Portfolio tab", text: "Allocation is compact, with By kind under details. Portfolio review opens with two short takeaways. Expand a check for the explanation, with extra checks and settings tucked away." }],
   },
   {
     date: "2026-10-30",

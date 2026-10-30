@@ -702,7 +702,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   const review = page.getByRole("region", { name: "Portfolio review" });
   await review.locator("summary").first().click();
   await review.getByRole("button", { name: "Turn on automatic reviews" }).click();
-  await expect(review.getByText("Review complete. Here is what deserves a closer look.")).toBeVisible({ timeout: 30_000 });
+  await expect(review.getByRole("status")).toContainText(/checks? to review|No flags in these checks/, { timeout: 30_000 });
   const reviewSent = JSON.stringify(await (await page.request.get("http://127.0.0.1:5329/last-review")).json());
   for (const name of ["Bank FD", "House", "Index SIP", email]) expect(reviewSent).not.toContain(name);
   await page.getByRole("button", { name: "Add or update", exact: true }).click();
@@ -711,7 +711,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   const oldValue = Number((await valueInput.inputValue()).replace(/,/g, ""));
   await valueInput.fill(String(oldValue + 1));
   await page.getByRole("button", { name: "Save 1 change", exact: true }).click();
-  await expect(review.getByText("Quick check complete. No major change since the last AI review.")).toBeVisible({ timeout: 30_000 });
+  await expect(review.getByRole("status")).toContainText("No major change since your last review", { timeout: 30_000 });
+  await review.getByText("Review details & settings", { exact: true }).click();
   await review.getByRole("button", { name: "Turn off reviews" }).click();
   await expect(review.getByRole("button", { name: "Turn on automatic reviews" })).toBeVisible();
 

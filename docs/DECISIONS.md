@@ -27,6 +27,7 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 - Goals and Portfolio use the + menu for Update values and Import statement, without duplicate top buttons. Updates open in place on Portfolio. Holdings still open for editing when tapped.
 - Add a card lives only in the Cards tab, with a visible button even when cards exist. The + menu has a first-use hint and a replayable guide.
 - Details are folded away ("Show details") so a goal shows its headline and verdict first.
+- Expanded portfolio reviews show two short takeaways first. Each finding expands for its evidence and explanation; remaining checks and review settings stay folded away.
 - Portfolio shows total value, monthly investing, compact allocation, a collapsed review summary and holdings. By kind is folded into allocation details so holdings appear sooner.
 - Portfolio shows total value, SIPs and equity share. The "invested vs now" gain box was removed
   at the owner's request; per-holding gains stay in the list.
