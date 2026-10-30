@@ -259,15 +259,15 @@ export function MoneyPlanCard({
   );
 
   if (!plan) return (
-    <section className="rounded-2xl border border-dashed border-primary/30 bg-card p-4" aria-label="Plan your money">
-      <div className="flex items-start gap-3">
-        <Sparkles className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
-        <div className="space-y-2">
-          <h2 className="font-semibold">Give your next rupee a purpose</h2>
-          <p className="text-sm leading-relaxed text-muted-foreground">Choose what you can save. See how it could help your goals.</p>
-          <Button type="button" size="sm" onClick={() => setOpen(true)}>Plan my money <ArrowUpRight className="size-4" aria-hidden /></Button>
-        </div>
-      </div>
+    <section className="rounded-2xl border bg-card" aria-label="Plan your money">
+      <button type="button" aria-label="Plan my money" onClick={() => setOpen(true)} className="flex min-h-16 w-full items-center gap-3 rounded-2xl px-4 py-3 text-left hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+        <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium">Plan my money</span>
+          <span className="block text-xs text-muted-foreground">Choose what you can invest.</span>
+        </span>
+        <ArrowUpRight className="size-4 shrink-0 text-primary" aria-hidden />
+      </button>
       {form}
     </section>
   );

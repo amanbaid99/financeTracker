@@ -27,21 +27,12 @@ export function GoalsOverview(props: {
   const count = groups.attention.length;
   const Icon = count ? Compass : CircleCheck;
   return <>
-    <section aria-labelledby="next-step-h" className="relative overflow-hidden rounded-3xl border border-primary/15 bg-primary-soft p-5">
-      <div className="pointer-events-none absolute -right-5 -top-8 size-32 rounded-full border border-primary/10" aria-hidden />
-      <div className="pointer-events-none absolute -right-1 -top-4 size-24 rounded-full border border-primary/10" aria-hidden />
-      <div className="relative space-y-3">
-        <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-widest text-primary">
-          <Icon className="size-4" aria-hidden /> Your next step
-        </div>
-        <h2 id="next-step-h" className="max-w-[24ch] text-xl font-semibold leading-snug tracking-tight">
-          {count ? `${count} ${count === 1 ? "goal needs" : "goals need"} a little attention` : "Room to look ahead"}
-        </h2>
-        <p className="max-w-prose text-sm leading-relaxed text-muted-foreground">
-          {count ? "Some goals need a top-up, a first investment or a new date. Take them one at a time." : groups.growing.length ? "Your active goals have no flagged shortfall. Keep values up to date and review your plan as life changes." : "Review your progress or make space for your next goal."}
-        </p>
-        {count > 0 && <a href="#your-goals" className="inline-flex min-h-10 items-center gap-1 text-sm font-medium text-primary">See what needs attention <ArrowDownRight className="size-4" aria-hidden /></a>}
-      </div>
+    <section aria-labelledby="next-step-h" className="flex items-center gap-3 rounded-2xl bg-primary-soft px-4 py-3">
+      <Icon className="size-4 shrink-0 text-primary" aria-hidden />
+      <h2 id="next-step-h" className="min-w-0 flex-1 text-sm font-medium">
+        {count ? `${count} ${count === 1 ? "goal needs" : "goals need"} attention` : groups.growing.length ? "No flagged goal shortfalls" : "Your goals at a glance"}
+      </h2>
+      {count > 0 && <a href="#your-goals" className="inline-flex min-h-10 shrink-0 items-center gap-1 text-sm font-medium text-primary" aria-label="Review goals needing attention">Review <ArrowDownRight className="size-4" aria-hidden /></a>}
     </section>
     <MoneyPlanCard {...props} strategy={strategy} onStrategyChange={setStrategy} />
     <div id="your-goals" className="scroll-mt-20">

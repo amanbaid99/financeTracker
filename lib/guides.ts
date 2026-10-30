@@ -93,6 +93,11 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    date: "2026-10-30",
+    title: "More room for your goals",
+    items: [{ title: "A shorter start", text: "Your next step is now a compact summary. Plan my money opens from one small row, leaving more room for your goals." }],
+  },
+  {
     date: "2026-10-29",
     title: "Your shortcuts, in one place",
     items: [{ title: "A clearer plus menu", text: "Update values and import statements from +. A first-use hint shows where to find them, with a guide in the menu. Add cards from the Cards tab." }],
