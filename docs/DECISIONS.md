@@ -33,7 +33,7 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 
 ## Goals and the money plan
 
-- Goals now lead with saved and monthly amounts, a compact attention strip, and a money plan. The next-step strip uses one short headline and a Review link. Before a plan exists, a single compact Plan my money row opens the form. Review your plan opens the SIP details. A visible Plan my money button is shown before a plan exists.
+- Goals now lead with saved and monthly amounts and a money plan. The separate attention-count strip was removed; goal groups already show what needs attention. Before a plan exists, a single compact Plan my money row opens the form. Review your plan opens the SIP details. A visible Plan my money button is shown before a plan exists.
 - Goals that need attention or a first investment come first, ordered by the existing date and amount rules. Other active goals follow. Reached goals and loans covered by EMIs are folded away, except for an explicitly opened goal. Overdue loans stay visible. These are presentation groups, not changes to allocation priorities.
 - Goal cards show full names, a date, a plain status and one actionable headline. Detailed targets and calculations stay inside the expanded goal. A soft accent panel with a subtle circular motif gives the page a distinctive next-step area while respecting every theme and accent.
 

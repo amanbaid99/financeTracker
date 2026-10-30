@@ -95,7 +95,7 @@ export const RELEASES: Release[] = [
   {
     date: "2026-10-30",
     title: "More room for your goals",
-    items: [{ title: "A shorter start", text: "Your next step is now a compact summary. Plan my money opens from one small row, leaving more room for your goals." }],
+    items: [{ title: "A shorter start", text: "The separate attention summary is removed. Plan my money opens from one small row, leaving more room for your goals." }],
   },
   {
     date: "2026-10-29",
