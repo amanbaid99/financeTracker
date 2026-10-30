@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 const STATUS: Record<PlanStatus, { short: string; tone: string }> = {
   chase: { short: "Within reach", tone: "text-success" },
-  stretch: { short: "Needs extra spend", tone: "text-warning" },
+  stretch: { short: "Above usual spend", tone: "text-warning" },
   unlikely: { short: "Out of reach", tone: "text-muted-foreground" },
 };
 
@@ -91,6 +91,10 @@ export function CardAdvisor({
         </p>
       )}
 
+      <p className="text-xs text-muted-foreground">Use planned spending only. Don&apos;t spend extra to reach a reward.</p>
+      {(a.plan.length > 0 || a.capacity !== null) && <details className="border-t pt-3">
+        <summary className="cursor-pointer py-1 text-sm font-medium text-primary">Why this card?</summary>
+        <div className="space-y-3 pt-2">
       {a.plan.length > 0 && (
         <ul className="divide-y text-sm" aria-label="Milestone plan">
           {a.plan
@@ -147,6 +151,8 @@ export function CardAdvisor({
             : ""}
         </p>
       )}
+        </div>
+      </details>}
     </section>
   );
 }

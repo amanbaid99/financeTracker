@@ -269,3 +269,35 @@ export function nextUnpaid(bills: Bill[]): Bill | null {
       )[0] ?? null
   );
 }
+
+/** Display order only: unknown due dates are unpaid, never assumed overdue. */
+function billPriority(bill: Bill, today: string): number {
+  if (bill.paid || bill.amount <= 0) return 3;
+  if (!bill.dueDate) return 2;
+  return bill.dueDate < today ? 0 : 1;
+}
+
+/** Unpaid bills stay visible even when newer paid statements have been logged. */
+export function billsForReview(bills: Bill[], today: string): Bill[] {
+  return [...bills].sort((a, b) => {
+    const priority = billPriority(a, today) - billPriority(b, today);
+    if (priority) return priority;
+    if (billPriority(a, today) === 3) return b.month.localeCompare(a.month);
+    return (a.dueDate ?? a.month).localeCompare(b.dueDate ?? b.month);
+  });
+}
+
+/** Cards with overdue bills first, followed by dated, undated and settled bills. */
+export function cardsForReview(cards: Card[], today: string): Card[] {
+  const rows = cards.map((card, index) => ({ card, index, bill: billsForReview(card.bills, today).find(b => !b.paid && b.amount > 0) }));
+  rows.sort((a, b) => {
+    const priority = (a.bill ? billPriority(a.bill, today) : 3) - (b.bill ? billPriority(b.bill, today) : 3);
+    if (priority) return priority;
+    if (a.bill && b.bill) {
+      const due = (a.bill.dueDate ?? a.bill.month).localeCompare(b.bill.dueDate ?? b.bill.month);
+      if (due) return due;
+    }
+    return a.index - b.index;
+  });
+  return rows.map(row => row.card);
+}

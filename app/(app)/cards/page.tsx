@@ -21,6 +21,7 @@ export default async function CardsPage({
           <h1 className="text-2xl font-semibold tracking-tight">Cards</h1>
           <GuideButton id="cards" />
         </div>
+        <p className="mt-1 text-sm text-muted-foreground">Bills first, rewards when they fit your spending.</p>
       </div>
       <CardList
         cards={cards}

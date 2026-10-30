@@ -39,7 +39,7 @@ decisions are in [DECISIONS.md](DECISIONS.md).
 | `/goals`                    | Start page. Goal list, money plan; updates and imports via +            |
 | `/goals/new`, `/goals/[id]` | New goal; one goal with its plan, investments and suggestions          |
 | `/portfolio`                | Total value, allocation bar, holdings (tap to edit); updates and imports via + |
-| `/cards`                    | Credit cards: milestones first, bills, card details, card advisor      |
+| `/cards`                    | Credit cards: unpaid bills first, milestones, card details, card advisor      |
 | `/ask`                      | Private Q&A about your own numbers (AI, opt-in)                        |
 | `/import`                   | CAS statement import with a review step                                |
 | `/settings`                 | Theme and accent, guides, AI opt-in, invites (admins), delete account  |

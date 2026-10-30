@@ -21,9 +21,10 @@ import { Checkbox, Input, Select } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
   averageBill,
+  billsForReview,
+  cardsForReview,
   headlineMilestone,
   liveUnbilled,
-  nextUnpaid,
   milestoneState,
   PERIOD_LABELS,
   periodBounds,
@@ -761,7 +762,7 @@ function BillRow({
             run(() => setBillPaid({ id: bill.id, paid: !bill.paid }))
           }
           className={cn(
-            "inline-flex h-7 shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-medium",
+            "inline-flex min-h-10 shrink-0 items-center gap-1 rounded-full px-2.5 text-xs font-medium",
             bill.paid
               ? "bg-success-soft text-success"
               : "border text-muted-foreground",
@@ -772,7 +773,7 @@ function BillRow({
           ) : (
             <Circle className="size-3.5" aria-hidden />
           )}
-          {bill.paid ? "Paid" : "Unpaid"}
+          {bill.paid ? "Paid" : "Mark paid"}
         </button>
       </div>
       {errorText}
@@ -793,7 +794,8 @@ function BillsSection({
 }) {
   const [all, setAll] = useState(false);
   const avg = averageBill(card.bills);
-  const shown = all ? card.bills : card.bills.slice(0, 3);
+  const ordered = billsForReview(card.bills, today);
+  const shown = all ? ordered : ordered.slice(0, 3);
   return (
     <section className="space-y-1" aria-label={`${card.label} bills`}>
       <div className="flex items-center justify-between gap-2">
@@ -997,7 +999,10 @@ export function CardList({
 
   return (
     <div className="space-y-4">
-      {cards.length > 0 && <Button type="button" size="sm" onClick={() => setSheet({ kind: "card", card: null })}><Plus /> Add a card</Button>}
+      {cards.length > 0 && <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">{cards.length} {cards.length === 1 ? "card" : "cards"}. Unpaid bills come first.</p>
+        <Button type="button" variant="outline" size="sm" onClick={() => setSheet({ kind: "card", card: null })}><Plus /> Add a card</Button>
+      </div>}
       {cards.length === 0 ? (
         <div className="space-y-2 rounded-2xl border bg-card p-6 text-center">
           <CreditCard className="mx-auto size-8 text-primary" aria-hidden />
@@ -1026,7 +1031,7 @@ export function CardList({
         </div>
       ) : (
         <ul className="space-y-3">
-          {cards.map((c) => {
+          {cardsForReview(cards, today).map((c) => {
             const states = c.milestones.map((m) => milestoneState(m, today, c));
             const head = headlineMilestone(states);
             const line = head
@@ -1035,7 +1040,9 @@ export function CardList({
                   text: "Add a milestone to track",
                   tone: "text-muted-foreground",
                 };
-            const due = nextUnpaid(c.bills);
+            const unpaid = billsForReview(c.bills, today).filter(b => !b.paid && b.amount > 0);
+            const due = unpaid[0];
+            const overdue = Boolean(due?.dueDate && due.dueDate < today);
             const isOpen = open === c.id;
             return (
               <li
@@ -1049,7 +1056,7 @@ export function CardList({
                   type="button"
                   aria-expanded={isOpen}
                   onClick={() => setOpen(isOpen ? null : c.id)}
-                  className="press flex w-full items-center gap-3 p-4 text-left"
+                  className="press flex w-full items-start gap-3 p-4 text-left"
                 >
                   <span
                     className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary"
@@ -1058,40 +1065,20 @@ export function CardList({
                     <CreditCard className="size-5" />
                   </span>
                   <div className="min-w-0 flex-1 space-y-1.5">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="truncate font-semibold">{c.label}</span>
-                      <span className="shrink-0 text-xs text-muted-foreground">
+                    <div className="space-y-0.5">
+                      <span className="block break-words font-semibold leading-snug">{c.label}</span>
+                      <span className="block text-xs text-muted-foreground">
                         {c.annualFee
-                          ? `${formatINR(c.annualFee)} fee`
+                          ? `${formatINR(c.annualFee)} annual fee`
                           : "No annual fee"}
                       </span>
                     </div>
-                    {head && (
-                      <Progress
-                        value={head.progress * 100}
-                        tone={
-                          line.tone === "text-warning"
-                            ? "warning"
-                            : line.tone === "text-danger"
-                              ? "danger"
-                              : "success"
-                        }
-                        label={`${c.label} milestone progress`}
-                      />
-                    )}
-                    <p
-                      className={cn("truncate text-xs font-medium", line.tone)}
-                    >
-                      {line.text}
+                    <p className={cn("text-sm font-medium", overdue ? "text-danger" : due ? "text-foreground" : "text-muted-foreground")}>
+                      {due ? `${formatINR(due.amount)} ${overdue ? "overdue" : due.dueDate === today ? "due today" : due.dueDate ? `due ${formatDate(due.dueDate)}` : "unpaid, due date not set"}` : "No unpaid bills logged"}
                     </p>
-                    {due && (
-                      <p className="truncate text-xs text-muted-foreground">
-                        Bill {formatINR(due.amount)}
-                        {due.dueDate
-                          ? ` due ${formatDate(due.dueDate)}`
-                          : " unpaid"}
-                      </p>
-                    )}
+                    {unpaid.length > 1 && <p className="text-xs text-muted-foreground">{unpaid.length} unpaid bills. Open to review all.</p>}
+                    {head && <Progress value={head.progress * 100} tone={line.tone === "text-warning" ? "warning" : line.tone === "text-danger" ? "danger" : "success"} label={`${c.label} milestone progress`} className="h-1.5" />}
+                    <p className={cn("break-words text-xs font-medium", line.tone)}>{line.text}</p>
                   </div>
                   <ChevronDown
                     className={cn(
@@ -1104,7 +1091,19 @@ export function CardList({
 
                 {isOpen && (
                   <div className="expand-in space-y-4 border-t px-4 pb-4 pt-2">
-                    <section aria-label={`${c.label} milestones`}>
+                    <BillsSection
+                      card={c}
+                      today={today}
+                      onLog={() =>
+                        setSheet({ kind: "bill", card: c, bill: null })
+                      }
+                      onEdit={(b) =>
+                        setSheet({ kind: "bill", card: c, bill: b })
+                      }
+                    />
+
+                    <section aria-label={`${c.label} milestones`} className="border-t pt-3">
+                      <h3 className="text-sm font-semibold">Milestones</h3>
                       {states.length === 0 ? (
                         <p className="py-3 text-sm text-muted-foreground">
                           Add a milestone like a fee waiver or bonus points.
@@ -1151,17 +1150,6 @@ export function CardList({
                         card={c}
                       />
                     )}
-
-                    <BillsSection
-                      card={c}
-                      today={today}
-                      onLog={() =>
-                        setSheet({ kind: "bill", card: c, bill: null })
-                      }
-                      onEdit={(b) =>
-                        setSheet({ kind: "bill", card: c, bill: b })
-                      }
-                    />
 
                     <AboutCard
                       card={c}

@@ -167,3 +167,37 @@ describe("bills", () => {
     expect(nextUnpaid([bills[2]])).toBeNull();
   });
 });
+
+describe("bill-focused display order", () => {
+  it("keeps an old overdue bill ahead of newer paid bills without mutating history", async () => {
+    const { billsForReview } = await import("@/lib/cards");
+    const bills = [bill("2026-10-01", 3000), bill("2026-09-01", 2000), bill("2026-08-01", 1000), { ...bill("2026-07-01", 4000), paid: false, dueDate: "2026-08-15" }];
+    const before = JSON.stringify(bills);
+    expect(billsForReview(bills, TODAY)[0].month).toBe("2026-07-01");
+    expect(billsForReview(bills, TODAY).slice(1).map(b => b.month)).toEqual(["2026-10-01", "2026-09-01", "2026-08-01"]);
+    expect(JSON.stringify(bills)).toBe(before);
+  });
+  it("puts dated unpaid bills before undated ones and does not treat missing dates as overdue", async () => {
+    const { billsForReview } = await import("@/lib/cards");
+    const bills = [
+      { ...bill("2026-01-01", 1000), paid: false },
+      { ...bill("2026-09-01", 2000), paid: false, dueDate: "2026-10-26" },
+      { ...bill("2026-08-01", 3000), paid: false, dueDate: "2026-10-24" },
+      { ...bill("2026-07-01", 0), paid: false, dueDate: "2026-08-01" },
+    ];
+    expect(billsForReview(bills, TODAY).map(b => b.month)).toEqual(["2026-08-01", "2026-09-01", "2026-01-01", "2026-07-01"]);
+  });
+  it("orders cards by payment urgency while keeping settled cards stable", async () => {
+    const { cardsForReview } = await import("@/lib/cards");
+    const base = { label: "A card", annualFee: null, yearStart: null, rewards: null, benefits: [], bestFor: [], milestones: [], unbilled: 0, unbilledAsOf: null };
+    const cards = [
+      { ...base, id: "clear", bills: [] },
+      { ...base, id: "unknown", bills: [{ ...bill("2026-06-01", 1000), paid: false }] },
+      { ...base, id: "due", bills: [{ ...bill("2026-10-01", 1000), paid: false, dueDate: TODAY }] },
+      { ...base, id: "late", bills: [{ ...bill("2026-09-01", 1000), paid: false, dueDate: "2026-10-24" }] },
+      { ...base, id: "paid", bills: [bill("2026-09-01", 1000)] },
+    ];
+    expect(cardsForReview(cards, TODAY).map(c => c.id)).toEqual(["late", "due", "unknown", "clear", "paid"]);
+    expect(cards.map(c => c.id)).toEqual(["clear", "unknown", "due", "late", "paid"]);
+  });
+});

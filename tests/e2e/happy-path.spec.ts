@@ -821,12 +821,12 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   const bills = page.getByRole("region", { name: "Regalia Gold bills" });
   await expect(bills).toContainText("Sep 2026");
   await expect(bills).toContainText("₹1,00,000");
-  await expect(page.getByText("Bill ₹1,00,000 due")).toBeVisible();
+  await expect(page.getByText(/₹1,00,000 (overdue|due)/)).toBeVisible();
   await bills.getByRole("button", { name: "Sep 2026 bill not paid" }).click();
   await expect(
     bills.getByRole("button", { name: "Sep 2026 bill paid" }),
   ).toBeVisible();
-  await expect(page.getByText("Bill ₹1,00,000 due")).toHaveCount(0);
+  await expect(page.getByText(/₹1,00,000 (overdue|due)/)).toHaveCount(0);
   // Logging the same month again doesn't overwrite it.
   await page.getByRole("button", { name: "Log bill" }).click();
   await page.getByLabel("Statement month").fill("2026-09");
@@ -898,6 +898,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Which card to use: the bonus is reachable at the usual spend.
   const advisor = page.getByRole("region", { name: "Which card to use" });
   await expect(advisor).toContainText("Use Regalia Gold");
+  await advisor.getByText("Why this card?", { exact: true }).click();
   await expect(advisor).toContainText("Within reach");
   await expect(advisor).toContainText("Based on your usual ₹1,00,000 a month");
 

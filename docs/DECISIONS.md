@@ -59,7 +59,8 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 
 ## Cards
 
-- Milestones come first on each card, with "Counted from N bills + ₹X not billed yet".
+- Bills come first on each card. Cards and bills are sorted for display: overdue, dated unpaid, undated unpaid, then paid. Old unpaid statements stay visible before newer paid ones. Missing due dates are never assumed overdue. Card names wrap, payment labels say Mark paid, and the advisor explanation is folded under Why this card. Calculations and explicit save steps stay the same.
+- Milestones retain "Counted from N bills + ₹X not billed yet".
 - Spend toward a milestone = logged monthly bills in the period + unbilled spend the user typed.
   Unbilled spend stops counting once a later bill is logged.
 - Card features can be read from a PDF or a description by AI, but every fact is shown for the user

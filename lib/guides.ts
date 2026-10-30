@@ -50,14 +50,15 @@ export const GUIDES: Record<GuideId, Guide> = {
   },
   cards: {
     title: "Tracking your cards",
-    intro: "Keep each card's benefits, milestones and monthly bills together.",
+    intro: "See what needs paying, then check your milestones and benefits.",
     steps: [
+      "Cards with overdue bills appear first. Older unpaid bills stay ahead of newer paid statements. A missing due date is shown clearly, not treated as overdue.",
       "Add a card with its annual fee, the date its card year starts, rewards and benefits. Never enter the card number.",
       "Add milestones like a fee waiver or bonus points, with the spend target and when it resets.",
       "Update spent so far whenever you check your statement. The bar shows if you're on pace.",
       "Tap Log bill to record each month's statement, then Mark paid once you've paid it.",
       "When a new card year or quarter starts, the milestone resets and asks for your new spend.",
-      "Which card to use suggests where to put your spend so you don't miss a milestone, based on your usual monthly bills.",
+      "Which card to use suggests where planned spending could help a milestone. Open Why this card for the breakdown. Do not spend extra just to reach a reward.",
       "Read features fills in a card from its features PDF or your description. You tick what to keep.",
     ],
   },
@@ -92,6 +93,11 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-10-30",
+    title: "Cards with a clearer next action",
+    items: [{ title: "Bills before rewards", text: "Overdue and unpaid bills come first, including older statements. Card names have more room. Open a card for bills, milestones and benefits; expand Why this card for the reward plan." }],
+  },
   {
     date: "2026-10-30",
     title: "A simpler monthly plan",
