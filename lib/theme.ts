@@ -1,4 +1,4 @@
-export const THEMES = ["auto", "white", "black", "beige"] as const;
+export const THEMES = ["white", "black", "beige"] as const;
 export const ACCENTS = [
   "green",
   "teal",
@@ -29,7 +29,6 @@ export function asAccent(v: string | undefined | null): Accent {
 }
 
 export const THEME_LABELS: Record<Theme, string> = {
-  auto: "Match phone",
   white: "White",
   black: "Black",
   beige: "Beige",
@@ -59,7 +58,6 @@ export const ACCENT_SWATCH: Record<Accent, string> = {
   graphite: "#3f3f46",
 };
 export const THEME_SWATCH: Record<Theme, string> = {
-  auto: "linear-gradient(135deg, #ffffff 50%, #0b0b0c 50%)",
   white: "#ffffff",
   black: "#0b0b0c",
   beige: "#f5efe4",
@@ -71,18 +69,3 @@ export const THEME_COOKIE_OPTIONS = {
   sameSite: "lax" as const,
   httpOnly: false,
 };
-
-/**
- * "Match phone" shows White or Black, following the phone's dark mode. This
- * runs in <head> before the page paints, and again when the phone switches.
- */
-export const AUTO_THEME_SCRIPT = `(() => {
-  const root = document.documentElement;
-  const dark = window.matchMedia("(prefers-color-scheme: dark)");
-  const apply = () => {
-    if (root.dataset.themePref === "auto")
-      root.dataset.theme = dark.matches ? "black" : "white";
-  };
-  apply();
-  dark.addEventListener("change", apply);
-})();`;

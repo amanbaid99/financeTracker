@@ -118,7 +118,7 @@ export const RELEASES: Release[] = [
       },
       {
         title: "Fixes",
-        text: "Sheets no longer sit under the tab bar, a gold ETF counts as gold, the + button moves aside while you scroll, and a new Match phone theme follows your phone's dark mode.",
+        text: "Sheets no longer sit under the tab bar, a gold ETF counts as gold and the + button moves aside while you scroll.",
       },
     ],
   },
