@@ -106,8 +106,7 @@ unit tests in `tests/unit/`.
 - **`lib/fund-goal.ts`**: for a goal with nothing linked, which holdings could be linked and what
   new kind of fund would suit it.
 - **`lib/portfolio.ts`**: totals by asset class, holdings with gains where `invested` is known.
-- **`lib/cards.ts`**: the current milestone period, spend in it (logged bills in the period plus
-  unbilled spend typed in, which stops counting once a later bill is logged), pace needed.
+- **`lib/cards.ts`**: the current milestone period, spend in it (logged bills in the period, excluding card-loan EMIs), and pace needed. Legacy unbilled entries are not counted.
   **`lib/card-advisor.ts`** says which card to use next from milestones and deadlines.
 - Shared helpers: `lib/dates.ts` (IST calendar dates, EMI dates), `lib/format.ts` (₹, dates),
   `lib/categories.ts` and `lib/instruments.ts` (category labels, planning returns, kinds).

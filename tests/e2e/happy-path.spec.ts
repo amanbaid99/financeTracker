@@ -891,17 +891,17 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   ).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await expect(bills).toContainText("₹1,00,000");
-  // Spend since the last bill tops it up, once for the whole card.
-  await page
-    .getByRole("button", { name: "Edit Spent since your Sep bill" })
-    .click();
-  await page.getByLabel("Spent since your Sep bill").fill("300000");
-  await page.getByRole("button", { name: "Save", exact: true }).click();
+  // Milestones change only when another statement is logged, with no
+  // separate "spent since your bill" entry.
+  await expect(page.getByText(/Spent since your .* bill/)).toHaveCount(0);
+  await page.getByRole("button", { name: "Log bill" }).click();
+  await page.getByLabel("Statement month").fill("2026-10");
+  await page.getByLabel("Bill amount").fill("300000");
+  await page.getByRole("checkbox", { name: "Paid" }).check();
+  await page.getByRole("button", { name: "Log bill", exact: true }).last().click();
   await expect(feeBar).toHaveAttribute("aria-valuenow", "100");
   await expect(page.getByText("Annual fee waived: reached")).toBeVisible();
-  await expect(
-    page.getByText("Counted from 1 bill + ₹3,00,000 not billed yet"),
-  ).toBeVisible();
+  await expect(page.getByText("Counted from 2 bills")).toBeVisible();
   // Read features: two readings, checked against the text; nothing saved
   // until chosen. Turning on AI is asked for right here.
   await page.getByRole("button", { name: "Read features" }).click();
@@ -951,7 +951,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(advisor).toContainText("Use Regalia Gold");
   await advisor.getByText("Why this card?", { exact: true }).click();
   await expect(advisor).toContainText("Within reach");
-  await expect(advisor).toContainText("Based on your usual ₹1,00,000 a month");
+  await expect(advisor).toContainText("Based on your usual ₹2,00,000 a month");
 
   await page.screenshot({ path: "test-results/cards-375.png", fullPage: true });
 

@@ -28,12 +28,10 @@ const bill = (month: string, amount: number) => ({
   paid: true,
   note: null,
 });
-/** A card where `amount` was typed as unbilled spend today, with no bills. */
+/** A card with one logged statement in the current month. */
 const spend = (amount: number, yearStart: string | null = null): CardSpend => ({
   yearStart,
-  bills: [],
-  unbilled: amount,
-  unbilledAsOf: TODAY,
+  bills: [bill("2026-10-01", amount)],
 });
 
 describe("card periods", () => {
@@ -98,13 +96,14 @@ describe("milestone progress", () => {
     });
   });
 
-  it("adds spend since the last bill, until the next bill is logged", () => {
+  it("ignores legacy unbilled amounts and changes progress only when another bill is logged", () => {
     const bills = [bill("2026-09-01", 50_000)];
     const card: CardSpend = { yearStart: null, bills, unbilled: 20_000, unbilledAsOf: "2026-10-20" };
-    expect(milestoneState(m({}), TODAY, card)).toMatchObject({ billed: 50_000, unbilledNow: 20_000, spentNow: 70_000 });
-    // The October bill now includes that spend.
+    expect(milestoneState(m({}), TODAY, card)).toMatchObject({ billed: 50_000, spentNow: 50_000 });
+    expect(milestoneState(m({}), TODAY, { ...card, bills: [] }).spentNow).toBe(0);
+    // A new statement increases eligible spend exactly once.
     const later = { ...card, bills: [bill("2026-10-01", 25_000), ...bills] };
-    expect(milestoneState(m({}), TODAY, later)).toMatchObject({ unbilledNow: 0, spentNow: 75_000 });
+    expect(milestoneState(m({}), TODAY, later)).toMatchObject({ spentNow: 75_000 });
   });
 
   it("starts a new period from zero", () => {
@@ -226,6 +225,6 @@ describe("loan EMIs on a card", () => {
     ];
     const card = { yearStart: null, bills, unbilled: 0, unbilledAsOf: null };
     expect(milestoneState(m, "2026-10-31", card).spentNow).toBe(55000);
-    expect(milestoneState(m, "2026-10-31", { ...card, emiPerBill: 5000 }).spentNow).toBe(45000);
+    expect(milestoneState(m, "2026-10-31", { ...card, emiPerBill: 5000, unbilled: 999999, unbilledAsOf: "2026-10-31" }).spentNow).toBe(45000);
   });
 });

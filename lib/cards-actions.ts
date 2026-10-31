@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { SPEND_CATEGORY_KEYS } from "@/lib/card-advisor";
-import { todayIST } from "@/lib/dates";
 import { createClient } from "@/lib/supabase/server";
 
 type Result = { ok: true; id?: string } | { ok: false; error: string };
@@ -141,28 +140,6 @@ export async function saveMilestone(
           .single();
     if (res.error) throw new Error(res.error.message);
     return done(res.data.id);
-  } catch (e) {
-    return fail(e);
-  }
-}
-
-/** Spend on the card since its last logged bill; counts toward every milestone. */
-export async function updateUnbilled(input: {
-  cardId: string;
-  amount: number;
-}): Promise<Result> {
-  try {
-    const v = z
-      .object({ cardId: z.string().uuid(), amount: money })
-      .parse(input);
-    const { supabase, userId } = await session();
-    const { error } = await supabase
-      .from("credit_cards")
-      .update({ unbilled: v.amount, unbilled_as_of: todayIST() })
-      .eq("id", v.cardId)
-      .eq("user_id", userId);
-    if (error) throw new Error(error.message);
-    return done();
   } catch (e) {
     return fail(e);
   }

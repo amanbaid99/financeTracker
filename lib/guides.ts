@@ -68,9 +68,9 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Cards with overdue bills appear first. Older unpaid bills stay ahead of newer paid statements. A missing due date is shown clearly, not treated as overdue.",
       "Add a card with its annual fee, the date its card year starts, rewards and benefits. Never enter the card number.",
       "Add milestones like a fee waiver or bonus points, with the spend target and when it resets.",
-      "Update spent so far whenever you check your statement. The bar shows if you're on pace.",
+      "Log each monthly statement to update milestone progress. Only logged bills count, with card-loan EMIs excluded.",
       "Tap + (or Log bill on a card) to record each month's statement. The card shows what's due and when; tap Mark paid right there once you've paid it.",
-      "When a new card year or quarter starts, the milestone resets and asks for your new spend.",
+      "When a new card year or quarter starts, progress counts the statements in that new period.",
       "Which card to use suggests where planned spending could help a milestone. Open Why this card for the breakdown. Do not spend extra just to reach a reward.",
       "Read features fills in a card from its features PDF or your description. You tick what to keep.",
     ],
@@ -106,6 +106,11 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-10-31",
+    title: "One less thing to enter",
+    items: [{ title: "Card progress from statements", text: "The spent-since-last-bill field is gone. Milestones use logged bills only, excluding card-loan EMIs. Older manual unbilled amounts no longer affect progress." }],
+  },
   {
     date: "2026-10-31",
     title: "A budget, and sharper answers",

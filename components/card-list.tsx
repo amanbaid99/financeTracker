@@ -25,7 +25,6 @@ import {
   cardsForReview,
   dueLabel,
   headlineMilestone,
-  liveUnbilled,
   milestoneState,
   PERIOD_LABELS,
   periodBounds,
@@ -42,7 +41,6 @@ import {
   saveCard,
   saveMilestone,
   setBillPaid,
-  updateUnbilled,
 } from "@/lib/cards-actions";
 import { SPEND_CATEGORIES, type SpendCategory } from "@/lib/card-advisor";
 import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
@@ -78,7 +76,6 @@ function useRun(onDone?: (id?: string) => void) {
 const MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
 const monthLabel = (iso: string) =>
   `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
-const shortMonth = (iso: string) => MONTHS[Number(iso.slice(5, 7)) - 1];
 
 function statusLine(s: MilestoneState): { text: string; tone: string } {
   const what = s.reward || s.name;
@@ -129,8 +126,6 @@ function MilestoneRow({
   const sources: string[] = [];
   if (s.billCount > 0)
     sources.push(s.billCount === 1 ? `1 bill` : `${s.billCount} bills`);
-  if (s.unbilledNow > 0)
-    sources.push(`${formatINR(s.unbilledNow)} not billed yet`);
 
   return (
     <li className="space-y-1.5 py-3">
@@ -174,71 +169,6 @@ function MilestoneRow({
           : ""}
       </p>
     </li>
-  );
-}
-
-/** Spend since the last bill, once per card; counts toward every milestone. */
-function UnbilledRow({ card }: { card: Card }) {
-  const live = liveUnbilled(card);
-  const [editing, setEditing] = useState(false);
-  const [amount, setAmount] = useState<number | null>(live || null);
-  const { pending, run, errorText } = useRun(() => setEditing(false));
-  const latest = card.bills[0]?.month;
-  const label = latest
-    ? `Spent since your ${shortMonth(latest)} bill`
-    : "Spent so far, not billed yet";
-
-  if (!editing)
-    return (
-      <div className="flex items-center justify-between gap-2 rounded-lg bg-muted px-3 py-2 text-sm">
-        <span className="min-w-0">
-          <span className="text-muted-foreground">{label}: </span>
-          <span className="tabular font-medium">{formatINR(live)}</span>
-        </span>
-        <Button
-          type="button"
-          variant="link"
-          size="sm"
-          onClick={() => setEditing(true)}
-          aria-label={`Edit ${label}`}
-        >
-          {live ? "Change" : "Add"}
-        </Button>
-      </div>
-    );
-  return (
-    <form
-      className="space-y-2 rounded-lg bg-muted p-3"
-      onSubmit={(e) => {
-        e.preventDefault();
-        run(() => updateUnbilled({ cardId: card.id, amount: amount ?? 0 }));
-      }}
-    >
-      <p className="text-xs text-muted-foreground">
-        Counts toward this card&apos;s milestones until you log the next bill.
-      </p>
-      <div className="flex items-end gap-2">
-        <MoneyInput
-          className="flex-1"
-          aria-label={label}
-          value={amount}
-          onChange={setAmount}
-          placeholder="0"
-        />
-        <Button type="submit" size="sm" disabled={pending}>
-          {pending ? "Saving…" : "Save"}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={() => setEditing(false)}
-        >
-          Cancel
-        </Button>
-      </div>
-      {errorText}
-    </form>
   );
 }
 
@@ -1232,12 +1162,7 @@ export function CardList({
                       </Button>
                     </section>
 
-                    {states.length > 0 && (
-                      <UnbilledRow
-                        key={`${c.unbilled}-${c.unbilledAsOf}-${c.bills[0]?.month}`}
-                        card={c}
-                      />
-                    )}
+
 
                     <AboutCard
                       card={c}

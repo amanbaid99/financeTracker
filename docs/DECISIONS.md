@@ -85,6 +85,8 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 
 ## Credit: loans and cards
 
+- **Oct 31: remove manual unbilled spending** (owner's request). There is no "Spent since your last bill" field. Milestone progress uses logged bills only, still excluding card-loan EMIs. Older unbilled values are retained in the database but are neither loaded for the UI nor counted. Progress updates when a statement is logged, not between statements.
+
 - **Oct 31: loans tracked on their own** (owner's request). The Cards tab became **Credit**, with
   Loans then Cards. A loan has a type (home, personal, car, education, gold, loan on a credit card,
   other), amount withdrawn, EMI, rate, total EMIs, EMI day, what's owed now, and for card loans
@@ -99,9 +101,7 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   itself. The annual fee moved into the card's details.
 
 - Bills come first on each card. Cards and bills are sorted for display: overdue, dated unpaid, undated unpaid, then paid. Old unpaid statements stay visible before newer paid ones. Missing due dates are never assumed overdue. Card names wrap, payment labels say Mark paid, and the advisor explanation is folded under Why this card. Calculations and explicit save steps stay the same.
-- Milestones retain "Counted from N bills + ₹X not billed yet".
-- Spend toward a milestone = logged monthly bills in the period + unbilled spend the user typed.
-  Unbilled spend stops counting once a later bill is logged.
+- Milestones show "Counted from N bills". Eligible spend comes from logged statements in the milestone period, excluding card-loan EMIs.
 - Card features can be read from a PDF or a description by AI, but every fact is shown for the user
   to confirm before it's saved.
 
