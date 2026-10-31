@@ -52,6 +52,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   const tab = (name: string) =>
     page.getByRole("navigation", { name: "Main" }).getByRole("link", { name });
   const quick = async (name: string) => {
+    // The + button slides away while scrolling down; scrolling up brings it back.
+    await page.evaluate(() => window.scrollTo(0, 0));
     await page.getByRole("button", { name: "Add or update" }).click();
     await page.getByRole("link", { name }).click();
   };
@@ -205,9 +207,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   ).toBeVisible();
   await page.getByRole("button", { name: "Show details" }).click();
   await expect(page.getByText("Needed each month to be on time")).toBeVisible();
-  await expect(
-    page.getByText(/^Needs ₹[\d,]+ more a month$/).first(),
-  ).toBeVisible();
+  await expect(page.getByText(/^\+₹[\d,]+\/mo$/).first()).toBeVisible();
+  await expect(page.getByText("Behind", { exact: true }).first()).toBeVisible();
   await page.screenshot({
     path: "test-results/goal-house-375.png",
     fullPage: true,
@@ -284,7 +285,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByText(/4% \+ GST · ₹47,200 today/)).toBeVisible();
   await expect(page.getByText(/in foreclosure charges:/)).toBeVisible();
-  await expect(page.getByText(/^Can close it around/)).toBeVisible();
+  await expect(page.getByText(/^around \w{3} \d{4}$/).first()).toBeVisible();
   let o = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,
   );
@@ -375,34 +376,33 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   );
   await page.getByLabel("Monthly investment budget").fill("40000");
   await page.getByRole("button", { name: "Show my plan" }).click();
-  await expect(page.getByText("Your money plan")).toBeVisible();
-  await expect(
-    page.getByText(/\/month after these changes.*₹2,80,000 one time/),
-  ).toBeVisible();
-  await expect(page.getByText("Suggested", { exact: true })).toBeVisible();
-  // You already hold a fund that suits House, so the plan names it.
+  // "This month": the plan as a checklist, in your own funds.
+  await expect(page.getByRole("heading", { name: "This month" })).toBeVisible();
+  await expect(page.getByText(/plus ₹2,80,000 once/)).toBeVisible();
+  const steps = page.getByRole("list", { name: "This month's steps" });
+  await expect(steps).toContainText("Index SIP");
+  await expect(steps).toContainText("₹2,80,000 now");
+  // The goal's own box says what to do, naming the fund you hold.
+  await expect(page.getByText("What to do").first()).toBeVisible();
   await expect(
     page.getByText(/into your Index SIP \(close enough to an equity index fund/),
   ).toBeVisible();
-  await page.getByText(/^Review your plan/).click();
-  // The plan as SIPs to start, in your own funds.
-  const sipList = page.getByRole("list", { name: "Monthly investment changes" });
-  await expect(sipList).toContainText("Index SIP");
-  await expect(sipList).toContainText("Increase");
-  await expect(sipList).toContainText("/month");
-  const showAll = page.getByRole("button", { name: /^Show all \d+ changes$/ });
-  if (await showAll.isVisible()) await showAll.click();
-  for (const summary of await sipList.locator("summary").all()) await summary.click();
-  await expect(sipList).toContainText("House");
-  await expect(sipList).toContainText(/review in \w{3} \d{4}/);
-  await expect(page.getByRole("group", { name: "SIP strategy" })).toBeHidden();
+  // Strategy lives under plan details and changes the steps, not your data.
   await page.getByText("Plan details and options", { exact: true }).click();
   await page.getByRole("button", { name: "One holding per goal", exact: true }).click();
   await expect(page.getByRole("button", { name: "One holding per goal", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect(sipList).toContainText("Index SIP");
+  await expect(steps).toContainText("Index SIP");
   await page.getByRole("button", { name: "Spread across holdings", exact: true }).click();
   await page.screenshot({ path: "test-results/plan-375.png", fullPage: true });
-  await expect(sipList).toBeVisible();
+  // Ticking a step records it on the fund, with Undo for a few seconds.
+  await steps.getByRole("checkbox", { name: /into Index SIP$/ }).click();
+  await expect(steps).toContainText("Added to your SIPs");
+  await steps.getByRole("button", { name: "Undo" }).click();
+  await expect(steps).not.toContainText("Added to your SIPs");
+  await expect(steps.getByRole("checkbox", { name: /into Index SIP$/ })).toHaveCount(1);
+  await page.getByRole("button", { name: "Edit Index SIP" }).click();
+  await expect(page.getByRole("dialog", { name: "Index SIP" }).getByLabel("Monthly SIP")).toHaveValue("10,000");
+  await page.getByRole("button", { name: "Close", exact: true }).click();
   // "I've invested this" opens your fund with the plan's amounts added.
   await page.getByRole("button", { name: "I've invested this" }).click();
   const raise = page.getByRole("dialog", { name: "Index SIP" });
@@ -428,8 +428,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   if (!await page.getByLabel("Savings to put toward goals now").isVisible()) await page.getByText("Add a one-time amount", { exact: true }).click();
   await page.getByLabel("Savings to put toward goals now").fill("0");
   await page.getByRole("button", { name: "Show my plan" }).click();
-  // No one-time amount any more: the plan header shows only the monthly total.
-  await expect(page.getByText(/\/month after these changes$/)).toBeVisible();
+  // No one-time amount any more.
+  await expect(page.getByText(/plus ₹[\d,]+ once/)).toHaveCount(0);
 
   // Bills fund: one liquid fund for known payments.
   const inMonths = (n: number) => {
@@ -462,8 +462,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Empty fund: the card asks for a monthly amount, the details explain
   // the gap and both ways to close it.
   const billsCard = page.getByRole("button", { name: /^Bills fund/ });
-  await expect(billsCard).toContainText(/Needs ₹[\d,]+ more a month/);
-  await expect(page.getByText(/short by \d+ \w+ \d{4}\. Add ₹[\d,]+ now, or put in/)).toBeVisible();
+  await expect(billsCard).toContainText(/Short in \w{3}/);
+  // The plan funds it, so one "What to do" box says how.
+  await expect(page.getByText(/^Put ₹[\d,]+ a month into a liquid fund/)).toBeVisible();
 
   // Link one liquid fund: payments show as covered.
   await page.getByRole("button", { name: "Add investment" }).click();
@@ -475,7 +476,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     .getByRole("dialog")
     .getByRole("button", { name: "Add investment" })
     .click();
-  await expect(page.getByText(/^Next: Gym on .+, covered$/)).toBeVisible();
+  await expect(billsCard).toContainText("Covered");
+  await expect(billsCard).toContainText(/Next: Gym, \d+ \w{3}/);
   await expect(
     page.getByText("Covered", { exact: true }).first(),
   ).toBeVisible();

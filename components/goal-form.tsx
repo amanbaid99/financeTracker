@@ -65,10 +65,13 @@ export function GoalForm({
   goal,
   today,
   onSaved,
+  initial,
 }: {
   goal: TrackedGoal | null;
   today: string;
   onSaved: (id: string) => void;
+  /** Start with these filled in (from a suggestion); nothing saves until you do. */
+  initial?: { targetDate?: string; target?: number };
 }) {
   const [type, setType] = useState<GoalType | null>(
     goal ? asGoalType(goal.type) : null,
@@ -80,10 +83,14 @@ export function GoalForm({
 
   const [name, setName] = useState(goal?.name ?? "");
   const [target, setTarget] = useState<number | null>(
-    goal && !ls ? goal.target : null,
+    initial?.target ?? (goal && !ls ? goal.target : null),
   );
-  const [noDate, setNoDate] = useState(goal ? !goal.targetDate : false);
-  const [date, setDate] = useState(goal?.targetDate ?? "");
+  const [noDate, setNoDate] = useState(
+    initial?.targetDate ? false : goal ? !goal.targetDate : false,
+  );
+  const [date, setDate] = useState(
+    initial?.targetDate ?? goal?.targetDate ?? "",
+  );
   const [inflate, setInflate] = useState(goal ? !!goal.inflationPct : true);
   const [inflation, setInflation] = useState(
     String(

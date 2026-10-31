@@ -92,6 +92,12 @@ unit tests in `tests/unit/`.
   least ₹100 (detected by "ETF" or "BeES" in the name; what they track comes from the name). Gold
   gets at most 20% and is never used for liquid needs. With nothing suitable it falls back to an
   unused holding, then to "New <category>".
+- **`planSteps`** (also in `lib/sip-plan.ts`) turns the plan into the "This month" checklist:
+  one step per holding with its monthly raise and one-time amount. `applyPlanStep` and
+  `undoPlanStep` in `lib/actions.ts` record a ticked step and put it back.
+- **`lib/goal-status.ts`**: presentation only. A goal's status label, its time group (next 2
+  years, later, no fixed date), the line under its name, the hint on its card, and `gapOptions`
+  (later date, smaller target, extra a month) for a goal the plan can't cover.
 - **`lib/fund-goal.ts`**: for a goal with nothing linked, which holdings could be linked and what
   new kind of fund would suit it.
 - **`lib/portfolio.ts`**: totals by asset class, holdings with gains where `invested` is known.

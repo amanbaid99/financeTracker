@@ -9,9 +9,17 @@ import { loadGoals } from "@/lib/data";
 import { formatINR, formatINRCompact } from "@/lib/format";
 import { planMoney } from "@/lib/allocate";
 import { sortGoals } from "@/lib/goal-summary";
+import { goalStatus } from "@/lib/goal-status";
 import { freePercent } from "@/lib/tracker";
 
 export const metadata: Metadata = { title: "Goals" };
+
+const PILL = {
+  danger: "bg-danger-soft text-danger",
+  warning: "bg-warning-soft text-warning",
+  success: "bg-success-soft text-success",
+  muted: "bg-muted text-muted-foreground",
+} as const;
 
 export default async function GoalsPage({
   searchParams,
@@ -44,16 +52,35 @@ export default async function GoalsPage({
       })
     : null;
   const saved = goals.reduce((s, g) => s + g.current, 0);
+  // How many goals need action, are behind, or are fine.
+  const tones = goals.map((g) => goalStatus(g, today).tone);
+  const count = (t: string) => tones.filter((x) => x === t).length;
+  const counts = (
+    [
+      ["danger", count("danger"), "need action"],
+      ["warning", count("warning"), "behind"],
+      ["success", count("success"), "on track"],
+      ["muted", count("muted"), "not started"],
+    ] as const
+  )
+    .filter(([, n]) => n > 0)
+    .map(
+      ([tone, n, label]) =>
+        [
+          tone,
+          n,
+          n === 1 && label === "need action" ? "needs action" : label,
+        ] as const,
+    );
   const sips = goals.reduce((s, g) => s + g.monthlySip, 0);
   // Every investment remains updatable from the + menu.
   const goalNames = new Map(goals.map((g) => [g.id, g.name]));
-  const updatable = investments
-    .map((i) => ({
-      investment: i,
-      goals: links
-        .filter((l) => l.investmentId === i.id)
-        .map((l) => goalNames.get(l.goalId) ?? ""),
-    }));
+  const updatable = investments.map((i) => ({
+    investment: i,
+    goals: links
+      .filter((l) => l.investmentId === i.id)
+      .map((l) => goalNames.get(l.goalId) ?? ""),
+  }));
 
   return (
     <main className="space-y-5">
@@ -63,18 +90,36 @@ export default async function GoalsPage({
             <h1 className="text-2xl font-semibold tracking-tight">Goals</h1>
             <GuideButton id="goals" />
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">Make room for what matters to you.</p>
-          {goals.length > 0 && (
-            <dl className="mt-4 grid grid-cols-2 gap-4 border-y border-border/60 py-3">
-              <div><dt className="text-xs text-muted-foreground">Saved toward goals</dt><dd className="tabular mt-1 text-2xl font-semibold tracking-tight">{formatINRCompact(saved)}</dd></div>
-              <div><dt className="text-xs text-muted-foreground">Going in each month</dt><dd className="tabular mt-1 text-2xl font-semibold tracking-tight">{formatINR(sips)}</dd></div>
-            </dl>
+          <p className="tabular mt-1 text-sm text-muted-foreground">
+            {goals.length > 0
+              ? `${formatINRCompact(saved)} saved · ${formatINR(sips)} a month going in`
+              : "Make room for what matters to you."}
+          </p>
+          {counts.length > 0 && (
+            <ul
+              className="mt-3 flex flex-wrap gap-1.5"
+              aria-label="Goals by status"
+            >
+              {counts.map(([tone, n, label]) => (
+                <li
+                  key={tone}
+                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${PILL[tone]}`}
+                >
+                  {n} {label}
+                </li>
+              ))}
+            </ul>
           )}
         </div>
-
       </div>
 
-      {updatable.length > 0 && <UpdateButton items={updatable} autoOpen={action === "update"} showButton={false} />}
+      {updatable.length > 0 && (
+        <UpdateButton
+          items={updatable}
+          autoOpen={action === "update"}
+          showButton={false}
+        />
+      )}
 
       {goals.length === 0 ? (
         <div className="space-y-3 rounded-2xl border bg-card p-6 text-center">

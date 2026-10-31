@@ -8,7 +8,7 @@ export function Progress({
 }: {
   value: number;
   className?: string;
-  tone?: "primary" | "success" | "warning" | "danger";
+  tone?: "primary" | "success" | "warning" | "danger" | "neutral";
   label?: string;
 }) {
   const v = Math.max(0, Math.min(100, value));
@@ -17,6 +17,7 @@ export function Progress({
     success: "bg-success",
     warning: "bg-warning",
     danger: "bg-danger",
+    neutral: "bg-foreground/80",
   }[tone];
   return (
     <div

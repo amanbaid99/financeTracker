@@ -21,6 +21,8 @@ import {
   KIND_LABELS,
   KINDS,
   type Kind,
+  etfLabel,
+  isEtf,
 } from "@/lib/instruments";
 import { freePercent, type Investment, type Link } from "@/lib/tracker";
 
@@ -34,6 +36,7 @@ export function investmentTitle(i: Investment): string {
 }
 
 export function investmentSub(i: Investment): string {
+  if (isEtf(i)) return etfLabel(i.name);
   const kind = asKind(i.kind);
   return kind === "mutual_fund" && i.name?.trim()
     ? categoryLabel(i.category)

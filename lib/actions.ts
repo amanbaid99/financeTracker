@@ -526,3 +526,148 @@ export async function removeInvite(email: string): Promise<ActionResult> {
     return fail(e);
   }
 }
+
+// ---------------------------------------------------------------------------
+// This month's plan steps: ticking one records it, Undo puts it back.
+// ---------------------------------------------------------------------------
+
+const planStepSchema = z.object({
+  investmentId: uuid,
+  addMonthly: money,
+  addLump: money,
+  goalIds: z.array(uuid).max(20),
+});
+
+/** What a step changed, so Undo can put it back exactly. */
+export type PlanStepUndo = {
+  investmentId: string;
+  monthlySip: number | null;
+  value: number;
+  planLump: number | null;
+  linkedGoalIds: string[];
+};
+
+export async function applyPlanStep(
+  input: z.input<typeof planStepSchema>,
+): Promise<{ ok: true; undo: PlanStepUndo } | { ok: false; error: string }> {
+  try {
+    const v = planStepSchema.parse(input);
+    if (v.addMonthly === 0 && v.addLump === 0)
+      return { ok: false, error: "Nothing to add." };
+    const { supabase, userId } = await session();
+    const { data: h, error } = await supabase
+      .from("holdings")
+      .select("monthly_sip, current_value")
+      .eq("id", v.investmentId)
+      .eq("user_id", userId)
+      .single();
+    if (error) throw new Error(error.message);
+    const { data: p } = await supabase
+      .from("profiles")
+      .select("plan_lump_sum")
+      .eq("user_id", userId)
+      .single();
+
+    const { error: upd } = await supabase
+      .from("holdings")
+      .update({
+        monthly_sip: (h.monthly_sip ?? 0) + v.addMonthly || null,
+        current_value: Number(h.current_value) + v.addLump,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", v.investmentId)
+      .eq("user_id", userId);
+    if (upd) throw new Error(upd.message);
+
+    // A holding the plan picked because no goal used it yet: link it to the
+    // goals it now pays for. Ones already linked are left as they are.
+    const { data: existing, error: linkErr } = await supabase
+      .from("goal_allocations")
+      .select("goal_id, percent")
+      .eq("holding_id", v.investmentId);
+    if (linkErr) throw new Error(linkErr.message);
+    const linkedGoalIds: string[] = [];
+    const used = (existing ?? []).reduce((s, a) => s + Number(a.percent), 0);
+    const missing = v.goalIds.filter(
+      (g) => !(existing ?? []).some((a) => a.goal_id === g),
+    );
+    if (missing.length && used === 0) {
+      const pct = Math.floor(100 / missing.length);
+      const { error: insErr } = await supabase.from("goal_allocations").insert(
+        missing.map((goalId) => ({
+          user_id: userId,
+          goal_id: goalId,
+          holding_id: v.investmentId,
+          percent: pct,
+        })),
+      );
+      if (insErr) throw new Error(insErr.message);
+      linkedGoalIds.push(...missing);
+    }
+
+    const planLump = p?.plan_lump_sum ?? null;
+    if (v.addLump > 0 && planLump !== null) {
+      await supabase
+        .from("profiles")
+        .update({ plan_lump_sum: Math.max(0, Number(planLump) - v.addLump) })
+        .eq("user_id", userId);
+    }
+    await schedulePortfolioReview(supabase, userId, "holding");
+    revalidatePath("/", "layout");
+    return {
+      ok: true,
+      undo: {
+        investmentId: v.investmentId,
+        monthlySip: h.monthly_sip,
+        value: Number(h.current_value),
+        planLump: planLump === null ? null : Number(planLump),
+        linkedGoalIds,
+      },
+    };
+  } catch (e) {
+    return fail(e) as { ok: false; error: string };
+  }
+}
+
+const undoSchema = z.object({
+  investmentId: uuid,
+  monthlySip: money.nullable(),
+  value: money,
+  planLump: money.nullable(),
+  linkedGoalIds: z.array(uuid).max(20),
+});
+
+export async function undoPlanStep(
+  input: z.input<typeof undoSchema>,
+): Promise<ActionResult> {
+  try {
+    const v = undoSchema.parse(input);
+    const { supabase, userId } = await session();
+    const { error } = await supabase
+      .from("holdings")
+      .update({
+        monthly_sip: v.monthlySip,
+        current_value: v.value,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", v.investmentId)
+      .eq("user_id", userId);
+    if (error) throw new Error(error.message);
+    if (v.linkedGoalIds.length) {
+      const { error: del } = await supabase
+        .from("goal_allocations")
+        .delete()
+        .eq("holding_id", v.investmentId)
+        .eq("user_id", userId)
+        .in("goal_id", v.linkedGoalIds);
+      if (del) throw new Error(del.message);
+    }
+    await supabase
+      .from("profiles")
+      .update({ plan_lump_sum: v.planLump })
+      .eq("user_id", userId);
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}

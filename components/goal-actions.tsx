@@ -16,7 +16,10 @@ import type { Suggestion } from "@/lib/allocate";
 import { goalHeadline } from "@/lib/goal-summary";
 import { waysToFund, type WaysToFund } from "@/lib/fund-goal";
 import { splitForGoal, type FundShare, type SipStrategy } from "@/lib/sip-plan";
-import { formatINR } from "@/lib/format";
+import { formatINR, formatINRCompact } from "@/lib/format";
+import type { GapOptions } from "@/lib/goal-status";
+import { monthYear } from "@/lib/goal-summary";
+import { QUICK_ACTION } from "@/components/quick-add";
 import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
 
 export function EditGoalButton({
@@ -326,6 +329,8 @@ export function SuggestionBox({
   suggestion: s,
   investments,
   links,
+  children,
+  short = false,
   strategy = "diversified",
 }: {
   strategy?: SipStrategy;
@@ -333,6 +338,10 @@ export function SuggestionBox({
   suggestion: Suggestion;
   investments: Investment[];
   links: Link[];
+  /** More at the end of the box, like ways to close a gap. */
+  children?: React.ReactNode;
+  /** The plan can't fully cover this goal. */
+  short?: boolean;
 }) {
   // null: closed; "new": a new fund; otherwise the share being recorded.
   const [open, setOpen] = useState<FundShare | "new" | null>(null);
@@ -359,9 +368,13 @@ export function SuggestionBox({
   const one = shares.length === 1 ? shares[0] : null;
 
   return (
-    <div className="space-y-2 rounded-lg bg-primary-soft p-3 text-sm">
-      <p className="flex items-center gap-1.5 font-semibold text-primary">
-        <Sparkles className="size-4" aria-hidden /> Suggested
+    <div
+      className={`space-y-2 rounded-lg p-3 text-sm ${short ? "bg-warning-soft" : "bg-primary-soft"}`}
+    >
+      <p
+        className={`flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide ${short ? "text-warning" : "text-primary"}`}
+      >
+        <Sparkles className="size-4" aria-hidden /> What to do
       </p>
       {shares.length === 0 ? (
         <p>
@@ -415,14 +428,17 @@ export function SuggestionBox({
           </ul>
         </>
       )}
-      <p className="text-muted-foreground">
-        With this: {goalHeadline(s.after).text}.
-      </p>
+      {!short && (
+        <p className="text-muted-foreground">
+          With this: {goalHeadline(s.after).text}.
+        </p>
+      )}
       {shares.length <= 1 && (
         <Button type="button" size="sm" onClick={() => setOpen(one ?? "new")}>
           I&apos;ve invested this
         </Button>
       )}
+      {children}
       {open === "new" && (
         <InvestmentSheet
           goalId={goal.id}
@@ -457,6 +473,106 @@ export function SuggestionBox({
           onClose={close}
           topUp={{ value: open.lump, sip: open.monthly }}
         />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Ways to close a gap the plan can't: a later date or a smaller target
+ * (each opens the goal's form filled in, for you to check and save), or a
+ * bigger monthly budget (opens the money plan).
+ */
+export function GapChoices({
+  goal,
+  options,
+  today,
+  afterPlan = false,
+}: {
+  goal: TrackedGoal;
+  options: GapOptions;
+  today: string;
+  /** Shown under the plan's suggestion, which isn't enough on its own. */
+  afterPlan?: boolean;
+}) {
+  const router = useRouter();
+  const [edit, setEdit] = useState<{
+    targetDate?: string;
+    target?: number;
+  } | null>(null);
+  const close = useCallback(() => setEdit(null), []);
+  const row = (
+    title: string,
+    sub: string,
+    button: string,
+    onClick: () => void,
+  ) => (
+    <li className="flex items-center justify-between gap-3 rounded-lg border border-black/5 bg-card p-3 text-foreground">
+      <span className="min-w-0">
+        <span className="block font-medium">{title}</span>
+        <span className="block text-xs text-muted-foreground">{sub}</span>
+      </span>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        onClick={onClick}
+        aria-label={`${button}: ${title}`}
+      >
+        {button}
+      </Button>
+    </li>
+  );
+  return (
+    <div className="space-y-2">
+      <p>
+        {afterPlan
+          ? "That's all your plan can give it, so you'd still be short. Pick one to close the gap:"
+          : "Pick one to close the gap:"}
+      </p>
+      <ul className="space-y-2" aria-label="Ways to close the gap">
+        {options.newDate &&
+          row(
+            `Move the date to ${monthYear(options.newDate)}`,
+            `Keeps your ${formatINRCompact(goal.target)} target`,
+            "Use",
+            () => setEdit({ targetDate: options.newDate! }),
+          )}
+        {options.lowerTarget &&
+          row(
+            `Lower the target to ${formatINRCompact(options.lowerTarget)}`,
+            `Keeps ${monthYear(goal.targetDate)}`,
+            "Use",
+            () => setEdit({ target: options.lowerTarget! }),
+          )}
+        {row(
+          `Invest ${formatINR(options.moreMonthly)} a month more`,
+          "Raise your monthly budget",
+          "Edit plan",
+          () =>
+            window.dispatchEvent(
+              new CustomEvent(QUICK_ACTION, { detail: "plan" }),
+            ),
+        )}
+      </ul>
+      {edit && (
+        <Sheet title="Edit goal" onClose={close}>
+          <p className="mb-3 rounded-lg bg-muted p-2.5 text-sm">
+            {edit.targetDate
+              ? `New date filled in: ${monthYear(edit.targetDate)}.`
+              : `New target filled in: ${formatINR(edit.target ?? 0)}.`}{" "}
+            Check it and save.
+          </p>
+          <GoalForm
+            goal={goal}
+            today={today}
+            initial={edit}
+            onSaved={() => {
+              router.refresh();
+              close();
+            }}
+          />
+        </Sheet>
       )}
     </div>
   );

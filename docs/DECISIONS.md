@@ -35,6 +35,21 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 
 ## Goals and the money plan
 
+- **Goals page revamp (Oct 31, owner approved a mockup):** the header shows saved, going in each
+  month, and counts by status (need action, behind, on track, not started). Active goals are
+  grouped by time: Next 2 years (and bills funds), Later, No fixed date; EMI-covered loans and
+  reached goals stay folded. Cards are calm: a status label (`lib/goal-status.ts`), a neutral
+  progress bar, "₹X of ₹Y" and one short hint. Orange and red only where something is behind or
+  short soon. This replaces the earlier "A little attention / Keep going" grouping.
+- **This month checklist** replaces the money plan card. One step per holding (monthly raise plus
+  any one-time amount, `planSteps`). Ticking a step is the user's confirmation: it raises that
+  holding's SIP and value, links a spare holding to its goals, and takes the one-time amount out of
+  the plan (`applyPlanStep`). The step shows Undo for 4 seconds (`undoPlanStep` restores exactly),
+  then leaves the list. Steps with no suitable holding show "Add it", which opens a prefilled form.
+- **One "What to do" box per goal.** The plan's suggestion, when there is one, replaces the coloured
+  verdict. When the plan still can't cover a dated goal, the box offers a later date, a smaller
+  target (each opens the goal form prefilled; the owner wants to check and save) or a bigger budget.
+
 - Goals now lead with saved and monthly amounts and a money plan. The separate attention-count strip was removed; goal groups already show what needs attention. Before a plan exists, a single compact Plan my money row opens the form. Review your plan opens the SIP details. A visible Plan my money button is shown before a plan exists.
 - Goals that need attention or a first investment come first, ordered by the existing date and amount rules. Other active goals follow. Reached goals and loans covered by EMIs are folded away, except for an explicitly opened goal. Overdue loans stay visible. These are presentation groups, not changes to allocation priorities.
 - Goal cards show full names, a date, a plain status and one actionable headline. Detailed targets and calculations stay inside the expanded goal. A soft accent panel with a subtle circular motif gives the page a distinctive next-step area while respecting every theme and accent.

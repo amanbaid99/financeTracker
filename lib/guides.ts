@@ -2,7 +2,13 @@
 // "What's new" notes shown once after a launch. Plain data, safe to use
 // from server and client code.
 
-export type GuideId = "goals" | "portfolio" | "cards" | "ask" | "import" | "quick-add";
+export type GuideId =
+  | "goals"
+  | "portfolio"
+  | "cards"
+  | "ask"
+  | "import"
+  | "quick-add";
 
 export interface Guide {
   title: string;
@@ -31,10 +37,11 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap Add a goal and pick a type: a purchase, a trip, an emergency fund, a bills fund or paying off a loan.",
       "Link the mutual funds, savings or deposits that pay for it. One investment can be split across goals.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
-      "Goals needing attention come first. Loans covered by EMIs and reached goals are folded away, so you can focus on what needs you.",
+      "Goals are grouped by when they're due: the next 2 years, later, and no fixed date. A label on each says On track, Behind or what needs action. Loans covered by EMIs and reached goals are folded away.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
-      "Plan my money is above your goals. Open Review your plan for SIP suggestions, or edit what you can invest. Nothing changes until you record it.",
-      "Enter one monthly investment budget, including what you already invest. One-time savings are optional. Each row shows the amount to set; tap it to see the current amount and goals behind it.",
+      "This month, above your goals, lists what to invest and where. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for a few seconds.",
+      "Open a goal for its What to do box. If your plan can't cover it, pick a later date, a smaller target or a bigger budget. The goal's form opens filled in for you to check and save.",
+      "Edit plan sets one monthly investment budget, including what you already invest. One-time savings are optional.",
       "Plan details and options shows the goal breakdown and lets you compare one holding per goal with a spread across holdings. Nothing is saved until you confirm.",
     ],
   },
@@ -94,44 +101,111 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    date: "2026-10-31",
+    title: "A calmer Goals page",
+    items: [
+      {
+        title: "This month",
+        text: "Your plan as a checklist. Tick a step once you've set it up and it's added to that fund's SIP. Undo is there for a few seconds.",
+      },
+      {
+        title: "Grouped by when",
+        text: "Goals sit under Next 2 years, Later and No fixed date, each with a short label: On track, Behind or what needs action.",
+      },
+      {
+        title: "One thing to do",
+        text: "Open a goal for one What to do box. When your plan can't cover it, choose a later date, a smaller target or a bigger budget.",
+      },
+      {
+        title: "Fixes",
+        text: "Sheets no longer sit under the tab bar, a gold ETF counts as gold, the + button moves aside while you scroll, and a new Match phone theme follows your phone's dark mode.",
+      },
+    ],
+  },
+  {
     date: "2026-10-30",
     title: "Cards with a clearer next action",
-    items: [{ title: "Bills before rewards", text: "Overdue and unpaid bills come first, including older statements. Card names have more room. Open a card for bills, milestones and benefits; expand Why this card for the reward plan." }],
+    items: [
+      {
+        title: "Bills before rewards",
+        text: "Overdue and unpaid bills come first, including older statements. Card names have more room. Open a card for bills, milestones and benefits; expand Why this card for the reward plan.",
+      },
+    ],
   },
   {
     date: "2026-10-30",
     title: "A simpler monthly plan",
-    items: [{ title: "One budget, clear amounts", text: "Start with one monthly budget. Each investment shows the amount to set, with its explanation and goals a tap away. Add a one-time amount only when you need it." }],
+    items: [
+      {
+        title: "One budget, clear amounts",
+        text: "Start with one monthly budget. Each investment shows the amount to set, with its explanation and goals a tap away. Add a one-time amount only when you need it.",
+      },
+    ],
   },
   {
     date: "2026-10-30",
     title: "Your holdings, sooner",
-    items: [{ title: "A shorter Portfolio tab", text: "Allocation is compact, with By kind under details. Portfolio review opens with two short takeaways. Expand a check for the explanation, with extra checks and settings tucked away." }],
+    items: [
+      {
+        title: "A shorter Portfolio tab",
+        text: "Allocation is compact, with By kind under details. Portfolio review opens with two short takeaways. Expand a check for the explanation, with extra checks and settings tucked away.",
+      },
+    ],
   },
   {
     date: "2026-10-30",
     title: "More room for your goals",
-    items: [{ title: "A shorter start", text: "The separate attention summary is removed. Plan my money opens from one small row, leaving more room for your goals." }],
+    items: [
+      {
+        title: "A shorter start",
+        text: "The separate attention summary is removed. Plan my money opens from one small row, leaving more room for your goals.",
+      },
+    ],
   },
   {
     date: "2026-10-29",
     title: "Your shortcuts, in one place",
-    items: [{ title: "A clearer plus menu", text: "Update values and import statements from +. A first-use hint shows where to find them, with a guide in the menu. Add cards from the Cards tab." }],
+    items: [
+      {
+        title: "A clearer plus menu",
+        text: "Update values and import statements from +. A first-use hint shows where to find them, with a guide in the menu. Add cards from the Cards tab.",
+      },
+    ],
   },
   {
     date: "2026-10-29",
     title: "A closer look at your portfolio",
-    items: [{ title: "Automatic portfolio checks", text: "Turn on reviews in Portfolio for a full check after confirmed CAS imports. Balance updates get a quick check, with AI used only for major changes. Review concentration and money needed soon before changing investments." }],
+    items: [
+      {
+        title: "Automatic portfolio checks",
+        text: "Turn on reviews in Portfolio for a full check after confirmed CAS imports. Balance updates get a quick check, with AI used only for major changes. Review concentration and money needed soon before changing investments.",
+      },
+    ],
   },
   {
     date: "2026-10-29",
     title: "A little more clarity for your goals",
     items: [
-      { title: "Know where to begin", text: "Your next step highlights goals that need attention. Your money plan is near the top, with the details folded away." },
-      { title: "More room for what matters", text: "Full goal names, clearer dates and quieter progress cards. Loans covered by EMIs and goals you've reached open when you need them." },
-      { title: "Clearer actions", text: "Update values says what it does. Plan my money is easy to find even before you have a plan." },
-      { title: "Know what changes", text: "One action per investment: start a monthly amount or increase to a new total. See the overall extra amount first, with explanations under details." },
-      { title: "Compare a simpler preview", text: "Open Plan details and options to compare one holding per goal with a spread across holdings. Your recorded investments stay the same." },
+      {
+        title: "Know where to begin",
+        text: "Your next step highlights goals that need attention. Your money plan is near the top, with the details folded away.",
+      },
+      {
+        title: "More room for what matters",
+        text: "Full goal names, clearer dates and quieter progress cards. Loans covered by EMIs and goals you've reached open when you need them.",
+      },
+      {
+        title: "Clearer actions",
+        text: "Update values says what it does. Plan my money is easy to find even before you have a plan.",
+      },
+      {
+        title: "Know what changes",
+        text: "One action per investment: start a monthly amount or increase to a new total. See the overall extra amount first, with explanations under details.",
+      },
+      {
+        title: "Compare a simpler preview",
+        text: "Open Plan details and options to compare one holding per goal with a spread across holdings. Your recorded investments stay the same.",
+      },
     ],
   },
   {

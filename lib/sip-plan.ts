@@ -428,3 +428,102 @@ export function sipPlan(
       b.monthly - a.monthly,
   );
 }
+
+/** One thing to do this month: raise a SIP and/or add a one-time amount to one holding. */
+export interface PlanStep {
+  key: string;
+  /** Your holding, or null when you hold nothing suitable yet. */
+  investment: Investment | null;
+  label: string;
+  /** Kind of fund the plan asked for (for a new one). */
+  category: string;
+  /** Extra a month on top of the current SIP. */
+  addMonthly: number;
+  /** One-time amount to put in now. */
+  addLump: number;
+  /** Goals this step pays for, soonest first. */
+  goals: { id: string; name: string }[];
+  note: string | null;
+}
+
+/**
+ * The plan as a checklist: one step per holding, with its monthly raise
+ * (from sipPlan) and any one-time amount (split the same way) together.
+ */
+export function planSteps(
+  suggestions: Suggestion[],
+  investments: Investment[] = [],
+  links: Link[] = [],
+  strategy: SipStrategy = "diversified",
+): PlanStep[] {
+  const steps = new Map<string, PlanStep>();
+  const addGoal = (step: PlanStep, id: string, name: string) => {
+    if (!step.goals.some((g) => g.id === id)) step.goals.push({ id, name });
+  };
+  for (const l of sipPlan(suggestions, investments, links, strategy)) {
+    const key = l.investment ? `inv:${l.investment.id}` : `new:${l.category}`;
+    const step: PlanStep = {
+      key,
+      investment: l.investment,
+      label: l.label,
+      category: l.category,
+      addMonthly: l.monthly,
+      addLump: 0,
+      goals: [],
+      note: l.note,
+    };
+    for (const p of l.parts) addGoal(step, p.goalId, p.goalName);
+    steps.set(key, step);
+  }
+  for (const s of suggestions) {
+    if (s.lump <= 0) continue;
+    const shares = splitForGoal(
+      s.goalId,
+      s.category,
+      0,
+      s.lump,
+      investments,
+      links,
+      strategy,
+    ).filter((sh) => sh.lump > 0);
+    const parts = shares.length
+      ? shares.map((sh) => ({
+          key: `inv:${sh.investment.id}`,
+          investment: sh.investment as Investment | null,
+          label:
+            sh.investment.name?.trim() || categoryLabel(kindOf(sh.investment)),
+          lump: sh.lump,
+          note: sh.note,
+        }))
+      : [
+          {
+            key: `new:${s.category}`,
+            investment: null,
+            label: `New ${categoryLabel(s.category).toLowerCase()}`,
+            lump: s.lump,
+            note: null,
+          },
+        ];
+    for (const p of parts) {
+      const step = steps.get(p.key) ?? {
+        key: p.key,
+        investment: p.investment,
+        label: p.label,
+        category: s.category,
+        addMonthly: 0,
+        addLump: 0,
+        goals: [],
+        note: p.note,
+      };
+      step.addLump += p.lump;
+      addGoal(step, s.goalId, s.goalName);
+      steps.set(p.key, step);
+    }
+  }
+  // Your own holdings first, biggest first; new ones last.
+  return [...steps.values()].sort(
+    (a, b) =>
+      Number(a.investment === null) - Number(b.investment === null) ||
+      b.addMonthly + b.addLump / 12 - (a.addMonthly + a.addLump / 12),
+  );
+}

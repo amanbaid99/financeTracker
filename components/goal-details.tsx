@@ -84,15 +84,31 @@ function savingsVerdict(g: TrackedGoal): {
 export function SavingsPlan({
   g,
   details = true,
+  verdict = true,
+  extra,
 }: {
   g: TrackedGoal;
   details?: boolean;
+  /** Show the one-line verdict (off when a "What to do" box says it). */
+  verdict?: boolean;
+  /** More inside the verdict box, like ways to close a gap. */
+  extra?: React.ReactNode;
 }) {
   const needed = g.monthlySip + g.extraSipNeeded;
   const v = savingsVerdict(g);
   return (
     <div className="space-y-3">
-      <p className={cn("rounded-lg p-3 text-sm", v.tone)}>{v.text}</p>
+      {verdict && (
+        <div className={cn("space-y-3 rounded-lg p-3 text-sm", v.tone)}>
+          {extra && (
+            <p className="text-xs font-semibold uppercase tracking-wide">
+              What to do
+            </p>
+          )}
+          <p>{v.text}</p>
+          {extra}
+        </div>
+      )}
       {details && (
         <dl className="expand-in divide-y">
           <Row label="Going in each month" value={formatINR(g.monthlySip)} />
@@ -169,9 +185,11 @@ function SavingLine({ g }: { g: TrackedGoal }) {
 export function LoanPlan({
   g,
   details = true,
+  verdict = true,
 }: {
   g: TrackedGoal;
   details?: boolean;
+  verdict?: boolean;
 }) {
   const l = g.loanState!;
   const needed = g.monthlySip + g.extraSipNeeded;
@@ -219,7 +237,7 @@ export function LoanPlan({
 
   return (
     <div className="space-y-3">
-      <p className="rounded-lg bg-muted p-3 text-sm">{plan}</p>
+      {verdict && <p className="rounded-lg bg-muted p-3 text-sm">{plan}</p>}
       {details && (
         <dl className="expand-in divide-y">
           <Row label="Owed today" value={formatINR(l.balance)} strong />
@@ -258,9 +276,11 @@ export function LoanPlan({
 export function BillsPlan({
   g,
   details = true,
+  verdict = true,
 }: {
   g: TrackedGoal;
   details?: boolean;
+  verdict?: boolean;
 }) {
   const b = g.billsFund!;
   if (!b.bills.length) {
@@ -275,7 +295,7 @@ export function BillsPlan({
   const upcoming = details ? b.upcoming.slice(0, 12) : b.upcoming.slice(0, 3);
   return (
     <div className="space-y-4">
-      {b.short ? (
+      {!verdict ? null : b.short ? (
         <p className="rounded-lg bg-warning-soft p-3 text-sm text-warning">
           At {formatINR(g.monthlySip)} a month you&apos;ll be{" "}
           <b>{formatINR(b.short.amount)}</b> short by {formatDate(b.short.by)}.

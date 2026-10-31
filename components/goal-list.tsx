@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   DeleteGoalButton,
   EditGoalButton,
+  GapChoices,
   GoalInvestments,
   SuggestionBox,
 } from "@/components/goal-actions";
@@ -14,7 +15,15 @@ import { BillsPlan, LoanPlan, SavingsPlan } from "@/components/goal-details";
 import { GoalIcon } from "@/components/goal-icon";
 import { Progress } from "@/components/ui/progress";
 import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
-import { goalHeadline, groupGoals, TONE_BAR, TONE_TEXT } from "@/lib/goal-summary";
+import { groupGoals } from "@/lib/goal-summary";
+import {
+  goalHint,
+  goalStatus,
+  gapOptions,
+  goalSubline,
+  timeGroup,
+  type GoalStatus,
+} from "@/lib/goal-status";
 import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +36,26 @@ function needLabel(g: TrackedGoal): string {
         : "owed today";
   }
   return g.targetDate ? `needed by ${formatDate(g.targetDate)}` : "needed";
+}
+
+const PILL: Record<GoalStatus["tone"], string> = {
+  success: "bg-success-soft text-success",
+  warning: "bg-warning-soft text-warning",
+  danger: "bg-danger-soft text-danger",
+  muted: "bg-muted text-muted-foreground",
+};
+
+export function StatusPill({ status }: { status: GoalStatus }) {
+  return (
+    <span
+      className={cn(
+        "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
+        PILL[status.tone],
+      )}
+    >
+      {status.label}
+    </span>
+  );
 }
 
 /** Goals as rows that expand in place to show the plan and investments. */
@@ -51,10 +80,25 @@ export function GoalList({
   const [details, setDetails] = useState(false);
 
   const groups = groupGoals(goals);
+  // Active goals by when they're due. Reached goals and loans the EMIs
+  // already cover stay folded away below.
+  const byTime = { soon: [], later: [], ongoing: [] } as Record<
+    "soon" | "later" | "ongoing",
+    TrackedGoal[]
+  >;
+  for (const g of [...groups.attention, ...groups.growing].sort(
+    (a, b) => goals.indexOf(a) - goals.indexOf(b),
+  ))
+    byTime[timeGroup(g)].push(g);
   const renderGoals = (items: TrackedGoal[]) => (
     <ul className="space-y-3">
       {items.map((g) => {
-        const h = goalHeadline(g);
+        const suggestion = suggestions.find((x) => x.goalId === g.id);
+        const st = goalStatus(g, today);
+        const sub = goalSubline(g);
+        const hint = goalHint(g, today, suggestion);
+        // Still behind after the plan: offer ways to close the gap.
+        const gap = gapOptions(g, today, suggestion?.monthly ?? 0);
         const isOpen = open === g.id;
         const panelId = `goal-${g.id}`;
         return (
@@ -77,28 +121,41 @@ export function GoalList({
             >
               <GoalIcon type={g.type} />
               <div className="min-w-0 flex-1 space-y-1.5">
-                <div className="space-y-1">
-                  <span className="block break-words text-base font-semibold leading-snug">{g.name}</span>
-                  <span className="block text-xs text-muted-foreground">
-                    {g.status === "reached" ? "Goal reached" : h.tone === "warning" || h.tone === "danger" ? "Needs attention" : g.emisCloseFirst ? "Covered by your EMIs" : g.status === "no_investments" ? "Ready to get started" : "Making progress"}
-                    {g.targetDate ? ` · ${formatDate(g.targetDate)}` : ""}
+                <div className="flex items-start justify-between gap-2">
+                  <span className="min-w-0 break-words text-base font-semibold leading-snug">
+                    {g.name}
                   </span>
+                  <StatusPill status={st} />
                 </div>
-                <Progress
-                  className="h-1.5"
-                  value={g.progress * 100}
-                  tone={TONE_BAR[h.tone]}
-                  label={`${g.name} progress`}
-                />
-                <p
-                  className={cn(
-                    "break-words text-sm font-medium leading-relaxed",
-                    TONE_TEXT[h.tone],
-                  )}
-                >
-                  {h.text}
-                </p>
-                {!g.emisCloseFirst && <p className="tabular text-xs text-muted-foreground">{formatINRCompact(g.current)} saved</p>}
+                {sub && (
+                  <span className="block text-xs text-muted-foreground">
+                    {sub}
+                  </span>
+                )}
+                {!(g.loanState && g.emisCloseFirst) && (
+                  <>
+                    <Progress
+                      className="h-1.5"
+                      value={g.progress * 100}
+                      tone="neutral"
+                      label={`${g.name} progress`}
+                    />
+                    <p className="tabular flex items-baseline justify-between gap-3 text-sm">
+                      <span>
+                        {formatINRCompact(g.current)}
+                        <span className="text-muted-foreground">
+                          {" "}
+                          of {formatINRCompact(g.futureTarget)}
+                        </span>
+                      </span>
+                      {hint && (
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {hint}
+                        </span>
+                      )}
+                    </p>
+                  </>
+                )}
               </div>
               <ChevronDown
                 className={cn(
@@ -136,21 +193,38 @@ export function GoalList({
                   <EditGoalButton goal={g} today={today} />
                 </div>
 
-                {g.loanState ? (
-                  <LoanPlan g={g} details={details} />
-                ) : g.billsFund ? (
-                  <BillsPlan g={g} details={details} />
-                ) : (
-                  <SavingsPlan g={g} details={details} />
-                )}
-
-                {suggestions.find((x) => x.goalId === g.id) && (
+                {suggestion && (
                   <SuggestionBox
                     strategy={strategy}
                     goal={g}
-                    suggestion={suggestions.find((x) => x.goalId === g.id)!}
+                    suggestion={suggestion}
                     investments={investments}
                     links={links}
+                    short={!!gap}
+                  >
+                    {gap && (
+                      <GapChoices
+                        goal={g}
+                        options={gap}
+                        today={today}
+                        afterPlan
+                      />
+                    )}
+                  </SuggestionBox>
+                )}
+
+                {g.loanState ? (
+                  <LoanPlan g={g} details={details} verdict={!suggestion} />
+                ) : g.billsFund ? (
+                  <BillsPlan g={g} details={details} verdict={!suggestion} />
+                ) : (
+                  <SavingsPlan
+                    g={g}
+                    details={details}
+                    verdict={!suggestion}
+                    extra={
+                      gap && <GapChoices goal={g} options={gap} today={today} />
+                    }
                   />
                 )}
 
@@ -187,38 +261,72 @@ export function GoalList({
 
   return (
     <div className="space-y-6">
-      {groups.attention.length > 0 && (
-        <section aria-labelledby="attention-goals-h" className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className="size-2 rounded-full bg-warning" aria-hidden />
-            <h2 id="attention-goals-h" className="font-semibold">A little attention</h2>
-            <span className="text-sm text-muted-foreground">{groups.attention.length}</span>
-          </div>
-          {renderGoals(groups.attention)}
-        </section>
+      {(
+        [
+          ["soon", "Next 2 years", "soonest first"],
+          ["later", "Later", ""],
+          ["ongoing", "No fixed date", ""],
+        ] as const
+      ).map(
+        ([key, title, note]) =>
+          byTime[key].length > 0 && (
+            <section
+              key={key}
+              aria-labelledby={`goals-${key}-h`}
+              className="space-y-3"
+            >
+              <div className="flex items-baseline justify-between gap-2 px-0.5">
+                <h2 id={`goals-${key}-h`} className="font-semibold">
+                  {title}
+                </h2>
+                <span className="text-xs text-muted-foreground">
+                  {note || byTime[key].length}
+                </span>
+              </div>
+              {renderGoals(byTime[key])}
+            </section>
+          ),
       )}
-      {groups.growing.length > 0 && (
-        <section aria-labelledby="growing-goals-h" className="space-y-3">
-          <h2 id="growing-goals-h" className="font-semibold">Keep going <span className="ml-1 text-sm font-normal text-muted-foreground">{groups.growing.length}</span></h2>
-          {renderGoals(groups.growing)}
-        </section>
+      {(
+        [
+          [
+            "loans",
+            "Loans covered by EMIs",
+            "Your regular payments are working toward these. Open a loan to see its timeline.",
+          ],
+          [
+            "reached",
+            "Goals reached",
+            "A moment to appreciate how far you've come.",
+          ],
+        ] as const
+      ).map(
+        ([key, title, description]) =>
+          groups[key].length > 0 && (
+            <details
+              key={key}
+              open={groups[key].some((g) => g.id === initialOpen) || undefined}
+              className="group rounded-2xl border border-border/70 bg-muted/30 p-4"
+            >
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium [&::-webkit-details-marker]:hidden">
+                <span>
+                  {title}{" "}
+                  <span className="ml-1 text-sm text-muted-foreground">
+                    {groups[key].length}
+                  </span>
+                </span>
+                <ChevronDown
+                  className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+                  aria-hidden
+                />
+              </summary>
+              <div className="mt-3 space-y-3">
+                <p className="text-sm text-muted-foreground">{description}</p>
+                {renderGoals(groups[key])}
+              </div>
+            </details>
+          ),
       )}
-      {([
-        ["loans", "Loans covered by EMIs", "Your regular payments are working toward these. Open a loan to see its timeline."],
-        ["reached", "Goals reached", "A moment to appreciate how far you've come."],
-      ] as const).map(([key, title, description]) => groups[key].length > 0 && (
-        <details key={key} open={groups[key].some((g) => g.id === initialOpen) || undefined}
-          className="group rounded-2xl border border-border/70 bg-muted/30 p-4">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium [&::-webkit-details-marker]:hidden">
-            <span>{title} <span className="ml-1 text-sm text-muted-foreground">{groups[key].length}</span></span>
-            <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden />
-          </summary>
-          <div className="mt-3 space-y-3">
-            <p className="text-sm text-muted-foreground">{description}</p>
-            {renderGoals(groups[key])}
-          </div>
-        </details>
-      ))}
     </div>
   );
 }
