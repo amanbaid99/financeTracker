@@ -83,20 +83,23 @@ function useHiddenOnScroll(): boolean {
   return hidden;
 }
 
+/** Where an action goes from this page: updates stay on Portfolio, and Import comes back to it. */
+function hrefFor(href: string, path: string): string {
+  if (path !== "/portfolio") return href;
+  if (href === "/goals?do=update") return "/portfolio?do=update";
+  if (href === "/import") return "/import?from=portfolio";
+  return href;
+}
+
 /** One button for every "add" or "update" in the app. Hidden where it'd get in the way. */
 export function QuickAdd() {
   const path = usePathname();
-  const { seen, markSeen, busy } = useGuides();
-  const pageGuide = path.startsWith("/portfolio")
-    ? "portfolio"
-    : path.startsWith("/cards")
-      ? "cards"
-      : "goals";
+  const { seen, markSeen } = useGuides();
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
-  const showHint =
-    !open && !busy && seen.has(pageGuide) && !seen.has("quick-add");
-  const hidden = useHiddenOnScroll() && !showHint;
+  // Each tab's first-visit guide already points to the + button, so there's
+  // no separate hint bubble.
+  const hidden = useHiddenOnScroll();
   if (
     path.startsWith("/ask") ||
     path.startsWith("/settings") ||
@@ -107,25 +110,6 @@ export function QuickAdd() {
 
   return (
     <>
-      {showHint && (
-        <aside
-          aria-label="About the plus button"
-          className="fixed bottom-[calc(8.75rem+env(safe-area-inset-bottom))] right-4 z-30 w-64 rounded-2xl border bg-card p-4 shadow-lg sm:right-[max(1rem,calc(50%-24rem+1rem))]"
-        >
-          <p className="text-sm font-semibold">Your shortcuts are here</p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Tap + to add a goal, update values, import a statement or log a
-            bill. Add cards in the Cards tab.
-          </p>
-          <button
-            type="button"
-            className="mt-2 min-h-10 text-sm font-medium text-primary"
-            onClick={() => markSeen("quick-add")}
-          >
-            Got it
-          </button>
-        </aside>
-      )}
       <button
         type="button"
         onClick={() => {
@@ -149,19 +133,12 @@ export function QuickAdd() {
             {ACTIONS.map((a) => (
               <li key={a.href}>
                 <Link
-                  href={
-                    a.href === "/goals?do=update" && path === "/portfolio"
-                      ? "/portfolio?do=update"
-                      : a.href
-                  }
+                  href={hrefFor(a.href, path)}
                   transitionTypes={["tab"]}
                   onClick={(e) => {
                     close();
                     // Already on that page: open it in place, keeping what's open.
-                    const href =
-                      a.href === "/goals?do=update" && path === "/portfolio"
-                        ? "/portfolio?do=update"
-                        : a.href;
+                    const href = hrefFor(a.href, path);
                     const [to, query] = href.split("?");
                     const action = new URLSearchParams(query).get("do");
                     if (action && to === path) {

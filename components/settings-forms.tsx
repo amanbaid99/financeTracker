@@ -56,18 +56,13 @@ export function ThemeSettings({
           setTheme(t);
           setAccent(a);
           applyTheme(t, a);
+          // Saved as soon as you tap: a look is easy to change back.
+          run(() => saveTheme({ theme: t, accent: a }));
         }}
       />
-      <div className="flex items-center gap-3">
-        <Button
-          type="button"
-          onClick={() => run(() => saveTheme({ theme, accent }))}
-          disabled={pending}
-        >
-          Save look
-        </Button>
-        {status}
-      </div>
+      <p className="min-h-4 text-xs text-muted-foreground" aria-live="polite">
+        {pending ? "Saving…" : (status ?? "Changes save as you tap.")}
+      </p>
     </div>
   );
 }
@@ -82,32 +77,36 @@ export function AccountSettings() {
           Sign out
         </Button>
       </form>
-      <div className="space-y-2 rounded-lg border border-danger/40 p-3">
-        <p className="text-sm font-medium text-danger">Delete account</p>
-        <p className="text-sm text-muted-foreground">
-          Permanently deletes your account, goals and investments. This
-          can&apos;t be undone.
-        </p>
-        <Field label="Type DELETE to confirm" htmlFor="del">
-          <Input
-            id="del"
-            value={confirm}
-            onChange={(e) => setConfirm(e.target.value)}
-            autoComplete="off"
-          />
-        </Field>
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="destructive"
-            disabled={pending || confirm !== "DELETE"}
-            onClick={() => run(() => deleteAccount(confirm))}
-          >
-            Delete everything
-          </Button>
-          {status}
+      <details className="group rounded-lg border border-danger/40 p-3">
+        <summary className="cursor-pointer text-sm font-medium text-danger">
+          Delete account
+        </summary>
+        <div className="mt-2 space-y-2">
+          <p className="text-sm text-muted-foreground">
+            Permanently deletes your account, goals and investments. This
+            can&apos;t be undone.
+          </p>
+          <Field label="Type DELETE to confirm" htmlFor="del">
+            <Input
+              id="del"
+              value={confirm}
+              onChange={(e) => setConfirm(e.target.value)}
+              autoComplete="off"
+            />
+          </Field>
+          <div className="flex items-center gap-3">
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={pending || confirm !== "DELETE"}
+              onClick={() => run(() => deleteAccount(confirm))}
+            >
+              Delete everything
+            </Button>
+            {status}
+          </div>
         </div>
-      </div>
+      </details>
     </div>
   );
 }

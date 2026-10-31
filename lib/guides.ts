@@ -63,7 +63,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Add a card with its annual fee, the date its card year starts, rewards and benefits. Never enter the card number.",
       "Add milestones like a fee waiver or bonus points, with the spend target and when it resets.",
       "Update spent so far whenever you check your statement. The bar shows if you're on pace.",
-      "Tap Log bill to record each month's statement, then Mark paid once you've paid it.",
+      "Tap + (or Log bill on a card) to record each month's statement. The card shows what's due and when; tap Mark paid right there once you've paid it.",
       "When a new card year or quarter starts, the milestone resets and asks for your new spend.",
       "Which card to use suggests where planned spending could help a milestone. Open Why this card for the breakdown. Do not spend extra just to reach a reward.",
       "Read features fills in a card from its features PDF or your description. You tick what to keep.",
@@ -100,6 +100,24 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-10-31",
+    title: "Quicker everyday steps",
+    items: [
+      {
+        title: "Cards: what's due, first",
+        text: 'Each card leads with the bill due and how soon, like "due in 2 days". Tap Mark paid right on the card. The annual fee is in the card\'s details.',
+      },
+      {
+        title: "Ask and Import",
+        text: "Ask gets to the point, with the full privacy details a tap away. Import has a proper upload area and takes you back where you came from.",
+      },
+      {
+        title: "Settings",
+        text: "Your theme and colour save as soon as you tap them.",
+      },
+    ],
+  },
   {
     date: "2026-10-31",
     title: "A calmer Goals page",

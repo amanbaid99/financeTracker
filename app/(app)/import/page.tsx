@@ -6,14 +6,23 @@ import { ImportFlow } from "@/components/import-flow";
 
 export const metadata: Metadata = { title: "Import statement" };
 
-export default function ImportPage() {
+export default async function ImportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string }>;
+}) {
+  // Back to where you came from: Portfolio, or Goals by default.
+  const back =
+    (await searchParams).from === "portfolio"
+      ? { href: "/portfolio", label: "Portfolio" }
+      : { href: "/goals", label: "Your goals" };
   return (
     <main className="space-y-4">
       <Link
-        href="/goals"
+        href={back.href}
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
-        <ChevronLeft className="size-4" aria-hidden /> Your goals
+        <ChevronLeft className="size-4" aria-hidden /> {back.label}
       </Link>
       <div className="space-y-1">
         <div className="flex items-center gap-1">
@@ -27,7 +36,7 @@ export default function ImportPage() {
           go. You check everything before it&apos;s saved.
         </p>
       </div>
-      <ImportFlow />
+      <ImportFlow back={back} />
     </main>
   );
 }

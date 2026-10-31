@@ -23,6 +23,7 @@ import {
   averageBill,
   billsForReview,
   cardsForReview,
+  dueLabel,
   headlineMilestone,
   liveUnbilled,
   milestoneState,
@@ -781,6 +782,26 @@ function BillRow({
   );
 }
 
+/** Marks a bill paid straight from the card's header. */
+function MarkPaidButton({ billId, label }: { billId: string; label: string }) {
+  const { pending, run, errorText } = useRun();
+  return (
+    <span className="relative z-10 shrink-0 text-right">
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        disabled={pending}
+        aria-label={`Mark ${label} bill paid`}
+        onClick={() => run(() => setBillPaid({ id: billId, paid: true }))}
+      >
+        {pending ? "Saving…" : "Mark paid"}
+      </Button>
+      {errorText}
+    </span>
+  );
+}
+
 function BillsSection({
   card,
   today,
@@ -999,10 +1020,22 @@ export function CardList({
 
   return (
     <div className="space-y-4">
-      {cards.length > 0 && <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">{cards.length} {cards.length === 1 ? "card" : "cards"}. Unpaid bills come first.</p>
-        <Button type="button" variant="outline" size="sm" onClick={() => setSheet({ kind: "card", card: null })}><Plus /> Add a card</Button>
-      </div>}
+      {cards.length > 0 && (
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            {cards.length} {cards.length === 1 ? "card" : "cards"}. Unpaid bills
+            come first.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setSheet({ kind: "card", card: null })}
+          >
+            <Plus /> Add a card
+          </Button>
+        </div>
+      )}
       {cards.length === 0 ? (
         <div className="space-y-2 rounded-2xl border bg-card p-6 text-center">
           <CreditCard className="mx-auto size-8 text-primary" aria-hidden />
@@ -1040,9 +1073,14 @@ export function CardList({
                   text: "Add a milestone to track",
                   tone: "text-muted-foreground",
                 };
-            const unpaid = billsForReview(c.bills, today).filter(b => !b.paid && b.amount > 0);
+            const unpaid = billsForReview(c.bills, today).filter(
+              (b) => !b.paid && b.amount > 0,
+            );
             const due = unpaid[0];
-            const overdue = Boolean(due?.dueDate && due.dueDate < today);
+            const { text: dueText, tone: dueTone } = dueLabel(
+              due?.dueDate ?? null,
+              today,
+            );
             const isOpen = open === c.id;
             return (
               <li
@@ -1052,12 +1090,9 @@ export function CardList({
                   isOpen && "border-primary",
                 )}
               >
-                <button
-                  type="button"
-                  aria-expanded={isOpen}
-                  onClick={() => setOpen(isOpen ? null : c.id)}
-                  className="press flex w-full items-start gap-3 p-4 text-left"
-                >
+                {/* The whole header opens the card (the name's button covers it);
+                    Mark paid sits above that so it can be tapped on its own. */}
+                <div className="relative flex items-start gap-3 p-4">
                   <span
                     className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary"
                     aria-hidden
@@ -1065,20 +1100,63 @@ export function CardList({
                     <CreditCard className="size-5" />
                   </span>
                   <div className="min-w-0 flex-1 space-y-1.5">
-                    <div className="space-y-0.5">
-                      <span className="block break-words font-semibold leading-snug">{c.label}</span>
-                      <span className="block text-xs text-muted-foreground">
-                        {c.annualFee
-                          ? `${formatINR(c.annualFee)} annual fee`
-                          : "No annual fee"}
-                      </span>
-                    </div>
-                    <p className={cn("text-sm font-medium", overdue ? "text-danger" : due ? "text-foreground" : "text-muted-foreground")}>
-                      {due ? `${formatINR(due.amount)} ${overdue ? "overdue" : due.dueDate === today ? "due today" : due.dueDate ? `due ${formatDate(due.dueDate)}` : "unpaid, due date not set"}` : "No unpaid bills logged"}
+                    <button
+                      type="button"
+                      aria-expanded={isOpen}
+                      onClick={() => setOpen(isOpen ? null : c.id)}
+                      className="block break-words text-left font-semibold leading-snug after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-primary"
+                    >
+                      {c.label}
+                    </button>
+                    {due ? (
+                      <div className="flex items-center justify-between gap-2">
+                        <p
+                          className={cn(
+                            "tabular min-w-0 text-sm font-semibold",
+                            dueTone === "danger"
+                              ? "text-danger"
+                              : dueTone === "warning"
+                                ? "text-warning"
+                                : "text-foreground",
+                          )}
+                        >
+                          {formatINR(due.amount)}{" "}
+                          <span className="font-medium">{dueText}</span>
+                        </p>
+                        <MarkPaidButton billId={due.id} label={c.label} />
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        No bills due
+                      </p>
+                    )}
+                    {unpaid.length > 1 && (
+                      <p className="text-xs text-muted-foreground">
+                        {unpaid.length} unpaid bills. Open to review all.
+                      </p>
+                    )}
+                    {head && (
+                      <Progress
+                        value={head.progress * 100}
+                        tone={
+                          line.tone === "text-warning"
+                            ? "warning"
+                            : line.tone === "text-danger"
+                              ? "danger"
+                              : "success"
+                        }
+                        label={`${c.label} milestone progress`}
+                        className="h-1.5"
+                      />
+                    )}
+                    <p
+                      className={cn(
+                        "break-words text-xs font-medium",
+                        line.tone,
+                      )}
+                    >
+                      {line.text}
                     </p>
-                    {unpaid.length > 1 && <p className="text-xs text-muted-foreground">{unpaid.length} unpaid bills. Open to review all.</p>}
-                    {head && <Progress value={head.progress * 100} tone={line.tone === "text-warning" ? "warning" : line.tone === "text-danger" ? "danger" : "success"} label={`${c.label} milestone progress`} className="h-1.5" />}
-                    <p className={cn("break-words text-xs font-medium", line.tone)}>{line.text}</p>
                   </div>
                   <ChevronDown
                     className={cn(
@@ -1087,7 +1165,7 @@ export function CardList({
                     )}
                     aria-hidden
                   />
-                </button>
+                </div>
 
                 {isOpen && (
                   <div className="expand-in space-y-4 border-t px-4 pb-4 pt-2">
@@ -1102,7 +1180,10 @@ export function CardList({
                       }
                     />
 
-                    <section aria-label={`${c.label} milestones`} className="border-t pt-3">
+                    <section
+                      aria-label={`${c.label} milestones`}
+                      className="border-t pt-3"
+                    >
                       <h3 className="text-sm font-semibold">Milestones</h3>
                       {states.length === 0 ? (
                         <p className="py-3 text-sm text-muted-foreground">

@@ -97,7 +97,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await goalsGuide.getByRole("button", { name: "Got it" }).click();
   await savedSeen;
   await expect(goalsGuide).toHaveCount(0);
-  await expect(page.getByRole("complementary", { name: "About the plus button" })).toBeVisible();
+  // One welcome per tab: no separate hint bubble for the + button.
+  await expect(page.getByRole("complementary", { name: "About the plus button" })).toHaveCount(0);
   await page.getByRole("button", { name: "Add or update", exact: true }).click();
   const shortcuts = page.getByRole("dialog", { name: "What would you like to do?" });
   await expect(shortcuts.getByRole("link", { name: /^Add a card/ })).toHaveCount(0);
@@ -107,7 +108,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await plusGuide.getByRole("button", { name: "Got it" }).click();
   await shortcuts.getByRole("button", { name: "Close", exact: true }).click();
   await page.reload();
-  await expect(page.getByRole("complementary", { name: "About the plus button" })).toHaveCount(0);
   await expect(page.getByText("What are you saving for?")).toBeVisible();
   await expect(goalsGuide).toHaveCount(0);
   await page.getByRole("button", { name: "Guide: How goals work" }).click();
@@ -664,9 +664,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
 
   // Ask: off until turned on, asks a follow-up, answers with your own names.
   await tab("Ask").click();
-  await expect(
-    page.getByText("What's sent to the AI (through OpenRouter)"),
-  ).toBeVisible();
+  await page.getByText("What's sent to the AI", { exact: true }).click();
+  await expect(page.getByText("Sent through OpenRouter:")).toBeVisible();
   await page.screenshot({
     path: "test-results/ask-consent-375.png",
     fullPage: true,
@@ -942,10 +941,14 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
 
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();
+  const savedBeige = page.waitForResponse((r) => r.request().method() === "POST");
   await page.getByRole("radio", { name: "Beige" }).click();
+  await savedBeige;
   await expect(page.getByRole("radiogroup", { name: "Accent colour" }).getByRole("radio")).toHaveCount(10);
+  // Saved as you tap: no Save button.
+  const savedLook = page.waitForResponse((r) => r.request().method() === "POST");
   await page.getByRole("radio", { name: "Plum" }).click();
-  await page.getByRole("button", { name: "Save look" }).click();
+  await savedLook;
   await expect(page.getByText("Saved", { exact: true })).toBeVisible();
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "beige");

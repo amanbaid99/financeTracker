@@ -144,8 +144,10 @@ export function GoalList({
                       <span>
                         {formatINRCompact(g.current)}
                         <span className="text-muted-foreground">
-                          {" "}
-                          of {formatINRCompact(g.futureTarget)}
+                          {/* A bills fund can hold more than it needs today. */}
+                          {g.billsFund && g.current > g.futureTarget
+                            ? ` · ${formatINRCompact(g.current - g.futureTarget)} extra`
+                            : ` of ${formatINRCompact(g.futureTarget)}`}
                         </span>
                       </span>
                       {hint && (

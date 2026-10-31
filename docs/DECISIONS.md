@@ -74,6 +74,10 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 
 ## Cards
 
+- **Oct 31:** each card's header leads with its first unpaid bill and how soon it's due
+  (`dueLabel`: overdue/today in red, within 3 days in amber), with **Mark paid** on the header
+  itself. The annual fee moved into the card's details.
+
 - Bills come first on each card. Cards and bills are sorted for display: overdue, dated unpaid, undated unpaid, then paid. Old unpaid statements stay visible before newer paid ones. Missing due dates are never assumed overdue. Card names wrap, payment labels say Mark paid, and the advisor explanation is folded under Why this card. Calculations and explicit save steps stay the same.
 - Milestones retain "Counted from N bills + ₹X not billed yet".
 - Spend toward a milestone = logged monthly bills in the period + unbilled spend the user typed.
@@ -93,6 +97,12 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 - Nothing personal goes to AI (see AGENTS.md rule 2). AI output never sets numbers on its own.
 
 ## Look and feel
+
+- **Oct 31:** Settings saves the theme and accent on tap (no Save look button); Delete account is
+  folded. Ask's consent screen is two lines plus example questions, with the full "What's sent"
+  list one tap away. Import has a tap-or-drop upload area and returns to Portfolio when opened
+  from there. The separate "+ button" hint bubble is gone: each tab's guide covers it.
+- "Match phone" theme was built and then dropped at the owner's request.
 
 - Calm and simple: fewer boxes, more white space, motion on sheets and tabs (reduced-motion
   respected).

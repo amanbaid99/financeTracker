@@ -22,18 +22,34 @@ const pct = (n: number) => `${(n * 100).toFixed(Math.abs(n) < 0.1 ? 1 : 0)}%`;
 const slotOf = (key: string) =>
   ASSET_CLASSES.find((c) => c.key === key)?.slot ?? 7;
 
-export default async function PortfolioPage({ searchParams }: { searchParams: Promise<{ do?: string }> }) {
+export default async function PortfolioPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ do?: string }>;
+}) {
   const { do: action } = await searchParams;
   const { investments, links, goals } = await loadGoals();
   const { supabase, user } = await requireUser();
   const [review, aiEnabled] = await Promise.all([
-    supabase.from("portfolio_reviews").select("*").eq("user_id", user.id).maybeSingle(),
+    supabase
+      .from("portfolio_reviews")
+      .select("*")
+      .eq("user_id", user.id)
+      .maybeSingle(),
     aiAllowed(supabase, user.id),
   ]);
   const parsedReview = resultSchema.safeParse(review.data?.result);
-  const reviewCard = <PortfolioReview available={!review.error} enabled={review.data?.enabled ?? false}
-    aiEnabled={aiEnabled} state={review.data?.state ?? "idle"} checkedAt={review.data?.checked_at ?? null}
-    reviewedAt={review.data?.reviewed_at ?? null} result={parsedReview.success ? parsedReview.data : null} />;
+  const reviewCard = (
+    <PortfolioReview
+      available={!review.error}
+      enabled={review.data?.enabled ?? false}
+      aiEnabled={aiEnabled}
+      state={review.data?.state ?? "idle"}
+      checkedAt={review.data?.checked_at ?? null}
+      reviewedAt={review.data?.reviewed_at ?? null}
+      result={parsedReview.success ? parsedReview.data : null}
+    />
+  );
   const p = buildPortfolio(investments);
   const goalNames = new Map(goals.map((g) => [g.id, g.name]));
   // Every investment, with the goals it counts toward (if any).
@@ -47,7 +63,13 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
   if (p.holdings.length === 0) {
     return (
       <main className="space-y-5">
-        {updatable.length > 0 && <UpdateButton items={updatable} autoOpen={action === "update"} showButton={false} />}
+        {updatable.length > 0 && (
+          <UpdateButton
+            items={updatable}
+            autoOpen={action === "update"}
+            showButton={false}
+          />
+        )}
         <div className="flex items-center gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">Portfolio</h1>
           <GuideButton id="portfolio" />
@@ -58,7 +80,7 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
             Import a CAS statement, or add your investments and savings, to see
             everything you hold in one place.
           </p>
-          <Link href="/import" className={buttonVariants()}>
+          <Link href="/import?from=portfolio" className={buttonVariants()}>
             <FileUp /> Import a CAS statement
           </Link>
         </div>
@@ -86,7 +108,13 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
           Everything you hold, across all your goals.
         </p>
       </div>
-      {updatable.length > 0 && <UpdateButton items={updatable} autoOpen={action === "update"} showButton={false} />}
+      {updatable.length > 0 && (
+        <UpdateButton
+          items={updatable}
+          autoOpen={action === "update"}
+          showButton={false}
+        />
+      )}
 
       <Card>
         <CardContent className="space-y-2 pt-5 sm:pt-5">
@@ -110,31 +138,33 @@ export default async function PortfolioPage({ searchParams }: { searchParams: Pr
         <CardContent>
           <AllocationBar classes={p.classes} />
           <details className="mt-3 border-t pt-3">
-            <summary className="cursor-pointer py-1 text-sm font-medium text-primary">By kind</summary>
-          <ul className="mt-3 space-y-3 text-sm">
-            {p.kinds.map((k) => (
-              <li key={k.label} className="space-y-1">
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="min-w-0 truncate">{k.label}</span>
-                  <span className="tabular shrink-0">
-                    {formatINRCompact(k.value)}{" "}
-                    <span className="text-muted-foreground">
-                      · {pct(k.share)}
+            <summary className="cursor-pointer py-1 text-sm font-medium text-primary">
+              By kind
+            </summary>
+            <ul className="mt-3 space-y-3 text-sm">
+              {p.kinds.map((k) => (
+                <li key={k.label} className="space-y-1">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <span className="min-w-0 truncate">{k.label}</span>
+                    <span className="tabular shrink-0">
+                      {formatINRCompact(k.value)}{" "}
+                      <span className="text-muted-foreground">
+                        · {pct(k.share)}
+                      </span>
                     </span>
-                  </span>
-                </div>
-                <div className="h-1.5 rounded-full bg-muted" aria-hidden>
-                  <div
-                    className={cn(
-                      "h-full rounded-full",
-                      swatchFor(slotOf(k.assetClass)),
-                    )}
-                    style={{ width: `${Math.max(k.share * 100, 1)}%` }}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-muted" aria-hidden>
+                    <div
+                      className={cn(
+                        "h-full rounded-full",
+                        swatchFor(slotOf(k.assetClass)),
+                      )}
+                      style={{ width: `${Math.max(k.share * 100, 1)}%` }}
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
           </details>
         </CardContent>
       </Card>

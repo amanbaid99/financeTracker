@@ -117,13 +117,14 @@ export function AskChat() {
             Ask anything about your goals and investments. If it needs more to
             go on, it&apos;ll ask you.
           </p>
+          <p className="text-xs font-medium text-muted-foreground">Try one</p>
           <div className="flex flex-col gap-2">
             {STARTERS.map((s) => (
               <button
                 key={s}
                 type="button"
                 onClick={() => send(s)}
-                className="rounded-xl border bg-card p-3 text-left text-sm hover:border-primary"
+                className="press rounded-xl border bg-card p-3 text-left text-sm hover:border-primary"
               >
                 {s}
               </button>
@@ -223,39 +224,48 @@ export function AskConsent() {
       <div className="space-y-1">
         <p className="font-semibold">Ask questions about your money</p>
         <p className="text-sm text-muted-foreground">
-          Like &quot;where should ₹50,000 for a treatment come from?&quot;
-          Answers use your goals and investments, and it asks you if it needs
-          more.
+          Answers use your goals and investments. Your names, PAN and account
+          numbers are never sent, and amounts are rounded.
         </p>
       </div>
-      <div className="space-y-2 rounded-lg bg-muted p-3 text-sm">
-        <p className="font-medium">
-          What&apos;s sent to the AI (through OpenRouter)
-        </p>
-        <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-          <li>
-            Your goals and investments as codes like &quot;Goal 1, wedding, ₹20L
-            by 2030&quot;, with amounts rounded.
+      <ul className="space-y-1.5 text-sm" aria-label="You could ask">
+        {STARTERS.slice(1).map((q) => (
+          <li key={q} className="rounded-lg bg-muted px-3 py-2">
+            &ldquo;{q}&rdquo;
           </li>
-          <li>
-            Kinds of funds (e.g. &quot;liquid fund&quot;), never their names,
-            your nicknames or your goal names.
-          </li>
-          <li>Your questions, as you type them.</li>
-          <li>
-            Card feature documents or descriptions you choose to read in Cards,
-            with card numbers, emails and phone numbers masked.
-          </li>
-        </ul>
-        <p className="font-medium">Never sent</p>
-        <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
-          <li>Your name, email, PAN, folio or account numbers.</li>
-        </ul>
-        <p className="text-muted-foreground">
-          Chats aren&apos;t saved. Some free AI models may keep what they
-          receive. You can turn Ask off any time in Settings.
-        </p>
-      </div>
+        ))}
+      </ul>
+      <details className="rounded-lg border p-3 text-sm">
+        <summary className="cursor-pointer font-medium text-primary">
+          What&apos;s sent to the AI
+        </summary>
+        <div className="mt-2 space-y-2">
+          <p className="text-muted-foreground">Sent through OpenRouter:</p>
+          <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+            <li>
+              Your goals and investments as codes like &quot;Goal 1, wedding,
+              ₹20L by 2030&quot;, with amounts rounded.
+            </li>
+            <li>
+              Kinds of funds (e.g. &quot;liquid fund&quot;), never their names,
+              your nicknames or your goal names.
+            </li>
+            <li>Your questions, as you type them.</li>
+            <li>
+              Card feature documents or descriptions you choose to read in
+              Cards, with card numbers, emails and phone numbers masked.
+            </li>
+          </ul>
+          <p className="font-medium">Never sent</p>
+          <ul className="list-disc space-y-1 pl-5 text-muted-foreground">
+            <li>Your name, email, PAN, folio or account numbers.</li>
+          </ul>
+          <p className="text-muted-foreground">
+            Chats aren&apos;t saved. Some free AI models may keep what they
+            receive. You can turn Ask off any time in Settings.
+          </p>
+        </div>
+      </details>
       {error && <p className="text-sm text-danger">{error}</p>}
       <Button
         type="button"

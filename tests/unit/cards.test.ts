@@ -201,3 +201,17 @@ describe("bill-focused display order", () => {
     expect(cards.map(c => c.id)).toEqual(["clear", "unknown", "due", "late", "paid"]);
   });
 });
+
+describe("due label", () => {
+  it("says how soon a bill is due, and flags the urgent ones", async () => {
+    const { dueLabel } = await import("@/lib/cards");
+    const t = "2026-10-31";
+    expect(dueLabel("2026-10-29", t)).toEqual({ text: "overdue by 2 days", tone: "danger" });
+    expect(dueLabel("2026-10-31", t)).toEqual({ text: "due today", tone: "danger" });
+    expect(dueLabel("2026-11-01", t)).toEqual({ text: "due tomorrow", tone: "warning" });
+    expect(dueLabel("2026-11-02", t)).toEqual({ text: "due in 2 days", tone: "warning" });
+    expect(dueLabel("2026-11-06", t)).toEqual({ text: "due in 6 days", tone: "normal" });
+    expect(dueLabel("2026-11-20", t)).toEqual({ text: "due 20 Nov", tone: "normal" });
+    expect(dueLabel(null, t).text).toBe("unpaid, due date not set");
+  });
+});

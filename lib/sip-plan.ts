@@ -168,6 +168,8 @@ function noteFor(i: Investment): string | null {
   if (kindOf(i) === "gold")
     return "gold, to spread the risk. Kept to a fifth of this goal as it can swing";
   if (isEtf(i)) return "an ETF, buy units each month";
+  if (kindOf(i) === "savings_account")
+    return "a savings account earns less than a liquid fund; consider one for this";
   return null;
 }
 

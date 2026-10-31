@@ -289,15 +289,53 @@ export function billsForReview(bills: Bill[], today: string): Bill[] {
 
 /** Cards with overdue bills first, followed by dated, undated and settled bills. */
 export function cardsForReview(cards: Card[], today: string): Card[] {
-  const rows = cards.map((card, index) => ({ card, index, bill: billsForReview(card.bills, today).find(b => !b.paid && b.amount > 0) }));
+  const rows = cards.map((card, index) => ({
+    card,
+    index,
+    bill: billsForReview(card.bills, today).find(
+      (b) => !b.paid && b.amount > 0,
+    ),
+  }));
   rows.sort((a, b) => {
-    const priority = (a.bill ? billPriority(a.bill, today) : 3) - (b.bill ? billPriority(b.bill, today) : 3);
+    const priority =
+      (a.bill ? billPriority(a.bill, today) : 3) -
+      (b.bill ? billPriority(b.bill, today) : 3);
     if (priority) return priority;
     if (a.bill && b.bill) {
-      const due = (a.bill.dueDate ?? a.bill.month).localeCompare(b.bill.dueDate ?? b.bill.month);
+      const due = (a.bill.dueDate ?? a.bill.month).localeCompare(
+        b.bill.dueDate ?? b.bill.month,
+      );
       if (due) return due;
     }
     return a.index - b.index;
   });
-  return rows.map(row => row.card);
+  return rows.map((row) => row.card);
+}
+
+/** "due in 2 days", "overdue by 3 days"... for an unpaid bill, with how urgent it is. */
+export function dueLabel(
+  dueDate: string | null,
+  today: string,
+): { text: string; tone: "danger" | "warning" | "normal" } {
+  if (!dueDate) return { text: "unpaid, due date not set", tone: "normal" };
+  const days = Math.round(
+    (Date.parse(dueDate) - Date.parse(today)) / (24 * 3600 * 1000),
+  );
+  if (days < 0)
+    return {
+      text: `overdue by ${-days} day${days === -1 ? "" : "s"}`,
+      tone: "danger",
+    };
+  if (days === 0) return { text: "due today", tone: "danger" };
+  if (days === 1) return { text: "due tomorrow", tone: "warning" };
+  if (days <= 7)
+    return {
+      text: `due in ${days} days`,
+      tone: days <= 3 ? "warning" : "normal",
+    };
+  const [, m, d] = dueDate.split("-").map(Number);
+  return {
+    text: `due ${d} ${"Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ")[m - 1]}`,
+    tone: "normal",
+  };
 }

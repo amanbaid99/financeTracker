@@ -171,9 +171,14 @@ async function readStatement(
   return body as ParsedStatement;
 }
 
-export function ImportFlow() {
+export function ImportFlow({
+  back = { href: "/goals", label: "Your goals" },
+}: {
+  back?: { href: string; label: string };
+}) {
   const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
+  const [dragging, setDragging] = useState(false);
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [ready, setReady] = useState<Ready | null>(null);
@@ -268,8 +273,8 @@ export function ImportFlow() {
         <p className="text-sm text-muted-foreground">
           Your goals now use the values from this statement.
         </p>
-        <Button type="button" onClick={() => router.push("/goals")}>
-          Back to your goals
+        <Button type="button" onClick={() => router.push(back.href)}>
+          Back to {back.label.toLowerCase()}
         </Button>
       </div>
     );
@@ -290,13 +295,43 @@ export function ImportFlow() {
           htmlFor="cas-file"
           hint="CAS from CAMS, KFintech, NSDL or CDSL. Up to 4 MB."
         >
-          <Input
-            id="cas-file"
-            type="file"
-            accept="application/pdf,.pdf"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            required
-          />
+          {/* A big tap or drop area; the real file input is hidden inside. */}
+          <label
+            htmlFor="cas-file"
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragging(false);
+              const f = e.dataTransfer.files?.[0];
+              if (f) setFile(f);
+            }}
+            className={cn(
+              "flex cursor-pointer flex-col items-center gap-1 rounded-xl border-2 border-dashed p-5 text-center transition-colors focus-within:border-primary hover:border-primary",
+              dragging && "border-primary bg-primary-soft",
+              file && "border-solid border-primary/50 bg-primary-soft/50",
+            )}
+          >
+            <FileUp className="size-6 text-primary" aria-hidden />
+            <span className="break-all text-sm font-medium">
+              {file ? file.name : "Choose your CAS PDF"}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {file
+                ? `${(file.size / 1e6).toFixed(1)} MB · tap to change`
+                : "Tap to pick a file, or drop it here"}
+            </span>
+            <input
+              id="cas-file"
+              type="file"
+              accept="application/pdf,.pdf"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              className="sr-only"
+            />
+          </label>
         </Field>
         <Field
           label="PDF password"
