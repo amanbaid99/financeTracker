@@ -57,7 +57,8 @@ export const GUIDES: Record<GuideId, Guide> = {
   },
   cards: {
     title: "Loans and cards",
-    intro: "See what needs paying, then how far each loan has come and your card milestones.",
+    intro:
+      "See what needs paying, then how far each loan has come and your card milestones.",
     steps: [
       "Add each loan with its type, the amount you withdrew, the EMI and what you owe now. For a loan on a credit card, pick the card and its bill and payment dates.",
       "Each loan shows its next EMI and how soon it's due. Tap Mark paid once you've paid: what you owe goes down and the progress bar moves. Undo is there if you tapped by mistake.",
@@ -104,6 +105,24 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-10-31",
+    title: "Loans, and smarter imports",
+    items: [
+      {
+        title: "Loans in the Credit tab",
+        text: "Cards is now Credit. Add each loan with its type, the amount withdrawn and the EMI. See the next EMI, mark it paid, and watch what you owe go down. Your loan goals are now tracked as loans too.",
+      },
+      {
+        title: "Loans on a card",
+        text: "Pick the card, its bill date and payment date. These EMIs don't count toward the card's milestones.",
+      },
+      {
+        title: "Imports that check with you",
+        text: "After reading a CAS, you confirm the values. If one fell a lot, you're asked whether you took money out. Then you see what changed: growth, withdrawals, biggest moves and new funds.",
+      },
+    ],
+  },
   {
     date: "2026-10-31",
     title: "Quicker everyday steps",

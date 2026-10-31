@@ -39,7 +39,7 @@ decisions are in [DECISIONS.md](DECISIONS.md).
 | `/goals`                    | Start page. Goal list, money plan; updates and imports via +            |
 | `/goals/new`, `/goals/[id]` | New goal; one goal with its plan, investments and suggestions          |
 | `/portfolio`                | Total value, allocation bar, holdings (tap to edit); updates and imports via + |
-| `/cards`                    | Credit cards: unpaid bills first, milestones, card details, card advisor      |
+| `/cards`                    | Credit: loans (next EMI, Mark paid, progress), then cards and the advisor     |
 | `/ask`                      | Private Q&A about your own numbers (AI, opt-in)                        |
 | `/import`                   | CAS statement import with a review step                                |
 | `/settings`                 | Theme and accent, guides, AI opt-in, invites (admins), delete account  |
@@ -55,6 +55,7 @@ All tables have `user_id` and RLS. Types are generated into `lib/supabase/databa
 | `holdings`                                      | Investments: kind, category, name, value, monthly SIP, invested, ISIN                   | `Investment`   |
 | `goal_allocations`                              | Which holding pays for which goal, and what percent of it                               | `Link`         |
 | `goal_bills`                                    | Payments a bills fund saves for: amount, next due, every N months (0 = one time)        | `Bill`         |
+| `loans`, `loan_payments` | Loans and each EMI marked paid (with the figures before, for Undo) | `lib/loans.ts` |
 | `credit_cards`, `card_milestones`, `card_bills` | Cards, spend milestones, monthly bills                                                  | `lib/cards.ts` |
 | `profiles`                                      | Theme, accent, money plan amounts, AI opt-in                                            |                |
 | `settings`                                      | Guides seen, "What's new" seen                                                          |                |

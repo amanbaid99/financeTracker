@@ -72,7 +72,16 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   (`every_months = 0`), not monthly. The plan only asks for what's missing given the balance,
   never the full monthly need again.
 
-## Cards
+## Credit: loans and cards
+
+- **Oct 31: loans tracked on their own** (owner's request). The Cards tab became **Credit**, with
+  Loans then Cards. A loan has a type (home, personal, car, education, gold, loan on a credit card,
+  other), amount withdrawn, EMI, rate, total EMIs, EMI day, what's owed now, and for card loans
+  the card, bill day and payment day. **Mark paid** lowers what's owed straight away (owner chose
+  this): the payment is stored with the previous figures, and only the latest payment can be
+  undone, which restores them exactly. EMIs older than a week that weren't marked are assumed paid,
+  as the schedule already does. Existing pay-off goals were converted to loans; a goal reads its
+  linked loan, and saving the goal updates it. Card-loan EMIs are left out of milestone spend.
 
 - **Oct 31:** each card's header leads with its first unpaid bill and how soon it's due
   (`dueLabel`: overdue/today in red, within 3 days in amber), with **Mark paid** on the header
@@ -84,6 +93,16 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   Unbilled spend stops counting once a later bill is logged.
 - Card features can be read from a PDF or a description by AI, but every fact is shown for the user
   to confirm before it's saved.
+
+## Statement import and value updates
+
+- **Oct 31 (owner's request):** after reading a CAS the confirm step asks "Do these values look
+  right?". Any update that fell 10% or more (and ₹1,000+) asks "Did you take money out?" and must
+  be answered. Yes lowers the amount invested by the same share when the statement doesn't give
+  one (`lib/withdrawal.ts`), so a withdrawal never shows as a loss. After saving, a "What changed"
+  list (`lib/statement/insights.ts`, no AI) shows growth net of withdrawals, withdrawals, best and
+  worst movers, SIP changes and new funds without a goal. Update values asks the same question
+  when a value with a known amount invested falls that much.
 
 ## AI
 

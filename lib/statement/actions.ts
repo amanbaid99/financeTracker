@@ -4,6 +4,7 @@ import { schedulePortfolioReview } from "@/lib/portfolio-review/service";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { investedAfterWithdrawal } from "@/lib/withdrawal";
 import { FUND_CATEGORIES, KINDS } from "@/lib/instruments";
 import { createClient } from "@/lib/supabase/server";
 import { freePercent } from "@/lib/tracker";
@@ -42,6 +43,7 @@ export type PrepareResult =
         value: number;
         sip: number;
         category: string | null;
+        invested: number | null;
       }[];
     }
   | { ok: false; error: string };
@@ -62,7 +64,7 @@ export async function prepareImport(
     supabase
       .from("holdings")
       .select(
-        "id, kind, name, category, current_value, monthly_sip, expected_return_pct, isin",
+        "id, kind, name, category, current_value, monthly_sip, expected_return_pct, isin, invested",
       ),
     supabase.from("goals").select("id, name").order("created_at"),
   ]);
@@ -78,6 +80,7 @@ export async function prepareImport(
     returnPct:
       h.expected_return_pct === null ? null : Number(h.expected_return_pct),
     isin: h.isin,
+    invested: h.invested,
   }));
 
   let rows = buildReview(statement, existing);
@@ -113,6 +116,7 @@ export async function prepareImport(
       value: e.value,
       sip: e.monthlySip,
       category: e.category,
+      invested: e.invested ?? null,
     })),
   };
 }
@@ -132,6 +136,8 @@ const choiceSchema = z
     invested: money.nullable().optional(),
     sip: money.nullable(),
     goalId: z.string().uuid().nullable(),
+    /** The value dropped and the person says they took money out. */
+    withdrew: z.boolean().optional(),
   })
   .superRefine((c, ctx) => {
     if (c.action === "update" && !c.investmentId)
@@ -200,6 +206,20 @@ export async function applyImport(
           invested?: number;
         } = { current_value: c.value, isin: c.isin, updated_at: now };
         if (c.invested != null) patch.invested = c.invested;
+        else if (c.withdrew) {
+          // No amount invested on the statement: lower ours by the share taken out.
+          const { data: h } = await supabase
+            .from("holdings")
+            .select("current_value, invested")
+            .eq("id", c.investmentId!)
+            .single();
+          if (h?.invested != null)
+            patch.invested = investedAfterWithdrawal(
+              Number(h.invested),
+              Number(h.current_value),
+              c.value,
+            );
+        }
         if (c.sip !== null) patch.monthly_sip = c.sip || null;
         if (c.kind === "mutual_fund") patch.category = category;
         const res = await supabase

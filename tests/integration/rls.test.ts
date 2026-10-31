@@ -90,6 +90,7 @@ describe("row level security", () => {
   let goalA = "";
   let holdingA = "";
   let cardA = "";
+  let loanA = "";
 
   beforeAll(async () => {
     const s = await a
@@ -201,6 +202,22 @@ describe("row level security", () => {
   beforeAll(async () => {
     const { error } = await a.from("portfolio_reviews").insert({ user_id: idA, enabled: true });
     if (error) throw error;
+    const loan = await a
+      .from("loans")
+      .insert({ user_id: idA, name: "Card EMI", type: "card", card_id: cardA, emi: 5000, outstanding: 40000 })
+      .select("id")
+      .single();
+    if (loan.error) throw loan.error;
+    loanA = loan.data.id;
+    const pay = await a.from("loan_payments").insert({
+      user_id: idA,
+      loan_id: loanA,
+      due_date: "2026-10-05",
+      amount: 5000,
+      prev_outstanding: 45000,
+      prev_as_of: "2026-09-05",
+    });
+    if (pay.error) throw pay.error;
   });
 
   const tables = [
@@ -223,6 +240,8 @@ describe("row level security", () => {
     "planned_expenses",
     "bill_status",
     "month_bills",
+    "loans",
+    "loan_payments",
   ] as const;
 
   for (const t of tables.filter((x) => x !== "ai_requests")) {
@@ -324,6 +343,22 @@ describe("row level security", () => {
         period: "month",
       });
     expect(error).toBeTruthy();
+  });
+
+  it("user B cannot put a loan on user A's card or pay user A's loan", async () => {
+    const loan = await b
+      .from("loans")
+      .insert({ user_id: idB, name: "Sneaky", type: "card", card_id: cardA, emi: 1, outstanding: 1 });
+    expect(loan.error).toBeTruthy();
+    const pay = await b.from("loan_payments").insert({
+      user_id: idB,
+      loan_id: loanA,
+      due_date: "2026-11-05",
+      amount: 1,
+      prev_outstanding: 1,
+      prev_as_of: "2026-10-05",
+    });
+    expect(pay.error).toBeTruthy();
   });
 
   it("user B cannot log a bill on user A's card", async () => {

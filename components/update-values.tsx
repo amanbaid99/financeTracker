@@ -3,6 +3,8 @@
 import { RefreshCw } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
+import { WithdrawQuestion } from "@/components/withdraw-question";
+import { isBigDrop } from "@/lib/withdrawal";
 import { investmentTitle } from "@/components/investment-sheet";
 import { MoneyInput } from "@/components/money-input";
 import { Sheet } from "@/components/sheet";
@@ -70,9 +72,17 @@ function UpdateSheet({
   );
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
+  // For a big drop: did you take money out? Asked only where it matters
+  // (an amount invested is known, so the gain would otherwise look wrong).
+  const [withdrew, setWithdrew] = useState<Record<string, boolean>>({});
   const changed = items.filter(
     (x) => (values[x.investment.id] ?? 0) !== x.investment.value,
   );
+  const asks = (i: UpdateItem["investment"]) =>
+    i.invested != null && isBigDrop(i.value, values[i.id] ?? 0);
+  const unanswered = changed.filter(
+    (x) => asks(x.investment) && withdrew[x.investment.id] === undefined,
+  ).length;
 
   function save() {
     setError("");
@@ -81,6 +91,7 @@ function UpdateSheet({
         changed.map((x) => ({
           id: x.investment.id,
           value: values[x.investment.id] ?? 0,
+          withdrew: asks(x.investment) ? withdrew[x.investment.id] : undefined,
         })),
       );
       if (!res.ok) return setError(res.error);
@@ -106,22 +117,32 @@ function UpdateSheet({
             const title = investmentTitle(i);
             const dirty = (values[i.id] ?? 0) !== i.value;
             return (
-              <li key={i.id} className="flex items-center gap-3 py-3">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{title}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {dirty ? `Was ${formatINR(i.value)}` : goals.join(", ")}
-                  </p>
+              <li key={i.id} className="space-y-2 py-3">
+                <div className="flex items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{title}</p>
+                    <p className="truncate text-xs text-muted-foreground">
+                      {dirty ? `Was ${formatINR(i.value)}` : goals.join(", ")}
+                    </p>
+                  </div>
+                  <MoneyInput
+                    className={cn(
+                      "w-36 shrink-0",
+                      dirty && "[&_input]:border-primary",
+                    )}
+                    aria-label={`${title} value today`}
+                    value={values[i.id] ?? null}
+                    onChange={(v) => setValues((s) => ({ ...s, [i.id]: v }))}
+                  />
                 </div>
-                <MoneyInput
-                  className={cn(
-                    "w-36 shrink-0",
-                    dirty && "[&_input]:border-primary",
-                  )}
-                  aria-label={`${title} value today`}
-                  value={values[i.id] ?? null}
-                  onChange={(v) => setValues((s) => ({ ...s, [i.id]: v }))}
-                />
+                {dirty && asks(i) && (
+                  <WithdrawQuestion
+                    name={title}
+                    drop={i.value - (values[i.id] ?? 0)}
+                    answer={withdrew[i.id]}
+                    onAnswer={(w) => setWithdrew((s) => ({ ...s, [i.id]: w }))}
+                  />
+                )}
               </li>
             );
           })}
@@ -140,13 +161,15 @@ function UpdateSheet({
           <Button
             type="submit"
             className="w-full"
-            disabled={pending || changed.length === 0}
+            disabled={pending || changed.length === 0 || unanswered > 0}
           >
             {pending
               ? "Saving…"
-              : changed.length
-                ? `Save ${changed.length} change${changed.length === 1 ? "" : "s"}`
-                : "Change an amount to save"}
+              : unanswered
+                ? "Answer the question above to save"
+                : changed.length
+                  ? `Save ${changed.length} change${changed.length === 1 ? "" : "s"}`
+                  : "Change an amount to save"}
           </Button>
         </div>
       </form>

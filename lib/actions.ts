@@ -2,6 +2,7 @@
 
 import { schedulePortfolioReview } from "@/lib/portfolio-review/service";
 import { revalidatePath } from "next/cache";
+import { investedAfterWithdrawal } from "@/lib/withdrawal";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -417,7 +418,7 @@ export async function removeFromGoal(input: {
 }
 
 const valuesSchema = z
-  .array(z.object({ id: uuid, value: money }))
+  .array(z.object({ id: uuid, value: money, withdrew: z.boolean().optional() }))
   .min(1)
   .max(200);
 
@@ -430,9 +431,31 @@ export async function updateValues(
     const { supabase, userId } = await session();
     const now = new Date().toISOString();
     for (const r of rows) {
+      const patch: {
+        current_value: number;
+        updated_at: string;
+        invested?: number;
+      } = {
+        current_value: r.value,
+        updated_at: now,
+      };
+      if (r.withdrew) {
+        // Money taken out: lower the amount invested by the same share.
+        const { data: h } = await supabase
+          .from("holdings")
+          .select("current_value, invested")
+          .eq("id", r.id)
+          .single();
+        if (h?.invested != null)
+          patch.invested = investedAfterWithdrawal(
+            Number(h.invested),
+            Number(h.current_value),
+            r.value,
+          );
+      }
       const { error } = await supabase
         .from("holdings")
-        .update({ current_value: r.value, updated_at: now })
+        .update(patch)
         .eq("id", r.id)
         .eq("user_id", userId);
       if (error) throw new Error(error.message);

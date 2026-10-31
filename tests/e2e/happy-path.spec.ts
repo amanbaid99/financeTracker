@@ -564,7 +564,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   });
   // Nothing is saved until the changes are confirmed.
   await page.getByRole("button", { name: /Review changes/ }).click();
-  await expect(page.getByText("Check before saving")).toBeVisible();
+  await expect(page.getByText("Do these values look right?")).toBeVisible();
   await expect(page.getByRole("region", { name: "Will update" })).toContainText(
     "Index SIP",
   );
@@ -589,10 +589,15 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     "flexi_cap",
   );
   await page.getByRole("button", { name: /Review changes/ }).click();
-  await page.getByRole("button", { name: "Confirm and save" }).click();
+  await page.getByRole("button", { name: "Yes, save" }).click();
   await expect(
     page.getByText("Updated 2 and added 1 investment."),
   ).toBeVisible();
+  // Insights from the confirmed values.
+  await expect(page.getByRole("heading", { name: "What changed" })).toBeVisible();
+  await expect(page.getByText(/^Up ₹[\d,]+ since your last update$/)).toBeVisible();
+  await expect(page.getByText(/^1 new investment$/)).toBeVisible();
+  await page.screenshot({ path: "test-results/import-insights-375.png", fullPage: true });
   await page.getByRole("button", { name: "Back to your goals" }).click();
   await page.getByRole("button", { name: /^Bills fund/ }).click();
   await expect(
@@ -618,9 +623,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(
     page.getByRole("region", { name: "Already up to date" }),
   ).toContainText("Index SIP");
-  await expect(
-    page.getByRole("button", { name: "Confirm and save" }),
-  ).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Yes, save" })).toBeDisabled();
   await page.getByRole("button", { name: "Go back" }).click();
 
   // Portfolio: everything held, split by asset class.
