@@ -57,12 +57,17 @@ export interface Card {
   /** Spend since the last logged bill, typed in by the person. */
   unbilled: number;
   unbilledAsOf: string | null;
+  /**
+   * EMIs of loans on this card, included in each bill. Banks usually leave
+   * them out of milestone spend, so they're taken off each bill here.
+   */
+  emiPerBill?: number;
 }
 
 /** What a milestone needs from its card to count spend. */
 export type CardSpend = Pick<
   Card,
-  "yearStart" | "bills" | "unbilled" | "unbilledAsOf"
+  "yearStart" | "bills" | "unbilled" | "unbilledAsOf" | "emiPerBill"
 >;
 
 /** First day of the month after an ISO month. */
@@ -199,7 +204,8 @@ export function milestoneState(
   // A one-off milestone counts from when it was added.
   const from = start ?? m.createdAt.slice(0, 10);
   const counted = billsInPeriod(card.bills, from, end);
-  const billed = counted.reduce((a, b) => a + b.amount, 0);
+  const emi = card.emiPerBill ?? 0;
+  const billed = counted.reduce((a, b) => a + Math.max(0, b.amount - emi), 0);
   const live = liveUnbilled(card);
   const unbilledNow = live && card.unbilledAsOf! >= from ? live : 0;
   const spentNow = billed + unbilledNow;

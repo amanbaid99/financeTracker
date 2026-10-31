@@ -215,3 +215,17 @@ describe("due label", () => {
     expect(dueLabel(null, t).text).toBe("unpaid, due date not set");
   });
 });
+
+describe("loan EMIs on a card", () => {
+  it("are left out of milestone spend", async () => {
+    const { milestoneState } = await import("@/lib/cards");
+    const m = { id: "m", name: "Fee waiver", target: 100000, period: "calendar_year" as const, deadline: null, reward: null, createdAt: "2026-01-01T00:00:00Z" };
+    const bills = [
+      { id: "b1", month: "2026-09-01", amount: 30000, dueDate: null, paid: true, note: null },
+      { id: "b2", month: "2026-10-01", amount: 25000, dueDate: null, paid: true, note: null },
+    ];
+    const card = { yearStart: null, bills, unbilled: 0, unbilledAsOf: null };
+    expect(milestoneState(m, "2026-10-31", card).spentNow).toBe(55000);
+    expect(milestoneState(m, "2026-10-31", { ...card, emiPerBill: 5000 }).spentNow).toBe(45000);
+  });
+});

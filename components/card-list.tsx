@@ -103,10 +103,13 @@ function statusLine(s: MilestoneState): { text: string; tone: string } {
 function MilestoneRow({
   s,
   noCardYear,
+  emi = 0,
   onEdit,
 }: {
   s: MilestoneState;
   noCardYear: boolean;
+  /** Loan EMIs on the card, left out of each bill. */
+  emi?: number;
   onEdit: () => void;
 }) {
   const tone =
@@ -163,6 +166,9 @@ function MilestoneRow({
         {sources.length
           ? `Counted from ${sources.join(" + ")}`
           : "No bills logged in this period yet"}
+        {emi > 0 && s.billCount > 0
+          ? `, leaving out ${formatINR(emi)} of loan EMI a bill`
+          : ""}
         {s.period === "card_year" && noCardYear
           ? ". Using Jan to Dec; set the card year in About this card."
           : ""}
@@ -1197,6 +1203,7 @@ export function CardList({
                               key={s.id}
                               s={s}
                               noCardYear={!c.yearStart}
+                              emi={c.emiPerBill}
                               onEdit={() =>
                                 setSheet({
                                   kind: "milestone",

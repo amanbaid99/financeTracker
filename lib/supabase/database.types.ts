@@ -416,6 +416,7 @@ export type Database = {
           loan_first_emi: string | null;
           loan_foreclosure_gst: boolean;
           loan_foreclosure_pct: number | null;
+          loan_id: string | null;
           loan_months_left: number | null;
           loan_outstanding: number | null;
           loan_rate: number | null;
@@ -439,6 +440,7 @@ export type Database = {
           loan_first_emi?: string | null;
           loan_foreclosure_gst?: boolean;
           loan_foreclosure_pct?: number | null;
+          loan_id?: string | null;
           loan_months_left?: number | null;
           loan_outstanding?: number | null;
           loan_rate?: number | null;
@@ -461,6 +463,7 @@ export type Database = {
           loan_first_emi?: string | null;
           loan_foreclosure_gst?: boolean;
           loan_foreclosure_pct?: number | null;
+          loan_id?: string | null;
           loan_months_left?: number | null;
           loan_outstanding?: number | null;
           loan_rate?: number | null;
@@ -473,7 +476,15 @@ export type Database = {
           type?: Database["public"]["Enums"]["goal_type"];
           user_id?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "goals_loan_id_fkey";
+            columns: ["loan_id"];
+            isOneToOne: false;
+            referencedRelation: "loans";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       holdings: {
         Row: {
@@ -680,6 +691,126 @@ export type Database = {
         };
         Relationships: [];
       };
+      loan_payments: {
+        Row: {
+          amount: number;
+          created_at: string;
+          due_date: string;
+          id: string;
+          loan_id: string;
+          paid_on: string;
+          prev_as_of: string;
+          prev_outstanding: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          amount: number;
+          created_at?: string;
+          due_date: string;
+          id?: string;
+          loan_id: string;
+          paid_on?: string;
+          prev_as_of: string;
+          prev_outstanding: number;
+          user_id?: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          due_date?: string;
+          id?: string;
+          loan_id?: string;
+          paid_on?: string;
+          prev_as_of?: string;
+          prev_outstanding?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "loan_payments_loan_id_fkey";
+            columns: ["loan_id"];
+            isOneToOne: false;
+            referencedRelation: "loans";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      loans: {
+        Row: {
+          bill_day: number | null;
+          card_id: string | null;
+          created_at: string;
+          emi: number | null;
+          emi_day: number | null;
+          first_emi: string | null;
+          foreclosure_gst: boolean;
+          foreclosure_pct: number | null;
+          id: string;
+          months_left: number | null;
+          name: string;
+          outstanding: number;
+          outstanding_as_of: string;
+          principal: number | null;
+          rate: number;
+          taken_on: string | null;
+          total_emis: number | null;
+          type: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          bill_day?: number | null;
+          card_id?: string | null;
+          created_at?: string;
+          emi?: number | null;
+          emi_day?: number | null;
+          first_emi?: string | null;
+          foreclosure_gst?: boolean;
+          foreclosure_pct?: number | null;
+          id?: string;
+          months_left?: number | null;
+          name: string;
+          outstanding: number;
+          outstanding_as_of?: string;
+          principal?: number | null;
+          rate?: number;
+          taken_on?: string | null;
+          total_emis?: number | null;
+          type?: string;
+          user_id?: string;
+        };
+        Update: {
+          bill_day?: number | null;
+          card_id?: string | null;
+          created_at?: string;
+          emi?: number | null;
+          emi_day?: number | null;
+          first_emi?: string | null;
+          foreclosure_gst?: boolean;
+          foreclosure_pct?: number | null;
+          id?: string;
+          months_left?: number | null;
+          name?: string;
+          outstanding?: number;
+          outstanding_as_of?: string;
+          principal?: number | null;
+          rate?: number;
+          taken_on?: string | null;
+          total_emis?: number | null;
+          type?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "loans_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "credit_cards";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       month_bills: {
         Row: {
           amount: number | null;
@@ -764,38 +895,38 @@ export type Database = {
       };
       portfolio_reviews: {
         Row: {
-          user_id: string;
-          enabled: boolean;
-          revision: string;
-          state: string;
-          source: string;
-          checked_at: string | null;
-          reviewed_at: string | null;
           baseline: Json | null;
+          checked_at: string | null;
+          enabled: boolean;
           result: Json | null;
+          reviewed_at: string | null;
+          revision: string;
+          source: string;
+          state: string;
+          user_id: string;
         };
         ComputedFields: never;
         Insert: {
-          user_id?: string;
-          enabled?: boolean;
-          revision?: string;
-          state?: string;
-          source?: string;
-          checked_at?: string | null;
-          reviewed_at?: string | null;
           baseline?: Json | null;
+          checked_at?: string | null;
+          enabled?: boolean;
           result?: Json | null;
+          reviewed_at?: string | null;
+          revision?: string;
+          source?: string;
+          state?: string;
+          user_id?: string;
         };
         Update: {
-          user_id?: string;
-          enabled?: boolean;
-          revision?: string;
-          state?: string;
-          source?: string;
-          checked_at?: string | null;
-          reviewed_at?: string | null;
           baseline?: Json | null;
+          checked_at?: string | null;
+          enabled?: boolean;
           result?: Json | null;
+          reviewed_at?: string | null;
+          revision?: string;
+          source?: string;
+          state?: string;
+          user_id?: string;
         };
         Relationships: [];
       };

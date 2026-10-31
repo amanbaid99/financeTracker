@@ -56,9 +56,13 @@ export const GUIDES: Record<GuideId, Guide> = {
     ],
   },
   cards: {
-    title: "Tracking your cards",
-    intro: "See what needs paying, then check your milestones and benefits.",
+    title: "Loans and cards",
+    intro: "See what needs paying, then how far each loan has come and your card milestones.",
     steps: [
+      "Add each loan with its type, the amount you withdrew, the EMI and what you owe now. For a loan on a credit card, pick the card and its bill and payment dates.",
+      "Each loan shows its next EMI and how soon it's due. Tap Mark paid once you've paid: what you owe goes down and the progress bar moves. Undo is there if you tapped by mistake.",
+      "At the top: everything you owe, your EMIs each month, and when you'll be debt-free.",
+      "EMIs on a card are part of its bill, but they don't count toward the card's milestones.",
       "Cards with overdue bills appear first. Older unpaid bills stay ahead of newer paid statements. A missing due date is shown clearly, not treated as overdue.",
       "Add a card with its annual fee, the date its card year starts, rewards and benefits. Never enter the card number.",
       "Add milestones like a fee waiver or bonus points, with the spend target and when it resets.",

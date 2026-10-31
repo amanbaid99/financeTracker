@@ -112,7 +112,9 @@ export function loanState(input: LoanInput, todayISO: string): LoanState {
   );
   const monthsLeft = monthsToClose(balance, input.ratePct, emi);
   const interestThisMonth = Math.round(balance * monthly(input.ratePct));
-  const nextEmi = balance > 0 ? nextEmiAfter(todayISO, emiDay) : null;
+  // An EMI already marked paid ahead of time moves `asOf` past today.
+  const from = input.asOf > todayISO ? input.asOf : todayISO;
+  const nextEmi = balance > 0 ? nextEmiAfter(from, emiDay) : null;
   return {
     balance,
     emi,

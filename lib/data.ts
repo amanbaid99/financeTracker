@@ -2,6 +2,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import type { Card, Period } from "@/lib/cards";
+import { loanInput, type Loan, type LoanType } from "@/lib/loans";
 import { pendingReleases, type Release } from "@/lib/guides";
 import { todayIST } from "@/lib/dates";
 import { PRIVACY_VERSION } from "@/lib/legal";
@@ -68,30 +69,33 @@ function check<T>(res: {
 
 export async function readGoals(): Promise<GoalsData> {
   const { supabase, user } = await requireUser();
-  const [goals, holdings, allocations, profile, bills] = await Promise.all([
-    supabase
-      .from("goals")
-      .select(
-        "id, name, type, target_today, target_date, inflation_rate, created_at, loan_outstanding, loan_emi, loan_rate, loan_months_left, loan_as_of, loan_foreclosure_pct, loan_foreclosure_gst, loan_emi_day, loan_first_emi",
-      )
-      .order("created_at"),
-    supabase
-      .from("holdings")
-      .select(
-        "id, kind, name, category, current_value, monthly_sip, expected_return_pct, invested",
-      )
-      .order("current_value", { ascending: false }),
-    supabase.from("goal_allocations").select("goal_id, holding_id, percent"),
-    supabase
-      .from("profiles")
-      .select("theme, accent, plan_lump_sum, plan_monthly")
-      .eq("user_id", user.id)
-      .maybeSingle(),
-    supabase
-      .from("goal_bills")
-      .select("id, goal_id, name, amount, every_months, next_due")
-      .order("next_due"),
-  ]);
+  const [goals, holdings, allocations, profile, bills, loans] =
+    await Promise.all([
+      supabase
+        .from("goals")
+        .select(
+          "id, name, type, target_today, target_date, inflation_rate, created_at, loan_id, loan_outstanding, loan_emi, loan_rate, loan_months_left, loan_as_of, loan_foreclosure_pct, loan_foreclosure_gst, loan_emi_day, loan_first_emi",
+        )
+        .order("created_at"),
+      supabase
+        .from("holdings")
+        .select(
+          "id, kind, name, category, current_value, monthly_sip, expected_return_pct, invested",
+        )
+        .order("current_value", { ascending: false }),
+      supabase.from("goal_allocations").select("goal_id, holding_id, percent"),
+      supabase
+        .from("profiles")
+        .select("theme, accent, plan_lump_sum, plan_monthly")
+        .eq("user_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("goal_bills")
+        .select("id, goal_id, name, amount, every_months, next_due")
+        .order("next_due"),
+      loadLoans(),
+    ]);
+  const loanById = new Map(loans.map((l) => [l.id, l]));
   const billRows = check(bills);
   const today = todayIST();
   const investments: Investment[] = check(holdings).map((h) => ({
@@ -120,23 +124,27 @@ export async function readGoals(): Promise<GoalsData> {
         targetDate: g.target_date,
         inflationPct:
           g.inflation_rate === null ? null : Number(g.inflation_rate),
+        loanId: g.loan_id,
+        // A linked loan is the source of truth; older goals kept their own copy.
         loan:
-          g.type === "loan_payoff" && g.loan_outstanding !== null
-            ? {
-                outstanding: g.loan_outstanding,
-                emi: g.loan_emi,
-                ratePct: Number(g.loan_rate ?? 0),
-                monthsLeft: g.loan_months_left,
-                asOf: g.loan_as_of ?? g.created_at.slice(0, 10),
-                foreclosurePct:
-                  g.loan_foreclosure_pct === null
-                    ? null
-                    : Number(g.loan_foreclosure_pct),
-                foreclosureGst: g.loan_foreclosure_gst,
-                emiDay: g.loan_emi_day,
-                firstEmi: g.loan_first_emi,
-              }
-            : null,
+          g.type === "loan_payoff" && g.loan_id && loanById.has(g.loan_id)
+            ? loanInput(loanById.get(g.loan_id)!)
+            : g.type === "loan_payoff" && g.loan_outstanding !== null
+              ? {
+                  outstanding: g.loan_outstanding,
+                  emi: g.loan_emi,
+                  ratePct: Number(g.loan_rate ?? 0),
+                  monthsLeft: g.loan_months_left,
+                  asOf: g.loan_as_of ?? g.created_at.slice(0, 10),
+                  foreclosurePct:
+                    g.loan_foreclosure_pct === null
+                      ? null
+                      : Number(g.loan_foreclosure_pct),
+                  foreclosureGst: g.loan_foreclosure_gst,
+                  emiDay: g.loan_emi_day,
+                  firstEmi: g.loan_first_emi,
+                }
+              : null,
         bills:
           g.type === "bills_fund"
             ? billRows
@@ -268,3 +276,58 @@ export const loadOnboarding = cache(
     };
   },
 );
+
+/** Every loan with its marked payments and the goal saving to close it. */
+export const loadLoans = cache(async (): Promise<Loan[]> => {
+  const { supabase } = await requireUser();
+  const [loans, payments, goals] = await Promise.all([
+    supabase
+      .from("loans")
+      .select(
+        "id, name, type, card_id, principal, taken_on, rate, emi, months_left, total_emis, emi_day, bill_day, first_emi, outstanding, outstanding_as_of, foreclosure_pct, foreclosure_gst",
+      )
+      .order("created_at"),
+    supabase
+      .from("loan_payments")
+      .select("loan_id, due_date, amount, paid_on")
+      .order("due_date", { ascending: false })
+      .limit(1000),
+    supabase
+      .from("goals")
+      .select("id, name, loan_id")
+      .not("loan_id", "is", null),
+  ]);
+  const ps = check(payments);
+  const gs = check(goals);
+  return check(loans).map((l) => {
+    const g = gs.find((x) => x.loan_id === l.id);
+    return {
+      id: l.id,
+      name: l.name,
+      type: l.type as LoanType,
+      cardId: l.card_id,
+      principal: l.principal,
+      takenOn: l.taken_on,
+      ratePct: Number(l.rate),
+      emi: l.emi,
+      monthsLeft: l.months_left,
+      totalEmis: l.total_emis,
+      emiDay: l.emi_day,
+      billDay: l.bill_day,
+      firstEmi: l.first_emi,
+      outstanding: l.outstanding,
+      asOf: l.outstanding_as_of,
+      foreclosurePct:
+        l.foreclosure_pct === null ? null : Number(l.foreclosure_pct),
+      foreclosureGst: l.foreclosure_gst,
+      payments: ps
+        .filter((p) => p.loan_id === l.id)
+        .map((p) => ({
+          dueDate: p.due_date,
+          amount: p.amount,
+          paidOn: p.paid_on,
+        })),
+      goal: g ? { id: g.id, name: g.name } : null,
+    };
+  });
+});

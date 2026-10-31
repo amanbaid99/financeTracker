@@ -169,6 +169,46 @@ export async function saveGoal(
           .single();
     if (res.error) throw new Error(res.error.message);
     const goalId = res.data.id;
+    if (loan) {
+      // Keep the tracked loan in step with the goal's loan details.
+      const loanRow = {
+        rate: loan.ratePct,
+        emi: loan.emi ?? null,
+        months_left: loan.monthsLeft ?? null,
+        emi_day: loan.emiDay,
+        first_emi: loan.firstEmi ?? null,
+        outstanding: loan.outstanding,
+        outstanding_as_of: row.loan_as_of!,
+        foreclosure_pct: loan.foreclosurePct ?? null,
+        foreclosure_gst: loan.foreclosureGst ?? true,
+      };
+      const { data: g, error: gErr } = await supabase
+        .from("goals")
+        .select("loan_id")
+        .eq("id", goalId)
+        .single();
+      if (gErr) throw new Error(gErr.message);
+      if (g.loan_id) {
+        const { error } = await supabase
+          .from("loans")
+          .update(loanRow)
+          .eq("id", g.loan_id)
+          .eq("user_id", userId);
+        if (error) throw new Error(error.message);
+      } else {
+        const { data: l, error } = await supabase
+          .from("loans")
+          .insert({ ...loanRow, user_id: userId, name: v.name.slice(0, 60) })
+          .select("id")
+          .single();
+        if (error) throw new Error(error.message);
+        const { error: linkErr } = await supabase
+          .from("goals")
+          .update({ loan_id: l.id })
+          .eq("id", goalId);
+        if (linkErr) throw new Error(linkErr.message);
+      }
+    }
     if (v.type === "bills_fund") {
       // Replace the payment list with what was sent.
       const del = await supabase

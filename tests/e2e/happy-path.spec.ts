@@ -768,10 +768,31 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   }
 
   // Credit cards: benefits and a spend milestone with progress.
-  await tab("Cards").click();
+  await tab("Credit").click();
   await expect(
     page.getByRole("heading", { name: "Cards", exact: true }),
   ).toBeVisible();
+  // Loans: the loan goal from earlier is tracked as a loan too.
+  const loansList = page.getByRole("region", { name: "Loans" });
+  await expect(loansList).toContainText("Close my loan");
+  await page.getByRole("button", { name: "Add a loan" }).click();
+  await page.getByLabel("Name").fill("Car finance");
+  await page.getByLabel("Type").selectOption("car");
+  await page.getByLabel("Amount withdrawn").fill("500000");
+  await page.getByLabel("EMI", { exact: true }).fill("12000");
+  await page.getByLabel("Interest, % a year").fill("9");
+  await page.getByLabel("Total EMIs").fill("48");
+  await page.getByLabel("Owed now").fill("400000");
+  await page.getByRole("button", { name: "Add loan" }).click();
+  await expect(loansList).toContainText("Car finance");
+  await expect(loansList).toContainText("₹1L of ₹5L repaid");
+  await expect(loansList).toContainText(/a month in EMIs/);
+  await page.getByRole("button", { name: "Mark Car finance EMI paid" }).click();
+  await expect(loansList).toContainText("marked paid");
+  await loansList.getByRole("button", { name: "Undo" }).click();
+  await expect(page.getByRole("button", { name: "Mark Car finance EMI paid" })).toBeVisible();
+  await expect(loansList).toContainText("₹1L of ₹5L repaid");
+  await page.screenshot({ path: "test-results/loans-375.png", fullPage: true });
   await expect(
     page.getByText("Track your cards' benefits and milestones"),
   ).toBeVisible();
@@ -932,8 +953,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(
     page.getByText("Guides will show again when you open each section."),
   ).toBeVisible();
-  await tab("Cards").click();
-  const cardsGuide = page.getByRole("dialog", { name: "Tracking your cards" });
+  await tab("Credit").click();
+  const cardsGuide = page.getByRole("dialog", { name: "Loans and cards" });
   await expect(cardsGuide).toContainText("Log bill");
   await page.screenshot({ path: "test-results/guide-375.png" });
   await cardsGuide.getByRole("button", { name: "Got it" }).click();

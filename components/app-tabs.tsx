@@ -24,7 +24,7 @@ const TABS = [
     icon: PieChart,
     match: ["/portfolio"],
   },
-  { href: "/cards", label: "Cards", icon: CreditCard, match: ["/cards"] },
+  { href: "/cards", label: "Credit", icon: CreditCard, match: ["/cards"] },
   { href: "/ask", label: "Ask", icon: MessageCircle, match: ["/ask"] },
 ];
 

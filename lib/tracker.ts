@@ -36,6 +36,8 @@ export interface GoalInput {
   inflationPct: number | null;
   /** For loan payoff goals. */
   loan?: LoanInput | null;
+  /** The tracked loan this goal saves to close, if linked. */
+  loanId?: string | null;
   /** For bills fund goals: the payments it saves for. */
   bills?: Bill[] | null;
 }
