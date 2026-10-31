@@ -9,7 +9,13 @@ import { formatINR } from "@/lib/format";
 import { goalTypeInfo } from "@/lib/goal-types";
 import { monthYear } from "@/lib/goal-summary";
 import { categoryLabel } from "@/lib/categories";
-import { asKind, defaultReturn, KIND_LABELS } from "@/lib/instruments";
+import {
+  asKind,
+  defaultReturn,
+  etfLabel,
+  isEtf,
+  KIND_LABELS,
+} from "@/lib/instruments";
 import { assetClassOf, ASSET_CLASSES, buildPortfolio } from "@/lib/portfolio";
 import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
 
@@ -18,6 +24,8 @@ export interface AskContext {
   facts: string;
   /** Code → the user's own name, for turning the reply back. */
   names: Record<string, string>;
+  /** Goal or investment id → its code, for adding app-computed facts. */
+  codeOf: Record<string, string>;
 }
 
 /** Rounded rupees: to ₹1,000 above ₹10,000, else to ₹100. */
@@ -30,6 +38,7 @@ export function rough(n: number): string {
 }
 
 function investmentLabel(i: Investment): string {
+  if (isEtf(i)) return etfLabel(i.name);
   const kind = asKind(i.kind);
   return kind === "mutual_fund" ? categoryLabel(i.category) : KIND_LABELS[kind];
 }
@@ -64,6 +73,10 @@ function goalLine(
     parts.push(
       `target ${rough(g.futureTarget)}${g.targetDate ? ` by ${monthYear(g.targetDate)}` : ", no fixed date"}`,
     );
+    if (g.months !== null && g.months > 0)
+      parts.push(
+        `${g.months} months away (${g.months < 36 ? "short term: keep it low risk" : g.months < 60 ? "medium term" : "long term"})`,
+      );
   }
   parts.push(`saved ${rough(g.current)}`);
   if (g.monthlySip) parts.push(`${rough(g.monthlySip)} a month going in`);
@@ -83,7 +96,7 @@ function goalLine(
       `held in ${g.lines
         .map(
           (l) =>
-            `${invCodes.get(l.investment.id)}${l.percent < 100 ? ` (${l.percent}% of it)` : ""}`,
+            `${invCodes.get(l.investment.id)} ${investmentLabel(l.investment).toLowerCase()}${l.percent < 100 ? ` (${l.percent}% of it)` : ""}`,
         )
         .join(", ")}`,
     );
@@ -169,7 +182,11 @@ export function buildAskContext(opts: {
     );
   }
 
-  return { facts: lines.join("\n"), names };
+  return {
+    facts: lines.join("\n"),
+    names,
+    codeOf: Object.fromEntries([...invCodes, ...goalCodes]),
+  };
 }
 
 /** Replaces codes like [G1] in the AI's reply with the user's own names. */
@@ -190,5 +207,7 @@ Rules:
 - Keep answers short and plain: a few sentences or a short list. Use ₹ and Indian number formats.
 - Explain the trade-offs: money not tied to any goal first; then goals that are furthest away or least important; keep the emergency fund for real emergencies; mention exit loads, ELSS 3-year lock-in, PPF/EPF limits, FD early-withdrawal penalties, and that equity sold within a year is taxed more, where relevant.
 - Never recommend a specific fund, scheme, fund house (AMC), stock or company to buy. Talk only about kinds of funds.
-- Use only the numbers in the facts. If something isn't there, say so.
+- Use only the numbers in the facts. Never do your own sums or percentages; if a number you need isn't there, say so.
+- When the facts include "The app's split", that is the answer: explain it in plain words, in that order, with those amounts. Don't move money between goals, don't add amounts, and don't give the same money to two goals.
+- A one-time amount and a monthly amount are different: never use one to cover the other.
 - You are not a registered investment adviser; for big or complex decisions suggest checking with one.`;

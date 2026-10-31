@@ -686,6 +686,18 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(answer.locator("strong")).toHaveText("exit load");
   await expect(answer).not.toContainText("[I");
   await page.screenshot({ path: "test-results/ask-375.png", fullPage: true });
+  // "Where should 10k go?": asks once or monthly, then the app's own split,
+  // with a made-up figure caught and rewritten, and a button to add it.
+  await page.getByLabel("Your question").fill("Where should 10k go?");
+  await page.getByRole("button", { name: "Send" }).click();
+  await expect(page.getByText("Is ₹10,000 a one-time amount, or every month?")).toBeVisible();
+  await page.getByRole("button", { name: "₹10,000 once" }).click();
+  const split = page.locator(`ol[aria-label="Conversation"] > li`).last();
+  await expect(split).toContainText(/as the app worked out|Nothing needs it right now/);
+  await expect(split).not.toContainText("₹1,23,456");
+  await expect(split).not.toContainText("Couldn't check");
+  // Goals here are all covered already, so there's nothing to add.
+  await expect(split.getByRole("button", { name: "Add to This month" })).toHaveCount(0);
   // What reached the AI: codes and rounded amounts, none of your names.
   const sent = JSON.stringify(
     await (await page.request.get("http://127.0.0.1:5329/last")).json(),

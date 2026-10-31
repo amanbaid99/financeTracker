@@ -100,6 +100,15 @@ http
         return reply(res, JSON.stringify({ order: facts.findings.map(f => f.code) }));
       }
       lastAsk = data;
+      // "Where should ₹X go?": explain the app's split. The first try slips
+      // in a made-up figure, to prove it gets caught and rewritten.
+      const sys = messages[0]?.content ?? "";
+      if (/^The app's split for/m.test(sys)) {
+        const step = sys.match(/^- (₹[\d,]+) (?:a month )?into ([^,]+),/m);
+        const retry = messages.at(-1)?.content?.includes("aren't in the facts");
+        const line = step ? `Put ${step[1]} into ${step[2]}, as the app worked out.` : "Nothing needs it right now.";
+        return reply(res, retry ? line : `${line} That gets you halfway, about ₹1,23,456.`);
+      }
       const asked = messages.filter((m) => m.role === "user").length;
       if (asked < 2) return reply(res, "How much do you need, and by when?");
       const system = messages[0]?.content ?? "";

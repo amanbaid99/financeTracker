@@ -2,9 +2,15 @@
 
 import { MessageCircle, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { askQuestion, setAskEnabled, type AskTurn } from "@/lib/ask/actions";
+import {
+  addToPlan,
+  askQuestion,
+  setAskEnabled,
+  type AskTurn,
+} from "@/lib/ask/actions";
 import { cn } from "@/lib/utils";
 
 const STARTERS = [
@@ -20,6 +26,45 @@ interface Message {
   coded: string;
   /** What you see. */
   shown: string;
+  choices?: string[];
+  plan?: { amount: number; frequency: "once" | "monthly" };
+  unchecked?: string[];
+}
+
+/** Adds an answer's split to the money plan, so This month shows the steps. */
+function AddToPlan({ plan }: { plan: NonNullable<Message["plan"]> }) {
+  const [state, setState] = useState<"idle" | "busy" | "done" | string>("idle");
+  if (state === "done")
+    return (
+      <p className="mt-2 text-xs">
+        Added to your plan.{" "}
+        <Link
+          href="/goals"
+          className="font-medium text-primary underline underline-offset-2"
+        >
+          See This month
+        </Link>
+      </p>
+    );
+  return (
+    <div className="mt-2 space-y-1">
+      <Button
+        type="button"
+        size="sm"
+        disabled={state === "busy"}
+        onClick={async () => {
+          setState("busy");
+          const res = await addToPlan(plan);
+          setState(res.ok ? "done" : (res.error ?? "Couldn't add it."));
+        }}
+      >
+        {state === "busy" ? "Adding…" : "Add to This month"}
+      </Button>
+      {state !== "idle" && state !== "busy" && (
+        <p className="text-xs text-danger">{state}</p>
+      )}
+    </div>
+  );
 }
 
 /** **bold** inside a line. */
@@ -104,7 +149,14 @@ export function AskChat() {
       }
       setMessages((m) => [
         ...m,
-        { role: "assistant", coded: res.coded, shown: res.shown },
+        {
+          role: "assistant",
+          coded: res.coded,
+          shown: res.shown,
+          choices: res.choices,
+          plan: res.plan,
+          unchecked: res.unchecked,
+        },
       ]);
     });
   }
@@ -151,6 +203,28 @@ export function AskChat() {
               )}
             >
               {m.role === "assistant" ? <Answer text={m.shown} /> : m.shown}
+              {m.unchecked && (
+                <p className="mt-2 rounded-lg bg-warning-soft p-2 text-xs text-warning">
+                  Couldn&apos;t check {m.unchecked.join(", ")} against your
+                  data. Treat {m.unchecked.length === 1 ? "it" : "them"} with
+                  care.
+                </p>
+              )}
+              {m.plan && <AddToPlan plan={m.plan} />}
+              {m.choices && i === messages.length - 1 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {m.choices.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => send(c)}
+                      className="press rounded-full border bg-card px-3 py-1.5 text-sm font-medium text-primary hover:border-primary"
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </li>
         ))}

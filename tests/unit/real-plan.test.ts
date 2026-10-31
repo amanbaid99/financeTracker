@@ -454,3 +454,46 @@ describe("simple SIP preview", () => {
     expect(sipAction({ ...lines[0], investment: null })).toEqual({ kind: "Start", current: 0, extra: 5000, total: 5000 });
   });
 });
+
+describe("Ask: where should an amount go", () => {
+  it("reads the amount and whether it repeats", async () => {
+    const { amountQuestion } = await import("@/lib/ask/amount");
+    expect(amountQuestion("Where should 10k go?")).toEqual({ amount: 10000, frequency: "unknown" });
+    expect(amountQuestion("Where should I invest ₹10,000 a month?")).toEqual({ amount: 10000, frequency: "monthly" });
+    expect(amountQuestion("I got a 1.5L bonus, where should I put it")).toEqual({ amount: 150000, frequency: "once" });
+    expect(amountQuestion("₹10,000 once")?.frequency).toBe("once");
+    expect(amountQuestion("I need ₹50,000 for a treatment, where should it come from?")).toBeNull();
+    expect(amountQuestion("Am I on track?")).toBeNull();
+  });
+
+  it("splits a one-time ₹10,000 with the app's own rules, once, with codes only", async () => {
+    const { splitFacts } = await import("@/lib/ask/amount");
+    const codeOf: Record<string, string> = {};
+    investments.forEach((i, n) => (codeOf[i.id] = `[I${n + 1}]`));
+    tracked.forEach((g, n) => (codeOf[g.id] = `[G${n + 1}]`));
+    const s = splitFacts({
+      q: { amount: 10000, frequency: "once" },
+      goals: tracked,
+      investments,
+      links,
+      todayISO: TODAY,
+      codeOf,
+    });
+    // Every rupee goes somewhere exactly once: the steps add up to ₹10,000.
+    const stepTotal = [...s.facts.matchAll(/^- (₹[\d,]+) into/gm)]
+      .map((m) => Number(m[1].replace(/[₹,]/g, "")))
+      .reduce((a, b) => a + b, 0);
+    expect(stepTotal).toBe(10000);
+    // No names the user typed.
+    for (const g of goals) expect(s.facts).not.toContain(g.name);
+    for (const i of investments) expect(s.facts).not.toContain(`${i.name} `);
+  });
+
+  it("catches figures the facts don't support", async () => {
+    const { unsupportedFigures } = await import("@/lib/ask/amount");
+    const facts = "- ₹10,000 into [I5], for [G9].\n- Target ₹3,00,000; saved ₹5,000.";
+    expect(unsupportedFigures("Put ₹10,000 into [I5]. That gets you to ₹15,000.", facts, [10000])).toEqual(["₹15,000"]);
+    expect(unsupportedFigures("Put ₹10,000 into [I5].", facts, [10000])).toEqual([]);
+    expect(unsupportedFigures("That's 50% of the way.", facts)).toEqual(["50%"]);
+  });
+});
