@@ -131,9 +131,12 @@ export function InvestmentSheet({
 
   const category = kind === "mutual_fund" ? fundCategory : null;
   const dflt = defaultReturn(kind, category);
-  const sharedElsewhere = investment
-    ? links.some((l) => l.investmentId === investment.id && l.goalId !== goalId)
-    : false;
+  // Other goals this investment counts toward (from Portfolio: every goal).
+  const otherGoals = investment
+    ? links.filter(
+        (l) => l.investmentId === investment.id && l.goalId !== goalId,
+      ).length
+    : 0;
   const existing = mode === "existing" && !investment;
 
   const run = (fn: () => Promise<{ ok: boolean; error?: string }>) =>
@@ -296,7 +299,8 @@ export function InvestmentSheet({
           </>
         ) : (
           <>
-            <div className="grid grid-cols-2 gap-3">
+            {/* One per row: category names are too long to share a row on a phone. */}
+            <div className="space-y-3">
               <Field label="Type" htmlFor="i-kind">
                 <Select
                   id="i-kind"
@@ -345,9 +349,11 @@ export function InvestmentSheet({
                 <MoneyInput id="i-sip" value={sip} onChange={setSip} />
               </Field>
             </div>
-            {sharedElsewhere && (
+            {otherGoals > 0 && (
               <p className="text-xs text-muted-foreground">
-                This also counts toward another goal, so it changes there too.
+                {goalId
+                  ? `This also counts toward ${otherGoals === 1 ? "another goal" : `${otherGoals} other goals`}, so it changes there too.`
+                  : `This counts toward ${otherGoals === 1 ? "a goal" : `${otherGoals} goals`}, so it changes there too.`}
               </p>
             )}
             <details

@@ -428,7 +428,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   if (!await page.getByLabel("Savings to put toward goals now").isVisible()) await page.getByText("Add a one-time amount", { exact: true }).click();
   await page.getByLabel("Savings to put toward goals now").fill("0");
   await page.getByRole("button", { name: "Show my plan" }).click();
-  await expect(page.getByText(/^₹0 now · /)).toBeVisible();
+  // No one-time amount any more: the plan header shows only the monthly total.
+  await expect(page.getByText(/\/month after these changes$/)).toBeVisible();
 
   // Bills fund: one liquid fund for known payments.
   const inMonths = (n: number) => {

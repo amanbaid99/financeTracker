@@ -61,4 +61,12 @@ describe("portfolio", () => {
   it("is empty with nothing held", () => {
     expect(buildPortfolio([])).toMatchObject({ total: 0, classes: [], holdings: [], growth: null });
   });
+
+  it("counts an ETF saved as a stock as what it holds", () => {
+    expect(assetClassOf({ kind: "stock", category: "direct_equity", name: "Gold etf" })).toBe("gold");
+    expect(assetClassOf({ kind: "stock", category: "direct_equity", name: "Liquid BeES" })).toBe("debt");
+    expect(assetClassOf({ kind: "stock", category: "direct_equity", name: "US stocks" })).toBe("equity");
+    const p = buildPortfolio([{ id: "g", kind: "stock", name: "Gold etf", category: "direct_equity", value: 1000, monthlySip: 0, returnPct: null }]);
+    expect(p.holdings[0]).toMatchObject({ kindLabel: "Gold ETF", assetClass: "gold" });
+  });
 });

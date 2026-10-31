@@ -42,14 +42,16 @@ export function UpdateButton({
   );
   return (
     <>
-      {showButton && <Button
-        type="button"
-        size="sm"
-        className="w-full"
-        onClick={() => setOpen(true)}
-      >
-        <RefreshCw /> Update values
-      </Button>}
+      {showButton && (
+        <Button
+          type="button"
+          size="sm"
+          className="w-full"
+          onClick={() => setOpen(true)}
+        >
+          <RefreshCw /> Update values
+        </Button>
+      )}
       {open && <UpdateSheet items={items} onClose={close} />}
     </>
   );
@@ -132,7 +134,9 @@ function UpdateSheet({
             {error}
           </p>
         )}
-        <div className="sticky bottom-0 -mx-5 border-t bg-card px-5 pt-3">
+        {/* Sticks to the very bottom of the sheet, covering its padding too, so
+            no rows show under the button. */}
+        <div className="sticky bottom-[calc(-1.25rem-env(safe-area-inset-bottom))] -mx-5 -mb-[calc(1.25rem+env(safe-area-inset-bottom))] border-t bg-card px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3">
           <Button
             type="submit"
             className="w-full"

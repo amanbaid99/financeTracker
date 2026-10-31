@@ -3,7 +3,17 @@
 
 import { defaultCategoryForKind, HOLDING_CATEGORIES } from "./categories";
 
-export const KINDS = ["mutual_fund", "stock", "fd", "ppf", "epf", "nps", "gold", "savings", "other"] as const;
+export const KINDS = [
+  "mutual_fund",
+  "stock",
+  "fd",
+  "ppf",
+  "epf",
+  "nps",
+  "gold",
+  "savings",
+  "other",
+] as const;
 export type Kind = (typeof KINDS)[number];
 
 export const KIND_LABELS: Record<Kind, string> = {
@@ -18,10 +28,21 @@ export const KIND_LABELS: Record<Kind, string> = {
   other: "Other",
 };
 
-const NOT_FUNDS = new Set(["savings_account", "sweep_fd", "fd_rd", "direct_equity", "ppf", "epf_vpf", "nps", "gold"]);
+const NOT_FUNDS = new Set([
+  "savings_account",
+  "sweep_fd",
+  "fd_rd",
+  "direct_equity",
+  "ppf",
+  "epf_vpf",
+  "nps",
+  "gold",
+]);
 
 /** Mutual fund categories to pick from. */
-export const FUND_CATEGORIES = HOLDING_CATEGORIES.filter((c) => !NOT_FUNDS.has(c.value));
+export const FUND_CATEGORIES = HOLDING_CATEGORIES.filter(
+  (c) => !NOT_FUNDS.has(c.value),
+);
 
 /** Conservative long-run planning returns, % a year. Not live market data. */
 export const RETURN_BY_CATEGORY: Record<string, number> = {
@@ -68,4 +89,31 @@ export function defaultReturn(kind: string, category: string | null): number {
 
 export function asKind(v: string): Kind {
   return (KINDS as readonly string[]).includes(v) ? (v as Kind) : "other";
+}
+
+/** An ETF bought on the exchange, saved as a stock or similar ("… ETF", "… BeES"). */
+export function isEtf(i: { kind: string; name?: string | null }): boolean {
+  return (
+    asKind(i.kind) !== "mutual_fund" && /\betf\b|bees\b/i.test(i.name ?? "")
+  );
+}
+
+/** The kind of fund an ETF works like, from its name. */
+export function etfCategory(name: string | null | undefined): string {
+  const n = name ?? "";
+  if (/gold|silver/i.test(n)) return "gold";
+  if (/liquid/i.test(n)) return "liquid_fund";
+  if (/mid|small/i.test(n)) return "mid_small_cap";
+  return "equity_index";
+}
+
+/** "Gold ETF", "Index ETF"... for an ETF's kind. */
+export function etfLabel(name: string | null | undefined): string {
+  return (
+    {
+      gold: "Gold ETF",
+      liquid_fund: "Liquid ETF",
+      mid_small_cap: "Mid / small-cap ETF",
+    }[etfCategory(name)] ?? "Index ETF"
+  );
 }

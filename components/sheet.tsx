@@ -1,10 +1,21 @@
 "use client";
 
 import { X } from "lucide-react";
-import { useEffect, useId } from "react";
+import { useEffect, useId, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
+
+const noop = () => () => {};
 
 /** A panel that slides up on phones and sits centred on larger screens. */
-export function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+export function Sheet({
+  title,
+  onClose,
+  children,
+}: {
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
   const id = useId();
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -16,10 +27,26 @@ export function Sheet({ title, onClose, children }: { title: string; onClose: ()
       document.body.style.overflow = prev;
     };
   }, [onClose]);
+  // Drawn on <body>, so nothing on the page (the tab bar, a transition
+  // layer) can sit on top of it. Only after hydration, as there's no body
+  // on the server.
+  const mounted = useSyncExternalStore(
+    noop,
+    () => true,
+    () => false,
+  );
+  if (!mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="presentation">
-      <div className="sheet-backdrop absolute inset-0 bg-black/40" onClick={onClose} aria-hidden />
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+      role="presentation"
+    >
+      <div
+        className="sheet-backdrop absolute inset-0 bg-black/40"
+        onClick={onClose}
+        aria-hidden
+      />
       <div
         role="dialog"
         aria-modal="true"
@@ -41,6 +68,7 @@ export function Sheet({ title, onClose, children }: { title: string; onClose: ()
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -6,7 +6,7 @@
 
 import type { Suggestion } from "./allocate";
 import { categoryLabel } from "./categories";
-import { asKind } from "./instruments";
+import { asKind, etfCategory, isEtf } from "./instruments";
 import { freePercent, type Investment, type Link } from "./tracker";
 
 export interface SipPart {
@@ -84,24 +84,11 @@ const STAND_INS: Record<string, string[]> = {
 /** Gold spreads the risk but can swing, so it gets at most this share of a goal. */
 const GOLD_CAP = 0.2;
 
-/** An ETF you buy on the exchange (named "… ETF" or "… BeES"). */
-function isEtf(i: Investment): boolean {
-  return /\betf\b|bees\b/i.test(i.name ?? "");
-}
-
-/** What an ETF tracks, from its name. */
-function etfKind(name: string): string {
-  if (/gold|silver/i.test(name)) return "gold";
-  if (/liquid/i.test(name)) return "liquid_fund";
-  if (/mid|small/i.test(name)) return "mid_small_cap";
-  return "equity_index";
-}
-
 /** The kind of fund an investment is, for matching ("savings_account" for a bank account). */
 function kindOf(i: Investment): string | null {
   const k = asKind(i.kind);
   // ETFs: any amount from one unit (often ₹100 or so), sold any day.
-  if (k !== "mutual_fund" && isEtf(i)) return etfKind(i.name ?? "");
+  if (isEtf(i)) return etfCategory(i.name);
   if (k === "mutual_fund") return i.category;
   if (k === "savings") return "savings_account";
   return null; // stocks, FDs, PPF, EPF, NPS, physical gold: not something to SIP into here
@@ -109,7 +96,7 @@ function kindOf(i: Investment): string | null {
 
 /** Smallest amount worth putting in, and the step amounts round to. */
 function sizeOf(i: Investment, lump: boolean): number {
-  if (isEtf(i) && asKind(i.kind) !== "mutual_fund") return 100;
+  if (isEtf(i)) return 100;
   return lump ? 1000 : 500;
 }
 
@@ -264,7 +251,8 @@ export function splitForGoal(
     investments.filter((i) => pctOf.has(i.id)),
     (i) => pctOf.get(i.id)!,
   );
-  if (strategy === "simple") cands = cands.filter((c) => kindOf(c.i) !== "gold");
+  if (strategy === "simple")
+    cands = cands.filter((c) => kindOf(c.i) !== "gold");
   // Funds only this goal uses come first; shared ones only if that's all there is.
   if (cands.some((c) => c.pct >= 100))
     cands = cands.filter((c) => c.pct >= 100);
@@ -304,14 +292,16 @@ export function splitForGoal(
   );
   if (strategy === "simple") {
     const c = cands[0];
-    return [{
-      investment: c.i,
-      monthly,
-      lump,
-      similar: c.r > 0,
-      percent: c.pct,
-      note: noteFor(c.i),
-    }];
+    return [
+      {
+        investment: c.i,
+        monthly,
+        lump,
+        similar: c.r > 0,
+        percent: c.pct,
+        note: noteFor(c.i),
+      },
+    ];
   }
   // One fund per kind: two of the same kind isn't spreading the risk.
   const seen = new Set<string>();

@@ -57,7 +57,7 @@ export function PortfolioHoldings({
                   <span className="block truncate text-sm font-medium">
                     {h.name}
                   </span>
-                  <span className="block truncate text-xs text-muted-foreground">
+                  <span className="block text-xs text-muted-foreground">
                     {h.kindLabel} · {pct(h.share)}
                     {h.monthlySip > 0 ? ` · ${formatINR(h.monthlySip)}/mo` : ""}
                   </span>

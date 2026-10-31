@@ -2,7 +2,13 @@
 // of fund, and how much it has grown where the amount invested is known.
 
 import { categoryLabel } from "./categories";
-import { asKind, KIND_LABELS } from "./instruments";
+import {
+  asKind,
+  etfCategory,
+  etfLabel,
+  isEtf,
+  KIND_LABELS,
+} from "./instruments";
 import type { Investment } from "./tracker";
 
 /** Asset classes in a fixed order; each keeps its chart colour slot. */
@@ -48,9 +54,12 @@ const DEBT = new Set([
 ]);
 
 export function assetClassOf(
-  i: Pick<Investment, "kind" | "category">,
+  i: Pick<Investment, "kind" | "category"> & { name?: string | null },
 ): AssetClass {
   const kind = asKind(i.kind);
+  // An ETF counts as what it holds: a gold ETF is gold, not stocks.
+  if (isEtf(i))
+    return assetClassOf({ kind: "mutual_fund", category: etfCategory(i.name) });
   if (kind === "stock") return "equity";
   if (kind === "savings") return "cash";
   if (kind === "fd") return "debt";
@@ -109,6 +118,7 @@ export interface Portfolio {
 }
 
 function kindLabel(i: Investment): string {
+  if (isEtf(i)) return etfLabel(i.name);
   const kind = asKind(i.kind);
   return kind === "mutual_fund" ? categoryLabel(i.category) : KIND_LABELS[kind];
 }
@@ -209,4 +219,5 @@ const SWATCH: Record<number, string> = {
 };
 
 /** Tailwind class for an asset class's chart colour slot. */
-export const swatchFor = (slot: number) => SWATCH[slot] ?? "bg-muted-foreground";
+export const swatchFor = (slot: number) =>
+  SWATCH[slot] ?? "bg-muted-foreground";
