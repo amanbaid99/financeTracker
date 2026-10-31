@@ -35,6 +35,17 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 
 ## Goals and the money plan
 
+- **Budget, plan only (Oct 31, owner's choice):** take-home income and monthly costs (reusing the
+  old `income_streams` and `expenses` tables), with loan EMIs and running SIPs filled in from the
+  app. Free to invest = income − costs − EMIs − SIPs. "Your month" sits at the top of Goals, with
+  the full page at `/goals/budget`. One tap sets the money plan's monthly budget to SIPs + free.
+  **No spend tracking**: the owner's card spends are often for friends who pay back, so actual card
+  totals would mislead. Yearly payments stay in bills funds (already a SIP), not budget costs.
+- **Ask money questions (Oct 31):** "where should ₹X go?" is answered by `planMoney` for that amount
+  (`lib/ask/amount.ts`); the AI only explains the split. Unclear once-vs-monthly is asked first
+  without AI. Every ₹ and % in a reply must match the facts (2% rounding); one rewrite is
+  requested, then anything left is flagged under the answer.
+
 - **Goals page revamp (Oct 31, owner approved a mockup):** the header shows saved, going in each
   month, and counts by status (need action, behind, on track, not started). Active goals are
   grouped by time: Next 2 years (and bills funds), Later, No fixed date; EMI-covered loans and
@@ -127,3 +138,9 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   respected).
 - 10 accent colours, light and dark themes, all contrast checked.
 - Copy: friendly, short, no jargon, no em dashes.
+
+## Later
+
+- **Card statement analysis** (owner's idea, Oct 31): upload a card statement, get a breakdown, and
+  for spends the app can't place (often UPI) ask the owner what they were, including "a friend
+  will pay me back", which shouldn't count as spending. Not started.

@@ -41,6 +41,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
       "This month, above your goals, lists what to invest and where. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for a few seconds.",
       "Open a goal for its What to do box. If your plan can't cover it, pick a later date, a smaller target or a bigger budget. The goal's form opens filled in for you to check and save.",
+      "Your month shows take-home, costs, EMIs and SIPs, and what's free to invest. Edit budget to change them; one tap uses the free amount for This month.",
       "Edit plan sets one monthly investment budget, including what you already invest. One-time savings are optional.",
       "Plan details and options shows the goal breakdown and lets you compare one holding per goal with a spread across holdings. Nothing is saved until you confirm.",
     ],
@@ -105,6 +106,20 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-10-31",
+    title: "A budget, and sharper answers",
+    items: [
+      {
+        title: "Your month",
+        text: "Add your take-home pay and monthly costs. EMIs and SIPs fill in by themselves, and you see what's free to invest. One tap uses it for This month.",
+      },
+      {
+        title: "Ask gets the maths right",
+        text: 'For "where should ₹X go?", the app works out the split with your plan\'s rules and Ask explains it. It checks whether you mean once or every month, and every number in an answer is checked against your data.',
+      },
+    ],
+  },
   {
     date: "2026-10-31",
     title: "Loans, and smarter imports",

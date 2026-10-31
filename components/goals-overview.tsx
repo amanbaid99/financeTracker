@@ -19,12 +19,19 @@ export function GoalsOverview(props: {
   sipsNow: number;
   unassigned: number;
   autoOpen: boolean;
+  budgetMonthly: number | null;
 }) {
   const [strategy, setStrategy] = useState<SipStrategy>("diversified");
-  return <>
-    <MoneyPlanCard {...props} strategy={strategy} onStrategyChange={setStrategy} />
-    <div id="your-goals" className="scroll-mt-20">
-      <GoalList {...props} strategy={strategy} />
-    </div>
-  </>;
+  return (
+    <>
+      <MoneyPlanCard
+        {...props}
+        strategy={strategy}
+        onStrategyChange={setStrategy}
+      />
+      <div id="your-goals" className="scroll-mt-20">
+        <GoalList {...props} strategy={strategy} />
+      </div>
+    </>
+  );
 }

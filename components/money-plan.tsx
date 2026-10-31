@@ -30,11 +30,14 @@ function PlanForm({
   plan,
   sipsNow,
   unassigned,
+  budgetMonthly,
   onClose,
 }: {
   plan: MoneyPlan | null;
   sipsNow: number;
   unassigned: number;
+  /** What the budget leaves for investing each month, SIPs included. */
+  budgetMonthly: number | null;
   onClose: () => void;
 }) {
   const router = useRouter();
@@ -81,6 +84,18 @@ function PlanForm({
             placeholder="e.g. 30,000"
           />
         </Field>
+        {budgetMonthly !== null && budgetMonthly !== monthly && (
+          <p className="-mt-2 text-xs text-muted-foreground">
+            Your budget leaves {formatINR(budgetMonthly)} a month.{" "}
+            <button
+              type="button"
+              className="text-primary underline"
+              onClick={() => setMonthly(budgetMonthly)}
+            >
+              Use this amount
+            </button>
+          </p>
+        )}
         <details open={Boolean(plan?.lump)} className="border-t pt-3">
           <summary className="cursor-pointer py-1 text-sm font-medium text-primary">
             Add a one-time amount
@@ -342,9 +357,11 @@ export function MoneyPlanCard({
   investments = [],
   links = [],
   autoOpen = false,
+  budgetMonthly = null,
   strategy,
   onStrategyChange,
 }: {
+  budgetMonthly?: number | null;
   plan: MoneyPlan | null;
   sipsNow: number;
   unassigned: number;
@@ -370,6 +387,7 @@ export function MoneyPlanCard({
       plan={plan}
       sipsNow={sipsNow}
       unassigned={unassigned}
+      budgetMonthly={budgetMonthly}
       onClose={close}
     />
   );

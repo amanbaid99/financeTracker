@@ -37,6 +37,7 @@ decisions are in [DECISIONS.md](DECISIONS.md).
 | `/login`, `/auth/callback`  | Sign in (invite list checked by a database trigger), privacy consent   |
 | `/consent`                  | Re-accept the privacy policy after `PRIVACY_VERSION` changes           |
 | `/goals`                    | Start page. Goal list, money plan; updates and imports via +            |
+| `/goals/budget` | Budget: take-home, monthly costs, EMIs and SIPs from the app, free to invest |
 | `/goals/new`, `/goals/[id]` | New goal; one goal with its plan, investments and suggestions          |
 | `/portfolio`                | Total value, allocation bar, holdings (tap to edit); updates and imports via + |
 | `/cards`                    | Credit: loans (next EMI, Mark paid, progress), then cards and the advisor     |
@@ -96,6 +97,9 @@ unit tests in `tests/unit/`.
 - **`planSteps`** (also in `lib/sip-plan.ts`) turns the plan into the "This month" checklist:
   one step per holding with its monthly raise and one-time amount. `applyPlanStep` and
   `undoPlanStep` in `lib/actions.ts` record a ticked step and put it back.
+- **`lib/budget.ts`**: free to invest = income − costs − EMIs − SIPs, and the savings rate.
+- **`lib/ask/amount.ts`**: finds "where should ₹X go?" questions, splits the amount with
+  `planMoney`/`planSteps` (codes only), and checks the reply's figures against the facts.
 - **`lib/goal-status.ts`**: presentation only. A goal's status label, its time group (next 2
   years, later, no fixed date), the line under its name, the hint on its card, and `gapOptions`
   (later date, smaller target, extra a month) for a goal the plan can't cover.

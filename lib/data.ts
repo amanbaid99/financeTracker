@@ -2,7 +2,8 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import type { Card, Period } from "@/lib/cards";
-import { loanInput, type Loan, type LoanType } from "@/lib/loans";
+import { budget, type Cost, type Income } from "@/lib/budget";
+import { loanInput, loanView, type Loan, type LoanType } from "@/lib/loans";
 import { pendingReleases, type Release } from "@/lib/guides";
 import { todayIST } from "@/lib/dates";
 import { PRIVACY_VERSION } from "@/lib/legal";
@@ -330,4 +331,52 @@ export const loadLoans = cache(async (): Promise<Loan[]> => {
       goal: g ? { id: g.id, name: g.name } : null,
     };
   });
+});
+
+/** Money in and money out for the budget, plus EMIs and SIPs from the app. */
+export const loadBudget = cache(async () => {
+  const { supabase } = await requireUser();
+  const [incomes, costs, loans, goals] = await Promise.all([
+    supabase
+      .from("income_streams")
+      .select("id, label, type, amount_monthly, active")
+      .order("created_at"),
+    supabase
+      .from("expenses")
+      .select("id, category, amount_monthly")
+      .order("amount_monthly", { ascending: false }),
+    loadLoans(),
+    loadGoals(),
+  ]);
+  const today = goals.today;
+  const loanEmis = loans
+    .map((l) => ({ name: l.name, view: loanView(l, today) }))
+    .filter((x) => !x.view.closed && x.view.state.emi > 0)
+    .map((x) => ({ name: x.name, emi: x.view.state.emi }));
+  const incomeRows: Income[] = check(incomes).map((i) => ({
+    id: i.id,
+    label: i.label,
+    type: i.type,
+    amount: i.amount_monthly,
+    active: i.active,
+  }));
+  const costRows: Cost[] = check(costs).map((c) => ({
+    id: c.id,
+    name: c.category,
+    amount: c.amount_monthly,
+  }));
+  const sips = goals.investments.reduce((s, i) => s + i.monthlySip, 0);
+  return {
+    incomes: incomeRows,
+    costs: costRows,
+    loanEmis,
+    sips,
+    plan: goals.plan,
+    budget: budget({
+      incomes: incomeRows,
+      costs: costRows,
+      emis: loanEmis.reduce((s, l) => s + l.emi, 0),
+      sips,
+    }),
+  };
 });

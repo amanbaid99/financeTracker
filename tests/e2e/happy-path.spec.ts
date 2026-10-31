@@ -975,6 +975,26 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await cardsGuide.getByRole("button", { name: "Got it" }).click();
   await closeGuides();
 
+  // Budget: take-home and costs give what's free, which can feed the plan.
+  await tab("Goals").click();
+  await page.getByRole("link", { name: /Set up your budget/ }).click();
+  await expect(page.getByRole("heading", { name: "Budget", exact: true })).toBeVisible();
+  await page.getByLabel("Salary a month").fill("200000");
+  await page.getByRole("button", { name: "Save Salary" }).click();
+  await expect(page.getByRole("button", { name: "Save Salary" })).toHaveCount(0);
+  await page.getByRole("button", { name: "+ Rent" }).click();
+  await page.getByLabel("Rent a month").fill("30000");
+  await page.getByRole("button", { name: "Save Rent" }).click();
+  await expect(page.getByRole("button", { name: "Save Rent" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "+ Rent" })).toHaveCount(0);
+  await expect(page.getByText(/free to invest a month/)).toBeVisible();
+  await expect(page.getByText(/^EMI · Car finance$/)).toBeVisible();
+  await page.screenshot({ path: "test-results/budget-375.png", fullPage: true });
+  await page.getByRole("button", { name: /a month for This month$/ }).click();
+  await expect(page.getByRole("button", { name: /a month for This month$/ })).toHaveCount(0);
+  await page.getByRole("link", { name: "Goals", exact: true }).first().click();
+  await expect(page.getByRole("heading", { name: "Your month" })).toBeVisible();
+
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();
   const savedBeige = page.waitForResponse((r) => r.request().method() === "POST");

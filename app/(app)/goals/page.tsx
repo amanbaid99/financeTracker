@@ -5,7 +5,8 @@ import Link from "next/link";
 import { GoalsOverview } from "@/components/goals-overview";
 import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
-import { loadGoals } from "@/lib/data";
+import { BudgetCard } from "@/components/budget-card";
+import { loadBudget, loadGoals } from "@/lib/data";
 import { formatINR, formatINRCompact } from "@/lib/format";
 import { planMoney } from "@/lib/allocate";
 import { sortGoals } from "@/lib/goal-summary";
@@ -27,13 +28,10 @@ export default async function GoalsPage({
   searchParams: Promise<{ open?: string; do?: string }>;
 }) {
   const { open, do: action } = await searchParams;
-  const {
-    goals,
-    investments,
-    links,
-    today,
-    plan: planInput,
-  } = await loadGoals();
+  const [
+    { goals, investments, links, today, plan: planInput },
+    { budget: monthBudget },
+  ] = await Promise.all([loadGoals(), loadBudget()]);
   const sipsNow = investments.reduce((s, i) => s + i.monthlySip, 0);
   const unassigned = Math.round(
     investments.reduce(
@@ -113,6 +111,8 @@ export default async function GoalsPage({
         </div>
       </div>
 
+      <BudgetCard b={monthBudget} planMonthly={planInput?.monthly ?? null} />
+
       {updatable.length > 0 && (
         <UpdateButton
           items={updatable}
@@ -154,6 +154,9 @@ export default async function GoalsPage({
             sipsNow={sipsNow}
             unassigned={unassigned}
             autoOpen={action === "plan"}
+            budgetMonthly={
+              monthBudget.income > 0 ? monthBudget.planMonthly : null
+            }
           />
         </>
       )}
