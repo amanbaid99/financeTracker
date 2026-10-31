@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox, Input, Select } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
+import { lastEmiOnOrBefore } from "@/lib/dates";
 import { monthYear } from "@/lib/goal-summary";
 import {
   LOAN_TYPES,
@@ -157,9 +158,15 @@ function LoanDetails({
         ) : null}
         <Row label="EMI" value={`${formatINR(s.emi)} at ${s.ratePct}%`} />
         <Row
-          label={card ? `On ${card.label}` : "EMI date"}
+          label={
+            card
+              ? `On ${card.label}`
+              : l.type === "card"
+                ? "Its own card"
+                : "EMI date"
+          }
           value={
-            card && l.billDay
+            l.type === "card" && l.billDay
               ? `Billed on the ${ordinal(l.billDay)}, due on the ${ordinal(s.emiDay)}`
               : `The ${ordinal(s.emiDay)} of each month`
           }
@@ -266,7 +273,10 @@ function LoanSheet({
   const { pending, run, error } = useRun(onClose);
   const [name, setName] = useState(loan?.name ?? "");
   const [type, setType] = useState<LoanType>(loan?.type ?? "personal");
-  const [cardId, setCardId] = useState(loan?.cardId ?? cards[0]?.id ?? "");
+  // "" is a separate card the lender gave you, not one of your credit cards.
+  const [cardId, setCardId] = useState(
+    loan ? (loan.cardId ?? "") : (cards[0]?.id ?? ""),
+  );
   const [principal, setPrincipal] = useState<number | null>(
     loan?.principal ?? null,
   );
@@ -281,6 +291,10 @@ function LoanSheet({
   // Editing: start from what's owed today, not the last saved figure.
   const owedToday = loan ? loanView(loan, today).state.balance : null;
   const [owed, setOwed] = useState<number | null>(owedToday);
+  // The date that figure is from: by default the latest EMI date, so a
+  // figure from your statement isn't treated as today's.
+  const [asOfPicked, setAsOf] = useState<string | null>(null);
+  const asOf = asOfPicked ?? lastEmiOnOrBefore(today, Number(emiDay));
   const [fee, setFee] = useState(
     loan?.foreclosurePct != null ? String(loan.foreclosurePct) : "",
   );
@@ -307,7 +321,7 @@ function LoanSheet({
               emiDay: Number(emiDay),
               billDay: isCard ? Number(billDay) : null,
               outstanding: owed ?? 0,
-              asOf: today,
+              asOf: asOf && asOf <= today ? asOf : today,
               foreclosurePct: fee === "" ? null : Number(fee),
               foreclosureGst: gst,
             }),
@@ -342,25 +356,28 @@ function LoanSheet({
         </Field>
         {isCard && (
           <>
-            {cards.length ? (
-              <Field label="Card" htmlFor="ln-card">
-                <Select
-                  id="ln-card"
-                  value={cardId}
-                  onChange={(e) => setCardId(e.target.value)}
-                >
-                  {cards.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.label}
-                    </option>
-                  ))}
-                </Select>
-              </Field>
-            ) : (
-              <p className="rounded-lg bg-muted p-2.5 text-sm">
-                Add the card first, under Cards below.
-              </p>
-            )}
+            <Field
+              label="Which card"
+              htmlFor="ln-card"
+              hint={
+                cardId
+                  ? "EMIs are part of this card's bill and don't count toward its milestones."
+                  : "For a card the lender gave you just for this loan, with its own bill and due dates."
+              }
+            >
+              <Select
+                id="ln-card"
+                value={cardId}
+                onChange={(e) => setCardId(e.target.value)}
+              >
+                {cards.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.label}
+                  </option>
+                ))}
+                <option value="">A separate card, not one of these</option>
+              </Select>
+            </Field>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Bill generated on" htmlFor="ln-bill">
                 <Select
@@ -447,13 +464,24 @@ function LoanSheet({
             </Field>
           )}
         </div>
-        <Field
-          label="Owed now"
-          htmlFor="ln-owed"
-          hint="From your latest statement or the lender's app. It goes down as you mark EMIs paid."
-        >
-          <MoneyInput id="ln-owed" value={owed} onChange={setOwed} required />
-        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Amount owed" htmlFor="ln-owed">
+            <MoneyInput id="ln-owed" value={owed} onChange={setOwed} required />
+          </Field>
+          <Field label="After the EMI on" htmlFor="ln-asof">
+            <Input
+              id="ln-asof"
+              type="date"
+              max={today}
+              value={asOf}
+              onChange={(e) => setAsOf(e.target.value || null)}
+            />
+          </Field>
+        </div>
+        <p className="-mt-2 text-xs text-muted-foreground">
+          From your statement or the lender&apos;s app, with the date it&apos;s
+          from. Later EMIs come off as you mark them paid.
+        </p>
         <div className="grid grid-cols-2 items-end gap-3">
           <Field label="Foreclosure charge, %" htmlFor="ln-fee" hint="Optional">
             <Input
@@ -526,8 +554,8 @@ export function LoanList({
       </div>
       {views.length === 0 ? (
         <p className="rounded-2xl border bg-card p-4 text-sm text-muted-foreground">
-          Track a home, personal, car or credit card loan: what&apos;s left, the
-          next EMI, and when you&apos;ll be done.
+          Track a home, personal, car or card loan: what&apos;s left, the next
+          EMI, and when you&apos;ll be done.
         </p>
       ) : (
         <>
@@ -573,7 +601,11 @@ export function LoanList({
                         </span>
                         <span className="block text-xs text-muted-foreground">
                           {loanTypeLabel(v.loan.type)}
-                          {card ? ` · ${card.label}` : ""}
+                          {card
+                            ? ` · ${card.label}`
+                            : v.loan.type === "card"
+                              ? " · its own card"
+                              : ""}
                         </span>
                       </button>
                       {v.closed ? (

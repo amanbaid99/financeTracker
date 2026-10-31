@@ -797,7 +797,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("EMI", { exact: true }).fill("12000");
   await page.getByLabel("Interest, % a year").fill("9");
   await page.getByLabel("Total EMIs").fill("48");
-  await page.getByLabel("Owed now").fill("400000");
+  await page.getByLabel("Amount owed").fill("400000");
   await page.getByRole("button", { name: "Add loan" }).click();
   await expect(loansList).toContainText("Car finance");
   await expect(loansList).toContainText("₹1L of ₹5L repaid");
@@ -808,6 +808,19 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Mark Car finance EMI paid" })).toBeVisible();
   await expect(loansList).toContainText("₹1L of ₹5L repaid");
   await page.screenshot({ path: "test-results/loans-375.png", fullPage: true });
+  // A loan on a separate card the lender gave you, not one of your credit cards.
+  await page.getByRole("button", { name: "Add a loan" }).click();
+  await page.getByLabel("Name").fill("Store card EMI");
+  await page.getByLabel("Type").selectOption("card");
+  await page.getByLabel("Which card").selectOption({ label: "A separate card, not one of these" });
+  await page.getByLabel("Bill generated on").selectOption("12");
+  await page.getByLabel("Payment due on").selectOption("2");
+  await page.getByLabel("EMI", { exact: true }).fill("3000");
+  await page.getByLabel("Interest, % a year").fill("14");
+  await page.getByLabel("Amount owed").fill("24000");
+  await page.getByRole("button", { name: "Add loan" }).click();
+  await expect(loansList).toContainText("Store card EMI");
+  await expect(loansList).toContainText("Loan on a card · its own card");
   await expect(
     page.getByText("Track your cards' benefits and milestones"),
   ).toBeVisible();

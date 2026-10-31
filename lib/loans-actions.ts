@@ -64,12 +64,6 @@ const loanSchema = z
     foreclosureGst: z.boolean(),
   })
   .superRefine((v, ctx) => {
-    if (v.type === "card" && !v.cardId)
-      ctx.addIssue({
-        code: "custom",
-        path: ["card"],
-        message: "pick the card",
-      });
     if (!v.emi)
       ctx.addIssue({ code: "custom", path: ["EMI"], message: "add the EMI" });
   });

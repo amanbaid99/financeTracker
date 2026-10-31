@@ -21,7 +21,7 @@ export const LOAN_TYPES = [
   { value: "car", label: "Car or bike loan" },
   { value: "education", label: "Education loan" },
   { value: "gold", label: "Gold loan" },
-  { value: "card", label: "Loan on a credit card" },
+  { value: "card", label: "Loan on a card" },
   { value: "other", label: "Other loan" },
 ] as const;
 export type LoanType = (typeof LOAN_TYPES)[number]["value"];
