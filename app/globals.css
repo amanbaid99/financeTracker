@@ -299,7 +299,10 @@
   animation: expand-in 200ms ease-out;
 }
 .press {
-  transition: transform 120ms ease-out, background-color 150ms, border-color 150ms;
+  transition:
+    transform 120ms ease-out,
+    background-color 150ms,
+    border-color 150ms;
 }
 .press:active {
   transform: scale(0.98);
@@ -343,4 +346,10 @@
   ::view-transition-new(*) {
     animation: none !important;
   }
+}
+
+/* A consistent, quiet surface for summary and goal cards in every theme. */
+.surface-card {
+  box-shadow: 0 2px 8px -4px
+    color-mix(in srgb, var(--foreground) 12%, transparent);
 }

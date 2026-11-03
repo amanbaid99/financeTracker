@@ -10,17 +10,9 @@ import { loadBudget, loadGoals } from "@/lib/data";
 import { formatINR, formatINRCompact } from "@/lib/format";
 import { planMoney } from "@/lib/allocate";
 import { sortGoals } from "@/lib/goal-summary";
-import { goalStatus } from "@/lib/goal-status";
 import { freePercent } from "@/lib/tracker";
 
 export const metadata: Metadata = { title: "Goals" };
-
-const PILL = {
-  danger: "bg-danger-soft text-danger",
-  warning: "bg-warning-soft text-warning",
-  success: "bg-success-soft text-success",
-  muted: "bg-muted text-muted-foreground",
-} as const;
 
 export default async function GoalsPage({
   searchParams,
@@ -50,26 +42,6 @@ export default async function GoalsPage({
       })
     : null;
   const saved = goals.reduce((s, g) => s + g.current, 0);
-  // How many goals need action, are behind, or are fine.
-  const tones = goals.map((g) => goalStatus(g, today).tone);
-  const count = (t: string) => tones.filter((x) => x === t).length;
-  const counts = (
-    [
-      ["danger", count("danger"), "need action"],
-      ["warning", count("warning"), "behind"],
-      ["success", count("success"), "on track"],
-      ["muted", count("muted"), "not started"],
-    ] as const
-  )
-    .filter(([, n]) => n > 0)
-    .map(
-      ([tone, n, label]) =>
-        [
-          tone,
-          n,
-          n === 1 && label === "need action" ? "needs action" : label,
-        ] as const,
-    );
   const sips = goals.reduce((s, g) => s + g.monthlySip, 0);
   // Every investment remains updatable from the + menu.
   const goalNames = new Map(goals.map((g) => [g.id, g.name]));
@@ -93,25 +65,12 @@ export default async function GoalsPage({
               ? `${formatINRCompact(saved)} saved · ${formatINR(sips)} a month going in`
               : "Make room for what matters to you."}
           </p>
-          {counts.length > 0 && (
-            <ul
-              className="mt-3 flex flex-wrap gap-1.5"
-              aria-label="Goals by status"
-            >
-              {counts.map(([tone, n, label]) => (
-                <li
-                  key={tone}
-                  className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${PILL[tone]}`}
-                >
-                  {n} {label}
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
       </div>
 
-      <BudgetCard b={monthBudget} planMonthly={planInput?.monthly ?? null} />
+      {goals.length === 0 && (
+        <BudgetCard b={monthBudget} planMonthly={planInput?.monthly ?? null} />
+      )}
 
       {updatable.length > 0 && (
         <UpdateButton
@@ -144,6 +103,7 @@ export default async function GoalsPage({
       ) : (
         <>
           <GoalsOverview
+            budget={monthBudget}
             suggestions={plan?.suggestions ?? []}
             goals={sortGoals(goals)}
             investments={investments}

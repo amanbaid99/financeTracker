@@ -84,14 +84,19 @@ export function goalHint(
   const bf = g.billsFund;
   if (bf) {
     const miss = bf.upcoming.find((e) => !e.covered);
-    if (suggestion) return "plan covers it";
+    if (suggestion)
+      return goalStatus(suggestion.after, today).tone === "success"
+        ? "Covered by your plan"
+        : "Plan still leaves a gap";
     return miss ? `${miss.name} not covered` : "";
   }
   if (st.label === "Not started") return g.lines.length ? "" : "link savings";
   if (st.tone === "warning" || st.tone === "danger") {
     if (suggestion) {
       const after = goalStatus(suggestion.after, today);
-      return after.tone === "success" ? "plan covers it" : "needs a decision";
+      return after.tone === "success"
+        ? "Covered by your plan"
+        : "Needs a decision";
     }
     return g.extraSipNeeded > 0 ? `+${formatINR(g.extraSipNeeded)}/mo` : "";
   }

@@ -19,7 +19,8 @@ export interface Guide {
 export const GUIDES: Record<GuideId, Guide> = {
   "quick-add": {
     title: "Using the plus button",
-    intro: "Tap + near the bottom of the screen for your everyday actions.",
+    intro:
+      "Tap + in the middle of the bottom navigation for your everyday actions.",
     steps: [
       "New goal adds something you want to save for.",
       "Update values lets you enter the latest amounts for your investments.",
@@ -37,13 +38,13 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap Add a goal and pick a type: a purchase, a trip, an emergency fund, a bills fund or paying off a loan.",
       "Link the mutual funds, savings or deposits that pay for it. One investment can be split across goals.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
-      "Goals are grouped by when they're due: the next 2 years, later, and no fixed date. A label on each says On track, Behind or what needs action. Covered bills funds, loans covered by EMIs and reached goals are folded away. If a bills fund develops a shortfall, it returns to the active list.",
+      "Tap a status filter to narrow your goals. Goals are grouped by when they're due: the next 2 years, later, and no fixed date. A label on each says On track, Behind or what needs action. Covered bills funds, loans covered by EMIs and reached goals are folded away. If a bills fund develops a shortfall, it returns to the active list.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
-      "This month, above your goals, lists what to invest and where. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for a few seconds.",
+      "This month, above your goals, lists what to invest and where. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
       "Open a goal for its What to do box. If your plan can't cover it, pick a later date, a smaller target or a bigger budget. The goal's form opens filled in for you to check and save.",
-      "Your month shows take-home, costs, EMIs and SIPs, and what's free to invest. Edit budget to change them; one tap uses the free amount for This month.",
+      "This month shows what your budget allows and what your plan uses. Open Budget and plan details for income, costs, EMIs and SIPs, or to edit your budget.",
       "Edit plan sets one monthly investment budget, including what you already invest. One-time savings are optional.",
-      "Plan details and options shows the goal breakdown and lets you compare one holding per goal with a spread across holdings. Nothing is saved until you confirm.",
+      "Budget and plan details shows the goal breakdown and lets you compare one holding per goal with a spread across holdings. Nothing is saved until you confirm.",
     ],
   },
   portfolio: {
@@ -108,13 +109,31 @@ export interface Release {
 export const RELEASES: Release[] = [
   {
     date: "2026-11-03",
-    title: "Covered goals, out of the way",
-    items: [{ title: "Focus on what still needs funding", text: "Covered bills funds sit in a folded group above reached goals. They move back into the active list if a shortfall appears." }],
+    title: "A calmer home for your money",
+    items: [
+      {
+        title: "One monthly overview",
+        text: "Budget and plan now share one compact card. See two investment steps first, and expand for the rest.",
+      },
+      {
+        title: "Find the goals you need",
+        text: "Tap a status to filter your goals. Covered bills funds and reached goals stay folded below the active list.",
+      },
+      {
+        title: "Shortcuts that stay in reach",
+        text: "The + button now sits in the bottom navigation. Forms keep keyboard focus inside, and investment steps offer Undo for 10 seconds.",
+      },
+    ],
   },
   {
     date: "2026-10-31",
     title: "One less thing to enter",
-    items: [{ title: "Card progress from statements", text: "The spent-since-last-bill field is gone. Milestones use logged bills only, excluding card-loan EMIs. Older manual unbilled amounts no longer affect progress." }],
+    items: [
+      {
+        title: "Card progress from statements",
+        text: "The spent-since-last-bill field is gone. Milestones use logged bills only, excluding card-loan EMIs. Older manual unbilled amounts no longer affect progress.",
+      },
+    ],
   },
   {
     date: "2026-10-31",

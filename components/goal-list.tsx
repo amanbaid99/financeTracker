@@ -67,7 +67,9 @@ export function GoalList({
   initialOpen,
   suggestions = [],
   strategy = "diversified",
+  filter = null,
 }: {
+  filter?: GoalStatus["tone"] | null;
   suggestions?: Suggestion[];
   strategy?: SipStrategy;
   goals: TrackedGoal[];
@@ -79,7 +81,10 @@ export function GoalList({
   const [open, setOpen] = useState<string | null>(initialOpen);
   const [details, setDetails] = useState(false);
 
-  const groups = groupGoals(goals);
+  const filtered = filter
+    ? goals.filter((g) => goalStatus(g, today).tone === filter)
+    : goals;
+  const groups = groupGoals(filtered);
   // Active goals by when they're due. Covered bills funds, reached goals
   // and loans the EMIs already cover stay folded away below.
   const byTime = { soon: [], later: [], ongoing: [] } as Record<
@@ -105,7 +110,7 @@ export function GoalList({
           <li
             key={g.id}
             className={cn(
-              "rounded-2xl border border-border/70 bg-card transition-colors hover:border-primary/40",
+              "surface-card overflow-hidden rounded-2xl border border-border/70 bg-card transition-colors hover:border-primary/40",
               isOpen && "border-primary",
             )}
           >
@@ -125,7 +130,13 @@ export function GoalList({
                   <span className="min-w-0 break-words text-base font-semibold leading-snug">
                     {g.name}
                   </span>
-                  <StatusPill status={st} />
+                  <StatusPill
+                    status={
+                      st.label === "Behind"
+                        ? { ...st, label: "Behind today" }
+                        : st
+                    }
+                  />
                 </div>
                 {sub && (
                   <span className="block text-xs text-muted-foreground">
@@ -140,7 +151,7 @@ export function GoalList({
                       tone="neutral"
                       label={`${g.name} progress`}
                     />
-                    <p className="tabular flex items-baseline justify-between gap-3 text-sm">
+                    <p className="tabular flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm">
                       <span>
                         {formatINRCompact(g.current)}
                         <span className="text-muted-foreground">
@@ -151,7 +162,7 @@ export function GoalList({
                         </span>
                       </span>
                       {hint && (
-                        <span className="shrink-0 text-xs text-muted-foreground">
+                        <span className="text-xs text-muted-foreground">
                           {hint}
                         </span>
                       )}
@@ -241,7 +252,7 @@ export function GoalList({
                   type="button"
                   aria-expanded={details}
                   onClick={() => setDetails(!details)}
-                  className="flex w-full items-center justify-center gap-1 text-sm font-medium text-primary"
+                  className="flex min-h-11 w-full items-center justify-center gap-1 text-sm font-medium text-primary"
                 >
                   {details ? "Hide details" : "Show details"}
                   <ChevronDown
@@ -312,7 +323,9 @@ export function GoalList({
           groups[key].length > 0 && (
             <details
               key={key}
-              open={groups[key].some((g) => g.id === open) || undefined}
+              open={
+                !!filter || groups[key].some((g) => g.id === open) || undefined
+              }
               className="group rounded-2xl border border-border/70 bg-muted/30 p-4"
             >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium [&::-webkit-details-marker]:hidden">

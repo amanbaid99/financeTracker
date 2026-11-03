@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Wallet } from "lucide-react";
+import { ArrowUpRight, ChevronDown, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -109,6 +109,7 @@ export function UseForPlan({
       <Button
         type="button"
         size="sm"
+        className="min-h-11 whitespace-normal text-left"
         disabled={pending}
         onClick={() =>
           start(async () => {
@@ -172,5 +173,52 @@ export function BudgetCard({
       <BudgetSummary b={b} />
       <UseForPlan b={b} planMonthly={planMonthly} />
     </section>
+  );
+}
+
+/** The full budget stays one tap away inside the monthly plan. */
+export function BudgetDetails({
+  b,
+  planMonthly,
+  expanded = false,
+}: {
+  b: Budget;
+  planMonthly: number | null;
+  expanded?: boolean;
+}) {
+  if (b.income <= 0)
+    return (
+      <Link
+        href="/goals/budget"
+        className="flex min-h-11 items-center gap-2 text-sm text-primary"
+      >
+        <Wallet className="size-4" aria-hidden /> Set up your budget{" "}
+        <ArrowUpRight className="size-4" aria-hidden />
+      </Link>
+    );
+  const content = (
+    <div className="space-y-3 pb-3">
+      <Link
+        href="/goals/budget"
+        className="inline-flex min-h-11 items-center text-sm text-primary"
+      >
+        Edit budget
+      </Link>
+      <BudgetSummary b={b} />
+      <UseForPlan b={b} planMonthly={planMonthly} />
+    </div>
+  );
+  if (expanded) return content;
+  return (
+    <details className="group/budget border-t">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 text-sm font-medium [&::-webkit-details-marker]:hidden">
+        Budget details{" "}
+        <ChevronDown
+          className="size-4 transition-transform group-open/budget:rotate-180"
+          aria-hidden
+        />
+      </summary>
+      {content}
+    </details>
   );
 }

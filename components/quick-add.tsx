@@ -61,28 +61,6 @@ const ACTIONS = [
   },
 ];
 
-/**
- * True while scrolling down the page, so the + button gets out of the way of
- * what you're reading. Scrolling up, or reaching the end, brings it back.
- */
-function useHiddenOnScroll(): boolean {
-  const [hidden, setHidden] = useState(false);
-  useEffect(() => {
-    let last = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      const atEnd =
-        y + window.innerHeight >= document.documentElement.scrollHeight - 40;
-      if (atEnd || y < 80 || y < last - 8) setHidden(false);
-      else if (y > last + 8) setHidden(true);
-      if (Math.abs(y - last) > 8) last = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-  return hidden;
-}
-
 /** Where an action goes from this page: updates stay on Portfolio, and Import comes back to it. */
 function hrefFor(href: string, path: string): string {
   if (path !== "/portfolio") return href;
@@ -91,7 +69,13 @@ function hrefFor(href: string, path: string): string {
   return href;
 }
 
-/** One button for every "add" or "update" in the app. Hidden where it'd get in the way. */
+export function hasQuickActions(path: string): boolean {
+  return !["/ask", "/settings", "/goals/new", "/import"].some((prefix) =>
+    path.startsWith(prefix),
+  );
+}
+
+/** One docked action for adding and updating, without covering page content. */
 export function QuickAdd() {
   const path = usePathname();
   const { seen, markSeen } = useGuides();
@@ -99,14 +83,7 @@ export function QuickAdd() {
   const close = useCallback(() => setOpen(false), []);
   // Each tab's first-visit guide already points to the + button, so there's
   // no separate hint bubble.
-  const hidden = useHiddenOnScroll();
-  if (
-    path.startsWith("/ask") ||
-    path.startsWith("/settings") ||
-    path.startsWith("/goals/new") ||
-    path.startsWith("/import")
-  )
-    return null;
+  if (!hasQuickActions(path)) return null;
 
   return (
     <>
@@ -117,7 +94,7 @@ export function QuickAdd() {
           setOpen(true);
         }}
         aria-label="Add or update"
-        className={`press fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-30 inline-flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg shadow-black/20 motion-safe:transition-[translate,opacity] motion-safe:duration-200 sm:right-[max(1rem,calc(50%-24rem+1rem))] ${hidden ? "pointer-events-none translate-y-24 opacity-0" : ""}`}
+        className="press inline-flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm hover:brightness-110"
       >
         <Plus className="size-6" aria-hidden />
       </button>

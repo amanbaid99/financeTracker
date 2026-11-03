@@ -6,7 +6,6 @@ import { DisclaimerFooter } from "@/components/disclaimer";
 import { GuidesProvider } from "@/components/guides";
 import { Logo } from "@/components/logo";
 import { SettingsLink } from "@/components/nav-pending";
-import { QuickAdd } from "@/components/quick-add";
 import { loadOnboarding, needsPrivacyConsent } from "@/lib/data";
 
 export default async function AppLayout({
@@ -40,7 +39,6 @@ export default async function AppLayout({
         </ViewTransition>
         <DisclaimerFooter />
       </div>
-      <QuickAdd />
       <AppTabs />
     </GuidesProvider>
   );

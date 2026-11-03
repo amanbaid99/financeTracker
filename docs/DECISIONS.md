@@ -146,3 +146,5 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 - **Card statement analysis** (owner's idea, Oct 31): upload a card statement, get a breakdown, and
   for spends the app can't place (often UPI) ask the owner what they were, including "a friend
   will pay me back", which shouldn't count as spending. Not started.
+
+- **Nov 3: compact home and consistent surfaces** (owner approved). Budget and plan share This month, with available and planned monthly totals labelled separately. Budget details are folded, and only two investment steps show initially. Status counts are filters, including covered and reached goals; filtering opens matching folded groups. Behind today describes the current position, while Covered by your plan describes the proposed change. The + action is docked in the centre of the bottom navigation. Native modal sheets contain keyboard focus and return it on closing. Checklist Undo lasts 10 seconds. Finance calculations and explicit save actions stay the same.

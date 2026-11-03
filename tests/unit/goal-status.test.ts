@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { gapOptions, goalStatus, timeGroup } from "@/lib/goal-status";
+import { gapOptions, goalHint, goalStatus, timeGroup } from "@/lib/goal-status";
+import type { Suggestion } from "@/lib/allocate";
 import { trackGoal, type GoalInput } from "@/lib/tracker";
 
 const TODAY = "2026-10-31";
@@ -50,7 +51,12 @@ describe("goal status", () => {
 
 describe("ways to close a gap", () => {
   it("offers a later date, a smaller target and the extra a month", () => {
-    const g = trackGoal(goal({ target: 300000 }), [inv(77000, 3000)], link, TODAY);
+    const g = trackGoal(
+      goal({ target: 300000 }),
+      [inv(77000, 3000)],
+      link,
+      TODAY,
+    );
     const o = gapOptions(g, TODAY, 500)!;
     expect(o.moreMonthly).toBe(g.extraSipNeeded - 500);
     expect(o.lowerTarget).toBeGreaterThan(77000);
@@ -67,5 +73,54 @@ describe("ways to close a gap", () => {
   it("offers nothing when the plan covers the goal", () => {
     const g = trackGoal(goal({}), [inv(77000, 3000)], link, TODAY);
     expect(gapOptions(g, TODAY, g.extraSipNeeded)).toBeNull();
+  });
+});
+
+describe("current position and proposed plan", () => {
+  it("does not call a bills fund covered when its proposed plan still has a shortfall", () => {
+    const g = trackGoal(
+      {
+        id: "g",
+        name: "Annual costs",
+        type: "bills_fund",
+        target: 0,
+        targetDate: null,
+        inflationPct: 0,
+        bills: [
+          {
+            name: "Annual payment",
+            amount: 120000,
+            everyMonths: 12,
+            nextDue: "2027-01-01",
+          },
+        ],
+      },
+      [inv(0, 100)],
+      link,
+      TODAY,
+    );
+    expect(g.billsFund?.short).not.toBeNull();
+    expect(goalHint(g, TODAY, { after: g } as Suggestion)).toBe(
+      "Plan still leaves a gap",
+    );
+    const covered = trackGoal(
+      {
+        ...g,
+        bills: [
+          {
+            name: "Annual payment",
+            amount: 120000,
+            everyMonths: 12,
+            nextDue: "2027-01-01",
+          },
+        ],
+      },
+      [inv(150000, 100)],
+      link,
+      TODAY,
+    );
+    expect(goalHint(g, TODAY, { after: covered } as Suggestion)).toBe(
+      "Covered by your plan",
+    );
   });
 });

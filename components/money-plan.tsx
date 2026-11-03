@@ -1,8 +1,11 @@
 "use client";
 
 import { ArrowUpRight, Check, ChevronDown, Plus, Sparkles } from "lucide-react";
+import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import { BudgetDetails } from "@/components/budget-card";
+import type { Budget } from "@/lib/budget";
 import { InvestmentSheet } from "@/components/investment-sheet";
 import { Field } from "@/components/forms/field";
 import { MoneyInput } from "@/components/money-input";
@@ -152,7 +155,7 @@ function PlanForm({
 }
 
 /** How long a ticked step stays on screen, with Undo, before it goes. */
-const UNDO_MS = 4000;
+const UNDO_MS = 10000;
 
 const amountsOf = (st: PlanStep) =>
   [
@@ -198,7 +201,7 @@ function Checklist({
   for (const [id, t] of Object.entries(ticked))
     if (!gone.has(id) && !visible.some((st) => idOf(st) === id))
       visible.splice(Math.min(t.at, visible.length), 0, t.step);
-  const shown = showAll ? visible : visible.slice(0, 4);
+  const shown = showAll ? visible : visible.slice(0, 2);
 
   const tick = async (st: PlanStep) => {
     if (!st.investment) return;
@@ -242,16 +245,13 @@ function Checklist({
 
   return (
     <div className="space-y-2">
-      <ul
-        className="divide-y divide-primary-foreground/15 rounded-xl bg-primary-foreground/10"
-        aria-label="This month's steps"
-      >
+      <ul className="divide-y divide-border/60" aria-label="This month's steps">
         {shown.map((st) => {
           const id = idOf(st);
           const done = !!ticked[id];
           const goals = st.goals.map((g) => g.name).join(", ");
           return (
-            <li key={id} className="flex items-start gap-3 px-3 py-2.5 text-sm">
+            <li key={id} className="flex items-start gap-2 py-2 text-sm">
               {st.investment ? (
                 <button
                   type="button"
@@ -260,11 +260,15 @@ function Checklist({
                   aria-label={`Done: ${amountsOf(st)} into ${st.label}`}
                   disabled={busy === id || done}
                   onClick={() => tick(st)}
-                  className={`mt-0.5 inline-flex size-5 shrink-0 items-center justify-center rounded-md border-2 border-primary-foreground/80 ${done ? "bg-primary-foreground text-primary" : ""} ${busy === id ? "animate-pulse" : ""}`}
+                  className={`inline-flex size-11 shrink-0 items-center justify-center rounded-xl text-primary hover:bg-primary-soft ${busy === id ? "animate-pulse" : ""}`}
                 >
-                  {done && (
-                    <Check className="size-3.5" strokeWidth={3} aria-hidden />
-                  )}
+                  <span
+                    className={`inline-flex size-5 items-center justify-center rounded-md border-2 border-primary/60 ${done ? "bg-primary text-primary-foreground" : ""}`}
+                  >
+                    {done && (
+                      <Check className="size-3.5" strokeWidth={3} aria-hidden />
+                    )}
+                  </span>
                 </button>
               ) : (
                 <Plus
@@ -272,7 +276,9 @@ function Checklist({
                   aria-hidden
                 />
               )}
-              <span className={`min-w-0 flex-1 ${done ? "opacity-70" : ""}`}>
+              <span
+                className={`min-w-0 flex-1 py-1 ${done ? "opacity-70" : ""}`}
+              >
                 <span
                   className={`block break-words ${done ? "line-through" : ""}`}
                 >
@@ -280,7 +286,7 @@ function Checklist({
                   <b>{st.label}</b>
                 </span>
                 <span className="block text-xs opacity-80">
-                  {done ? "Added to your SIPs" : goals}
+                  {done ? "Recorded. Undo is available for 10 seconds." : goals}
                   {!done && st.note ? ` · ${st.note}` : ""}
                 </span>
               </span>
@@ -289,7 +295,7 @@ function Checklist({
                   type="button"
                   onClick={() => undo(st)}
                   disabled={busy === id}
-                  className="shrink-0 text-xs font-semibold underline underline-offset-2"
+                  className="min-h-11 shrink-0 px-2 text-xs font-semibold text-primary underline underline-offset-2"
                 >
                   Undo
                 </button>
@@ -298,7 +304,7 @@ function Checklist({
                   <button
                     type="button"
                     onClick={() => setAdding(st)}
-                    className="shrink-0 rounded-lg bg-primary-foreground px-2.5 py-1 text-xs font-semibold text-primary"
+                    className="min-h-11 shrink-0 rounded-lg bg-primary-soft px-2.5 text-xs font-semibold text-primary"
                   >
                     Add it
                   </button>
@@ -308,10 +314,10 @@ function Checklist({
           );
         })}
       </ul>
-      {visible.length > 4 && (
+      {visible.length > 2 && (
         <button
           type="button"
-          className="min-h-9 w-full text-sm font-medium"
+          className="min-h-11 w-full rounded-xl bg-muted/60 text-sm font-medium text-primary hover:bg-muted"
           aria-expanded={showAll}
           onClick={() => setShowAll(!showAll)}
         >
@@ -323,9 +329,8 @@ function Checklist({
           {error}
         </p>
       )}
-      <p className="text-xs opacity-80">
-        Tick a step once you&apos;ve set it up with your provider. Nothing is
-        invested for you.
+      <p className="text-xs text-muted-foreground">
+        Tick to record what you set up with your provider. No money is moved.
       </p>
       {adding && (
         <InvestmentSheet
@@ -354,6 +359,7 @@ export function MoneyPlanCard({
   plan,
   sipsNow,
   unassigned,
+  budget,
   investments = [],
   links = [],
   autoOpen = false,
@@ -361,6 +367,7 @@ export function MoneyPlanCard({
   strategy,
   onStrategyChange,
 }: {
+  budget: Budget;
   budgetMonthly?: number | null;
   plan: MoneyPlan | null;
   sipsNow: number;
@@ -395,7 +402,7 @@ export function MoneyPlanCard({
   if (!plan)
     return (
       <section
-        className="rounded-2xl border bg-card"
+        className="surface-card rounded-2xl border bg-card p-4"
         aria-label="Plan your money"
       >
         <button
@@ -413,6 +420,7 @@ export function MoneyPlanCard({
           </span>
           <ArrowUpRight className="size-4 shrink-0 text-primary" aria-hidden />
         </button>
+        <BudgetDetails b={budget} planMonthly={null} />
         {form}
       </section>
     );
@@ -442,62 +450,80 @@ export function MoneyPlanCard({
 
   return (
     <section
-      className="space-y-3 rounded-2xl bg-primary p-4 text-primary-foreground"
+      className="surface-card space-y-3 rounded-2xl border border-primary/15 bg-card p-4 text-card-foreground"
       aria-labelledby="plan-h"
     >
       <div className="flex items-start justify-between gap-2">
         <h2 id="plan-h" className="flex items-center gap-1.5 font-semibold">
-          <Sparkles className="size-4" aria-hidden /> This month
+          <Sparkles className="size-4 text-primary" aria-hidden /> This month
         </h2>
         <button
           type="button"
           aria-label="Edit money plan"
           onClick={() => setOpen(true)}
-          className="-mr-1 rounded-lg px-2 py-1 text-sm opacity-90 hover:bg-primary-foreground/10"
+          className="-mr-1 -mt-2 min-h-11 rounded-lg px-2 text-sm text-primary hover:bg-primary-soft"
         >
           Edit plan
         </button>
       </div>
+      <div className="grid grid-cols-2 gap-3 rounded-xl bg-muted/50 p-3">
+        <div>
+          <p className="text-xs text-muted-foreground">Available / month</p>
+          <p className="tabular mt-1 text-xl font-semibold tracking-tight">
+            {budget.income > 0 ? (
+              formatINR(budget.planMonthly)
+            ) : (
+              <NextLink
+                href="/goals/budget"
+                className="inline-flex min-h-11 items-center text-base text-primary"
+              >
+                Set budget
+              </NextLink>
+            )}
+          </p>
+        </div>
+        <div className="border-l pl-3">
+          <p className="text-xs text-muted-foreground">Planned / month</p>
+          <p className="tabular mt-1 text-xl font-semibold tracking-tight">
+            {formatINR(plan.monthlyTotal)}
+          </p>
+        </div>
+      </div>
+      {lumpTotal > 0 && (
+        <p className="text-xs text-muted-foreground">
+          plus {formatINR(lumpTotal)} once
+        </p>
+      )}
+      {budget.income > 0 && plan.monthlyTotal > budget.planMonthly && (
+        <p role="status" className="text-xs text-warning">
+          Your plan is {formatINR(plan.monthlyTotal - budget.planMonthly)} above
+          your monthly budget. Review it before investing.
+        </p>
+      )}
       {steps.length > 0 ? (
-        <>
-          <div>
-            <p className="tabular text-2xl font-semibold tracking-tight">
-              {extraMonthly > 0
-                ? `${formatINR(extraMonthly)} a month`
-                : `${formatINR(lumpTotal)} once`}
-            </p>
-            <p className="text-sm opacity-85">
-              {[
-                extraMonthly > 0 && lumpTotal > 0
-                  ? `plus ${formatINR(lumpTotal)} once`
-                  : "",
-                plan.sipsNow > 0
-                  ? `on top of the ${formatINR(plan.sipsNow)} already going in`
-                  : "",
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
-          </div>
-          <Checklist steps={steps} investments={investments} links={links} />
-        </>
+        <Checklist steps={steps} investments={investments} links={links} />
       ) : (
-        <p className="text-sm opacity-90">
+        <p className="text-sm text-muted-foreground">
           {plan.lump || plan.monthlyFree
             ? "You're all set. Your goals don't need anything extra right now."
             : "Add savings or a monthly amount to get suggestions."}
         </p>
       )}
-      {suggestions.length > 0 && (
-        <details className="group/plan rounded-xl bg-card text-card-foreground">
-          <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
-            Plan details and options
+      {(suggestions.length > 0 || budget.income > 0) && (
+        <details className="group/plan border-t text-card-foreground">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
+            Budget and plan details
             <ChevronDown
               className="size-4 shrink-0 transition-transform group-open/plan:rotate-180"
               aria-hidden
             />
           </summary>
           <div className="space-y-3 px-3 pb-3">
+            <BudgetDetails
+              b={budget}
+              planMonthly={plan.monthlyTotal}
+              expanded
+            />
             <p className={`text-sm ${footer.tone}`}>{footer.text}</p>
             <p className="text-xs text-muted-foreground">
               Budget: {formatINR(plan.monthlyTotal)}/month. Going in now:{" "}
