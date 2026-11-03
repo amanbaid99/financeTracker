@@ -402,25 +402,40 @@ export function MoneyPlanCard({
   if (!plan)
     return (
       <section
-        className="surface-card rounded-2xl border bg-card p-4"
+        className="surface-card overflow-hidden rounded-2xl border bg-card"
         aria-label="Plan your money"
       >
         <button
           type="button"
           aria-label="Plan my money"
           onClick={() => setOpen(true)}
-          className="flex min-h-16 w-full items-center gap-3 rounded-2xl px-4 py-3 text-left hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="press flex min-h-18 w-full items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
+          <span
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary"
+            aria-hidden
+          >
+            <Sparkles className="size-4" />
+          </span>
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-medium">Plan my money</span>
             <span className="block text-xs text-muted-foreground">
-              Choose what you can invest.
+              Split your monthly savings across goals.
             </span>
           </span>
           <ArrowUpRight className="size-4 shrink-0 text-primary" aria-hidden />
         </button>
-        <BudgetDetails b={budget} planMonthly={null} />
+        <div className="flex items-center justify-between gap-3 border-t border-border/60 px-4">
+          <NextLink
+            href="/goals/budget"
+            className="inline-flex min-h-11 items-center text-xs font-medium text-muted-foreground hover:text-primary"
+          >
+            {budget.income > 0 ? "Edit budget" : "Set up a budget"}
+          </NextLink>
+          {budget.income <= 0 && (
+            <span className="text-xs text-muted-foreground">Optional</span>
+          )}
+        </div>
         {form}
       </section>
     );
