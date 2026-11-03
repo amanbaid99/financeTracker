@@ -75,9 +75,12 @@ export function CreditOverview({
               {payments.filter((p) => p.kind !== "linked").length} to record
             </span>
           </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Overdue and due this month
+          </p>
           {payments.length === 0 ? (
             <p className="mt-2 text-sm text-muted-foreground">
-              No unpaid statements or upcoming EMIs recorded.
+              No overdue or current-month payments to record.
             </p>
           ) : (
             <ul className="mt-2 divide-y" aria-label="Payments due">

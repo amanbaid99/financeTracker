@@ -13,15 +13,23 @@ export interface CreditPayment {
   statementMonth?: string;
 }
 
-/** Due bills and the next EMI. Linked card EMIs are never a second payment. */
+/** Overdue and current-month payments. Undated bills still need review. */
 export function creditPayments(
   cards: Card[],
   loans: Loan[],
   today: string,
 ): CreditPayment[] {
+  const month = today.slice(0, 7);
   const rows: CreditPayment[] = cards.flatMap((c) =>
     c.bills
-      .filter((b) => !b.paid && b.amount > 0)
+      .filter(
+        (b) =>
+          !b.paid &&
+          b.amount > 0 &&
+          (b.dueDate
+            ? b.dueDate.slice(0, 7) <= month
+            : b.month.slice(0, 7) <= month),
+      )
       .map((b) => ({
         key: `bill:${b.id}`,
         kind: "bill" as const,
@@ -35,7 +43,7 @@ export function creditPayments(
   );
   for (const loan of loans) {
     const v = loanView(loan, today);
-    if (!v.next) continue;
+    if (!v.next || v.next.date.slice(0, 7) > month) continue;
     const linked =
       loan.type === "card" && cards.some((c) => c.id === loan.cardId);
     if (linked) {

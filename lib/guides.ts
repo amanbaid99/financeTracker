@@ -64,7 +64,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "See what needs paying, then how far each loan has come and your card milestones.",
     steps: [
       "Add each loan with its type, the amount you withdrew, the EMI and what you owe now. For a loan on a card, pick one of your credit cards or a separate card the lender gave you, with its bill and payment dates.",
-      "Payments due combines unpaid card statements and the next EMI for each loan, ordered by date. Card-linked EMIs are included in their card bill. Use All, Loans or Cards to narrow the page.",
+      "Payments due shows overdue payments and those due this month, ordered by date. Existing bills without dates stay visible for review. Later payments stay inside their card or loan. Card-linked EMIs are included in their card bill. Use All, Loans or Cards to narrow the page.",
       "Each loan shows its next EMI and how soon it's due. Tap Mark paid once you've paid: what you owe goes down and the progress bar moves. A page confirmation offers Undo for 10 seconds.",
       "Loan balances, payoff dates and elapsed EMI counts are estimates based on the schedule. Payments you explicitly record appear inside each loan. Closed loans are folded below active loans.",
       "EMIs on a card are part of its bill, but they don't count toward the card's milestones.",
