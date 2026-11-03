@@ -1,6 +1,6 @@
 "use client";
 
-import { formatINRCompact } from "@/lib/format";
+import { formatINR, formatINRCompact } from "@/lib/format";
 import { swatchFor, type AssetClass, type Portfolio } from "@/lib/portfolio";
 import { cn } from "@/lib/utils";
 
@@ -46,7 +46,15 @@ export function AllocationBar({
           </button>
         ))}
       </div>
-      <ul className="grid grid-cols-2 gap-x-4" aria-label="Allocation legend">
+      <div
+        className="grid grid-cols-[minmax(0,1fr)_6.5rem_3.25rem] gap-x-3 px-2 pb-1 text-[11px] text-muted-foreground"
+        aria-hidden
+      >
+        <span>Asset</span>
+        <span className="text-right">Value</span>
+        <span className="text-right">Share</span>
+      </div>
+      <ul className="divide-y divide-border/50" aria-label="Allocation legend">
         {classes.map((c) => (
           <li key={c.key}>
             <button
@@ -55,13 +63,13 @@ export function AllocationBar({
               aria-pressed={active === c.key}
               aria-label={`Filter ${c.label}`}
               className={cn(
-                "flex min-h-11 w-full flex-col justify-center rounded-lg px-1 text-left text-xs",
+                "grid min-h-11 w-full grid-cols-[minmax(0,1fr)_6.5rem_3.25rem] items-center gap-x-3 rounded-lg px-2 text-left text-xs",
                 active === c.key
                   ? "bg-primary-soft text-primary"
                   : "hover:bg-muted/60",
               )}
             >
-              <span className="flex w-full items-center gap-1.5">
+              <span className="flex min-w-0 items-center gap-2">
                 <span
                   className={cn(
                     "size-2 shrink-0 rounded-full",
@@ -69,19 +77,19 @@ export function AllocationBar({
                   )}
                   aria-hidden
                 />
-                <span className="min-w-0 flex-1">
+                <span className="min-w-0 break-words">
                   {c.key === "retirement"
                     ? "Retirement"
                     : c.key === "debt"
                       ? "Debt"
                       : c.label}
                 </span>
-                <span className="tabular shrink-0 text-muted-foreground">
-                  {pct(c.share)}
-                </span>
               </span>
-              <span className="tabular ml-3.5 mt-0.5 font-medium">
-                {formatINRCompact(c.value)}
+              <span className="tabular whitespace-nowrap text-right font-medium">
+                {formatINR(c.value)}
+              </span>
+              <span className="tabular text-right text-muted-foreground">
+                {pct(c.share)}
               </span>
             </button>
           </li>
