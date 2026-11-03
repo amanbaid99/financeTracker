@@ -29,3 +29,42 @@ describe("home goal grouping", () => {
     expect(groups.growing.map((g) => g.id)).toEqual(["steady"]);
   });
 });
+
+describe("covered bills funds", () => {
+  const today = "2026-11-03";
+  const input = { id: "bills", name: "Annual costs", type: "bills_fund", target: 0, targetDate: null, inflationPct: 0, bills: [{ name: "Insurance", amount: 12000, everyMonths: 12, nextDue: "2027-01-10" }] };
+  const investment = { id: "cash", kind: "savings", name: "Savings", category: "savings_account", value: 15000, monthlySip: 1000, returnPct: null };
+  const links = [{ goalId: input.id, investmentId: investment.id, percent: 100 }];
+
+  it("separates genuinely covered funds from active and reached goals without changing the input", () => {
+    const covered = trackGoal(input, [investment], links, today);
+    const growing = goal("growing", { status: "on_track" });
+    const reached = goal("reached", { status: "reached" });
+    const goals = [covered, growing, reached];
+    const before = JSON.stringify(goals);
+    const groups = groupGoals(goals);
+    expect(covered.billsFund?.short).toBeNull();
+    expect(groups.covered).toEqual([covered]);
+    expect(groups.growing).toEqual([growing]);
+    expect(groups.reached).toEqual([reached]);
+    expect(Object.values(groups).flat()).toHaveLength(3);
+    expect(JSON.stringify(goals)).toBe(before);
+  });
+
+  it("returns a fund to active goals when its updated balance leaves a shortfall", () => {
+    const covered = trackGoal(input, [investment], links, today);
+    const short = trackGoal(input, [{ ...investment, value: 0, monthlySip: 0 }], links, today);
+    expect(groupGoals([covered]).covered).toHaveLength(1);
+    const groups = groupGoals([short]);
+    expect(groups.covered).toEqual([]);
+    expect(groups.attention).toEqual([short]);
+  });
+
+  it("keeps a fund with no bills to configure visible, and never hides an overdue goal", () => {
+    const empty = trackGoal({ ...input, bills: [] }, [], [], today);
+    expect(groupGoals([empty]).covered).toEqual([]);
+    const covered = trackGoal(input, [investment], links, today);
+    const overdue = { ...covered, status: "overdue" as const };
+    expect(groupGoals([overdue]).attention).toEqual([overdue]);
+  });
+});

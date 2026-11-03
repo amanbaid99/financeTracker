@@ -476,6 +476,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     .getByRole("dialog")
     .getByRole("button", { name: "Add investment" })
     .click();
+  const coveredGroup = page.locator("details").filter({ has: page.locator("summary", { hasText: "Covered at your current pace" }) });
+  await expect(coveredGroup).toHaveAttribute("open", "");
+  await coveredGroup.locator("summary").first().click();
+  await expect(billsCard).toBeHidden();
+  await coveredGroup.locator("summary").first().click();
   await expect(billsCard).toContainText("Covered");
   await expect(billsCard).toContainText(/Next: Gym, \d+ \w{3}/);
   await expect(

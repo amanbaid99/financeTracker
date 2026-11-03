@@ -37,7 +37,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap Add a goal and pick a type: a purchase, a trip, an emergency fund, a bills fund or paying off a loan.",
       "Link the mutual funds, savings or deposits that pay for it. One investment can be split across goals.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
-      "Goals are grouped by when they're due: the next 2 years, later, and no fixed date. A label on each says On track, Behind or what needs action. Loans covered by EMIs and reached goals are folded away.",
+      "Goals are grouped by when they're due: the next 2 years, later, and no fixed date. A label on each says On track, Behind or what needs action. Covered bills funds, loans covered by EMIs and reached goals are folded away. If a bills fund develops a shortfall, it returns to the active list.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
       "This month, above your goals, lists what to invest and where. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for a few seconds.",
       "Open a goal for its What to do box. If your plan can't cover it, pick a later date, a smaller target or a bigger budget. The goal's form opens filled in for you to check and save.",
@@ -106,6 +106,11 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-11-03",
+    title: "Covered goals, out of the way",
+    items: [{ title: "Focus on what still needs funding", text: "Covered bills funds sit in a folded group above reached goals. They move back into the active list if a shortfall appears." }],
+  },
   {
     date: "2026-10-31",
     title: "One less thing to enter",

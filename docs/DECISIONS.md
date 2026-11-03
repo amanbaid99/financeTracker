@@ -35,6 +35,8 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 
 ## Goals and the money plan
 
+- **Nov 3:** bills funds labelled Covered are folded under "Covered at your current pace", immediately above reached goals. This uses the saved balance and contributions, not a proposed plan. A shortfall returns the goal to its active time group. Ordinary on-track savings goals stay in the active list. An explicitly opened goal stays visible inside its group. Funding priorities and calculations do not change.
+
 - **Budget, plan only (Oct 31, owner's choice):** take-home income and monthly costs (reusing the
   old `income_streams` and `expenses` tables), with loan EMIs and running SIPs filled in from the
   app. Free to invest = income − costs − EMIs − SIPs. "Your month" sits at the top of Goals, with

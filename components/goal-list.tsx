@@ -80,8 +80,8 @@ export function GoalList({
   const [details, setDetails] = useState(false);
 
   const groups = groupGoals(goals);
-  // Active goals by when they're due. Reached goals and loans the EMIs
-  // already cover stay folded away below.
+  // Active goals by when they're due. Covered bills funds, reached goals
+  // and loans the EMIs already cover stay folded away below.
   const byTime = { soon: [], later: [], ongoing: [] } as Record<
     "soon" | "later" | "ongoing",
     TrackedGoal[]
@@ -297,6 +297,11 @@ export function GoalList({
             "Your regular payments are working toward these. Open a loan to see its timeline.",
           ],
           [
+            "covered",
+            "Covered at your current pace",
+            "Your current balance and monthly contributions cover these planned bills. Keep contributions going. A shortfall moves a goal back into the active list.",
+          ],
+          [
             "reached",
             "Goals reached",
             "A moment to appreciate how far you've come.",
@@ -307,7 +312,7 @@ export function GoalList({
           groups[key].length > 0 && (
             <details
               key={key}
-              open={groups[key].some((g) => g.id === initialOpen) || undefined}
+              open={groups[key].some((g) => g.id === open) || undefined}
               className="group rounded-2xl border border-border/70 bg-muted/30 p-4"
             >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium [&::-webkit-details-marker]:hidden">
