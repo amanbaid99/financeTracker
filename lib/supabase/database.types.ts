@@ -1000,6 +1000,7 @@ export type Database = {
       settings: {
         Row: {
           config_overrides: NonNullable<Json>;
+          last_cas_import_at: string | null;
           seen_guides: string[];
           updated_at: string;
           user_id: string;
@@ -1008,6 +1009,7 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           config_overrides?: NonNullable<Json>;
+          last_cas_import_at?: string | null;
           seen_guides?: string[];
           updated_at?: string;
           user_id: string;
@@ -1015,6 +1017,7 @@ export type Database = {
         };
         Update: {
           config_overrides?: NonNullable<Json>;
+          last_cas_import_at?: string | null;
           seen_guides?: string[];
           updated_at?: string;
           user_id?: string;

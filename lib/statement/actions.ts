@@ -258,21 +258,20 @@ export async function applyImport(
       ) {
         const free = freePercent(id, current);
         if (free >= 1) {
-          const ins = await supabase
-            .from("goal_allocations")
-            .insert({
-              user_id: userId,
-              goal_id: c.goalId,
-              holding_id: id,
-              percent: free,
-            });
+          const ins = await supabase.from("goal_allocations").insert({
+            user_id: userId,
+            goal_id: c.goalId,
+            holding_id: id,
+            percent: free,
+          });
           if (ins.error) throw new Error(ins.error.message);
           current.push({ goalId: c.goalId, investmentId: id, percent: free });
         }
       }
     }
   } catch (e) {
-    if (updated + added > 0) await schedulePortfolioReview(supabase, userId, "cas");
+    if (updated + added > 0)
+      await schedulePortfolioReview(supabase, userId, "cas");
     revalidatePath("/", "layout");
     return {
       ok: false,
@@ -280,7 +279,18 @@ export async function applyImport(
         e instanceof Error ? e.message : "Something went wrong while saving.",
     };
   }
+  if (updated + added > 0) {
+    // Keep successful import time separate from later manual holding edits.
+    const { error } = await supabase
+      .from("settings")
+      .upsert(
+        { user_id: userId, last_cas_import_at: now },
+        { onConflict: "user_id" },
+      );
+    if (error) console.error("Could not record CAS import time:", error.code);
+  }
   revalidatePath("/", "layout");
-  if (updated + added > 0) await schedulePortfolioReview(supabase, userId, "cas");
+  if (updated + added > 0)
+    await schedulePortfolioReview(supabase, userId, "cas");
   return { ok: true, updated, added };
 }

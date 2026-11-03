@@ -23,6 +23,8 @@ export interface Investment {
   returnPct: number | null;
   /** Amount put in (cost), when known. */
   invested?: number | null;
+  /** Last record edit in ISO time, not the market price date. */
+  updatedAt?: string | null;
 }
 
 export interface GoalInput {

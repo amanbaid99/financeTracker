@@ -6,21 +6,14 @@ import { FileUp } from "lucide-react";
 import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { AllocationBar } from "@/components/allocation-bar";
+import { PortfolioOverview } from "@/components/portfolio-overview";
 import { PortfolioHoldings } from "@/components/portfolio-holdings";
 import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { loadGoals } from "@/lib/data";
-import { formatINR, formatINRCompact } from "@/lib/format";
-import { ASSET_CLASSES, buildPortfolio, swatchFor } from "@/lib/portfolio";
-import { cn } from "@/lib/utils";
+import { buildPortfolio } from "@/lib/portfolio";
 
 export const metadata: Metadata = { title: "Portfolio" };
-
-const pct = (n: number) => `${(n * 100).toFixed(Math.abs(n) < 0.1 ? 1 : 0)}%`;
-const slotOf = (key: string) =>
-  ASSET_CLASSES.find((c) => c.key === key)?.slot ?? 7;
 
 export default async function PortfolioPage({
   searchParams,
@@ -30,13 +23,18 @@ export default async function PortfolioPage({
   const { do: action } = await searchParams;
   const { investments, links, goals } = await loadGoals();
   const { supabase, user } = await requireUser();
-  const [review, aiEnabled] = await Promise.all([
+  const [review, aiEnabled, importHistory] = await Promise.all([
     supabase
       .from("portfolio_reviews")
       .select("*")
       .eq("user_id", user.id)
       .maybeSingle(),
     aiAllowed(supabase, user.id),
+    supabase
+      .from("settings")
+      .select("last_cas_import_at")
+      .eq("user_id", user.id)
+      .maybeSingle(),
   ]);
   const parsedReview = resultSchema.safeParse(review.data?.result);
   const reviewCard = (
@@ -86,6 +84,7 @@ export default async function PortfolioPage({
         </div>
         <div className="overflow-hidden rounded-2xl border bg-card">
           <PortfolioHoldings
+            autoAdd={action === "add"}
             holdings={[]}
             investments={investments}
             links={links}
@@ -95,8 +94,6 @@ export default async function PortfolioPage({
     );
   }
 
-  const equity = p.classes.find((c) => c.key === "equity")?.share ?? 0;
-
   return (
     <main className="space-y-5">
       <div className="space-y-1">
@@ -104,9 +101,6 @@ export default async function PortfolioPage({
           <h1 className="text-2xl font-semibold tracking-tight">Portfolio</h1>
           <GuideButton id="portfolio" />
         </div>
-        <p className="text-sm text-muted-foreground">
-          Everything you hold, across all your goals.
-        </p>
       </div>
       {updatable.length > 0 && (
         <UpdateButton
@@ -116,73 +110,18 @@ export default async function PortfolioPage({
         />
       )}
 
-      <Card>
-        <CardContent className="space-y-2 pt-5 sm:pt-5">
-          <p className="text-xs text-muted-foreground">Total value</p>
-          <p className="tabular text-3xl font-semibold tracking-tight">
-            {formatINR(p.total)}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            {p.monthlySips > 0
-              ? `${formatINR(p.monthlySips)} a month going in · `
-              : ""}
-            {pct(equity)} in equity
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Where your money is</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <AllocationBar classes={p.classes} />
-          <details className="mt-3 border-t pt-3">
-            <summary className="cursor-pointer py-1 text-sm font-medium text-primary">
-              By kind
-            </summary>
-            <ul className="mt-3 space-y-3 text-sm">
-              {p.kinds.map((k) => (
-                <li key={k.label} className="space-y-1">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <span className="min-w-0 truncate">{k.label}</span>
-                    <span className="tabular shrink-0">
-                      {formatINRCompact(k.value)}{" "}
-                      <span className="text-muted-foreground">
-                        · {pct(k.share)}
-                      </span>
-                    </span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-muted" aria-hidden>
-                    <div
-                      className={cn(
-                        "h-full rounded-full",
-                        swatchFor(slotOf(k.assetClass)),
-                      )}
-                      style={{ width: `${Math.max(k.share * 100, 1)}%` }}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </details>
-        </CardContent>
-      </Card>
-
-      {reviewCard}
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Holdings</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0 sm:p-0">
-          <PortfolioHoldings
-            holdings={p.holdings}
-            investments={investments}
-            links={links}
-          />
-        </CardContent>
-      </Card>
+      <PortfolioOverview
+        portfolio={p}
+        investments={investments}
+        links={links}
+        review={reviewCard}
+        lastImportAt={
+          importHistory.error
+            ? null
+            : (importHistory.data?.last_cas_import_at ?? null)
+        }
+        autoAdd={action === "add"}
+      />
     </main>
   );
 }

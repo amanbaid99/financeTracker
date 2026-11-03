@@ -7,6 +7,7 @@ import {
   RefreshCw,
   Sparkles,
   Target,
+  Wallet,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -80,6 +81,18 @@ export function QuickAdd() {
   const path = usePathname();
   const { seen, markSeen } = useGuides();
   const [open, setOpen] = useState(false);
+  const actions =
+    path === "/portfolio"
+      ? [
+          {
+            href: "/portfolio?do=add",
+            label: "Add an investment or saving",
+            hint: "Track something you hold",
+            icon: Wallet,
+          },
+          ...ACTIONS,
+        ]
+      : ACTIONS;
   const close = useCallback(() => setOpen(false), []);
   // Each tab's first-visit guide already points to the + button, so there's
   // no separate hint bubble.
@@ -107,7 +120,7 @@ export function QuickAdd() {
             <GuideButton id="quick-add" autoShow={false} />
           </div>
           <ul className="grid grid-cols-2 gap-2">
-            {ACTIONS.map((a) => (
+            {actions.map((a) => (
               <li key={a.href}>
                 <Link
                   href={hrefFor(a.href, path)}

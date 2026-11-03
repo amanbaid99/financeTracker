@@ -1,21 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { formatINR } from "@/lib/format";
-import { swatchFor, type Portfolio } from "@/lib/portfolio";
+import { formatINRCompact } from "@/lib/format";
+import { swatchFor, type AssetClass, type Portfolio } from "@/lib/portfolio";
 import { cn } from "@/lib/utils";
 
 const pct = (n: number) => `${(n * 100).toFixed(n < 0.1 ? 1 : 0)}%`;
 
-/** Part-to-whole bar with a legend that always shows each amount and share. */
-export function AllocationBar({ classes }: { classes: Portfolio["classes"] }) {
-  const [active, setActive] = useState<string | null>(null);
-  const shown = classes.find((c) => c.key === active);
-
+/** Allocation doubles as a filter, with amounts visible without hovering. */
+export function AllocationBar({
+  classes,
+  active,
+  onSelect,
+}: {
+  classes: Portfolio["classes"];
+  active: AssetClass | null;
+  onSelect: (key: AssetClass | null) => void;
+}) {
+  const select = (key: AssetClass) => onSelect(active === key ? null : key);
   return (
-    <div className="space-y-3">
+    <div className="space-y-1">
       <div
-        className="flex h-4 w-full gap-[2px]"
+        className="flex min-h-11 w-full items-center gap-0.5"
         role="group"
         aria-label="Where your money is"
       >
@@ -23,32 +28,65 @@ export function AllocationBar({ classes }: { classes: Portfolio["classes"] }) {
           <button
             key={c.key}
             type="button"
-            aria-label={`${c.label}: ${formatINR(c.value)}, ${pct(c.share)}`}
-            onMouseEnter={() => setActive(c.key)}
-            onMouseLeave={() => setActive(null)}
-            onFocus={() => setActive(c.key)}
-            onBlur={() => setActive(null)}
-            onClick={() => setActive(c.key)}
+            aria-label={`${c.label}: ${formatINRCompact(c.value)}, ${pct(c.share)}`}
+            aria-pressed={active === c.key}
+            onClick={() => select(c.key)}
             style={{ flexGrow: Math.max(c.share, 0.005), flexBasis: 0 }}
-            className={cn(
-              "h-full min-w-[3px] transition-opacity",
-              swatchFor(c.slot),
-              i === 0 && "rounded-l",
-              i === classes.length - 1 && "rounded-r",
-              active && active !== c.key && "opacity-40",
-            )}
-          />
+            className="flex h-11 min-w-[3px] items-center"
+          >
+            <span
+              className={cn(
+                "block h-3 w-full transition-opacity",
+                swatchFor(c.slot),
+                i === 0 && "rounded-l-full",
+                i === classes.length - 1 && "rounded-r-full",
+                active && active !== c.key && "opacity-35",
+              )}
+            />
+          </button>
         ))}
       </div>
-      <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs" aria-label="Allocation legend">
-        {classes.map(c => <li key={c.key}>
-          <button type="button" onClick={() => setActive(active === c.key ? null : c.key)} aria-pressed={active === c.key} className="inline-flex min-h-9 items-center gap-1.5 text-left">
-            <span className={cn("size-2 shrink-0 rounded-sm", swatchFor(c.slot))} aria-hidden />
-            <span>{c.label} <span className="tabular text-muted-foreground">{pct(c.share)}</span></span>
-          </button>
-        </li>)}
+      <ul className="grid grid-cols-2 gap-x-4" aria-label="Allocation legend">
+        {classes.map((c) => (
+          <li key={c.key}>
+            <button
+              type="button"
+              onClick={() => select(c.key)}
+              aria-pressed={active === c.key}
+              aria-label={`Filter ${c.label}`}
+              className={cn(
+                "flex min-h-11 w-full flex-col justify-center rounded-lg px-1 text-left text-xs",
+                active === c.key
+                  ? "bg-primary-soft text-primary"
+                  : "hover:bg-muted/60",
+              )}
+            >
+              <span className="flex w-full items-center gap-1.5">
+                <span
+                  className={cn(
+                    "size-2 shrink-0 rounded-full",
+                    swatchFor(c.slot),
+                  )}
+                  aria-hidden
+                />
+                <span className="min-w-0 flex-1">
+                  {c.key === "retirement"
+                    ? "Retirement"
+                    : c.key === "debt"
+                      ? "Debt"
+                      : c.label}
+                </span>
+                <span className="tabular shrink-0 text-muted-foreground">
+                  {pct(c.share)}
+                </span>
+              </span>
+              <span className="tabular ml-3.5 mt-0.5 font-medium">
+                {formatINRCompact(c.value)}
+              </span>
+            </button>
+          </li>
+        ))}
       </ul>
-      {shown && <p className="text-sm text-muted-foreground" aria-live="polite"><span className="font-medium text-foreground">{shown.label}</span> · {formatINR(shown.value)} · {pct(shown.share)}</p>}
     </div>
   );
 }

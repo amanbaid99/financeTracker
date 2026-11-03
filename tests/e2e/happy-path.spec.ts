@@ -653,7 +653,13 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     .getByRole("group", { name: "Where your money is" })
     .getByRole("button", { name: /^Equity:/ })
     .click();
-  await expect(page.getByText(/^Equity · ₹/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Clear asset filter" })).toBeVisible();
+  await page.getByRole("button", { name: "Clear asset filter" }).click();
+  await page.getByRole("searchbox", { name: "Search holdings" }).fill("Index SIP");
+  await expect(page.getByRole("list", { name: "Holdings" }).locator(":scope > li")).toHaveCount(1);
+  await page.getByRole("searchbox", { name: "Search holdings" }).fill("");
+  await page.getByRole("combobox", { name: "Sort holdings" }).selectOption("name");
+  await page.getByRole("combobox", { name: "Sort holdings" }).selectOption("value");
   o = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,
   );

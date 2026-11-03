@@ -81,7 +81,7 @@ export async function readGoals(): Promise<GoalsData> {
       supabase
         .from("holdings")
         .select(
-          "id, kind, name, category, current_value, monthly_sip, expected_return_pct, invested",
+          "id, kind, name, category, current_value, monthly_sip, expected_return_pct, invested, updated_at",
         )
         .order("current_value", { ascending: false }),
       supabase.from("goal_allocations").select("goal_id, holding_id, percent"),
@@ -109,6 +109,7 @@ export async function readGoals(): Promise<GoalsData> {
     returnPct:
       h.expected_return_pct === null ? null : Number(h.expected_return_pct),
     invested: h.invested,
+    updatedAt: h.updated_at,
   }));
   const links: Link[] = check(allocations).map((a) => ({
     goalId: a.goal_id,

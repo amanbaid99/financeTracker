@@ -51,10 +51,11 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "Your portfolio",
     intro: "Everything you hold, across all goals, in one place.",
     steps: [
-      "Open View review for portfolio checks and settings. Turn on automatic reviews for checks after imports and holding updates. Review suggestions yourself before changing investments.",
-      "The bar shows your split by asset class. Tap a part or its label to see the amount. Open By kind for the detailed breakdown.",
-      "Growth compares today's value with what you put in.",
-      "Tap + to update values or import a CAS statement. Tap a holding to edit it.",
+      "Open the Portfolio review row for checks and settings. Turn on automatic reviews for checks after imports and holding updates. Review suggestions yourself before changing investments.",
+      "The overview shows your total, monthly investments and asset split. Tap an asset class to filter the holdings below. Clear the filter to see everything again. Open By kind for the detailed breakdown.",
+      "Search holdings by name or category. Sort by value, name or simple growth. Unknown growth comes last. Growth compares today's value with what you put in, not an annual return.",
+      "Last edited is when a holding record changed, not a market price date. CAS import dates are recorded for new successful imports; older dates may be unknown.",
+      "Tap + to add an investment or saving, update values or import a CAS statement. Tap a holding to edit it.",
     ],
   },
   cards: {
@@ -111,6 +112,10 @@ export const RELEASES: Release[] = [
     date: "2026-11-03",
     title: "A calmer home for your money",
     items: [
+      {
+        title: "A clearer portfolio",
+        text: "One overview, allocation filters, searchable holdings and sorting. Add investments from +. Record edit dates and new CAS import dates are shown separately.",
+      },
       {
         title: "One monthly overview",
         text: "Budget and plan now share one compact card. See two investment steps first, and expand for the rest.",
