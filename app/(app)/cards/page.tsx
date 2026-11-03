@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { GuideButton } from "@/components/guides";
-import { CardList } from "@/components/card-list";
-import { LoanList } from "@/components/loan-list";
+import { CreditOverview } from "@/components/credit-overview";
 import { loadCards, loadLoans } from "@/lib/data";
 import { cardEmis } from "@/lib/loans";
 
@@ -33,22 +32,13 @@ export default async function CreditPage({
           Loans and cards: what&apos;s due comes first.
         </p>
       </div>
-      <LoanList
+      <CreditOverview
+        cards={withEmis}
         loans={loans}
-        cards={cards.map((c) => ({ id: c.id, label: c.label }))}
         today={today}
+        initialOpen={open ?? null}
+        action={action ?? null}
       />
-      <section aria-labelledby="cards-h" className="space-y-3">
-        <h2 id="cards-h" className="text-lg font-semibold">
-          Cards
-        </h2>
-        <CardList
-          cards={withEmis}
-          today={today}
-          initialOpen={open ?? null}
-          action={action ?? null}
-        />
-      </section>
     </main>
   );
 }

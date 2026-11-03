@@ -3,9 +3,10 @@
 import { ChevronDown, Landmark, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { Field } from "@/components/forms/field";
 import { MoneyInput } from "@/components/money-input";
+import { CreditPaymentButton } from "@/components/credit-payment";
 import { Sheet } from "@/components/sheet";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Input, Select } from "@/components/ui/input";
@@ -22,12 +23,7 @@ import {
   type LoanType,
   type LoanView,
 } from "@/lib/loans";
-import {
-  deleteLoan,
-  markEmiPaid,
-  saveLoan,
-  undoEmiPaid,
-} from "@/lib/loans-actions";
+import { deleteLoan, saveLoan, undoEmiPaid } from "@/lib/loans-actions";
 import { cn } from "@/lib/utils";
 
 const ordinal = (n: number) =>
@@ -46,78 +42,46 @@ function useRun(onDone?: () => void) {
   const run = (fn: () => Promise<{ ok: boolean; error?: string }>) =>
     start(async () => {
       setError("");
-      const res = await fn();
-      if (!res.ok) return setError(res.error ?? "Something went wrong");
-      router.refresh();
-      onDone?.();
+      try {
+        const res = await fn();
+        if (!res.ok) return setError(res.error ?? "Something went wrong");
+        router.refresh();
+        onDone?.();
+      } catch {
+        setError("Could not save. Check your connection and try again.");
+      }
     });
   return { pending, run, error };
 }
 
-/** The next EMI with Mark paid; right after marking, Undo for a few seconds. */
+/** Payments are confirmed at page level so Undo survives a row refresh. */
 function NextEmi({ v }: { v: LoanView }) {
-  const { pending, run, error } = useRun();
-  const [paid, setPaid] = useState<string | null>(null);
-  useEffect(() => {
-    if (!paid) return;
-    const t = setTimeout(() => setPaid(null), 6000);
-    return () => clearTimeout(t);
-  }, [paid]);
-  if (paid)
-    return (
-      <div className="relative z-10 flex items-center justify-between gap-2 text-sm">
-        <span className="text-success">
-          EMI for {formatDate(paid).split(" ").slice(0, 2).join(" ")} marked
-          paid
-        </span>
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() =>
-            run(async () => {
-              const res = await undoEmiPaid({
-                loanId: v.loan.id,
-                dueDate: paid,
-              });
-              if (res.ok) setPaid(null);
-              return res;
-            })
-          }
-          className="shrink-0 text-xs font-semibold underline underline-offset-2"
-        >
-          Undo
-        </button>
-      </div>
-    );
   if (!v.next) return null;
   const n = v.next;
+  const linked = v.loan.type === "card" && !!v.loan.cardId;
   return (
-    <div className="flex items-center justify-between gap-2">
-      <p className={cn("tabular min-w-0 text-sm font-semibold", TONE[n.tone])}>
-        {formatINR(n.amount)} <span className="font-medium">{n.label}</span>
-      </p>
-      <span className="relative z-10 shrink-0 text-right">
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          disabled={pending}
-          aria-label={`Mark ${v.loan.name} EMI paid`}
-          onClick={() =>
-            run(async () => {
-              const res = await markEmiPaid({
-                loanId: v.loan.id,
-                dueDate: n.date,
-              });
-              if (res.ok) setPaid(n.date);
-              return res;
-            })
-          }
+    <div className="space-y-1">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p
+          className={cn("tabular min-w-0 text-sm font-semibold", TONE[n.tone])}
         >
-          {pending ? "Saving…" : "Mark paid"}
-        </Button>
-        {error && <span className="block text-xs text-danger">{error}</span>}
-      </span>
+          {formatINR(n.amount)} <span className="font-medium">{n.label}</span>
+        </p>
+        <CreditPaymentButton
+          payment={{
+            kind: "emi",
+            id: v.loan.id,
+            date: n.date,
+            label: `${v.loan.name} EMI`,
+          }}
+          text={linked ? "Record EMI" : "Mark paid"}
+        />
+      </div>
+      {linked && (
+        <p className="text-xs text-muted-foreground">
+          Included in the card bill. Record this EMI to update the loan balance.
+        </p>
+      )}
     </div>
   );
 }
@@ -143,7 +107,7 @@ function LoanDetails({
   onEdit: () => void;
 }) {
   const { loan: l, state: s } = v;
-  const { pending, run } = useRun();
+  const { pending, run, error } = useRun();
   const [confirm, setConfirm] = useState(false);
   const card = cards.find((c) => c.id === l.cardId);
   const latest = [...l.payments].sort((a, b) =>
@@ -152,7 +116,7 @@ function LoanDetails({
   return (
     <div className="expand-in space-y-4 border-t px-4 pb-4 pt-2">
       <dl className="divide-y">
-        <Row label="Owed today" value={formatINR(s.balance)} />
+        <Row label="Estimated balance" value={formatINR(s.balance)} />
         {l.principal ? (
           <Row label="Amount withdrawn" value={formatINR(l.principal)} />
         ) : null}
@@ -183,7 +147,9 @@ function LoanDetails({
             value={formatINR(s.interestLeft)}
           />
         )}
-        {s.endDate && <Row label="Last EMI" value={monthYear(s.endDate)} />}
+        {s.endDate && (
+          <Row label="Estimated last EMI" value={monthYear(s.endDate)} />
+        )}
         {s.feeRate > 0 && (
           <Row
             label="Closing it today costs"
@@ -212,7 +178,7 @@ function LoanDetails({
                           undoEmiPaid({ loanId: l.id, dueDate: p.dueDate }),
                         )
                       }
-                      className="text-xs font-semibold text-primary underline underline-offset-2"
+                      className="min-h-11 px-2 text-xs font-semibold text-primary underline underline-offset-2"
                     >
                       Undo
                     </button>
@@ -235,13 +201,20 @@ function LoanDetails({
         </p>
       ) : null}
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="outline" size="sm" onClick={onEdit}>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="min-h-11"
+          onClick={onEdit}
+        >
           Edit loan
         </Button>
         <Button
           type="button"
           variant={confirm ? "destructive" : "ghost"}
           size="sm"
+          className="min-h-11"
           disabled={pending}
           onClick={() =>
             confirm ? run(() => deleteLoan(l.id)) : setConfirm(true)
@@ -250,6 +223,14 @@ function LoanDetails({
           {confirm ? "Tap again to delete" : "Delete loan"}
         </Button>
       </div>
+      {error && (
+        <p
+          role="alert"
+          className="rounded-lg bg-danger-soft p-3 text-sm text-danger"
+        >
+          {error}
+        </p>
+      )}
       {confirm && l.goal && (
         <p className="text-xs text-muted-foreground">
           The goal {l.goal.name} stays, with the loan details it had.
@@ -315,7 +296,7 @@ function LoanSheet({
               cardId: isCard ? cardId || null : null,
               principal,
               takenOn: takenOn || null,
-              ratePct: Number(rate) || 0,
+              ratePct: Number(rate),
               emi,
               totalEmis: totalEmis ? Number(totalEmis) : null,
               emiDay: Number(emiDay),
@@ -409,69 +390,14 @@ function LoanSheet({
           </>
         )}
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Amount withdrawn" htmlFor="ln-principal">
-            <MoneyInput
-              id="ln-principal"
-              value={principal}
-              onChange={setPrincipal}
-            />
-          </Field>
-          <Field label="Taken on" htmlFor="ln-taken">
-            <Input
-              id="ln-taken"
-              type="date"
-              value={takenOn}
-              onChange={(e) => setTakenOn(e.target.value)}
-            />
-          </Field>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="EMI" htmlFor="ln-emi">
-            <MoneyInput id="ln-emi" value={emi} onChange={setEmi} required />
-          </Field>
-          <Field label="Interest, % a year" htmlFor="ln-rate">
-            <Input
-              id="ln-rate"
-              inputMode="decimal"
-              value={rate}
-              onChange={(e) => setRate(e.target.value)}
-              required
-            />
-          </Field>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Total EMIs" htmlFor="ln-total" hint="Optional, e.g. 36">
-            <Input
-              id="ln-total"
-              inputMode="numeric"
-              value={totalEmis}
-              onChange={(e) => setTotalEmis(e.target.value.replace(/\D/g, ""))}
-            />
-          </Field>
-          {!isCard && (
-            <Field label="EMI date" htmlFor="ln-day">
-              <Select
-                id="ln-day"
-                value={emiDay}
-                onChange={(e) => setEmiDay(e.target.value)}
-              >
-                {Array.from({ length: 31 }, (_, i) => (
-                  <option key={i + 1} value={i + 1}>
-                    {ordinal(i + 1)}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-          )}
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Amount owed" htmlFor="ln-owed">
+          <Field label="Outstanding balance" htmlFor="ln-owed">
             <MoneyInput id="ln-owed" value={owed} onChange={setOwed} required />
           </Field>
-          <Field label="After the EMI on" htmlFor="ln-asof">
+          <Field label="Balance date" htmlFor="ln-asof">
             <Input
               id="ln-asof"
               type="date"
+              required
               max={today}
               value={asOf}
               onChange={(e) => setAsOf(e.target.value || null)}
@@ -479,26 +405,107 @@ function LoanSheet({
           </Field>
         </div>
         <p className="-mt-2 text-xs text-muted-foreground">
-          From your statement or the lender&apos;s app, with the date it&apos;s
-          from. Later EMIs come off as you mark them paid.
+          Use the balance and date from your lender. Later balances are
+          estimates based on scheduled EMIs. Mark paid only after payment.
         </p>
-        <div className="grid grid-cols-2 items-end gap-3">
-          <Field label="Foreclosure charge, %" htmlFor="ln-fee" hint="Optional">
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="EMI" htmlFor="ln-emi">
+            <MoneyInput id="ln-emi" value={emi} onChange={setEmi} required />
+          </Field>
+          <Field label="Interest, % a year" htmlFor="ln-rate">
             <Input
-              id="ln-fee"
+              id="ln-rate"
+              type="number"
+              min="0"
+              max="60"
+              step="any"
               inputMode="decimal"
-              value={fee}
-              onChange={(e) => setFee(e.target.value)}
+              value={rate}
+              onChange={(e) => setRate(e.target.value)}
+              required
             />
           </Field>
-          <label className="flex items-start gap-2 pb-6 text-sm">
-            <Checkbox
-              checked={gst}
-              onChange={(e) => setGst(e.target.checked)}
-            />
-            Plus 18% GST
-          </label>
         </div>
+        {!isCard && (
+          <Field label="EMI date" htmlFor="ln-day">
+            <Select
+              id="ln-day"
+              value={emiDay}
+              onChange={(e) => setEmiDay(e.target.value)}
+            >
+              {Array.from({ length: 31 }, (_, i) => (
+                <option key={i + 1} value={i + 1}>
+                  {ordinal(i + 1)}
+                </option>
+              ))}
+            </Select>
+          </Field>
+        )}
+        <details className="border-t">
+          <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium text-primary">
+            Original loan and early-closure details
+          </summary>
+          <div className="space-y-4 pt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Amount withdrawn" htmlFor="ln-principal">
+                <MoneyInput
+                  id="ln-principal"
+                  value={principal}
+                  onChange={setPrincipal}
+                />
+              </Field>
+              <Field label="Taken on" htmlFor="ln-taken">
+                <Input
+                  id="ln-taken"
+                  type="date"
+                  value={takenOn}
+                  onChange={(e) => setTakenOn(e.target.value)}
+                />
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                label="Total EMIs"
+                htmlFor="ln-total"
+                hint="Optional, e.g. 36"
+              >
+                <Input
+                  id="ln-total"
+                  inputMode="numeric"
+                  value={totalEmis}
+                  onChange={(e) =>
+                    setTotalEmis(e.target.value.replace(/\D/g, ""))
+                  }
+                />
+              </Field>
+            </div>
+            <div className="grid grid-cols-2 items-end gap-3">
+              <Field
+                label="Foreclosure charge, %"
+                htmlFor="ln-fee"
+                hint="Optional"
+              >
+                <Input
+                  id="ln-fee"
+                  type="number"
+                  min="0"
+                  max="20"
+                  step="any"
+                  inputMode="decimal"
+                  value={fee}
+                  onChange={(e) => setFee(e.target.value)}
+                />
+              </Field>
+              <label className="flex items-start gap-2 pb-6 text-sm">
+                <Checkbox
+                  checked={gst}
+                  onChange={(e) => setGst(e.target.checked)}
+                />
+                Plus 18% GST
+              </label>
+            </div>
+          </div>
+        </details>
         {error && (
           <p
             role="alert"
@@ -507,7 +514,7 @@ function LoanSheet({
             {error}
           </p>
         )}
-        <Button type="submit" className="w-full" disabled={pending}>
+        <Button type="submit" className="min-h-11 w-full" disabled={pending}>
           {pending ? "Saving…" : loan ? "Save loan" : "Add loan"}
         </Button>
       </form>
@@ -537,6 +544,90 @@ export function LoanList({
     );
   const t = loanTotals(views);
 
+  const renderLoans = (items: LoanView[]) => (
+    <ul className="space-y-3">
+      {items.map((v) => {
+        const isOpen = open === v.loan.id;
+        const card = cards.find((c) => c.id === v.loan.cardId);
+        return (
+          <li
+            key={v.loan.id}
+            className={cn(
+              "surface-card overflow-hidden rounded-2xl border border-border/70 bg-card",
+              isOpen && "border-primary",
+            )}
+          >
+            <div className="relative flex items-start gap-3 p-4">
+              <span
+                className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary"
+                aria-hidden
+              >
+                <Landmark className="size-5" />
+              </span>
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <button
+                  type="button"
+                  aria-expanded={isOpen}
+                  onClick={() => setOpen(isOpen ? null : v.loan.id)}
+                  className="block text-left after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-primary"
+                >
+                  <span className="block break-words font-semibold leading-snug">
+                    {v.loan.name}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    {loanTypeLabel(v.loan.type)}
+                    {card
+                      ? ` · ${card.label}`
+                      : v.loan.type === "card"
+                        ? " · its own card"
+                        : ""}
+                  </span>
+                </button>
+                {v.closed ? (
+                  <p className="text-sm font-medium text-success">Paid off</p>
+                ) : (
+                  <NextEmi v={v} />
+                )}
+                <Progress
+                  value={v.progress * 100}
+                  tone="neutral"
+                  label={`${v.loan.name} repaid`}
+                  className="h-1.5"
+                />
+                <p className="tabular flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                  <span>
+                    {v.repaid !== null && v.loan.principal
+                      ? `${formatINRCompact(v.repaid)} of ${formatINRCompact(v.loan.principal)} repaid`
+                      : `${formatINRCompact(v.state.balance)} owed`}
+                  </span>
+                  {v.emisLine && <span>{v.emisLine}</span>}
+                </p>
+                {v.state.endDate && !v.closed && (
+                  <p className="text-xs text-muted-foreground">
+                    Estimated end {monthYear(v.state.endDate)}
+                  </p>
+                )}
+              </div>
+              <ChevronDown
+                className={cn(
+                  "size-4 shrink-0 text-muted-foreground transition-transform",
+                  isOpen && "rotate-180",
+                )}
+                aria-hidden
+              />
+            </div>
+            {isOpen && (
+              <LoanDetails
+                v={v}
+                cards={cards}
+                onEdit={() => setSheet(v.loan)}
+              />
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
   return (
     <section aria-labelledby="loans-h" className="space-y-3">
       <div className="flex items-center justify-between gap-2">
@@ -547,6 +638,7 @@ export function LoanList({
           type="button"
           variant="outline"
           size="sm"
+          className="min-h-11"
           onClick={() => setSheet("new")}
         >
           <Plus /> Add a loan
@@ -564,98 +656,30 @@ export function LoanList({
               <span className="font-semibold text-foreground">
                 {formatINRCompact(t.owed)}
               </span>{" "}
-              owed · {formatINR(t.monthlyEmi)} a month in EMIs
+              estimated balance · {formatINR(t.monthlyEmi)} a month in EMIs
               {t.debtFree && !t.openEnded
-                ? ` · debt-free by ${monthYear(t.debtFree)}`
+                ? ` · estimated loan payoff ${monthYear(t.debtFree)}`
                 : ""}
             </p>
           )}
-          <ul className="space-y-3">
-            {views.map((v) => {
-              const isOpen = open === v.loan.id;
-              const card = cards.find((c) => c.id === v.loan.cardId);
-              return (
-                <li
-                  key={v.loan.id}
-                  className={cn(
-                    "rounded-2xl border bg-card",
-                    isOpen && "border-primary",
-                  )}
-                >
-                  <div className="relative flex items-start gap-3 p-4">
-                    <span
-                      className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary"
-                      aria-hidden
-                    >
-                      <Landmark className="size-5" />
-                    </span>
-                    <div className="min-w-0 flex-1 space-y-1.5">
-                      <button
-                        type="button"
-                        aria-expanded={isOpen}
-                        onClick={() => setOpen(isOpen ? null : v.loan.id)}
-                        className="block text-left after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-primary"
-                      >
-                        <span className="block break-words font-semibold leading-snug">
-                          {v.loan.name}
-                        </span>
-                        <span className="block text-xs text-muted-foreground">
-                          {loanTypeLabel(v.loan.type)}
-                          {card
-                            ? ` · ${card.label}`
-                            : v.loan.type === "card"
-                              ? " · its own card"
-                              : ""}
-                        </span>
-                      </button>
-                      {v.closed ? (
-                        <p className="text-sm font-medium text-success">
-                          Paid off
-                        </p>
-                      ) : (
-                        <NextEmi v={v} />
-                      )}
-                      <Progress
-                        value={v.progress * 100}
-                        tone="neutral"
-                        label={`${v.loan.name} repaid`}
-                        className="h-1.5"
-                      />
-                      <p className="tabular flex items-baseline justify-between gap-3 text-xs text-muted-foreground">
-                        <span>
-                          {v.repaid !== null && v.loan.principal
-                            ? `${formatINRCompact(v.repaid)} of ${formatINRCompact(v.loan.principal)} repaid`
-                            : `${formatINRCompact(v.state.balance)} owed`}
-                        </span>
-                        {v.emisLine && (
-                          <span className="shrink-0">{v.emisLine}</span>
-                        )}
-                      </p>
-                      {v.state.endDate && !v.closed && (
-                        <p className="text-xs text-muted-foreground">
-                          Ends {monthYear(v.state.endDate)}
-                        </p>
-                      )}
-                    </div>
-                    <ChevronDown
-                      className={cn(
-                        "size-4 shrink-0 text-muted-foreground transition-transform",
-                        isOpen && "rotate-180",
-                      )}
-                      aria-hidden
-                    />
-                  </div>
-                  {isOpen && (
-                    <LoanDetails
-                      v={v}
-                      cards={cards}
-                      onEdit={() => setSheet(v.loan)}
-                    />
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+          <p className="text-xs text-muted-foreground">
+            Balances and progress assume scheduled EMIs. Recorded payments
+            appear inside each loan.
+          </p>
+          {renderLoans(views.filter((v) => !v.closed))}
+          {views.some((v) => v.closed) && (
+            <details className="rounded-2xl border border-border/60 bg-muted/30 px-4">
+              <summary className="flex min-h-14 cursor-pointer items-center justify-between text-sm font-medium">
+                <span>Closed loans</span>{" "}
+                <span className="text-muted-foreground">
+                  {views.filter((v) => v.closed).length}
+                </span>
+              </summary>
+              <div className="pb-4">
+                {renderLoans(views.filter((v) => v.closed))}
+              </div>
+            </details>
+          )}
         </>
       )}
       {sheet && (

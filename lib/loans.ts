@@ -157,7 +157,7 @@ export function loanView(l: Loan, today: string): LoanView {
       0,
       Math.min(l.totalEmis, l.totalEmis - state.monthsLeft),
     );
-    emisLine = `${done} of ${l.totalEmis} EMIs paid`;
+    emisLine = `${done} of ${l.totalEmis} scheduled EMIs elapsed`;
     if (repaid === null) progress = done / l.totalEmis;
   } else if (state.monthsLeft !== null && !closed) {
     emisLine = `${state.monthsLeft} EMI${state.monthsLeft === 1 ? "" : "s"} left`;

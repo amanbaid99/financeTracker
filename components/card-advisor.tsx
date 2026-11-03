@@ -1,6 +1,6 @@
 "use client";
 
-import { Lightbulb } from "lucide-react";
+import { ChevronDown, Lightbulb } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,124 +35,146 @@ export function CardAdvisor({
   return (
     <section
       aria-label="Which card to use"
-      className="space-y-3 rounded-2xl border bg-card p-4"
+      className="rounded-2xl border border-border/60 bg-muted/30"
     >
-      <div className="flex items-center gap-2">
-        <Lightbulb className="size-4 text-primary" aria-hidden />
-        <h2 className="font-semibold">Which card to use</h2>
-      </div>
-
-      <div
-        className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1"
-        role="group"
-        aria-label="What are you paying for?"
-      >
-        {(
-          [null, ...Object.keys(SPEND_CATEGORIES)] as (SpendCategory | null)[]
-        ).map((c) => (
-          <button
-            key={c ?? "any"}
-            type="button"
-            aria-pressed={category === c}
-            onClick={() => setCategory(c)}
-            className={cn(
-              "shrink-0 rounded-full border px-3 py-1 text-xs",
-              category === c
-                ? "border-primary bg-primary-soft text-primary"
-                : "text-muted-foreground",
-            )}
+      <details className="group/advisor">
+        <summary className="flex min-h-14 cursor-pointer list-none items-center gap-2 px-4 py-2 [&::-webkit-details-marker]:hidden">
+          <Lightbulb className="size-4 text-primary" aria-hidden />
+          <h2 className="font-semibold">Which card to use</h2>
+          <ChevronDown
+            className="ml-auto size-4 shrink-0 text-muted-foreground transition-transform group-open/advisor:rotate-180"
+            aria-hidden
+          />
+        </summary>
+        <div className="space-y-3 border-t p-4">
+          <div
+            className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1"
+            role="group"
+            aria-label="What are you paying for?"
           >
-            {c ? SPEND_CATEGORIES[c] : "Any spend"}
-          </button>
-        ))}
-      </div>
-
-      {a.pick ? (
-        <div className="rounded-xl bg-primary-soft p-3">
-          <p className="text-sm">
-            Use <b>{a.pick.cardLabel}</b>
-          </p>
-          <p className="text-sm text-muted-foreground">{a.pick.reason}</p>
-          {category &&
-            a.forCategory.length > 0 &&
-            a.forCategory[0].cardId !== a.pick.cardId && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                {a.forCategory[0].cardLabel} suits{" "}
-                {SPEND_CATEGORIES[category].toLowerCase()} better, but no
-                milestone is riding on it.
-              </p>
-            )}
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          {a.capacity === null
-            ? "Log a few monthly bills so I can tell which milestones you can reach."
-            : "No milestone is within reach right now. Use whichever card earns most on this spend."}
-        </p>
-      )}
-
-      <p className="text-xs text-muted-foreground">Use planned spending only. Don&apos;t spend extra to reach a reward.</p>
-      {(a.plan.length > 0 || a.capacity !== null) && <details className="border-t pt-3">
-        <summary className="cursor-pointer py-1 text-sm font-medium text-primary">Why this card?</summary>
-        <div className="space-y-3 pt-2">
-      {a.plan.length > 0 && (
-        <ul className="divide-y text-sm" aria-label="Milestone plan">
-          {a.plan
-            .filter(
-              (p) => showAll || a.capacity === null || p.status !== "unlikely",
-            )
-            .map((p) => (
-              <li key={p.milestone.id} className="space-y-0.5 py-2">
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="min-w-0 font-medium">
-                    {p.cardLabel}: {p.milestone.reward || p.milestone.name}
-                  </p>
-                  {a.capacity !== null && (
-                    <span
-                      className={cn(
-                        "shrink-0 text-xs font-medium",
-                        STATUS[p.status].tone,
-                      )}
-                    >
-                      {STATUS[p.status].short}
-                    </span>
-                  )}
-                </div>
-                <p className="tabular text-xs text-muted-foreground">
-                  {formatINR(p.milestone.remaining)} more by{" "}
-                  {formatDate(p.milestone.end)}
-                  {p.perMonth > 0
-                    ? ` · about ${formatINR(p.perMonth)} a month`
-                    : ""}
-                </p>
-              </li>
+            {(
+              [
+                null,
+                ...Object.keys(SPEND_CATEGORIES),
+              ] as (SpendCategory | null)[]
+            ).map((c) => (
+              <button
+                key={c ?? "any"}
+                type="button"
+                aria-pressed={category === c}
+                onClick={() => setCategory(c)}
+                className={cn(
+                  "min-h-11 shrink-0 rounded-full border px-3 py-1 text-xs",
+                  category === c
+                    ? "border-primary bg-primary-soft text-primary"
+                    : "text-muted-foreground",
+                )}
+              >
+                {c ? SPEND_CATEGORIES[c] : "Any spend"}
+              </button>
             ))}
-        </ul>
-      )}
-      {a.capacity !== null && a.plan.some((p) => p.status === "unlikely") && (
-        <Button
-          type="button"
-          variant="link"
-          size="sm"
-          onClick={() => setShowAll(!showAll)}
-        >
-          {showAll
-            ? "Hide out of reach"
-            : `Show ${a.plan.filter((p) => p.status === "unlikely").length} out of reach`}
-        </Button>
-      )}
+          </div>
 
-      {a.capacity !== null && (
-        <p className="text-xs text-muted-foreground">
-          Based on your usual {formatINR(a.capacity)} a month across cards, from
-          your logged bills.
-          {a.spare && a.plan.some((p) => p.status === "chase")
-            ? ` About ${formatINR(a.spare)} a month is free after these milestones.`
-            : ""}
-        </p>
-      )}
+          {a.pick ? (
+            <div className="rounded-xl bg-primary-soft p-3">
+              <p className="text-sm">
+                Use <b>{a.pick.cardLabel}</b>
+              </p>
+              <p className="text-sm text-muted-foreground">{a.pick.reason}</p>
+              {category &&
+                a.forCategory.length > 0 &&
+                a.forCategory[0].cardId !== a.pick.cardId && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {a.forCategory[0].cardLabel} suits{" "}
+                    {SPEND_CATEGORIES[category].toLowerCase()} better, but no
+                    milestone is riding on it.
+                  </p>
+                )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              {a.capacity === null
+                ? "Log a few monthly bills so I can tell which milestones you can reach."
+                : "No milestone is within reach right now. Use whichever card earns most on this spend."}
+            </p>
+          )}
+
+          <p className="text-xs text-muted-foreground">
+            Use planned spending only. Don&apos;t spend extra to reach a reward.
+          </p>
+          {(a.plan.length > 0 || a.capacity !== null) && (
+            <details className="border-t pt-3">
+              <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium text-primary">
+                Why this card?
+              </summary>
+              <div className="space-y-3 pt-2">
+                {a.plan.length > 0 && (
+                  <ul className="divide-y text-sm" aria-label="Milestone plan">
+                    {a.plan
+                      .filter(
+                        (p) =>
+                          showAll ||
+                          a.capacity === null ||
+                          p.status !== "unlikely",
+                      )
+                      .map((p) => (
+                        <li key={p.milestone.id} className="space-y-0.5 py-2">
+                          <div className="flex items-baseline justify-between gap-2">
+                            <p className="min-w-0 font-medium">
+                              {p.cardLabel}:{" "}
+                              {p.milestone.reward || p.milestone.name}
+                            </p>
+                            {a.capacity !== null && (
+                              <span
+                                className={cn(
+                                  "shrink-0 text-xs font-medium",
+                                  STATUS[p.status].tone,
+                                )}
+                              >
+                                {STATUS[p.status].short}
+                              </span>
+                            )}
+                          </div>
+                          <p className="tabular text-xs text-muted-foreground">
+                            {formatINR(p.milestone.remaining)} more by{" "}
+                            {formatDate(p.milestone.end)}
+                            {p.perMonth > 0
+                              ? ` · about ${formatINR(p.perMonth)} a month`
+                              : ""}
+                          </p>
+                        </li>
+                      ))}
+                  </ul>
+                )}
+                {a.capacity !== null &&
+                  a.plan.some((p) => p.status === "unlikely") && (
+                    <Button
+                      type="button"
+                      variant="link"
+                      size="sm"
+                      className="min-h-11"
+                      onClick={() => setShowAll(!showAll)}
+                    >
+                      {showAll
+                        ? "Hide out of reach"
+                        : `Show ${a.plan.filter((p) => p.status === "unlikely").length} out of reach`}
+                    </Button>
+                  )}
+
+                {a.capacity !== null && (
+                  <p className="text-xs text-muted-foreground">
+                    Based on your usual {formatINR(a.capacity)} a month across
+                    cards, from your logged bills.
+                    {a.spare && a.plan.some((p) => p.status === "chase")
+                      ? ` About ${formatINR(a.spare)} a month is free after these milestones.`
+                      : ""}
+                  </p>
+                )}
+              </div>
+            </details>
+          )}
         </div>
-      </details>}
+      </details>
     </section>
   );
 }

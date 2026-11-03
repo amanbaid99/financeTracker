@@ -807,19 +807,20 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Add a loan" }).click();
   await page.getByLabel("Name").fill("Car finance");
   await page.getByLabel("Type").selectOption("car");
+  await page.getByText("Original loan and early-closure details", { exact: true }).click();
   await page.getByLabel("Amount withdrawn").fill("500000");
   await page.getByLabel("EMI", { exact: true }).fill("12000");
   await page.getByLabel("Interest, % a year").fill("9");
   await page.getByLabel("Total EMIs").fill("48");
-  await page.getByLabel("Amount owed").fill("400000");
+  await page.getByLabel("Outstanding balance").fill("400000");
   await page.getByRole("button", { name: "Add loan" }).click();
   await expect(loansList).toContainText("Car finance");
   await expect(loansList).toContainText("₹1L of ₹5L repaid");
   await expect(loansList).toContainText(/a month in EMIs/);
-  await page.getByRole("button", { name: "Mark Car finance EMI paid" }).click();
-  await expect(loansList).toContainText("marked paid");
-  await loansList.getByRole("button", { name: "Undo" }).click();
-  await expect(page.getByRole("button", { name: "Mark Car finance EMI paid" })).toBeVisible();
+  await loansList.getByRole("button", { name: "Mark Car finance EMI paid" }).click();
+  await expect(page.getByRole("status").filter({ hasText: "Car finance EMI marked paid" })).toBeVisible();
+  await page.getByRole("status").filter({ hasText: "Car finance EMI marked paid" }).getByRole("button", { name: "Undo" }).click();
+  await expect(loansList.getByRole("button", { name: "Mark Car finance EMI paid" })).toBeVisible();
   await expect(loansList).toContainText("₹1L of ₹5L repaid");
   await page.screenshot({ path: "test-results/loans-375.png", fullPage: true });
   // A loan on a separate card the lender gave you, not one of your credit cards.
@@ -831,7 +832,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Payment due on").selectOption("2");
   await page.getByLabel("EMI", { exact: true }).fill("3000");
   await page.getByLabel("Interest, % a year").fill("14");
-  await page.getByLabel("Amount owed").fill("24000");
+  await page.getByLabel("Outstanding balance").fill("24000");
   await page.getByRole("button", { name: "Add loan" }).click();
   await expect(loansList).toContainText("Store card EMI");
   await expect(loansList).toContainText("Loan on a card · its own card");
@@ -867,6 +868,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     name: "Annual fee waiver progress",
   });
   await expect(feeBar).toHaveAttribute("aria-valuenow", "0");
+  await page.getByText("How this is counted", { exact: true }).click();
   await expect(
     page.getByText("No bills logged in this period yet"),
   ).toBeVisible();
@@ -874,8 +876,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Log bill" }).click();
   await page.getByLabel("Statement month").fill("2026-09");
   await page.getByLabel("Bill amount").fill("100000");
-  await page.getByRole("checkbox", { name: "Paid" }).uncheck();
-  await page.getByRole("button", { name: "Add due date or note" }).click();
+  await page.getByRole("checkbox", { name: "I have paid this bill" }).uncheck();
   await page.getByLabel("Due date (optional)").fill("2026-10-05");
   await page
     .getByRole("button", { name: "Log bill", exact: true })
@@ -886,11 +887,10 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   const bills = page.getByRole("region", { name: "Regalia Gold bills" });
   await expect(bills).toContainText("Sep 2026");
   await expect(bills).toContainText("₹1,00,000");
-  await expect(page.getByText(/₹1,00,000 (overdue|due)/)).toBeVisible();
-  await bills.getByRole("button", { name: "Sep 2026 bill not paid" }).click();
-  await expect(
-    bills.getByRole("button", { name: "Sep 2026 bill paid" }),
-  ).toBeVisible();
+  await expect(page.getByText(/₹1,00,000 (overdue|due)/).first()).toBeVisible();
+  await bills.getByRole("button", { name: "Mark Sep 2026 bill paid" }).click();
+  await bills.getByText("Payment history", { exact: true }).click();
+  await expect(bills.getByText("Paid", { exact: true })).toBeVisible();
   await expect(page.getByText(/₹1,00,000 (overdue|due)/)).toHaveCount(0);
   // Logging the same month again doesn't overwrite it.
   await page.getByRole("button", { name: "Log bill" }).click();
@@ -911,10 +911,12 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Log bill" }).click();
   await page.getByLabel("Statement month").fill("2026-10");
   await page.getByLabel("Bill amount").fill("300000");
-  await page.getByRole("checkbox", { name: "Paid" }).check();
+  await page.getByRole("checkbox", { name: "I have paid this bill" }).check();
   await page.getByRole("button", { name: "Log bill", exact: true }).last().click();
+  await page.getByText("Past and reached milestones", { exact: true }).click();
   await expect(feeBar).toHaveAttribute("aria-valuenow", "100");
-  await expect(page.getByText("Annual fee waived: reached")).toBeVisible();
+  await page.getByText("How this is counted", { exact: true }).click();
+  await expect(page.getByText("Reached", { exact: true })).toBeVisible();
   await expect(page.getByText("Counted from 2 bills")).toBeVisible();
   // Read features: two readings, checked against the text; nothing saved
   // until chosen. Turning on AI is asked for right here.
@@ -962,6 +964,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   ).toContainText("Travel");
   // Which card to use: the bonus is reachable at the usual spend.
   const advisor = page.getByRole("region", { name: "Which card to use" });
+  await advisor.locator("summary").first().click();
   await expect(advisor).toContainText("Use Regalia Gold");
   await advisor.getByText("Why this card?", { exact: true }).click();
   await expect(advisor).toContainText("Within reach");
