@@ -61,10 +61,10 @@ export function PortfolioOverview({
           </p>
         )}
         <div className="mt-4 border-t pt-3">
-          <div className="flex items-center justify-between gap-3">
+          <div className="space-y-2">
             <h2 className="text-sm font-semibold">Where your money is</h2>
             <div
-              className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+              className="grid w-full grid-cols-2 gap-1 rounded-lg bg-muted p-1"
               role="tablist"
               aria-label="Group by"
             >

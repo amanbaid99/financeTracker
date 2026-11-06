@@ -242,6 +242,7 @@ describe("row level security", () => {
     "month_bills",
     "loans",
     "loan_payments",
+    "net_worth_history",
   ] as const;
 
   for (const t of tables.filter((x) => x !== "ai_requests")) {
@@ -378,6 +379,15 @@ describe("row level security", () => {
     });
     const { error } = await anon.rpc("app_snapshot", { privacy_version: "test" });
     expect(error).toBeTruthy();
+  });
+
+  it("net worth history is written by the database, only for its owner", async () => {
+    const forge = await b
+      .from("net_worth_history")
+      .insert({ user_id: idA, day: "2020-01-01", assets: 1, liabilities: 0 });
+    expect(forge.error).not.toBeNull();
+    const call = await b.rpc("record_net_worth" as never, { uid: idA } as never);
+    expect(call.error).not.toBeNull();
   });
 
   it("user B cannot log a bill on user A's card", async () => {

@@ -859,6 +859,31 @@ export type Database = {
           },
         ];
       };
+      net_worth_history: {
+        Row: {
+          assets: number;
+          day: string;
+          liabilities: number;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          assets: number;
+          day: string;
+          liabilities: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          assets?: number;
+          day?: string;
+          liabilities?: number;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       planned_expenses: {
         Row: {
           amount: number;
@@ -1050,6 +1075,7 @@ export type Database = {
           note: string;
         }[];
       };
+      record_net_worth: { Args: { uid: string }; Returns: undefined };
       remove_invite: { Args: { p_email: string }; Returns: undefined };
     };
     Enums: {

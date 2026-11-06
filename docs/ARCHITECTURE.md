@@ -102,6 +102,9 @@ unit tests in `tests/unit/`.
   one step per holding with its monthly raise and one-time amount. `applyPlanStep` and
   `undoPlanStep` in `lib/actions.ts` record a ticked step and put it back.
 - **`lib/budget.ts`**: free to invest = income − costs − EMIs − SIPs, and the savings rate.
+- **Net worth**: `net_worth_history` (one row per day) is filled by database triggers on
+  `holdings` and `loans`. `loadNetWorth` in `lib/data.ts` reads it and adds a live point for today;
+  `components/net-worth-card.tsx` draws it as a small SVG chart (no chart library).
 - **`lib/ask/amount.ts`**: finds "where should ₹X go?" questions, splits the amount with
   `planMoney`/`planSteps` (codes only), and checks the reply's figures against the facts.
 - **`lib/goal-status.ts`**: a goal's status label, its time group (`horizonGroup`: next month,

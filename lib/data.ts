@@ -10,6 +10,7 @@ import { PRIVACY_VERSION } from "@/lib/legal";
 import type { Database, Tables } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { planMoney } from "@/lib/allocate";
+import type { NetWorthPoint } from "@/components/net-worth-card";
 import {
   freePercent,
   trackGoal,
@@ -481,4 +482,39 @@ export const loadMoneyPlan = cache(async () => {
     unassigned,
     budgetMonthly: b.budget.income > 0 ? b.budget.planMonthly : null,
   };
+});
+
+/**
+ * Net worth over time. The database keeps a row per day whenever a holding
+ * or loan changes; today's point uses the live figures (loan balances follow
+ * their EMI schedule even before you update them).
+ */
+export const loadNetWorth = cache(async () => {
+  const [{ supabase }, goals, loans] = await Promise.all([
+    requireUser(),
+    loadGoals(),
+    loadLoans(),
+  ]);
+  const { data } = await supabase
+    .from("net_worth_history")
+    .select("day, assets, liabilities")
+    .order("day", { ascending: true })
+    .limit(800);
+  const today = goals.today;
+  const assets = Math.round(goals.investments.reduce((s, i) => s + i.value, 0));
+  const liabilities = Math.round(
+    loans.reduce(
+      (s, l) => s + Math.max(0, loanView(l, today).state.balance),
+      0,
+    ),
+  );
+  const history: NetWorthPoint[] = (data ?? [])
+    .filter((r) => r.day < today)
+    .map((r) => ({
+      day: r.day,
+      assets: Number(r.assets),
+      liabilities: Number(r.liabilities),
+    }));
+  history.push({ day: today, assets, liabilities });
+  return { history, assets, liabilities };
 });

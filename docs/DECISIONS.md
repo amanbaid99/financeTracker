@@ -50,6 +50,11 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   split by plan step), "Where it goes, and why" by step (`Suggestion.stage`), then the This month
   checklist and details. Goals shows one row ("Your plan: ₹X a month", View plan) plus a budget
   link. Saving the plan form opens the plan page.
+- **Net worth (Nov 6, owner asked):** holdings minus loans. `net_worth_history` keeps one row per
+  day, written by database triggers on holdings and loans (`record_net_worth`, security definer,
+  not callable by users), so history needs nothing from the app. Today's point uses live figures
+  (loan balances follow their EMI schedule). Card bills are not counted. History starts on the
+  day the table was added.
 - **Portfolio and Credit simplified (Nov 6, owner asked):** Portfolio's "Where your money is" has
   Asset type and Instrument tabs instead of a separate "By kind" fold. Credit has no All/Loans/
   Cards chips: Payments due shows only when something is due, then Cards, then Loans.

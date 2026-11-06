@@ -52,6 +52,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro: "Everything you hold, across all goals, in one place.",
     steps: [
       "Open the Portfolio review row for checks and settings. Turn on automatic reviews for checks after imports and holding updates. Review suggestions yourself before changing investments.",
+      "Net worth at the top is what you own minus what you owe, with a chart that grows each time you update an investment or loan. Tap the chart to see a day.",
       "The overview shows your total, monthly investments and asset split. Tap an asset class to filter the holdings below. Clear the filter to see everything again. Switch to Instrument to see it by kind of investment, like mutual funds, stocks or EPF.",
       "Search holdings by name or category. Sort by value, name or simple growth. Unknown growth comes last. Growth compares today's value with what you put in, not an annual return.",
       "Last edited is when a holding record changed, not a market price date. CAS import dates are recorded for new successful imports; older dates may be unknown.",
@@ -113,6 +114,10 @@ export const RELEASES: Release[] = [
     date: "2026-11-06",
     title: "Not sure how much to save?",
     items: [
+      {
+        title: "Net worth, over time",
+        text: "Portfolio now starts with your net worth: what you own minus what you owe. Each time you add, update or remove an investment or loan, the chart gets a new point. Tap the chart to see any day.",
+      },
       {
         title: "Your plan, on its own page",
         text: "Goals shows a small row with your plan. Tap View plan to see where each rupee goes and why, in the order the plan fills it, and what to add to your SIPs.",
