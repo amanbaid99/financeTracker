@@ -376,7 +376,10 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   );
   await page.getByLabel("Monthly investment budget").fill("40000");
   await page.getByRole("button", { name: "Show my plan" }).click();
-  // "This month": the plan as a checklist, in your own funds.
+  // A saved plan opens on its own page: where it goes and why, then
+  // "This month" as a checklist in your own funds.
+  await expect(page).toHaveURL(/\/goals\/plan$/);
+  await expect(page.getByRole("heading", { name: "Where it goes, and why" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "This month" })).toBeVisible();
   await expect(page.getByText(/plus ₹2,80,000 once/)).toBeVisible();
   const steps = page.getByRole("list", { name: "This month's steps" });
@@ -385,11 +388,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   if (await showAllSteps.isVisible()) await showAllSteps.click();
   await expect(steps).toContainText("Index SIP");
   await expect(steps).toContainText("₹2,80,000 now");
-  // The goal's own box says what to do, naming the fund you hold.
-  await expect(page.getByText("What to do").first()).toBeVisible();
-  await expect(
-    page.getByText(/into your Index SIP \(close enough to an equity index fund/),
-  ).toBeVisible();
   // Strategy lives under plan details and changes the steps, not your data.
   await page.getByText("Budget and plan details", { exact: true }).click();
   await page.getByRole("button", { name: "One holding per goal", exact: true }).click();
@@ -403,6 +401,15 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await steps.getByRole("button", { name: "Undo" }).click();
   await expect(steps).not.toContainText("Recorded. Undo is available for 10 seconds.");
   await expect(steps.getByRole("checkbox", { name: /into Index SIP$/ })).toHaveCount(1);
+  // Back on Goals, a small row leads to the plan, and the goal's own box
+  // says what to do, naming the fund you hold.
+  await page.getByRole("link", { name: "Goals", exact: true }).first().click();
+  await expect(page.getByRole("link", { name: /View plan/ })).toBeVisible();
+  await page.getByRole("button", { name: /^House/ }).click();
+  await expect(page.getByText("What to do").first()).toBeVisible();
+  await expect(
+    page.getByText(/into your Index SIP \(close enough to an equity index fund/),
+  ).toBeVisible();
   await page.getByRole("button", { name: "Edit Index SIP" }).click();
   await expect(page.getByRole("dialog", { name: "Index SIP" }).getByLabel("Monthly SIP")).toHaveValue("10,000");
   await page.getByRole("button", { name: "Close", exact: true }).click();
@@ -427,7 +434,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Edit Planned index fund" }),
   ).toBeVisible();
-  await page.getByRole("button", { name: "Edit money plan" }).click();
+  await quick("Plan my money");
   if (!await page.getByLabel("Savings to put toward goals now").isVisible()) await page.getByText("Add a one-time amount", { exact: true }).click();
   await page.getByLabel("Savings to put toward goals now").fill("0");
   await page.getByRole("button", { name: "Show my plan" }).click();
@@ -1050,7 +1057,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: /a month for This month$/ }).click();
   await expect(page.getByRole("button", { name: /a month for This month$/ })).toHaveCount(0);
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
-  await expect(page.getByRole("heading", { name: "This month" })).toBeVisible();
+  await expect(page.getByRole("link", { name: /View plan/ })).toBeVisible();
 
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();

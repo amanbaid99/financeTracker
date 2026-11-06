@@ -9,7 +9,9 @@ import { todayIST } from "@/lib/dates";
 import { PRIVACY_VERSION } from "@/lib/legal";
 import type { Database, Tables } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
+import { planMoney } from "@/lib/allocate";
 import {
+  freePercent,
   trackGoal,
   type Investment,
   type Link,
@@ -445,5 +447,38 @@ export const loadBudget = cache(async () => {
       emis: loanEmis.reduce((s, l) => s + l.emi, 0),
       sips,
     }),
+  };
+});
+
+/** The money plan as Goals and the plan page show it, worked out once. */
+export const loadMoneyPlan = cache(async () => {
+  const [g, b] = await Promise.all([loadGoals(), loadBudget()]);
+  const { goals, investments, links, today, plan: input } = g;
+  const sipsNow = investments.reduce((s, i) => s + i.monthlySip, 0);
+  const unassigned = Math.round(
+    investments.reduce(
+      (s, i) => s + (i.value * freePercent(i.id, links)) / 100,
+      0,
+    ),
+  );
+  const plan = input
+    ? planMoney({
+        goals,
+        investments,
+        links,
+        lump: input.lump,
+        monthlyTotal: input.monthly,
+        todayISO: today,
+        essentialsMonthly: b.budget.costs + b.budget.emis,
+      })
+    : null;
+  return {
+    ...g,
+    budget: b.budget,
+    plan,
+    planInput: input,
+    sipsNow,
+    unassigned,
+    budgetMonthly: b.budget.income > 0 ? b.budget.planMonthly : null,
   };
 });

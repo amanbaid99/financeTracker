@@ -55,8 +55,10 @@ function PlanForm({
       setError("");
       const res = await savePlan(input);
       if (!res.ok) return setError(res.error);
-      router.refresh();
       onClose();
+      // A saved plan opens on its own page.
+      if (input) router.push("/goals/plan");
+      router.refresh();
     });
 
   return (
@@ -367,7 +369,10 @@ export function MoneyPlanCard({
   strategy,
   onStrategyChange,
   goals = [],
+  variant = "summary",
 }: {
+  /** "summary" is the small row on Goals; "full" is the plan page. */
+  variant?: "summary" | "full";
   /** To say what the goals still need before there's a plan. */
   goals?: TrackedGoal[];
   budget: Budget;
@@ -452,7 +457,6 @@ export function MoneyPlanCard({
   const sips = sipPlan(suggestions, investments, links, strategy);
   const steps = planSteps(suggestions, investments, links, strategy);
   const extraMonthly = sips.reduce((sum, line) => sum + line.monthly, 0);
-  const lumpTotal = steps.reduce((sum, st) => sum + st.addLump, 0);
   let footer: { text: string; tone: string };
   if (plan.stillShortMonthly > 0) {
     footer = {
@@ -469,6 +473,66 @@ export function MoneyPlanCard({
       text: "Every dated goal is covered with this plan.",
       tone: "text-success",
     };
+  }
+
+  if (variant === "summary") {
+    const over =
+      budget.income > 0 && plan.monthlyTotal > budget.planMonthly
+        ? plan.monthlyTotal - budget.planMonthly
+        : 0;
+    return (
+      <section
+        className="surface-card overflow-hidden rounded-2xl border border-primary/15 bg-card"
+        aria-label="Your money plan"
+      >
+        <NextLink
+          href="/goals/plan"
+          className="press flex min-h-18 w-full items-center gap-3 px-4 py-3 hover:bg-muted/40"
+        >
+          <span
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary"
+            aria-hidden
+          >
+            <Sparkles className="size-4" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium">
+              Your plan:{" "}
+              <span className="tabular">{formatINR(plan.monthlyTotal)}</span> a
+              month
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {steps.length > 0
+                ? `${steps.length} ${steps.length === 1 ? "step" : "steps"} to set up this month`
+                : "Nothing to set up right now"}
+              {over > 0 && (
+                <span className="text-warning">
+                  {" "}
+                  · {formatINR(over)} over budget
+                </span>
+              )}
+            </span>
+          </span>
+          <span className="shrink-0 text-sm font-medium text-primary">
+            View plan
+          </span>
+        </NextLink>
+        <div className="flex items-center justify-between gap-3 border-t border-border/60 px-4">
+          <NextLink
+            href="/goals/budget"
+            className="inline-flex min-h-11 items-center text-xs font-medium text-muted-foreground hover:text-primary"
+          >
+            {budget.income > 0 ? "Edit budget" : "Set budget"}
+          </NextLink>
+          {budget.income > 0 && (
+            <span className="tabular text-xs text-muted-foreground">
+              {formatINR(budget.planMonthly)} a month to invest
+            </span>
+          )}
+        </div>
+        {form}
+      </section>
+    );
   }
 
   return (
@@ -488,38 +552,6 @@ export function MoneyPlanCard({
         >
           Edit plan
         </button>
-      </div>
-      <div>
-        <p className="tabular text-2xl font-semibold tracking-tight">
-          {formatINR(plan.monthlyTotal)}
-          <span className="text-sm font-normal text-muted-foreground">
-            {" "}
-            a month
-          </span>
-        </p>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-          {lumpTotal > 0 && <span>plus {formatINR(lumpTotal)} once</span>}
-          {budget.income > 0 ? (
-            plan.monthlyTotal > budget.planMonthly ? (
-              <span
-                role="status"
-                className="rounded-full bg-warning-soft px-2 py-0.5 font-medium text-warning"
-              >
-                {formatINR(plan.monthlyTotal - budget.planMonthly)} over your
-                budget
-              </span>
-            ) : (
-              <span>of {formatINR(budget.planMonthly)} your budget allows</span>
-            )
-          ) : (
-            <NextLink
-              href="/goals/budget"
-              className="inline-flex min-h-11 items-center font-medium text-primary"
-            >
-              Set budget
-            </NextLink>
-          )}
-        </p>
       </div>
       {steps.length > 0 ? (
         <Checklist steps={steps} investments={investments} links={links} />

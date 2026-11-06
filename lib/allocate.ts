@@ -29,7 +29,12 @@ export interface Suggestion {
   why: string;
   /** The goal as it would look with this suggestion. */
   after: TrackedGoal;
+  /** Which step of the plan funded it, for explaining the order. */
+  stage: PlanStage;
 }
+
+/** The plan's steps, in the order it funds them. */
+export type PlanStage = "bills" | "emergency" | "soon" | "long" | "open";
 
 export interface MoneyPlan {
   lump: number;
@@ -300,6 +305,15 @@ export function planMoney(opts: {
       categoryLabel: categoryLabel(a.category),
       why: a.why,
       after,
+      stage: g.billsFund
+        ? "bills"
+        : floorGiven.has(g.id)
+          ? "emergency"
+          : near.includes(g)
+            ? "soon"
+            : longTerm.includes(g)
+              ? "long"
+              : "open",
     });
   }
 

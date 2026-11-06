@@ -46,6 +46,10 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   the monthly amount, with "over your budget" as a small pill. Before a plan exists, the row says
   what the goals still need a month. The time-group chip strip was tried and removed (owner: not
   needed); the group headings stay.
+- **Plan page (Nov 6, owner asked):** the plan lives at `/goals/plan`: a summary (monthly total,
+  split by plan step), "Where it goes, and why" by step (`Suggestion.stage`), then the This month
+  checklist and details. Goals shows one row ("Your plan: ₹X a month", View plan) plus a budget
+  link. Saving the plan form opens the plan page.
 - **EMI Mark paid from the 1st of the due month (Nov 6, owner asked):** earlier, the button is a
   note ("Mark paid from 1 Dec"), and the server refuses early marks too.
 - **One way to close a gap (Nov 6, owner's call):** a goal the plan can't cover only shows "invest

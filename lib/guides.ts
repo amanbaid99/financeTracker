@@ -40,9 +40,9 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
       "The card at the top shows what's saved, what goes in each month and how many goals are on track. Goals are grouped by when they're due, from next month to 5+ years. Must-haves come first in each group. A label on each says On track, Behind or what needs action. Covered bills funds, loans covered by EMIs and reached goals are folded away. If a bills fund develops a shortfall, it returns to the active list.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
-      "This month, above your goals, lists what to invest and where. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
+      "Your plan has its own page: tap View plan. It shows where the money goes and why, then This month lists what to add to your SIPs. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
       "Open a goal for its What to do box. If your plan can't cover it, it says how much more a month keeps it on track.",
-      "This month shows what your budget allows and what your plan uses. Open Budget and plan details for income, costs, EMIs and SIPs, or to edit your budget.",
+      "The plan page shows what your budget allows and what your plan uses. Open Budget and plan details there for income, costs, EMIs and SIPs.",
       "Edit plan sets one monthly investment budget, including what you already invest. One-time savings are optional.",
       "Budget and plan details shows the goal breakdown and lets you compare one holding per goal with a spread across holdings. Nothing is saved until you confirm.",
     ],
@@ -114,8 +114,12 @@ export const RELEASES: Release[] = [
     title: "Not sure how much to save?",
     items: [
       {
+        title: "Your plan, on its own page",
+        text: "Goals shows a small row with your plan. Tap View plan to see where each rupee goes and why, in the order the plan fills it, and what to add to your SIPs.",
+      },
+      {
         title: "A clearer Goals page",
-        text: "One card shows what's saved, what goes in each month and how your goals are doing. This month leads with the amount to invest. Goals are grouped from next month to 5+ years. Mark a goal Must have or Nice to have, and must-haves come first.",
+        text: "One card shows what's saved, what goes in each month and how your goals are doing. Goals are grouped from next month to 5+ years. Mark a goal Must have or Nice to have, and must-haves come first.",
       },
       {
         title: "EMIs when they're due",

@@ -6,10 +6,8 @@ import { GoalsOverview } from "@/components/goals-overview";
 import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
 import { BudgetCard } from "@/components/budget-card";
-import { loadBudget, loadGoals } from "@/lib/data";
-import { planMoney } from "@/lib/allocate";
+import { loadMoneyPlan } from "@/lib/data";
 import { sortGoals } from "@/lib/goal-summary";
-import { freePercent } from "@/lib/tracker";
 
 export const metadata: Metadata = { title: "Goals" };
 
@@ -19,28 +17,18 @@ export default async function GoalsPage({
   searchParams: Promise<{ open?: string; do?: string }>;
 }) {
   const { open, do: action } = await searchParams;
-  const [
-    { goals, investments, links, today, plan: planInput },
-    { budget: monthBudget },
-  ] = await Promise.all([loadGoals(), loadBudget()]);
-  const sipsNow = investments.reduce((s, i) => s + i.monthlySip, 0);
-  const unassigned = Math.round(
-    investments.reduce(
-      (s, i) => s + (i.value * freePercent(i.id, links)) / 100,
-      0,
-    ),
-  );
-  const plan = planInput
-    ? planMoney({
-        goals,
-        investments,
-        links,
-        lump: planInput.lump,
-        monthlyTotal: planInput.monthly,
-        todayISO: today,
-        essentialsMonthly: monthBudget.costs + monthBudget.emis,
-      })
-    : null;
+  const {
+    goals,
+    investments,
+    links,
+    today,
+    plan,
+    planInput,
+    budget: monthBudget,
+    sipsNow,
+    unassigned,
+    budgetMonthly,
+  } = await loadMoneyPlan();
   // Every investment remains updatable from the + menu.
   const goalNames = new Map(goals.map((g) => [g.id, g.name]));
   const updatable = investments.map((i) => ({
@@ -112,9 +100,7 @@ export default async function GoalsPage({
             sipsNow={sipsNow}
             unassigned={unassigned}
             autoOpen={action === "plan"}
-            budgetMonthly={
-              monthBudget.income > 0 ? monthBudget.planMonthly : null
-            }
+            budgetMonthly={budgetMonthly}
           />
         </>
       )}
