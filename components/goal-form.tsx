@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft } from "lucide-react";
+import { Calculator, ChevronLeft } from "lucide-react";
 import { useState, useTransition } from "react";
 import { Field } from "@/components/forms/field";
 import {
@@ -8,6 +8,7 @@ import {
   newBillKey,
   type BillRow,
 } from "@/components/bills-editor";
+import { GoalCalculator } from "@/components/goal-calculator";
 import { GoalIcon } from "@/components/goal-icon";
 import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
@@ -85,6 +86,7 @@ export function GoalForm({
   const [target, setTarget] = useState<number | null>(
     initial?.target ?? (goal && !ls ? goal.target : null),
   );
+  const [calc, setCalc] = useState(false);
   const [noDate, setNoDate] = useState(
     initial?.targetDate ? false : goal ? !goal.targetDate : false,
   );
@@ -516,6 +518,13 @@ export function GoalForm({
             placeholder="e.g. 20,00,000"
             required
           />
+          <button
+            type="button"
+            onClick={() => setCalc(true)}
+            className="mt-1.5 inline-flex items-center gap-1 text-sm font-medium text-primary"
+          >
+            <Calculator className="size-4" aria-hidden /> Not sure? Work it out
+          </button>
         </Field>
       )}
 
@@ -583,6 +592,24 @@ export function GoalForm({
       <Button type="submit" disabled={pending} className={cn("w-full")}>
         {pending ? "Saving…" : goal ? "Save goal" : "Create goal"}
       </Button>
+      {calc && type && (
+        <GoalCalculator
+          goalType={type}
+          today={today}
+          onClose={() => setCalc(false)}
+          onUse={(r) => {
+            // Fill the form in; the person checks it and saves.
+            setTarget(r.target);
+            if (r.targetDate) {
+              setNoDate(false);
+              setDate(r.targetDate);
+            } else setNoDate(true);
+            setInflate(r.inflationPct > 0);
+            if (r.inflationPct > 0) setInflation(String(r.inflationPct));
+            setCalc(false);
+          }}
+        />
+      )}
     </form>
   );
 }

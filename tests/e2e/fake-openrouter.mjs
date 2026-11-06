@@ -99,6 +99,9 @@ http
         const facts = JSON.parse(messages[1].content);
         return reply(res, JSON.stringify({ order: facts.findings.map(f => f.code) }));
       }
+      if (messages[0]?.content?.startsWith("You estimate what something costs in India")) {
+        return reply(res, JSON.stringify({ low: 800000, typical: 1200000, high: 2000000, assumptions: ["about 300 guests", "venue, food and decor"] }));
+      }
       lastAsk = data;
       // "Where should ₹X go?": explain the app's split. The first try slips
       // in a made-up figure, to prove it gets caught and rewritten.

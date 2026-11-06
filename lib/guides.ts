@@ -110,6 +110,20 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    date: "2026-11-06",
+    title: "Not sure how much to save?",
+    items: [
+      {
+        title: "Work it out",
+        text: 'When you add a goal, tap "Not sure? Work it out". For retirement it uses your age and spending to find the amount you\'d need. For an emergency fund it counts months of essentials and EMIs. For a home, the down payment and buying costs.',
+      },
+      {
+        title: "AI cost estimates",
+        text: "For a wedding, education, a car or a trip, describe it and AI suggests a low, typical and high cost. You pick one, and the app does the maths.",
+      },
+    ],
+  },
+  {
     date: "2026-11-03",
     title: "A calmer home for your money",
     items: [

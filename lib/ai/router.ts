@@ -17,7 +17,12 @@ import "server-only";
 
 import type { AiSettings, ChatMessage } from "@/lib/ai/openrouter";
 
-export type Task = "categorize" | "card_features" | "ask" | "portfolio_review";
+export type Task =
+  | "categorize"
+  | "card_features"
+  | "ask"
+  | "portfolio_review"
+  | "estimate";
 
 interface Policy {
   json: boolean;
@@ -29,8 +34,20 @@ interface Policy {
 }
 
 export const POLICIES: Record<Task, Policy> = {
+  // "What does this cost in India today?" for the goal calculator.
+  estimate: {
+    json: true,
+    maxTokens: 400,
+    timeoutMs: 20_000,
+    minContext: 4_000,
+    maxPaidInput: 1,
+  },
   portfolio_review: {
-    json: true, maxTokens: 1500, timeoutMs: 20_000, minContext: 8_000, maxPaidInput: 1,
+    json: true,
+    maxTokens: 1500,
+    timeoutMs: 20_000,
+    minContext: 8_000,
+    maxPaidInput: 1,
   },
   categorize: {
     json: true,

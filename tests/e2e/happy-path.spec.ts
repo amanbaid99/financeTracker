@@ -208,7 +208,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Show details" }).click();
   await expect(page.getByText("Needed each month to be on time")).toBeVisible();
   await expect(page.getByText(/^\+₹[\d,]+\/mo$/).first()).toBeVisible();
-  await expect(page.getByText("Behind", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(/^Behind/).first()).toBeVisible();
   await page.screenshot({
     path: "test-results/goal-house-375.png",
     fullPage: true,
@@ -607,6 +607,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText(/^1 new investment$/)).toBeVisible();
   await page.screenshot({ path: "test-results/import-insights-375.png", fullPage: true });
   await page.getByRole("button", { name: "Back to your goals" }).click();
+  // A covered bills fund is folded below the active goals.
+  await page.getByText(/^Covered at your current pace/).click();
   await page.getByRole("button", { name: /^Bills fund/ }).click();
   await expect(
     page.getByRole("button", { name: "Edit Bills liquid fund" }),
@@ -1005,9 +1007,20 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await cardsGuide.getByRole("button", { name: "Got it" }).click();
   await closeGuides();
 
+  // Not sure how much? The calculator works it out and fills the goal in.
+  await quick("New goal");
+  await page.getByRole("button", { name: /^Retirement/ }).click();
+  await page.getByRole("button", { name: /Work it out/ }).click();
+  await page.getByLabel("Your age").fill("30");
+  await page.getByLabel("Monthly spending today").fill("50000");
+  await expect(page.getByText(/That takes about ₹[\d.]+ Cr at 60/)).toBeVisible();
+  await page.getByRole("button", { name: /^Use ₹/ }).click();
+  await expect(page.getByLabel("How much do you need?")).not.toHaveValue("");
+  await page.getByRole("link", { name: "Your goals" }).click();
+
   // Budget: take-home and costs give what's free, which can feed the plan.
   await tab("Goals").click();
-  await page.getByRole("link", { name: /Set up your budget/ }).click();
+  await page.getByRole("link", { name: /^Set budget$|Set up your budget/ }).click();
   await expect(page.getByRole("heading", { name: "Budget", exact: true })).toBeVisible();
   await page.getByLabel("Salary a month").fill("200000");
   await page.getByRole("button", { name: "Save Salary" }).click();
