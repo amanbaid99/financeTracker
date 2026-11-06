@@ -6,6 +6,29 @@ export function PageSkeleton({
   title: string;
   rows?: number;
 }) {
+  if (title === "Home")
+    return (
+      <main className="space-y-5" aria-busy="true">
+        <h1 className="text-2xl font-semibold tracking-tight">Home</h1>
+        <div className="h-64 motion-safe:animate-pulse rounded-2xl border bg-card p-4">
+          <div className="h-4 w-20 rounded bg-muted" />
+          <div className="mt-3 h-9 w-44 rounded bg-muted" />
+          <div className="mt-6 h-24 rounded-xl bg-muted/60" />
+        </div>
+        <div className="h-72 motion-safe:animate-pulse rounded-2xl border bg-card p-4">
+          <div className="mb-4 h-4 w-28 rounded bg-muted" />
+          <div className="grid grid-cols-2 gap-2">
+            {[0, 1, 2, 3].map((n) => (
+              <div key={n} className="h-24 rounded-xl bg-muted/60" />
+            ))}
+          </div>
+        </div>
+        <div className="h-40 motion-safe:animate-pulse rounded-2xl border bg-card" />
+        <span className="sr-only" role="status">
+          Loading Home
+        </span>
+      </main>
+    );
   return (
     <main className="space-y-5" aria-busy="true">
       <div className="space-y-2">

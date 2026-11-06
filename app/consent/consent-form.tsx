@@ -14,7 +14,10 @@ export function ConsentForm() {
   return (
     <div className="space-y-4">
       <label className="flex items-start gap-3 text-sm">
-        <Checkbox checked={agree} onChange={(e) => setAgree(e.target.checked)} />
+        <Checkbox
+          checked={agree}
+          onChange={(e) => setAgree(e.target.checked)}
+        />
         <span>
           I have read and agree to the{" "}
           <a href="/privacy" target="_blank" className="font-medium underline">
@@ -31,7 +34,7 @@ export function ConsentForm() {
             start(async () => {
               const r = await acceptPrivacy();
               if (!r.ok) setError(r.error);
-              else router.replace("/goals");
+              else router.replace("/overview");
             })
           }
         >

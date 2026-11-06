@@ -20,7 +20,9 @@ function Chart({
   points,
   picked,
   onPick,
+  compact = false,
 }: {
+  compact?: boolean;
   points: { day: string; value: number }[];
   picked: number;
   onPick: (i: number) => void;
@@ -44,8 +46,29 @@ function Chart({
   return (
     <svg
       viewBox={`0 0 ${W} ${H}`}
-      className="h-28 w-full touch-none"
-      role="img"
+      className={cn("w-full touch-pan-y", compact ? "h-20" : "h-28")}
+      role="slider"
+      tabIndex={0}
+      aria-valuemin={0}
+      aria-valuemax={points.length - 1}
+      aria-valuenow={picked}
+      aria-valuetext={`${formatDate(points[picked].day)}: ${formatINR(points[picked].value)}`}
+      onKeyDown={(event) => {
+        const next =
+          event.key === "ArrowLeft"
+            ? picked - 1
+            : event.key === "ArrowRight"
+              ? picked + 1
+              : event.key === "Home"
+                ? 0
+                : event.key === "End"
+                  ? points.length - 1
+                  : null;
+        if (next !== null) {
+          event.preventDefault();
+          onPick(Math.max(0, Math.min(points.length - 1, next)));
+        }
+      }}
       aria-label={`Net worth from ${formatDate(points[0].day)} to ${formatDate(points[points.length - 1].day)}`}
       onPointerDown={(e) => {
         const box = e.currentTarget.getBoundingClientRect();
@@ -97,13 +120,21 @@ function Chart({
 }
 
 /** What you own minus what you owe, and how it has moved. */
-export function NetWorthCard({ history }: { history: NetWorthPoint[] }) {
+export function NetWorthCard({
+  history,
+  compact = false,
+}: {
+  history: NetWorthPoint[];
+  compact?: boolean;
+}) {
   const points = history.map((p) => ({
     day: p.day,
     value: p.assets - p.liabilities,
   }));
   const last = points.length - 1;
-  const [picked, setPicked] = useState(last);
+  const [selection, setPicked] = useState<number | null>(null);
+  if (!history.length) return null;
+  const picked = Math.min(selection ?? last, last);
   const now = history[picked];
   const net = points[picked].value;
   const first = points[0].value;
@@ -146,7 +177,12 @@ export function NetWorthCard({ history }: { history: NetWorthPoint[] }) {
         </div>
       </div>
       {points.length > 1 ? (
-        <Chart points={points} picked={picked} onPick={setPicked} />
+        <Chart
+          points={points}
+          picked={picked}
+          onPick={setPicked}
+          compact={compact}
+        />
       ) : (
         <p className="rounded-lg bg-muted p-2.5 text-xs text-muted-foreground">
           Your history starts today. Each time you add, update or remove an
@@ -154,8 +190,8 @@ export function NetWorthCard({ history }: { history: NetWorthPoint[] }) {
         </p>
       )}
       <p className="text-[11px] text-muted-foreground">
-        Investments and savings, minus loans. Card bills you pay in full
-        aren&apos;t counted.
+        Tracked investments and savings minus loans. Card bills are shown
+        separately.
       </p>
     </section>
   );

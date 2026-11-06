@@ -60,7 +60,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Home Screen app: manifest and icons are public, and the login page links them.
   const manifest = await page.request.get("/manifest.webmanifest");
   expect(manifest.ok()).toBe(true);
-  expect((await manifest.json()).icons.length).toBeGreaterThan(0);
+  const manifestData = await manifest.json();
+  expect(manifestData.icons.length).toBeGreaterThan(0);
+  expect(manifestData.start_url).toBe("/overview");
   expect((await page.request.get("/icon-192.png")).ok()).toBe(true);
 
   // Not invited: friendly error.
@@ -87,7 +89,13 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText("wrong or has expired")).toBeVisible();
   await page.getByLabel("Code from the email", { exact: true }).fill(code);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page).toHaveURL(/\/goals$/);
+  await expect(page).toHaveURL(/\/overview$/);
+  const homeGuide = page.getByRole("dialog", { name: "Your money at a glance" });
+  await expect(homeGuide).toBeVisible();
+  await homeGuide.getByRole("button", { name: "Got it" }).click();
+  await expect(page.getByRole("heading", { name: "Home", exact: true })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link")).toHaveCount(5);
+  await tab("Goals").click();
   // First visit: the Goals guide pops up once, and (i) brings it back.
   // A new user gets no "What's new".
   const goalsGuide = page.getByRole("dialog", { name: "How goals work" });

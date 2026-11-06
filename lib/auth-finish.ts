@@ -11,7 +11,11 @@ type Supabase = Awaited<ReturnType<typeof createClient>>;
  * records the privacy consent given on the login screen, restores the user's
  * theme cookies and says where to go next.
  */
-export async function finishSignIn(supabase: Supabase, userId: string, consentVersion: string | null) {
+export async function finishSignIn(
+  supabase: Supabase,
+  userId: string,
+  consentVersion: string | null,
+) {
   if (consentVersion === PRIVACY_VERSION) {
     const { data: existing } = await supabase
       .from("consents")
@@ -20,7 +24,9 @@ export async function finishSignIn(supabase: Supabase, userId: string, consentVe
       .eq("version", PRIVACY_VERSION)
       .limit(1);
     if (!existing?.length) {
-      await supabase.from("consents").insert({ kind: "privacy_policy", version: PRIVACY_VERSION });
+      await supabase
+        .from("consents")
+        .insert({ kind: "privacy_policy", version: PRIVACY_VERSION });
     }
   }
 
@@ -35,5 +41,5 @@ export async function finishSignIn(supabase: Supabase, userId: string, consentVe
     store.set(THEME_COOKIE, profile.theme, THEME_COOKIE_OPTIONS);
     store.set(ACCENT_COOKIE, profile.accent, THEME_COOKIE_OPTIONS);
   }
-  return "/goals";
+  return "/overview";
 }

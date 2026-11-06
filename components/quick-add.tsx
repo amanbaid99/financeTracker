@@ -70,7 +70,7 @@ const ACTIONS = [
 
 /** Where an action goes from this page: updates stay on Portfolio, and Import comes back to it. */
 function hrefFor(href: string, path: string): string {
-  if (path !== "/portfolio") return href;
+  if (path !== "/portfolio" && path !== "/overview") return href;
   if (href === "/goals?do=update") return "/portfolio?do=update";
   if (href === "/import") return "/import?from=portfolio";
   return href;
@@ -82,13 +82,13 @@ export function hasQuickActions(path: string): boolean {
   );
 }
 
-/** One docked action for adding and updating, without covering page content. */
+/** Fixed on main pages, with a clear gutter beside the page content. */
 export function QuickAdd() {
   const path = usePathname();
   const { seen, markSeen } = useGuides();
   const [open, setOpen] = useState(false);
   const actions =
-    path === "/portfolio"
+    path === "/portfolio" || path === "/overview"
       ? [
           {
             href: "/portfolio?do=add",
@@ -113,7 +113,7 @@ export function QuickAdd() {
           setOpen(true);
         }}
         aria-label="Add or update"
-        className="press inline-flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm hover:brightness-110"
+        className="press fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-30 inline-flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-black/15 hover:brightness-110 sm:right-[max(1rem,calc(50%-24rem+1rem))]"
       >
         <Plus className="size-6" aria-hidden />
       </button>

@@ -3,6 +3,7 @@
 // from server and client code.
 
 export type GuideId =
+  | "home"
   | "goals"
   | "portfolio"
   | "cards"
@@ -17,10 +18,22 @@ export interface Guide {
 }
 
 export const GUIDES: Record<GuideId, Guide> = {
+  home: {
+    title: "Your money at a glance",
+    intro:
+      "Home brings your saved figures together. Open a section for its details.",
+    steps: [
+      "Net worth is your tracked investments and savings minus loans. Card bills are shown separately. The chart starts when history was first recorded.",
+      "This month shows your budget, current SIPs, dated card statement totals and unpaid bills. Statement totals include any EMIs in those bills. Missing statements do not mean zero spending.",
+      "Payments coming up shows up to three overdue or current-month payments. Open Credit to record them.",
+      "Goal progress previews three active goals. Your next step suggests one thing to work on, and Not now hides it on this device.",
+      "The + button stays at the bottom right on the main pages for adding, importing and updating. The five tabs open Home, Goals, Portfolio, Credit and Ask.",
+    ],
+  },
   "quick-add": {
     title: "Using the plus button",
     intro:
-      "Tap + in the middle of the bottom navigation for your everyday actions.",
+      "Tap + above the bottom-right corner of the navigation for your everyday actions.",
     steps: [
       "New goal adds something you want to save for.",
       "Update values lets you enter the latest amounts for your investments.",
@@ -40,7 +53,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
       "The card at the top shows what's saved, what goes in each month and how many goals are on track. Goals are grouped by when they're due, from next month to 5+ years. Must-haves come first in each group. A label on each says On track, Behind or what needs action. Covered bills funds, loans covered by EMIs and reached goals are folded away. If a bills fund develops a shortfall, it returns to the active list.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
-      "A Next step card shows only when there's something to do: set your budget, start a SIP plan or set up this month's SIPs. Tap Not now to hide it. Got a bonus or idle savings? Tap +, then I have extra money.",
+      "Home has a Next step card when there's something to do: set your budget, start a SIP plan or set up this month's SIPs. Tap Not now to hide it. Got a bonus or idle savings? Tap +, then I have extra money.",
       "Your plan has its own page: tap Your plan. It shows where the money goes and why, then This month lists what to add to your SIPs. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
       "Open a goal for its What to do box. If your plan can't cover it, it says how much more a month keeps it on track.",
       "The plan page shows what your budget allows and what your plan uses. Open Budget and plan details there for income, costs, EMIs and SIPs.",
@@ -52,8 +65,8 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "Your portfolio",
     intro: "Everything you hold, across all goals, in one place.",
     steps: [
+      "Home shows your net worth and its history. Portfolio focuses on the value and allocation of your holdings.",
       "Open the Portfolio review row for checks and settings. Turn on automatic reviews for checks after imports and holding updates. Review suggestions yourself before changing investments.",
-      "Net worth at the top is what you own minus what you owe, with a chart that grows each time you update an investment or loan. Tap the chart to see a day.",
       "The overview shows your total, monthly investments and asset split. Tap an asset class to filter the holdings below. Clear the filter to see everything again. Switch to Instrument to see it by kind of investment, like mutual funds, stocks or EPF.",
       "Search holdings by name or category. Sort by value, name or simple growth. Unknown growth comes last. Growth compares today's value with what you put in, not an annual return.",
       "Last edited is when a holding record changed, not a market price date. CAS import dates are recorded for new successful imports; older dates may be unknown.",
@@ -111,6 +124,20 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-11-06",
+    title: "A Home for your money",
+    items: [
+      {
+        title: "Your overview",
+        text: "Home brings together net worth, monthly figures, dated card statements, upcoming payments and goal progress. Details stay in their own tabs.",
+      },
+      {
+        title: "One useful next step",
+        text: "Next-step guidance now lives on Home. The + button stays above the bottom-right corner while you scroll the main pages.",
+      },
+    ],
+  },
   {
     date: "2026-11-06",
     title: "Not sure how much to save?",
