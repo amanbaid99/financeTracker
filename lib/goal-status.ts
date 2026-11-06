@@ -2,10 +2,10 @@
 // plan and its calculations never read these.
 
 import type { Suggestion } from "./allocate";
-import { addMonths, monthsBetween } from "./dates";
+import { addMonths } from "./dates";
 import { formatINR, formatMonths } from "./format";
 import { monthYear, type Tone } from "./goal-summary";
-import { projectedValue, type TrackedGoal } from "./tracker";
+import { requiredSip, type TrackedGoal } from "./tracker";
 
 export interface GoalStatus {
   label: string;
@@ -105,17 +105,24 @@ export function goalHint(
 }
 
 export interface GapOptions {
-  /** A later date the goal can be reached by with what's going in. */
-  newDate: string | null;
-  /** A smaller target, in today's money, that's reachable by the date. */
-  lowerTarget: number | null;
-  /** Extra a month still needed to keep the date and target. */
+  /** Total a month needed to keep the date and target. */
+  neededNow: number;
+  /** A later date, with the total a month that then gets there. */
+  later: { date: string; monthly: number } | null;
+  /** A target a fifth smaller (today's money), with the total a month for it. */
+  smaller: { target: number; monthly: number } | null;
+  /** Extra a month, beyond what's going in and the plan, to keep both. */
   moreMonthly: number;
+  /** Nothing going in yet, so it's "start" rather than "more". */
+  fromZero: boolean;
 }
 
+const up100 = (n: number) => Math.ceil(n / 100) * 100;
+
 /**
- * For a dated savings goal still behind after the plan: three ways to close
- * the gap. `planMonthly` is what the plan adds; it counts toward each one.
+ * For a dated savings goal still behind after the plan: realistic trade-offs,
+ * each with what it then takes a month. Never "lower it to whatever today's
+ * savings reach", which for a long goal with little invested is meaningless.
  */
 export function gapOptions(
   g: TrackedGoal,
@@ -124,30 +131,38 @@ export function gapOptions(
 ): GapOptions | null {
   if (g.loanState || g.billsFund || !g.targetDate || !g.months) return null;
   if (g.status !== "behind") return null;
-  const sip = g.monthlySip + planMonthly;
+  const going = g.monthlySip + planMonthly;
   const moreMonthly = Math.max(0, g.extraSipNeeded - planMonthly);
   if (moreMonthly <= 0) return null;
   const infl = (g.inflationPct ?? 0) / 100;
-  const grown = (m: number) => g.target * Math.pow(1 + infl, m / 12);
+  // Total a month to reach `target` (today's money) in `m` months.
+  const needed = (target: number, m: number) =>
+    up100(
+      requiredSip(
+        target * Math.pow(1 + infl, m / 12),
+        g.current,
+        g.returnPct,
+        m,
+      ),
+    );
+  const neededNow = needed(g.target, g.months);
 
-  // Smallest number of months (up to 40 years) where saving meets the
-  // target, which also grows with prices.
-  let newDate: string | null = null;
-  for (let m = g.months + 1; m <= 480; m++) {
-    if (projectedValue(g.current, sip, g.returnPct, m) >= grown(m)) {
-      newDate = addMonths(today, m);
-      break;
-    }
-  }
-  // What's reachable by the date, back in today's money, rounded down.
-  const reach = projectedValue(g.current, sip, g.returnPct, g.months);
-  const today$ = reach / Math.pow(1 + infl, g.months / 12);
-  const step = today$ >= 1e5 ? 10000 : 1000;
-  const lower = Math.floor(today$ / step) * step;
-  return {
-    newDate:
-      newDate && monthsBetween(today, newDate) > g.months ? newDate : null,
-    lowerTarget: lower > 0 && lower < g.target ? lower : null,
-    moreMonthly,
-  };
+  // Push the date out by about a sixth of the time left (6 months to 3 years).
+  const shift = Math.min(36, Math.max(6, Math.round(g.months / 6)));
+  const laterMonthly = needed(g.target, g.months + shift);
+  const later =
+    laterMonthly < neededNow * 0.97
+      ? { date: addMonths(g.targetDate, shift), monthly: laterMonthly }
+      : null;
+
+  // Aim a fifth lower: a real trade-off, not a different goal.
+  const raw = g.target * 0.8;
+  const step = raw >= 1e7 ? 1e5 : raw >= 1e5 ? 1e4 : 1000;
+  const smallerTarget = Math.round(raw / step) * step;
+  const smaller =
+    smallerTarget > g.current
+      ? { target: smallerTarget, monthly: needed(smallerTarget, g.months) }
+      : null;
+
+  return { neededNow, later, smaller, moreMonthly, fromZero: going === 0 };
 }

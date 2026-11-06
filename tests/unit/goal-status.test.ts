@@ -50,24 +50,29 @@ describe("goal status", () => {
 });
 
 describe("ways to close a gap", () => {
-  it("offers a later date, a smaller target and the extra a month", () => {
+  it("offers realistic trade-offs, each with what it then takes a month", () => {
+    const g = trackGoal(goal({ target: 300000 }), [inv(77000, 3000)], link, TODAY);
+    const o = gapOptions(g, TODAY, 500)!;
+    expect(o.moreMonthly).toBe(g.extraSipNeeded - 500);
+    expect(o.fromZero).toBe(false);
+    expect(o.smaller!.target).toBe(240000);
+    expect(o.smaller!.monthly).toBeLessThan(o.neededNow);
+    expect(o.later!.date > "2028-02-01").toBe(true);
+    expect(o.later!.monthly).toBeLessThan(o.neededNow);
+  });
+
+  it("never suggests cutting a big goal to what today's savings reach", () => {
+    // Retirement-like: ₹1.65 Cr target, ₹2.15L saved, nothing going in.
     const g = trackGoal(
-      goal({ target: 300000 }),
-      [inv(77000, 3000)],
+      goal({ type: "retirement", target: 16500000, targetDate: "2059-11-06" }),
+      [inv(215000, 0)],
       link,
       TODAY,
     );
-    const o = gapOptions(g, TODAY, 500)!;
-    expect(o.moreMonthly).toBe(g.extraSipNeeded - 500);
-    expect(o.lowerTarget).toBeGreaterThan(77000);
-    expect(o.lowerTarget).toBeLessThan(300000);
-    expect(o.newDate! > "2028-02-01").toBe(true);
-    expect(o.newDate! < "2034-01-01").toBe(true);
-  });
-
-  it("leaves out a date when prices outrun the saving", () => {
-    const g = trackGoal(goal({}), [inv(77000, 3000)], link, TODAY);
-    expect(gapOptions(g, TODAY, 500)?.newDate).toBeNull();
+    const o = gapOptions(g, TODAY, 0)!;
+    expect(o.fromZero).toBe(true);
+    expect(o.smaller!.target).toBe(13200000);
+    expect(o.later!.date).toBe("2062-11-06");
   });
 
   it("offers nothing when the plan covers the goal", () => {

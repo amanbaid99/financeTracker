@@ -531,29 +531,33 @@ export function GapChoices({
           : "Pick one to close the gap:"}
       </p>
       <ul className="space-y-2" aria-label="Ways to close the gap">
-        {options.newDate &&
-          row(
-            `Move the date to ${monthYear(options.newDate)}`,
-            `Keeps your ${formatINRCompact(goal.target)} target`,
-            "Use",
-            () => setEdit({ targetDate: options.newDate! }),
-          )}
-        {options.lowerTarget &&
-          row(
-            `Lower the target to ${formatINRCompact(options.lowerTarget)}`,
-            `Keeps ${monthYear(goal.targetDate)}`,
-            "Use",
-            () => setEdit({ target: options.lowerTarget! }),
-          )}
         {row(
-          `Invest ${formatINR(options.moreMonthly)} a month more`,
-          "Raise your monthly budget",
+          options.fromZero
+            ? `Start investing ${formatINR(options.moreMonthly)} a month`
+            : `Invest ${formatINR(options.moreMonthly)} a month more`,
+          "Keeps the date and the target",
           "Edit plan",
           () =>
             window.dispatchEvent(
               new CustomEvent(QUICK_ACTION, { detail: "plan" }),
             ),
         )}
+        {options.later &&
+          row(
+            goal.type === "retirement"
+              ? `Retire a little later, in ${monthYear(options.later.date)}`
+              : `Move the date to ${monthYear(options.later.date)}`,
+            `Then ${formatINR(options.later.monthly)} a month instead of ${formatINR(options.neededNow)}`,
+            "Use",
+            () => setEdit({ targetDate: options.later!.date }),
+          )}
+        {options.smaller &&
+          row(
+            `Aim a fifth lower: ${formatINRCompact(options.smaller.target)}`,
+            `Then ${formatINR(options.smaller.monthly)} a month instead of ${formatINR(options.neededNow)} (today's money)`,
+            "Use",
+            () => setEdit({ target: options.smaller!.target }),
+          )}
       </ul>
       {edit && (
         <Sheet title="Edit goal" onClose={close}>
