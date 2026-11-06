@@ -9,20 +9,20 @@ import {
 import { GuideSettings } from "@/components/guide-settings";
 import { InviteSettings } from "@/components/invite-settings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { loadGoals, requireUser } from "@/lib/data";
+import { loadSnapshot, requireUser } from "@/lib/data";
 import { asAccent, asTheme } from "@/lib/theme";
 
 export const metadata: Metadata = { title: "Settings" };
 
 export default async function SettingsPage() {
-  const { supabase, user } = await requireUser();
-  const { theme, accent } = await loadGoals();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("ai_enabled")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  const { data: isAdmin } = await supabase.rpc("is_admin");
+  const [{ supabase, user }, snap] = await Promise.all([
+    requireUser(),
+    loadSnapshot(),
+  ]);
+  const theme = snap.profile?.theme ?? "white";
+  const accent = snap.profile?.accent ?? "green";
+  const profile = snap.profile;
+  const isAdmin = snap.is_admin;
   const invites = isAdmin
     ? ((await supabase.rpc("list_invites")).data ?? [])
     : [];

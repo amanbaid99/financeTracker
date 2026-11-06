@@ -7,6 +7,7 @@ import { loanInput, loanView, type Loan, type LoanType } from "@/lib/loans";
 import { pendingReleases, type Release } from "@/lib/guides";
 import { todayIST } from "@/lib/dates";
 import { PRIVACY_VERSION } from "@/lib/legal";
+import type { Database, Tables } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 import {
   trackGoal,
@@ -36,17 +37,144 @@ export const requireUser = cache(async () => {
   };
 });
 
+type Row<T extends keyof Database["public"]["Tables"]> = Tables<T>;
+
+/**
+ * Everything the signed-in pages show, from one database call
+ * (`app_snapshot`, which runs under row level security). Cached per request,
+ * so the layout and the page share it.
+ */
+export interface Snapshot {
+  goals: Pick<
+    Row<"goals">,
+    | "id"
+    | "name"
+    | "type"
+    | "target_today"
+    | "target_date"
+    | "inflation_rate"
+    | "created_at"
+    | "loan_id"
+    | "loan_outstanding"
+    | "loan_emi"
+    | "loan_rate"
+    | "loan_months_left"
+    | "loan_as_of"
+    | "loan_foreclosure_pct"
+    | "loan_foreclosure_gst"
+    | "loan_emi_day"
+    | "loan_first_emi"
+  >[];
+  holdings: Pick<
+    Row<"holdings">,
+    | "id"
+    | "kind"
+    | "name"
+    | "category"
+    | "current_value"
+    | "monthly_sip"
+    | "expected_return_pct"
+    | "invested"
+    | "updated_at"
+  >[];
+  allocations: Pick<
+    Row<"goal_allocations">,
+    "goal_id" | "holding_id" | "percent"
+  >[];
+  goal_bills: Pick<
+    Row<"goal_bills">,
+    "id" | "goal_id" | "name" | "amount" | "every_months" | "next_due"
+  >[];
+  loans: Pick<
+    Row<"loans">,
+    | "id"
+    | "name"
+    | "type"
+    | "card_id"
+    | "principal"
+    | "taken_on"
+    | "rate"
+    | "emi"
+    | "months_left"
+    | "total_emis"
+    | "emi_day"
+    | "bill_day"
+    | "first_emi"
+    | "outstanding"
+    | "outstanding_as_of"
+    | "foreclosure_pct"
+    | "foreclosure_gst"
+  >[];
+  loan_payments: Pick<
+    Row<"loan_payments">,
+    "loan_id" | "due_date" | "amount" | "paid_on"
+  >[];
+  incomes: Pick<
+    Row<"income_streams">,
+    "id" | "label" | "type" | "amount_monthly" | "active"
+  >[];
+  expenses: Pick<Row<"expenses">, "id" | "category" | "amount_monthly">[];
+  cards: Pick<
+    Row<"credit_cards">,
+    | "id"
+    | "label"
+    | "annual_fee"
+    | "year_start"
+    | "rewards"
+    | "benefits"
+    | "best_for"
+    | "created_at"
+  >[];
+  card_milestones: Pick<
+    Row<"card_milestones">,
+    | "id"
+    | "card_id"
+    | "name"
+    | "target"
+    | "period"
+    | "deadline"
+    | "reward"
+    | "created_at"
+  >[];
+  card_bills: Pick<
+    Row<"card_bills">,
+    "id" | "card_id" | "month" | "amount" | "due_date" | "paid" | "note"
+  >[];
+  profile: Pick<
+    Row<"profiles">,
+    | "theme"
+    | "accent"
+    | "plan_lump_sum"
+    | "plan_monthly"
+    | "ai_enabled"
+    | "age"
+    | "dob"
+    | "dependents"
+    | "sole_earner"
+  > | null;
+  settings: Pick<
+    Row<"settings">,
+    "seen_guides" | "whats_new_seen" | "last_cas_import_at"
+  > | null;
+  review: Row<"portfolio_reviews"> | null;
+  privacy_ok: boolean;
+  joined_at: string | null;
+  is_admin: boolean;
+  ai_consent: { granted: boolean; version: string } | null;
+}
+
+export const loadSnapshot = cache(async (): Promise<Snapshot> => {
+  const { supabase } = await requireUser();
+  const { data, error } = await supabase.rpc("app_snapshot", {
+    privacy_version: PRIVACY_VERSION,
+  });
+  if (error) throw new Error(error.message);
+  return data as unknown as Snapshot;
+});
+
 /** True when the user hasn't accepted the current privacy policy version. */
 export const needsPrivacyConsent = cache(async (): Promise<boolean> => {
-  const { supabase } = await requireUser();
-  const { data } = await supabase
-    .from("consents")
-    .select("id")
-    .eq("kind", "privacy_policy")
-    .eq("version", PRIVACY_VERSION)
-    .eq("granted", true)
-    .limit(1);
-  return !data?.length;
+  return !(await loadSnapshot()).privacy_ok;
 });
 
 export interface GoalsData {
@@ -69,33 +197,12 @@ function check<T>(res: {
 }
 
 export async function readGoals(): Promise<GoalsData> {
-  const { supabase, user } = await requireUser();
-  const [goals, holdings, allocations, profile, bills, loans] =
-    await Promise.all([
-      supabase
-        .from("goals")
-        .select(
-          "id, name, type, target_today, target_date, inflation_rate, created_at, loan_id, loan_outstanding, loan_emi, loan_rate, loan_months_left, loan_as_of, loan_foreclosure_pct, loan_foreclosure_gst, loan_emi_day, loan_first_emi",
-        )
-        .order("created_at"),
-      supabase
-        .from("holdings")
-        .select(
-          "id, kind, name, category, current_value, monthly_sip, expected_return_pct, invested, updated_at",
-        )
-        .order("current_value", { ascending: false }),
-      supabase.from("goal_allocations").select("goal_id, holding_id, percent"),
-      supabase
-        .from("profiles")
-        .select("theme, accent, plan_lump_sum, plan_monthly")
-        .eq("user_id", user.id)
-        .maybeSingle(),
-      supabase
-        .from("goal_bills")
-        .select("id, goal_id, name, amount, every_months, next_due")
-        .order("next_due"),
-      loadLoans(),
-    ]);
+  const [snap, loans] = await Promise.all([loadSnapshot(), loadLoans()]);
+  const goals = { data: snap.goals, error: null };
+  const holdings = { data: snap.holdings, error: null };
+  const allocations = { data: snap.allocations, error: null };
+  const profile = { data: snap.profile };
+  const bills = { data: snap.goal_bills, error: null };
   const loanById = new Map(loans.map((l) => [l.id, l]));
   const billRows = check(bills);
   const today = todayIST();
@@ -189,26 +296,10 @@ export const loadGoals = cache(readGoals);
 /** The user's credit cards with their milestones. */
 export const loadCards = cache(
   async (): Promise<{ cards: Card[]; today: string }> => {
-    const { supabase } = await requireUser();
-    const [cards, milestones, bills] = await Promise.all([
-      supabase
-        .from("credit_cards")
-        .select(
-          "id, label, annual_fee, year_start, rewards, benefits, best_for, created_at",
-        )
-        .order("created_at"),
-      supabase
-        .from("card_milestones")
-        .select(
-          "id, card_id, name, target, period, deadline, reward, created_at",
-        )
-        .order("created_at"),
-      supabase
-        .from("card_bills")
-        .select("id, card_id, month, amount, due_date, paid, note")
-        .order("month", { ascending: false })
-        .limit(500),
-    ]);
+    const snap = await loadSnapshot();
+    const cards = { data: snap.cards, error: null };
+    const milestones = { data: snap.card_milestones, error: null };
+    const bills = { data: snap.card_bills, error: null };
     const ms = check(milestones);
     const bs = check(bills);
     return {
@@ -250,22 +341,12 @@ export const loadCards = cache(
 /** Which guides this person has seen and which launches they haven't read. */
 export const loadOnboarding = cache(
   async (): Promise<{ seenGuides: string[]; releases: Release[] }> => {
-    const { supabase, user } = await requireUser();
+    const snap = await loadSnapshot();
     // When someone joined: their first privacy acceptance, made at sign-up.
-    const [settings, joined] = await Promise.all([
-      supabase
-        .from("settings")
-        .select("seen_guides, whats_new_seen")
-        .eq("user_id", user.id)
-        .maybeSingle(),
-      supabase
-        .from("consents")
-        .select("created_at")
-        .eq("kind", "privacy_policy")
-        .order("created_at", { ascending: true })
-        .limit(1)
-        .maybeSingle(),
-    ]);
+    const settings = { data: snap.settings };
+    const joined = {
+      data: snap.joined_at ? { created_at: snap.joined_at } : null,
+    };
     const data = settings.data;
     return {
       seenGuides: data?.seen_guides ?? [],
@@ -279,24 +360,15 @@ export const loadOnboarding = cache(
 
 /** Every loan with its marked payments and the goal saving to close it. */
 export const loadLoans = cache(async (): Promise<Loan[]> => {
-  const { supabase } = await requireUser();
-  const [loans, payments, goals] = await Promise.all([
-    supabase
-      .from("loans")
-      .select(
-        "id, name, type, card_id, principal, taken_on, rate, emi, months_left, total_emis, emi_day, bill_day, first_emi, outstanding, outstanding_as_of, foreclosure_pct, foreclosure_gst",
-      )
-      .order("created_at"),
-    supabase
-      .from("loan_payments")
-      .select("loan_id, due_date, amount, paid_on")
-      .order("due_date", { ascending: false })
-      .limit(1000),
-    supabase
-      .from("goals")
-      .select("id, name, loan_id")
-      .not("loan_id", "is", null),
-  ]);
+  const snap = await loadSnapshot();
+  const loans = { data: snap.loans, error: null };
+  const payments = { data: snap.loan_payments, error: null };
+  const goals = {
+    data: snap.goals
+      .filter((g) => g.loan_id)
+      .map((g) => ({ id: g.id, name: g.name, loan_id: g.loan_id })),
+    error: null,
+  };
   const ps = check(payments);
   const gs = check(goals);
   return check(loans).map((l) => {
@@ -334,19 +406,13 @@ export const loadLoans = cache(async (): Promise<Loan[]> => {
 
 /** Money in and money out for the budget, plus EMIs and SIPs from the app. */
 export const loadBudget = cache(async () => {
-  const { supabase } = await requireUser();
-  const [incomes, costs, loans, goals] = await Promise.all([
-    supabase
-      .from("income_streams")
-      .select("id, label, type, amount_monthly, active")
-      .order("created_at"),
-    supabase
-      .from("expenses")
-      .select("id, category, amount_monthly")
-      .order("amount_monthly", { ascending: false }),
+  const [snap, loans, goals] = await Promise.all([
+    loadSnapshot(),
     loadLoans(),
     loadGoals(),
   ]);
+  const incomes = { data: snap.incomes, error: null };
+  const costs = { data: snap.expenses, error: null };
   const today = goals.today;
   const loanEmis = loans
     .map((l) => ({ name: l.name, view: loanView(l, today) }))

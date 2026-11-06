@@ -1,7 +1,5 @@
 import { PortfolioReview } from "@/components/portfolio-review";
 import { resultSchema } from "@/lib/portfolio-review/checks";
-import { aiAllowed } from "@/lib/portfolio-review/service";
-import { requireUser } from "@/lib/data";
 import { FileUp } from "lucide-react";
 import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
@@ -10,7 +8,8 @@ import { PortfolioOverview } from "@/components/portfolio-overview";
 import { PortfolioHoldings } from "@/components/portfolio-holdings";
 import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
-import { loadGoals } from "@/lib/data";
+import { loadGoals, loadSnapshot } from "@/lib/data";
+import { AI_CONSENT_VERSION } from "@/lib/legal";
 import { buildPortfolio } from "@/lib/portfolio";
 
 export const metadata: Metadata = { title: "Portfolio" };
@@ -21,21 +20,18 @@ export default async function PortfolioPage({
   searchParams: Promise<{ do?: string }>;
 }) {
   const { do: action } = await searchParams;
-  const { investments, links, goals } = await loadGoals();
-  const { supabase, user } = await requireUser();
-  const [review, aiEnabled, importHistory] = await Promise.all([
-    supabase
-      .from("portfolio_reviews")
-      .select("*")
-      .eq("user_id", user.id)
-      .maybeSingle(),
-    aiAllowed(supabase, user.id),
-    supabase
-      .from("settings")
-      .select("last_cas_import_at")
-      .eq("user_id", user.id)
-      .maybeSingle(),
+  // One snapshot for everything here (shared with the layout).
+  const [{ investments, links, goals }, snap] = await Promise.all([
+    loadGoals(),
+    loadSnapshot(),
   ]);
+  const review = { data: snap.review, error: null };
+  const aiEnabled = Boolean(
+    snap.profile?.ai_enabled &&
+    snap.ai_consent?.granted &&
+    snap.ai_consent.version === AI_CONSENT_VERSION,
+  );
+  const importHistory = { data: snap.settings, error: null };
   const parsedReview = resultSchema.safeParse(review.data?.result);
   const reviewCard = (
     <PortfolioReview

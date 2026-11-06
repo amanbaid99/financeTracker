@@ -2,17 +2,12 @@ import type { Metadata } from "next";
 import { GuideButton } from "@/components/guides";
 import { AskChat, AskConsent } from "@/components/ask-chat";
 import { openRouterSettings } from "@/lib/ai/openrouter";
-import { requireUser } from "@/lib/data";
+import { loadSnapshot } from "@/lib/data";
 
 export const metadata: Metadata = { title: "Ask" };
 
 export default async function AskPage() {
-  const { supabase, user } = await requireUser();
-  const { data } = await supabase
-    .from("profiles")
-    .select("ai_enabled")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  const data = (await loadSnapshot()).profile;
   const configured = openRouterSettings() !== null;
 
   return (

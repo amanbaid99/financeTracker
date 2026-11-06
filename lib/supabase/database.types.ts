@@ -1034,6 +1034,7 @@ export type Database = {
         Args: { p_email: string; p_note?: string };
         Returns: undefined;
       };
+      app_snapshot: { Args: { privacy_version: string }; Returns: Json };
       caller_email: { Args: Record<PropertyKey, never>; Returns: string };
       delete_my_account: {
         Args: Record<PropertyKey, never>;

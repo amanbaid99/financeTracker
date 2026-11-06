@@ -361,6 +361,25 @@ describe("row level security", () => {
     expect(pay.error).toBeTruthy();
   });
 
+  it("the page snapshot only ever holds your own rows", async () => {
+    const mine = (await a.rpc("app_snapshot", { privacy_version: "test" })).data as {
+      goals: { id: string }[];
+      cards: { id: string }[];
+      loans: { id: string }[];
+    };
+    expect(mine.goals.some((g) => g.id === goalA)).toBe(true);
+    expect(mine.cards.some((c) => c.id === cardA)).toBe(true);
+    const theirs = (await b.rpc("app_snapshot", { privacy_version: "test" })).data as typeof mine;
+    expect(theirs.goals.some((g) => g.id === goalA)).toBe(false);
+    expect(theirs.cards.some((c) => c.id === cardA)).toBe(false);
+    expect(theirs.loans.some((l) => l.id === loanA)).toBe(false);
+    const anon = createClient<Database>(url, anonKey, {
+      auth: { persistSession: false },
+    });
+    const { error } = await anon.rpc("app_snapshot", { privacy_version: "test" });
+    expect(error).toBeTruthy();
+  });
+
   it("user B cannot log a bill on user A's card", async () => {
     const { error } = await b.from("card_bills").insert({
       user_id: idB,

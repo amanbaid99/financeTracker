@@ -6,7 +6,7 @@ import { userMayPay } from "@/lib/ai/budget";
 import { openRouterSettings } from "@/lib/ai/openrouter";
 import { sharedRouter } from "@/lib/ai/router";
 import { maskPersonal } from "@/lib/card-extract";
-import { loadBudget } from "@/lib/data";
+import { loadBudget, loadSnapshot } from "@/lib/data";
 import {
   ESTIMATE_PROMPT,
   parseEstimate,
@@ -35,15 +35,9 @@ export interface CalcContext {
 
 /** What the calculator can fill in for you. Nothing here is saved. */
 export async function calcContext(): Promise<CalcContext> {
-  const { supabase, userId } = await session();
-  const [{ data: p }, b] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("age, dob, dependents, sole_earner, ai_enabled")
-      .eq("user_id", userId)
-      .maybeSingle(),
-    loadBudget(),
-  ]);
+  await session();
+  const [snap, b] = await Promise.all([loadSnapshot(), loadBudget()]);
+  const p = snap.profile;
   let age = p?.age ?? null;
   if (p?.dob) {
     const d = new Date(p.dob);
