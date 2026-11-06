@@ -39,10 +39,26 @@ export function Sheet({
         el.getClientRects().length > 0 &&
         getComputedStyle(el).visibility !== "hidden",
     );
-    (input ?? panel.querySelector<HTMLElement>("button"))?.focus({
-      preventScroll: true,
-    });
+    // On a phone, focusing an input opens the keyboard over the sheet before
+    // you've seen it. Focus the sheet itself there; tap a box to type.
+    const touch = window.matchMedia("(pointer: coarse)").matches;
+    const target = touch
+      ? panel.querySelector<HTMLElement>("[data-sheet-panel]")
+      : (input ?? panel.querySelector<HTMLElement>("button"));
+    target?.focus({ preventScroll: true });
+    // Keep the sheet in the space above the on-screen keyboard.
+    const vv = window.visualViewport;
+    const fit = () => {
+      if (!vv) return;
+      panel.style.height = `${vv.height}px`;
+      panel.style.top = `${vv.offsetTop}px`;
+    };
+    fit();
+    vv?.addEventListener("resize", fit);
+    vv?.addEventListener("scroll", fit);
     return () => {
+      vv?.removeEventListener("resize", fit);
+      vv?.removeEventListener("scroll", fit);
       panel.close();
       document.body.style.overflow = overflow;
       if (previous instanceof HTMLElement && previous.isConnected)
@@ -103,7 +119,11 @@ export function Sheet({
         onClick={onClose}
         aria-hidden
       />
-      <div className="sheet-panel relative max-h-[90dvh] w-full overflow-y-auto overscroll-contain rounded-t-3xl border bg-card p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-xl sm:max-w-md sm:rounded-3xl">
+      <div
+        data-sheet-panel
+        tabIndex={-1}
+        className="sheet-panel relative max-h-[90%] outline-none w-full overflow-y-auto overscroll-contain rounded-t-3xl border bg-card p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-xl sm:max-w-md sm:rounded-3xl"
+      >
         <div
           className="mx-auto mb-3 h-1 w-9 rounded-full bg-border sm:hidden"
           aria-hidden
