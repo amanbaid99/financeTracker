@@ -46,6 +46,12 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   the monthly amount, with "over your budget" as a small pill. Before a plan exists, the row says
   what the goals still need a month. The time-group chip strip was tried and removed (owner: not
   needed); the group headings stay.
+- **Next step, not a permanent plan card (Nov 6, owner asked):** Goals shows one Next step card
+  only when there's something to do, in this order: set up this month's SIPs (plan with steps),
+  set a budget (no plan, no income), start a SIP plan (no plan). "Not now" hides that step on the
+  device (localStorage). "I have extra money" (+ menu, `?do=extra`) shows where a one-time amount
+  goes with `planMoney`, and adds it to the plan only on "Add to my plan". The + menu's "Plan my
+  money" became "Edit SIP plan". The summary card links to Your plan and Budget.
 - **Plan page (Nov 6, owner asked):** the plan lives at `/goals/plan`: a summary (monthly total,
   split by plan step), "Where it goes, and why" by step (`Suggestion.stage`), then the This month
   checklist and details. Goals shows one row ("Your plan: ₹X a month", View plan) plus a budget

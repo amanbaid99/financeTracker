@@ -365,7 +365,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   ).toBeVisible();
 
   // Money plan: suggests a split, and recording it takes it out of the plan.
-  await quick("Plan my money");
+  await quick("Edit SIP plan");
   await page.getByText("Add a one-time amount", { exact: true }).click();
   await expect(
     page.getByText(/is not linked to a goal/),
@@ -404,7 +404,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Back on Goals, a small row leads to the plan, and the goal's own box
   // says what to do, naming the fund you hold.
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
-  await expect(page.getByRole("link", { name: /View plan/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Your plan", exact: true })).toBeVisible();
   await page.getByRole("button", { name: /^House/ }).click();
   await expect(page.getByText("What to do").first()).toBeVisible();
   await expect(
@@ -434,12 +434,22 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Edit Planned index fund" }),
   ).toBeVisible();
-  await quick("Plan my money");
+  await quick("Edit SIP plan");
   if (!await page.getByLabel("Savings to put toward goals now").isVisible()) await page.getByText("Add a one-time amount", { exact: true }).click();
   await page.getByLabel("Savings to put toward goals now").fill("0");
   await page.getByRole("button", { name: "Show my plan" }).click();
   // No one-time amount any more.
   await expect(page.getByText(/plus ₹[\d,]+ once/)).toHaveCount(0);
+  // Extra money: where a one-time amount would go, without saving anything.
+  await page.getByRole("link", { name: "Goals", exact: true }).first().click();
+  await quick("I have extra money");
+  await page.getByLabel("How much?").fill("50000");
+  await expect(
+    page
+      .getByRole("list", { name: "Where it goes" })
+      .or(page.getByText("Your goals don't need a one-time amount right now.")),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Close", exact: true }).click();
 
   // Bills fund: one liquid fund for known payments.
   const inMonths = (n: number) => {
@@ -1057,7 +1067,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: /a month for This month$/ }).click();
   await expect(page.getByRole("button", { name: /a month for This month$/ })).toHaveCount(0);
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
-  await expect(page.getByRole("link", { name: /View plan/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Your plan", exact: true })).toBeVisible();
 
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();

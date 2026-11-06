@@ -49,9 +49,15 @@ const ACTIONS = [
     icon: Receipt,
   },
   {
+    href: "/goals?do=extra",
+    label: "I have extra money",
+    hint: "See where a one-time amount helps most",
+    icon: Wallet,
+  },
+  {
     href: "/goals?do=plan",
-    label: "Plan my money",
-    hint: "Split what you can invest",
+    label: "Edit SIP plan",
+    hint: "Your monthly split across goals",
     icon: Sparkles,
   },
   {

@@ -1,9 +1,16 @@
 "use client";
 
-import { ArrowUpRight, Check, ChevronDown, Plus, Sparkles } from "lucide-react";
+import { Check, ChevronDown, Plus, Sparkles } from "lucide-react";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  useTransition,
+} from "react";
 import { BudgetDetails } from "@/components/budget-card";
 import type { Budget } from "@/lib/budget";
 import { InvestmentSheet } from "@/components/investment-sheet";
@@ -410,53 +417,24 @@ export function MoneyPlanCard({
   const needed = goals
     .filter((g) => g.status !== "reached" && !g.emisCloseFirst)
     .reduce((s, g) => s + g.extraSipNeeded, 0);
-  if (!plan)
-    return (
-      <section
-        className="surface-card overflow-hidden rounded-2xl border bg-card"
-        aria-label="Plan your money"
-      >
-        <button
-          type="button"
-          aria-label="Plan my money"
-          onClick={() => setOpen(true)}
-          className="press flex min-h-18 w-full items-center gap-3 px-4 py-3 text-left hover:bg-muted/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-        >
-          <span
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary"
-            aria-hidden
-          >
-            <Sparkles className="size-4" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium">Plan my money</span>
-            <span className="block text-xs text-muted-foreground">
-              {needed > 0
-                ? `Your goals need about ${formatINR(Math.round(needed / 1000) * 1000)} a month more. See how to split what you can.`
-                : "Split your monthly savings across goals."}
-            </span>
-          </span>
-          <ArrowUpRight className="size-4 shrink-0 text-primary" aria-hidden />
-        </button>
-        <div className="flex items-center justify-between gap-3 border-t border-border/60 px-4">
-          <NextLink
-            href="/goals/budget"
-            className="inline-flex min-h-11 items-center text-xs font-medium text-muted-foreground hover:text-primary"
-          >
-            {budget.income > 0 ? "Edit budget" : "Set up a budget"}
-          </NextLink>
-          {budget.income <= 0 && (
-            <span className="text-xs text-muted-foreground">Optional</span>
-          )}
-        </div>
-        {form}
-      </section>
-    );
-
-  const { suggestions } = plan;
+  const suggestions = plan?.suggestions ?? [];
   const sips = sipPlan(suggestions, investments, links, strategy);
   const steps = planSteps(suggestions, investments, links, strategy);
   const extraMonthly = sips.reduce((sum, line) => sum + line.monthly, 0);
+  if (variant === "summary")
+    return (
+      <>
+        <NextStep
+          plan={plan}
+          budget={budget}
+          steps={steps.length}
+          needed={needed}
+          onStart={() => setOpen(true)}
+        />
+        {form}
+      </>
+    );
+  if (!plan) return form || null;
   let footer: { text: string; tone: string };
   if (plan.stillShortMonthly > 0) {
     footer = {
@@ -473,66 +451,6 @@ export function MoneyPlanCard({
       text: "Every dated goal is covered with this plan.",
       tone: "text-success",
     };
-  }
-
-  if (variant === "summary") {
-    const over =
-      budget.income > 0 && plan.monthlyTotal > budget.planMonthly
-        ? plan.monthlyTotal - budget.planMonthly
-        : 0;
-    return (
-      <section
-        className="surface-card overflow-hidden rounded-2xl border border-primary/15 bg-card"
-        aria-label="Your money plan"
-      >
-        <NextLink
-          href="/goals/plan"
-          className="press flex min-h-18 w-full items-center gap-3 px-4 py-3 hover:bg-muted/40"
-        >
-          <span
-            className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary"
-            aria-hidden
-          >
-            <Sparkles className="size-4" />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium">
-              Your plan:{" "}
-              <span className="tabular">{formatINR(plan.monthlyTotal)}</span> a
-              month
-            </span>
-            <span className="block text-xs text-muted-foreground">
-              {steps.length > 0
-                ? `${steps.length} ${steps.length === 1 ? "step" : "steps"} to set up this month`
-                : "Nothing to set up right now"}
-              {over > 0 && (
-                <span className="text-warning">
-                  {" "}
-                  · {formatINR(over)} over budget
-                </span>
-              )}
-            </span>
-          </span>
-          <span className="shrink-0 text-sm font-medium text-primary">
-            View plan
-          </span>
-        </NextLink>
-        <div className="flex items-center justify-between gap-3 border-t border-border/60 px-4">
-          <NextLink
-            href="/goals/budget"
-            className="inline-flex min-h-11 items-center text-xs font-medium text-muted-foreground hover:text-primary"
-          >
-            {budget.income > 0 ? "Edit budget" : "Set budget"}
-          </NextLink>
-          {budget.income > 0 && (
-            <span className="tabular text-xs text-muted-foreground">
-              {formatINR(budget.planMonthly)} a month to invest
-            </span>
-          )}
-        </div>
-        {form}
-      </section>
-    );
   }
 
   return (
@@ -638,6 +556,132 @@ export function MoneyPlanCard({
         </details>
       )}
       {form}
+    </section>
+  );
+}
+
+const HIDDEN_KEY = "next-step-hidden";
+function readHidden(): string {
+  try {
+    return localStorage.getItem(HIDDEN_KEY) ?? "[]";
+  } catch {
+    return "[]";
+  }
+}
+function subscribeHidden(fn: () => void) {
+  window.addEventListener(HIDDEN_KEY, fn);
+  return () => window.removeEventListener(HIDDEN_KEY, fn);
+}
+
+/**
+ * One thing to do next, only when there is one: set a budget, start a SIP
+ * plan, or set up this month's SIPs. "Not now" hides it on this device.
+ */
+function NextStep({
+  plan,
+  budget,
+  steps,
+  needed,
+  onStart,
+}: {
+  plan: MoneyPlan | null;
+  budget: Budget;
+  steps: number;
+  needed: number;
+  onStart: () => void;
+}) {
+  const raw = useSyncExternalStore(subscribeHidden, readHidden, () => "[]");
+  let hidden: string[] = [];
+  try {
+    hidden = JSON.parse(raw);
+  } catch {
+    hidden = [];
+  }
+  const hide = (key: string) => {
+    try {
+      localStorage.setItem(HIDDEN_KEY, JSON.stringify([...hidden, key]));
+    } catch {
+      // Storage blocked: it comes back next time.
+    }
+    window.dispatchEvent(new Event(HIDDEN_KEY));
+  };
+  const round = (n: number) => Math.round(n / 1000) * 1000;
+  const options: {
+    key: string;
+    title: string;
+    text: string;
+    action: { label: string; href?: string; onClick?: () => void };
+  }[] = [];
+  if (plan && steps > 0)
+    options.push({
+      key: `steps-${plan.monthlyTotal}-${steps}`,
+      title: `Set up ${steps} ${steps === 1 ? "SIP" : "SIPs"} this month`,
+      text: "Your plan says where each one goes. Tick them off once they're set up.",
+      action: { label: "See plan", href: "/goals/plan" },
+    });
+  if (!plan && budget.income <= 0)
+    options.push({
+      key: "budget",
+      title: "Set your monthly budget",
+      text: "Add your take-home pay and costs. The app works out what you can invest.",
+      action: { label: "Set budget", href: "/goals/budget" },
+    });
+  if (!plan)
+    options.push({
+      key: "sip",
+      title: "Start a SIP plan",
+      text:
+        budget.income > 0 && budget.planMonthly > 0
+          ? `Your budget leaves ${formatINR(budget.planMonthly)} a month. See how to split it across your goals.`
+          : needed > 0
+            ? `Your goals need about ${formatINR(round(needed))} a month more. Split what you can across them.`
+            : "Split what you can invest each month across your goals.",
+      action: { label: "Start", onClick: onStart },
+    });
+  const step = options.find((o) => !hidden.includes(o.key));
+  if (!step) return null;
+  const button =
+    "inline-flex min-h-10 shrink-0 items-center rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground";
+  return (
+    <section
+      aria-label="Next step"
+      className="surface-card space-y-3 rounded-2xl border border-primary/15 bg-card p-4"
+    >
+      <div className="flex items-start gap-3">
+        <span
+          className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary"
+          aria-hidden
+        >
+          <Sparkles className="size-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-medium text-primary">Next step</p>
+          <h2 className="font-semibold">{step.title}</h2>
+          <p className="text-sm text-muted-foreground">{step.text}</p>
+        </div>
+      </div>
+      <div className="flex items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => hide(step.key)}
+          className="min-h-10 rounded-lg px-3 text-sm text-muted-foreground hover:bg-muted"
+        >
+          Not now
+        </button>
+        {step.action.href ? (
+          <NextLink href={step.action.href} className={button}>
+            {step.action.label}
+          </NextLink>
+        ) : (
+          <button
+            type="button"
+            onClick={step.action.onClick}
+            className={button}
+          >
+            {step.action.label}
+          </button>
+        )}
+      </div>
     </section>
   );
 }

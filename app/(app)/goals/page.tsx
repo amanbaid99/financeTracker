@@ -100,6 +100,7 @@ export default async function GoalsPage({
             sipsNow={sipsNow}
             unassigned={unassigned}
             autoOpen={action === "plan"}
+            autoExtra={action === "extra"}
             budgetMonthly={budgetMonthly}
           />
         </>

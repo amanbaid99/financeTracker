@@ -40,7 +40,8 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
       "The card at the top shows what's saved, what goes in each month and how many goals are on track. Goals are grouped by when they're due, from next month to 5+ years. Must-haves come first in each group. A label on each says On track, Behind or what needs action. Covered bills funds, loans covered by EMIs and reached goals are folded away. If a bills fund develops a shortfall, it returns to the active list.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
-      "Your plan has its own page: tap View plan. It shows where the money goes and why, then This month lists what to add to your SIPs. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
+      "A Next step card shows only when there's something to do: set your budget, start a SIP plan or set up this month's SIPs. Tap Not now to hide it. Got a bonus or idle savings? Tap +, then I have extra money.",
+      "Your plan has its own page: tap Your plan. It shows where the money goes and why, then This month lists what to add to your SIPs. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
       "Open a goal for its What to do box. If your plan can't cover it, it says how much more a month keeps it on track.",
       "The plan page shows what your budget allows and what your plan uses. Open Budget and plan details there for income, costs, EMIs and SIPs.",
       "Edit plan sets one monthly investment budget, including what you already invest. One-time savings are optional.",
@@ -120,7 +121,7 @@ export const RELEASES: Release[] = [
       },
       {
         title: "Your plan, on its own page",
-        text: "Goals shows a small row with your plan. Tap View plan to see where each rupee goes and why, in the order the plan fills it, and what to add to your SIPs.",
+        text: "Goals shows one Next step only when there's something to do, like starting a SIP plan. Extra money? Tap +, then I have extra money, to see where it helps most. Tap Your plan to see where each rupee goes and why, in the order the plan fills it, and what to add to your SIPs.",
       },
       {
         title: "A clearer Goals page",

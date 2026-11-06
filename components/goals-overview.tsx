@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { GoalList } from "@/components/goal-list";
 import { MoneyPlanCard } from "@/components/money-plan";
+import { ExtraMoney } from "@/components/extra-money";
+import NextLink from "next/link";
 import { goalStatus } from "@/lib/goal-status";
 import { formatINR, formatINRCompact } from "@/lib/format";
 import type { Budget } from "@/lib/budget";
@@ -24,6 +26,7 @@ export function GoalsOverview(props: {
   sipsNow: number;
   unassigned: number;
   autoOpen: boolean;
+  autoExtra?: boolean;
   budgetMonthly: number | null;
 }) {
   const [strategy, setStrategy] = useState<SipStrategy>("diversified");
@@ -85,7 +88,32 @@ export function GoalsOverview(props: {
             </p>
           </div>
         )}
+        <div className="flex items-center gap-4 border-t pt-2 text-xs font-medium">
+          {props.plan && (
+            <NextLink
+              href="/goals/plan"
+              className="inline-flex min-h-10 items-center text-primary"
+            >
+              Your plan
+            </NextLink>
+          )}
+          <NextLink
+            href="/goals/budget"
+            className="inline-flex min-h-10 items-center text-muted-foreground hover:text-primary"
+          >
+            {props.budget.income > 0 ? "Budget" : "Set budget"}
+          </NextLink>
+        </div>
       </section>
+      <ExtraMoney
+        goals={props.goals}
+        investments={props.investments}
+        links={props.links}
+        today={props.today}
+        plan={props.plan}
+        sipsNow={props.sipsNow}
+        autoOpen={props.autoExtra}
+      />
       <MoneyPlanCard
         {...props}
         strategy={strategy}
