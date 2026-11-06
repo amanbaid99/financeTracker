@@ -114,6 +114,14 @@ export const RELEASES: Release[] = [
     title: "Not sure how much to save?",
     items: [
       {
+        title: "A faster app",
+        text: "Each screen now loads everything it needs in one go, instead of a dozen separate requests.",
+      },
+      {
+        title: "An easier budget",
+        text: "Every line reads at a glance. Tap one to change it, or tap + to add to it, like ₹2,000 more for groceries. EMIs and SIPs sit in the same list, filled in for you, and what's free to invest follows what you type.",
+      },
+      {
         title: "Work it out",
         text: 'When you add a goal, tap "Not sure? Work it out". For retirement it uses your age and spending to find the amount you\'d need. For an emergency fund it counts months of essentials and EMIs. For a home, the down payment and buying costs.',
       },

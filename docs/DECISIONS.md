@@ -35,6 +35,15 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 
 ## Goals and the money plan
 
+- **Goal calculator (Nov 6):** "Not sure? Work it out" in the goal form (`lib/goal-calc.ts`):
+  retirement corpus as a growing annuity from today's spending, emergency fund as months of
+  essentials and EMIs, a home's down payment plus buying costs, or any cost grown with prices.
+  AI only suggests a low/typical/high cost from a short description (masked); the app does the
+  maths and the person checks and saves.
+- **Budget page (Nov 6):** lines read at a glance; tap to edit, + to add to an existing amount;
+  auto-filled EMIs and SIPs in a "Counted for you" section linking to where they change; the free
+  amount follows unsaved typing.
+
 - **Nov 3:** bills funds labelled Covered are folded under "Covered at your current pace", immediately above reached goals. This uses the saved balance and contributions, not a proposed plan. A shortfall returns the goal to its active time group. Ordinary on-track savings goals stay in the active list. An explicitly opened goal stays visible inside its group. Funding priorities and calculations do not change.
 
 - **Budget, plan only (Oct 31, owner's choice):** take-home income and monthly costs (reusing the
@@ -154,3 +163,11 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 - **Nov 3: payments-first Credit** (owner approved). A due list combines unpaid statements and next EMIs by date; undated bills come last. Linked card-loan EMIs are informational reminders when statements are missing, never a second payable amount alongside unpaid card bills. Recording an EMI still updates its loan balance separately. All/Loans/Cards filters retain open state. Closed loans, paid bill history, completed milestones, calculation explanations and card suggestions are folded away. Bill entry always shows due date and never assumes older bills are paid. Mark paid has page-level confirmation and 10-second Undo; paid labels are read-only and can be changed through Edit bill. Loan forms fold original borrowing and closure charges. Loan balances and elapsed EMI counts remain schedule estimates, with recorded payments listed separately. No finance calculation or automatic payment is introduced.
 
 - **Nov 3: current-month due list** (owner correction). Payments due stops at the end of the current IST month. Overdue and undated existing bills remain visible. Future card bills and next-month EMIs stay in their own card or loan, keeping their dates and payment actions intact. The cutoff uses the injected today, including December to January.
+
+## Speed
+
+- **Nov 6:** pages load all of the signed-in person's rows with one call to `app_snapshot()`
+  (security invoker, so RLS applies), cached per request and shared by layout and page. Before,
+  the Goals page made ~13 REST calls and Portfolio/Settings waited on sequential batches; the
+  small database slowed each to 70-250 ms under that burst. Add new page data to the snapshot
+  rather than a new query.

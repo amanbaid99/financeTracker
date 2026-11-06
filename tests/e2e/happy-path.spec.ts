@@ -1030,7 +1030,13 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Save Rent" }).click();
   await expect(page.getByRole("button", { name: "Save Rent" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "+ Rent" })).toHaveCount(0);
-  await expect(page.getByText(/free to invest a month/)).toBeVisible();
+  await expect(page.getByText(/free to invest a month/).first()).toBeVisible();
+  // + on a line adds to it.
+  await page.getByRole("button", { name: "Add to Rent" }).click();
+  await page.getByLabel("Amount to add to Rent").fill("2000");
+  await expect(page.getByText("= ₹32,000 a month")).toBeVisible();
+  await page.getByRole("button", { name: "Add ₹2,000" }).click();
+  await expect(page.getByRole("button", { name: "Edit Rent" })).toContainText("₹32,000");
   await expect(page.getByText(/^EMI · Car finance$/)).toBeVisible();
   await page.screenshot({ path: "test-results/budget-375.png", fullPage: true });
   await page.getByRole("button", { name: /a month for This month$/ }).click();
