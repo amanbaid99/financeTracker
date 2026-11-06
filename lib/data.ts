@@ -64,6 +64,7 @@ export interface Snapshot {
     | "loan_foreclosure_gst"
     | "loan_emi_day"
     | "loan_first_emi"
+    | "priority"
   >[];
   holdings: Pick<
     Row<"holdings">,
@@ -234,6 +235,7 @@ export async function readGoals(): Promise<GoalsData> {
         inflationPct:
           g.inflation_rate === null ? null : Number(g.inflation_rate),
         loanId: g.loan_id,
+        niceToHave: (g.priority ?? 3) >= 4,
         // A linked loan is the source of truth; older goals kept their own copy.
         loan:
           g.type === "loan_payoff" && g.loan_id && loanById.has(g.loan_id)

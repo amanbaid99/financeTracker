@@ -38,10 +38,10 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap Add a goal and pick a type: a purchase, a trip, an emergency fund, a bills fund or paying off a loan.",
       "Link the mutual funds, savings or deposits that pay for it. One investment can be split across goals.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
-      "Tap a status filter to narrow your goals. Goals are grouped by when they're due: the next 2 years, later, and no fixed date. A label on each says On track, Behind or what needs action. Covered bills funds, loans covered by EMIs and reached goals are folded away. If a bills fund develops a shortfall, it returns to the active list.",
+      "Tap a status filter to narrow your goals. Goals are grouped by when they're due, from next month to 5+ years. Tap a chip at the top to jump to a group. Must-haves come first in each group. A label on each says On track, Behind or what needs action. Covered bills funds, loans covered by EMIs and reached goals are folded away. If a bills fund develops a shortfall, it returns to the active list.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
       "This month, above your goals, lists what to invest and where. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
-      "Open a goal for its What to do box. If your plan can't cover it, pick a later date, a smaller target or a bigger budget. The goal's form opens filled in for you to check and save.",
+      "Open a goal for its What to do box. If your plan can't cover it, it says how much more a month keeps it on track.",
       "This month shows what your budget allows and what your plan uses. Open Budget and plan details for income, costs, EMIs and SIPs, or to edit your budget.",
       "Edit plan sets one monthly investment budget, including what you already invest. One-time savings are optional.",
       "Budget and plan details shows the goal breakdown and lets you compare one holding per goal with a spread across holdings. Nothing is saved until you confirm.",
@@ -113,6 +113,14 @@ export const RELEASES: Release[] = [
     date: "2026-11-06",
     title: "Not sure how much to save?",
     items: [
+      {
+        title: "Goals by when they're due",
+        text: "Goals are grouped from next month to 5+ years, with chips at the top to jump between them. Mark a goal Must have or Nice to have, and must-haves come first.",
+      },
+      {
+        title: "A plan that looks ahead",
+        text: "Your plan now builds 3 months of essentials in your emergency fund first, and keeps a fifth of your monthly money for goals 5+ years away, like retirement, so they aren't always left for last.",
+      },
       {
         title: "A faster app",
         text: "Each screen now loads everything it needs in one go, instead of a dozen separate requests.",

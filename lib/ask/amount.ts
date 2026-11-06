@@ -94,6 +94,7 @@ export function splitFacts(opts: {
   links: Link[];
   todayISO: string;
   codeOf: Record<string, string>;
+  essentialsMonthly?: number;
 }): Split {
   const { q, goals, investments, links, todayISO, codeOf } = opts;
   const sipsNow = investments.reduce((s, i) => s + i.monthlySip, 0);
@@ -104,6 +105,7 @@ export function splitFacts(opts: {
     lump: q.frequency === "once" ? q.amount : 0,
     monthlyTotal: sipsNow + (q.frequency === "monthly" ? q.amount : 0),
     todayISO,
+    essentialsMonthly: opts.essentialsMonthly,
   });
   const steps = planSteps(plan.suggestions, investments, links);
   const what = q.frequency === "once" ? "one-time amount" : "a month";

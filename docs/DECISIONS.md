@@ -35,6 +35,15 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 
 ## Goals and the money plan
 
+- **Plan by time and priority (Nov 6, owner agreed to the suggested rules):** goals are grouped
+  Next month, This quarter, Next 6 months, Within a year, 1 to 5 years, 5+ years, No fixed date,
+  with a strip of chips to jump between them. The plan funds bills funds, then emergency savings
+  to 3 months of essentials, keeps a fifth of the monthly money for 5+ year goals so retirement
+  isn't always last, then nearer goals by group with must-haves first. Each goal can be Must have
+  or Nice to have.
+- **One way to close a gap (Nov 6, owner's call):** a goal the plan can't cover only shows "invest
+  ₹X a month more". The later date and smaller target options were removed to keep it simple.
+
 - **Goal calculator (Nov 6):** "Not sure? Work it out" in the goal form (`lib/goal-calc.ts`):
   retirement corpus as a growing annuity from today's spending, emergency fund as months of
   essentials and EMIs, a home's down payment plus buying costs, or any cost grown with prices.
@@ -69,8 +78,8 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   the plan (`applyPlanStep`). The step shows Undo for 4 seconds (`undoPlanStep` restores exactly),
   then leaves the list. Steps with no suitable holding show "Add it", which opens a prefilled form.
 - **One "What to do" box per goal.** The plan's suggestion, when there is one, replaces the coloured
-  verdict. When the plan still can't cover a dated goal, the box offers a later date, a smaller
-  target (each opens the goal form prefilled; the owner wants to check and save) or a bigger budget.
+  verdict. When the plan still can't cover a dated goal, the box says how much more a month keeps
+  it on track, with a link to edit the plan.
 
 - Goals now lead with saved and monthly amounts and a money plan. The separate attention-count strip was removed; goal groups already show what needs attention. Before a plan exists, a single compact Plan my money row opens the form. Review your plan opens the SIP details. A visible Plan my money button is shown before a plan exists.
 - Goals that need attention or a first investment come first, ordered by the existing date and amount rules. Other active goals follow. Reached goals and loans covered by EMIs are folded away, except for an explicitly opened goal. Overdue loans stay visible. These are presentation groups, not changes to allocation priorities.

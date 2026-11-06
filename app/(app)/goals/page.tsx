@@ -39,6 +39,7 @@ export default async function GoalsPage({
         lump: planInput.lump,
         monthlyTotal: planInput.monthly,
         todayISO: today,
+        essentialsMonthly: monthBudget.costs + monthBudget.emis,
       })
     : null;
   const saved = goals.reduce((s, g) => s + g.current, 0);

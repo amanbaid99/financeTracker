@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gapOptions, goalHint, goalStatus, timeGroup } from "@/lib/goal-status";
+import { gapOptions, goalHint, goalStatus, horizonGroup } from "@/lib/goal-status";
 import type { Suggestion } from "@/lib/allocate";
 import { trackGoal, type GoalInput } from "@/lib/tracker";
 
@@ -29,13 +29,13 @@ describe("goal status", () => {
   it("labels a goal far behind as Behind, and groups it as soon", () => {
     const g = trackGoal(goal({}), [inv(77000, 3000)], link, TODAY);
     expect(goalStatus(g, TODAY)).toEqual({ label: "Behind", tone: "warning" });
-    expect(timeGroup(g)).toBe("soon");
+    expect(horizonGroup(g, TODAY)).toBe("five");
   });
 
   it("calls a goal with nothing linked Not started, and a far date Later", () => {
     const g = trackGoal(goal({ targetDate: "2035-01-01" }), [], [], TODAY);
     expect(goalStatus(g, TODAY).label).toBe("Not started");
-    expect(timeGroup(g)).toBe("later");
+    expect(horizonGroup(g, TODAY)).toBe("beyond");
   });
 
   it("puts goals with no date under No fixed date", () => {
@@ -45,34 +45,38 @@ describe("goal status", () => {
       link,
       TODAY,
     );
-    expect(timeGroup(g)).toBe("ongoing");
+    expect(horizonGroup(g, TODAY)).toBe("ongoing");
+  });
+});
+
+describe("time groups", () => {
+  const at = (targetDate: string) =>
+    horizonGroup(trackGoal(goal({ targetDate }), [], [], TODAY), TODAY);
+  it("puts each date in the right group", () => {
+    expect(at("2026-11-20")).toBe("month");
+    expect(at("2027-01-15")).toBe("quarter");
+    expect(at("2027-04-01")).toBe("half");
+    expect(at("2027-10-01")).toBe("year");
+    expect(at("2030-06-01")).toBe("five");
+    expect(at("2040-01-01")).toBe("beyond");
   });
 });
 
 describe("ways to close a gap", () => {
-  it("offers realistic trade-offs, each with what it then takes a month", () => {
+  it("offers one simple step: invest more a month", () => {
     const g = trackGoal(goal({ target: 300000 }), [inv(77000, 3000)], link, TODAY);
     const o = gapOptions(g, TODAY, 500)!;
-    expect(o.moreMonthly).toBe(g.extraSipNeeded - 500);
-    expect(o.fromZero).toBe(false);
-    expect(o.smaller!.target).toBe(240000);
-    expect(o.smaller!.monthly).toBeLessThan(o.neededNow);
-    expect(o.later!.date > "2028-02-01").toBe(true);
-    expect(o.later!.monthly).toBeLessThan(o.neededNow);
+    expect(o).toEqual({ moreMonthly: g.extraSipNeeded - 500, fromZero: false });
   });
 
-  it("never suggests cutting a big goal to what today's savings reach", () => {
-    // Retirement-like: ₹1.65 Cr target, ₹2.15L saved, nothing going in.
+  it("says start when nothing is going in yet", () => {
     const g = trackGoal(
       goal({ type: "retirement", target: 16500000, targetDate: "2059-11-06" }),
       [inv(215000, 0)],
       link,
       TODAY,
     );
-    const o = gapOptions(g, TODAY, 0)!;
-    expect(o.fromZero).toBe(true);
-    expect(o.smaller!.target).toBe(13200000);
-    expect(o.later!.date).toBe("2062-11-06");
+    expect(gapOptions(g, TODAY, 0)!.fromZero).toBe(true);
   });
 
   it("offers nothing when the plan covers the goal", () => {

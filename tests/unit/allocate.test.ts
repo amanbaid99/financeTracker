@@ -64,3 +64,50 @@ describe("money plan", () => {
     expect(categoryForHorizon(120, "emergency_fund").category).toBe("liquid_fund");
   });
 });
+
+describe("plan priorities", () => {
+  it("builds the emergency fund to 3 months of essentials first", () => {
+    const s = setup([
+      goal({ id: "trip", targetDate: "2027-06-25" }),
+      goal({ id: "ef", type: "emergency_fund", target: 600_000, targetDate: null }),
+    ]);
+    const p = planMoney({ ...s, lump: 0, monthlyTotal: 20_000, todayISO: TODAY, essentialsMonthly: 40_000 });
+    // 3 x 40k = 1.2L over 12 months = 10k a month, before the trip.
+    expect(p.suggestions[0].goalId).toBe("ef");
+    expect(p.suggestions.find((x) => x.goalId === "ef")!.monthly).toBe(10_000);
+    expect(p.suggestions.find((x) => x.goalId === "trip")!.monthly).toBe(10_000);
+  });
+
+  it("keeps a fifth for goals 5+ years away", () => {
+    const s = setup([
+      goal({ id: "car", target: 2_000_000, targetDate: "2028-10-25" }),
+      goal({ id: "retire", type: "retirement", target: 50_000_000, targetDate: "2056-10-25" }),
+    ]);
+    const p = planMoney({ ...s, lump: 0, monthlyTotal: 50_000, todayISO: TODAY });
+    expect(p.suggestions.find((x) => x.goalId === "retire")!.monthly).toBe(10_000);
+    expect(p.suggestions.find((x) => x.goalId === "car")!.monthly).toBe(40_000);
+  });
+
+  it("gives the fifth back when long goals need less", () => {
+    const s = setup([
+      goal({ id: "car", target: 2_000_000, targetDate: "2028-10-25" }),
+      goal({ id: "later", target: 100_000, targetDate: "2036-10-25" }),
+    ]);
+    const p = planMoney({ ...s, lump: 0, monthlyTotal: 50_000, todayISO: TODAY });
+    const later = p.suggestions.find((x) => x.goalId === "later")!.monthly;
+    expect(later).toBeLessThan(10_000);
+    expect(p.suggestions.find((x) => x.goalId === "car")!.monthly).toBe(50_000 - later);
+  });
+
+  it("funds must-haves before nice-to-haves due around the same time", () => {
+    const s = setup([
+      goal({ id: "gadget", targetDate: "2027-03-01", niceToHave: true }),
+      goal({ id: "fees", targetDate: "2027-03-20" }),
+    ]);
+    const p = planMoney({ ...s, lump: 0, monthlyTotal: 20_000, todayISO: TODAY });
+    expect(p.suggestions[0].goalId).toBe("fees");
+    expect(p.suggestions.find((x) => x.goalId === "gadget")?.monthly ?? 0).toBeLessThan(
+      p.suggestions.find((x) => x.goalId === "fees")!.monthly,
+    );
+  });
+});

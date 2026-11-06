@@ -16,9 +16,8 @@ import type { Suggestion } from "@/lib/allocate";
 import { goalHeadline } from "@/lib/goal-summary";
 import { waysToFund, type WaysToFund } from "@/lib/fund-goal";
 import { splitForGoal, type FundShare, type SipStrategy } from "@/lib/sip-plan";
-import { formatINR, formatINRCompact } from "@/lib/format";
+import { formatINR } from "@/lib/format";
 import type { GapOptions } from "@/lib/goal-status";
-import { monthYear } from "@/lib/goal-summary";
 import { QUICK_ACTION } from "@/components/quick-add";
 import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
 
@@ -484,100 +483,44 @@ export function SuggestionBox({
  * bigger monthly budget (opens the money plan).
  */
 export function GapChoices({
-  goal,
   options,
-  today,
   afterPlan = false,
 }: {
-  goal: TrackedGoal;
   options: GapOptions;
-  today: string;
   /** Shown under the plan's suggestion, which isn't enough on its own. */
   afterPlan?: boolean;
 }) {
-  const router = useRouter();
-  const [edit, setEdit] = useState<{
-    targetDate?: string;
-    target?: number;
-  } | null>(null);
-  const close = useCallback(() => setEdit(null), []);
-  const row = (
-    title: string,
-    sub: string,
-    button: string,
-    onClick: () => void,
-  ) => (
-    <li className="flex items-center justify-between gap-3 rounded-lg border border-black/5 bg-card p-3 text-foreground">
-      <span className="min-w-0">
-        <span className="block font-medium">{title}</span>
-        <span className="block text-xs text-muted-foreground">{sub}</span>
-      </span>
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        onClick={onClick}
-        aria-label={`${button}: ${title}`}
-      >
-        {button}
-      </Button>
-    </li>
-  );
+  const title = options.fromZero
+    ? `Start investing ${formatINR(options.moreMonthly)} a month`
+    : `Invest ${formatINR(options.moreMonthly)} a month more`;
   return (
     <div className="space-y-2">
       <p>
         {afterPlan
-          ? "That's all your plan can give it, so you'd still be short. Pick one to close the gap:"
-          : "Pick one to close the gap:"}
+          ? "That's all your plan can give it, so you'd still be short. To stay on track:"
+          : "To stay on track:"}
       </p>
-      <ul className="space-y-2" aria-label="Ways to close the gap">
-        {row(
-          options.fromZero
-            ? `Start investing ${formatINR(options.moreMonthly)} a month`
-            : `Invest ${formatINR(options.moreMonthly)} a month more`,
-          "Keeps the date and the target",
-          "Edit plan",
-          () =>
+      <div className="flex items-center justify-between gap-3 rounded-lg border border-black/5 bg-card p-3 text-foreground">
+        <span className="min-w-0">
+          <span className="block font-medium">{title}</span>
+          <span className="block text-xs text-muted-foreground">
+            Keeps the date and the target
+          </span>
+        </span>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={() =>
             window.dispatchEvent(
               new CustomEvent(QUICK_ACTION, { detail: "plan" }),
-            ),
-        )}
-        {options.later &&
-          row(
-            goal.type === "retirement"
-              ? `Retire a little later, in ${monthYear(options.later.date)}`
-              : `Move the date to ${monthYear(options.later.date)}`,
-            `Then ${formatINR(options.later.monthly)} a month instead of ${formatINR(options.neededNow)}`,
-            "Use",
-            () => setEdit({ targetDate: options.later!.date }),
-          )}
-        {options.smaller &&
-          row(
-            `Aim a fifth lower: ${formatINRCompact(options.smaller.target)}`,
-            `Then ${formatINR(options.smaller.monthly)} a month instead of ${formatINR(options.neededNow)} (today's money)`,
-            "Use",
-            () => setEdit({ target: options.smaller!.target }),
-          )}
-      </ul>
-      {edit && (
-        <Sheet title="Edit goal" onClose={close}>
-          <p className="mb-3 rounded-lg bg-muted p-2.5 text-sm">
-            {edit.targetDate
-              ? `New date filled in: ${monthYear(edit.targetDate)}.`
-              : `New target filled in: ${formatINR(edit.target ?? 0)}.`}{" "}
-            Check it and save.
-          </p>
-          <GoalForm
-            goal={goal}
-            today={today}
-            initial={edit}
-            onSaved={() => {
-              router.refresh();
-              close();
-            }}
-          />
-        </Sheet>
-      )}
+            )
+          }
+          aria-label={`Edit plan: ${title}`}
+        >
+          Edit plan
+        </Button>
+      </div>
     </div>
   );
 }

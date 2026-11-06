@@ -264,6 +264,9 @@ describe("SIP plan", () => {
       Travel: ["au", true], // its savings account
       "Emergency fund": ["axis", false],
       Marriage: ["Gold etf", true], // arb (liquid, in place of short debt) plus up to a fifth in gold
+      // A fifth of the monthly money is kept for goals 5+ years away.
+      "House down payment": ["mid", true],
+      Retirement: ["n50", false],
     });
     expect(sips.every((l) => l.investment !== null)).toBe(true);
   });

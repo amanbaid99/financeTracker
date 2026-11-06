@@ -82,9 +82,13 @@ unit tests in `tests/unit/`.
   runs short (binary search), never below the steady average for repeating bills. It also gives
   `needsToday`, `topUpNow` and the first date it would run short.
 - **`lib/goal-summary.ts`**: the one-line headline and colour for each goal, and goal sort order.
-- **`lib/allocate.ts`**: `planMoney` splits "savings now" and "monthly to invest" across goals:
-  bills funds first, then dated goals soonest first (just enough to be on time), then goals with no
-  date by how much each still needs. `categoryForHorizon` picks the kind of fund for each goal by
+- **`lib/allocate.ts`**: `planMoney` splits "savings now" and "monthly to invest" across goals,
+  in this order: bills funds; emergency savings up to 3 months of essentials within a year
+  (`essentialsMonthly` = budget costs + EMIs, else half the fund's target; skipped when a dated
+  emergency fund has its own plan); a fifth of the monthly money kept for dated goals 5+ years away
+  (only what they need); nearer dated goals by time group, must-haves before nice-to-haves, then
+  soonest (just enough to be on time); goals 5+ years away (the fifth plus anything left); then
+  goals with no date by how much each still needs. Suggestions come out in that order. `categoryForHorizon` picks the kind of fund for each goal by
   time left: under 1 year liquid, 1 to 3 years short debt, 3 to 5 years balanced advantage, 5+
   years equity index; emergency and bills funds always liquid.
 - **`lib/sip-plan.ts`**: turns the plan into SIPs in the user's own funds. `splitForGoal` spreads a
@@ -100,9 +104,12 @@ unit tests in `tests/unit/`.
 - **`lib/budget.ts`**: free to invest = income − costs − EMIs − SIPs, and the savings rate.
 - **`lib/ask/amount.ts`**: finds "where should ₹X go?" questions, splits the amount with
   `planMoney`/`planSteps` (codes only), and checks the reply's figures against the facts.
-- **`lib/goal-status.ts`**: presentation only. A goal's status label, its time group (next 2
-  years, later, no fixed date), the line under its name, the hint on its card, and `gapOptions`
-  (later date, smaller target, extra a month) for a goal the plan can't cover.
+- **`lib/goal-status.ts`**: a goal's status label, its time group (`horizonGroup`: next month,
+  this quarter, 6 months, a year, 1 to 5 years, 5+ years, no fixed date; bills funds by their next
+  payment; also used by the plan's order), the line under its name, the hint on its card, and
+  `gapOptions` (extra a month) for a goal the plan can't cover.
+- **Must have / Nice to have** is `goals.priority` (3 / 4), read as `niceToHave`. Emergency funds,
+  loans and bills funds are always must-haves.
 - **`lib/fund-goal.ts`**: for a goal with nothing linked, which holdings could be linked and what
   new kind of fund would suit it.
 - **`lib/portfolio.ts`**: totals by asset class, holdings with gains where `invested` is known.

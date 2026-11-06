@@ -4,6 +4,7 @@
 import { billsMonthlyNeed } from "./bills-fund";
 import { categoryLabel } from "./categories";
 import { sortGoals } from "./goal-summary";
+import { horizonGroup, horizonRank } from "./goal-status";
 import { RETURN_BY_CATEGORY } from "./instruments";
 import {
   projectedValue,
@@ -76,6 +77,13 @@ export function categoryForHorizon(
 
 const roundUp = (n: number, step: number) => Math.ceil(n / step) * step;
 
+/** Emergency fund floor: this many months of essentials, built over a year. */
+const EMERGENCY_FLOOR_MONTHS = 3;
+const FLOOR_MONTHS = 12;
+/** Goals this far away get a fifth of the monthly money kept for them. */
+const LONG_TERM_MONTHS = 60;
+const LONG_TERM_SHARE = 0.2;
+
 export function planMoney(opts: {
   goals: TrackedGoal[];
   investments: Investment[];
@@ -83,6 +91,8 @@ export function planMoney(opts: {
   lump: number;
   monthlyTotal: number;
   todayISO: string;
+  /** Essential costs and EMIs a month, for the emergency fund's floor. */
+  essentialsMonthly?: number;
 }): MoneyPlan {
   const { goals, investments, links, todayISO } = opts;
   const sipsNow = investments.reduce((s, i) => s + i.monthlySip, 0);
@@ -133,29 +143,106 @@ export function planMoney(opts: {
     monthlyLeft -= a.monthly;
   }
 
-  // 1. Dated goals, soonest first: enough to be on time.
-  for (const g of active.filter((x) => x.targetDate && x.months)) {
+  // 1. Emergency savings up to a floor of 3 months of essentials, built
+  // within about a year. Counts every emergency fund together. A dated
+  // emergency fund already gets its own plan below, so then this is skipped.
+  // The rest of the fund shares what's left at the end.
+  const floorGiven = new Map<string, number>();
+  const emergency = goals.filter((x) => x.type === "emergency_fund");
+  const openEmergency = active
+    .filter((x) => x.type === "emergency_fund" && !x.targetDate)
+    .sort((x, y) => y.futureTarget - x.futureTarget);
+  const datedEmergency = active.some(
+    (x) => x.type === "emergency_fund" && x.targetDate,
+  );
+  if (openEmergency.length && !datedEmergency) {
+    const g = openEmergency[0];
+    const a = alloc.get(g.id)!;
+    const floor =
+      opts.essentialsMonthly && opts.essentialsMonthly > 0
+        ? Math.min(
+            g.futureTarget,
+            opts.essentialsMonthly * EMERGENCY_FLOOR_MONTHS,
+          )
+        : g.futureTarget / 2;
+    const saved = emergency.reduce((s, x) => s + x.current, 0);
+    const going = emergency.reduce((s, x) => s + x.monthlySip, 0);
+    const need = floor - saved;
+    if (need > 0) {
+      a.lump = Math.min(lumpLeft, roundUp(need, 1000));
+      lumpLeft -= a.lump;
+      const rest = need - a.lump - going * FLOOR_MONTHS;
+      if (rest > 0) {
+        a.monthly = Math.min(monthlyLeft, roundUp(rest / FLOOR_MONTHS, 500));
+        monthlyLeft -= a.monthly;
+      }
+      floorGiven.set(g.id, a.lump + a.monthly * FLOOR_MONTHS);
+    }
+  }
+
+  // What a dated goal still needs, and how to fund it.
+  const dated = active.filter((x) => x.targetDate && x.months && !x.billsFund);
+  const fund = (g: TrackedGoal, monthlyCap: number) => {
     const a = alloc.get(g.id)!;
     const m = g.months!;
     const shortfall =
       g.futureTarget - projectedValue(g.current, g.monthlySip, g.returnPct, m);
-    if (shortfall <= 0) continue;
+    if (shortfall <= 0) return 0;
     const growth = projectedValue(1, 0, a.rate, m);
     a.lump = Math.min(lumpLeft, roundUp(shortfall / growth, 1000));
     lumpLeft -= a.lump;
     const rest = shortfall - a.lump * growth;
-    if (rest > 0) {
-      a.monthly = Math.min(
-        monthlyLeft,
-        roundUp(requiredSip(rest, 0, a.rate, m), 500),
-      );
-      monthlyLeft -= a.monthly;
-    }
-  }
+    if (rest <= 0) return 0;
+    a.monthly = Math.min(
+      monthlyCap,
+      roundUp(requiredSip(rest, 0, a.rate, m), 500),
+    );
+    return a.monthly;
+  };
+  const longTerm = dated.filter((g) => g.months! >= LONG_TERM_MONTHS);
+  const near = dated
+    .filter((g) => g.months! < LONG_TERM_MONTHS)
+    .sort(
+      (x, y) =>
+        horizonRank(horizonGroup(x, todayISO)) -
+          horizonRank(horizonGroup(y, todayISO)) ||
+        Number(!!x.niceToHave) - Number(!!y.niceToHave) ||
+        x.months! - y.months!,
+    );
 
-  // 2. Whatever is left goes to goals with no date, by how much each still needs.
+  // 2. Keep a fifth of the monthly money for goals 5+ years away, so they
+  // aren't always last. Only as much as they need.
+  const longNeed = longTerm.reduce((s, g) => {
+    const rest =
+      g.futureTarget -
+      projectedValue(g.current, g.monthlySip, g.returnPct, g.months!);
+    return rest > 0
+      ? s + requiredSip(rest, 0, alloc.get(g.id)!.rate, g.months!)
+      : s;
+  }, 0);
+  const reserve = Math.min(
+    Math.floor((monthlyLeft * LONG_TERM_SHARE) / 500) * 500,
+    roundUp(longNeed, 500),
+  );
+  monthlyLeft -= reserve;
+
+  // 3. Nearer goals, by time group, must-haves first: enough to be on time.
+  for (const g of near) monthlyLeft -= fund(g, monthlyLeft);
+
+  // 4. Goals 5+ years away: the reserve, plus anything still free.
+  monthlyLeft += reserve;
+  for (const g of [...longTerm].sort(
+    (x, y) =>
+      Number(!!x.niceToHave) - Number(!!y.niceToHave) || x.months! - y.months!,
+  ))
+    monthlyLeft -= fund(g, monthlyLeft);
+
+  // 5. Whatever is left goes to goals with no date, by how much each still
+  // needs. An emergency fund counts what its floor already gave.
   const open = active.filter((g) => !g.targetDate && !g.billsFund);
-  const gaps = open.map((g) => Math.max(0, g.futureTarget - g.current));
+  const gaps = open.map((g) =>
+    Math.max(0, g.futureTarget - g.current - (floorGiven.get(g.id) ?? 0)),
+  );
   const totalGap = gaps.reduce((s, x) => s + x, 0);
   if (totalGap > 0 && (lumpLeft > 0 || monthlyLeft > 0)) {
     let lumpGiven = 0;
@@ -163,18 +250,30 @@ export function planMoney(opts: {
     open.forEach((g, i) => {
       const a = alloc.get(g.id)!;
       const share = gaps[i] / totalGap;
-      a.lump = Math.min(gaps[i], Math.floor((lumpLeft * share) / 1000) * 1000);
-      a.monthly = Math.floor((monthlyLeft * share) / 500) * 500;
-      lumpGiven += a.lump;
-      monthlyGiven += a.monthly;
+      const lump = Math.min(
+        gaps[i],
+        Math.floor((lumpLeft * share) / 1000) * 1000,
+      );
+      const monthly = Math.floor((monthlyLeft * share) / 500) * 500;
+      a.lump += lump;
+      a.monthly += monthly;
+      lumpGiven += lump;
+      monthlyGiven += monthly;
     });
     lumpLeft -= lumpGiven;
     monthlyLeft -= monthlyGiven;
   }
 
-  // Show each goal as it would look with its suggestion.
+  // Show each goal as it would look with its suggestion, in priority order.
+  const order = [
+    ...active.filter((g) => g.billsFund),
+    ...active.filter((g) => floorGiven.has(g.id)),
+    ...near,
+    ...longTerm,
+    ...active,
+  ].filter((g, i, all) => all.indexOf(g) === i);
   const suggestions: Suggestion[] = [];
-  for (const g of active) {
+  for (const g of order) {
     const a = alloc.get(g.id)!;
     if (!a.lump && !a.monthly) continue;
     const virtual: Investment = {

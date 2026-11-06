@@ -80,6 +80,8 @@ export function GoalForm({
   const info = type ? goalTypeInfo(type) : null;
   const isLoan = type === "loan_payoff";
   const isBills = type === "bills_fund";
+  // Emergency funds, loans and bills funds always come first.
+  const canRank = !!type && !isLoan && !isBills && type !== "emergency_fund";
   const ls = goal?.loanState;
 
   const [name, setName] = useState(goal?.name ?? "");
@@ -94,6 +96,7 @@ export function GoalForm({
     initial?.targetDate ?? goal?.targetDate ?? "",
   );
   const [inflate, setInflate] = useState(goal ? !!goal.inflationPct : true);
+  const [nice, setNice] = useState(goal?.niceToHave ?? false);
   const [inflation, setInflation] = useState(
     String(
       goal?.inflationPct ??
@@ -231,6 +234,7 @@ export function GoalForm({
           !isLoan && !isBills && inflate && !noDate
             ? (num(inflation) ?? 0)
             : null,
+        niceToHave: canRank && nice,
         loan: loanInput,
         bills: isBills
           ? bills.map((b) => ({
@@ -578,6 +582,39 @@ export function GoalForm({
               % a year
             </div>
           )}
+        </div>
+      )}
+
+      {canRank && (
+        <div className="space-y-1.5">
+          <div
+            className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+            role="radiogroup"
+            aria-label="How important is it?"
+          >
+            {(
+              [
+                [false, "Must have"],
+                [true, "Nice to have"],
+              ] as const
+            ).map(([v, label]) => (
+              <button
+                key={label}
+                type="button"
+                role="radio"
+                aria-checked={nice === v}
+                onClick={() => setNice(v)}
+                className={`rounded-md px-2 py-1.5 text-sm ${nice === v ? "bg-card font-medium shadow-sm" : "text-muted-foreground"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {nice
+              ? "Your plan funds this after the must-haves due around the same time."
+              : "Your plan funds this first among goals due around the same time."}
+          </p>
         </div>
       )}
 

@@ -42,6 +42,8 @@ export interface GoalInput {
   loanId?: string | null;
   /** For bills fund goals: the payments it saves for. */
   bills?: Bill[] | null;
+  /** Nice to have rather than must have: the plan funds it after the rest. */
+  niceToHave?: boolean;
 }
 
 export interface Link {

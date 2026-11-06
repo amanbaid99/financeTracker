@@ -6,7 +6,7 @@ import { z } from "zod";
 import { userMayPay } from "@/lib/ai/budget";
 import { openRouterSettings } from "@/lib/ai/openrouter";
 import { sharedRouter } from "@/lib/ai/router";
-import { loadGoals } from "@/lib/data";
+import { loadBudget, loadGoals } from "@/lib/data";
 import { AI_CONSENT_VERSION } from "@/lib/legal";
 import { createClient } from "@/lib/supabase/server";
 import { formatINR } from "@/lib/format";
@@ -116,7 +116,8 @@ export async function askQuestion(history: AskTurn[]): Promise<AskResult> {
     };
   }
 
-  const { goals, investments, links, plan, today } = await loadGoals();
+  const [{ goals, investments, links, plan, today }, { budget: b }] =
+    await Promise.all([loadGoals(), loadBudget()]);
   const ctx = buildAskContext({
     goals,
     investments,
@@ -143,6 +144,7 @@ export async function askQuestion(history: AskTurn[]): Promise<AskResult> {
       links,
       todayISO: today,
       codeOf: ctx.codeOf,
+      essentialsMonthly: b.costs + b.emis,
     });
     facts += `\n\n${split.facts}`;
     known.push(...split.numbers);

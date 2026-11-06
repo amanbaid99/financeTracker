@@ -67,6 +67,7 @@ const goalSchema = z
     target: money,
     targetDate: isoDate.nullable(),
     inflationPct: z.number().min(0).max(20).nullable(),
+    niceToHave: z.boolean().optional(),
     loan: z
       .object({
         outstanding: money.min(1, "add what you still owe"),
@@ -154,6 +155,7 @@ export async function saveGoal(
         : null,
       loan_emi_day: loan?.emiDay ?? null,
       loan_first_emi: loan?.firstEmi ?? null,
+      priority: v.niceToHave ? 4 : 3,
     };
     const res = v.id
       ? await supabase
@@ -165,7 +167,7 @@ export async function saveGoal(
           .single()
       : await supabase
           .from("goals")
-          .insert({ ...row, user_id: userId, priority: 3, saved_amount: 0 })
+          .insert({ ...row, user_id: userId, saved_amount: 0 })
           .select("id")
           .single();
     if (res.error) throw new Error(res.error.message);

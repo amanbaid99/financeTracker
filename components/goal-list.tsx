@@ -21,7 +21,9 @@ import {
   goalStatus,
   gapOptions,
   goalSubline,
-  timeGroup,
+  HORIZONS,
+  horizonGroup,
+  type Horizon,
   type GoalStatus,
 } from "@/lib/goal-status";
 import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
@@ -85,16 +87,24 @@ export function GoalList({
     ? goals.filter((g) => goalStatus(g, today).tone === filter)
     : goals;
   const groups = groupGoals(filtered);
-  // Active goals by when they're due. Covered bills funds, reached goals
-  // and loans the EMIs already cover stay folded away below.
-  const byTime = { soon: [], later: [], ongoing: [] } as Record<
-    "soon" | "later" | "ongoing",
-    TrackedGoal[]
-  >;
+  // Active goals by when they need the money, must-haves first in each
+  // group. Covered bills funds, reached goals and loans the EMIs already
+  // cover stay folded away below.
+  const byTime = Object.fromEntries(
+    HORIZONS.map((h) => [h.key, [] as TrackedGoal[]]),
+  ) as Record<Horizon, TrackedGoal[]>;
   for (const g of [...groups.attention, ...groups.growing].sort(
-    (a, b) => goals.indexOf(a) - goals.indexOf(b),
+    (a, b) =>
+      Number(!!a.niceToHave) - Number(!!b.niceToHave) ||
+      goals.indexOf(a) - goals.indexOf(b),
   ))
-    byTime[timeGroup(g)].push(g);
+    byTime[horizonGroup(g, today)].push(g);
+  const shown = HORIZONS.filter((h) => byTime[h.key].length > 0);
+  const behindIn = (key: Horizon) =>
+    byTime[key].filter((g) => {
+      const t = goalStatus(g, today).tone;
+      return t === "warning" || t === "danger";
+    }).length;
   const renderGoals = (items: TrackedGoal[]) => (
     <ul className="space-y-3">
       {items.map((g) => {
@@ -138,9 +148,11 @@ export function GoalList({
                     }
                   />
                 </div>
-                {sub && (
+                {(sub || g.niceToHave) && (
                   <span className="block text-xs text-muted-foreground">
-                    {sub}
+                    {[sub, g.niceToHave && "Nice to have"]
+                      .filter(Boolean)
+                      .join(" · ")}
                   </span>
                 )}
                 {!(g.loanState && g.emisCloseFirst) && (
@@ -215,14 +227,7 @@ export function GoalList({
                     links={links}
                     short={!!gap}
                   >
-                    {gap && (
-                      <GapChoices
-                        goal={g}
-                        options={gap}
-                        today={today}
-                        afterPlan
-                      />
-                    )}
+                    {gap && <GapChoices options={gap} afterPlan />}
                   </SuggestionBox>
                 )}
 
@@ -235,9 +240,7 @@ export function GoalList({
                     g={g}
                     details={details}
                     verdict={!suggestion}
-                    extra={
-                      gap && <GapChoices goal={g} options={gap} today={today} />
-                    }
+                    extra={gap && <GapChoices options={gap} />}
                   />
                 )}
 
@@ -274,32 +277,63 @@ export function GoalList({
 
   return (
     <div className="space-y-6">
-      {(
-        [
-          ["soon", "Next 2 years", "soonest first"],
-          ["later", "Later", ""],
-          ["ongoing", "No fixed date", ""],
-        ] as const
-      ).map(
-        ([key, title, note]) =>
-          byTime[key].length > 0 && (
-            <section
-              key={key}
-              aria-labelledby={`goals-${key}-h`}
-              className="space-y-3"
-            >
-              <div className="flex items-baseline justify-between gap-2 px-0.5">
-                <h2 id={`goals-${key}-h`} className="font-semibold">
-                  {title}
-                </h2>
-                <span className="text-xs text-muted-foreground">
-                  {note || byTime[key].length}
+      {shown.length > 1 && (
+        <nav
+          aria-label="Jump to a time"
+          className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none]"
+        >
+          {shown.map((h) => {
+            const behind = behindIn(h.key);
+            return (
+              <button
+                key={h.key}
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById(`goals-${h.key}`)
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+                className="press flex shrink-0 flex-col items-start rounded-xl border bg-card px-3 py-2 text-left"
+              >
+                <span className="text-xs text-muted-foreground">{h.short}</span>
+                <span className="flex items-center gap-1.5 text-sm font-medium">
+                  {byTime[h.key].length}{" "}
+                  {byTime[h.key].length === 1 ? "goal" : "goals"}
+                  {behind > 0 && (
+                    <span
+                      className="size-1.5 rounded-full bg-warning"
+                      aria-label={`${behind} behind`}
+                    />
+                  )}
                 </span>
-              </div>
-              {renderGoals(byTime[key])}
-            </section>
-          ),
+              </button>
+            );
+          })}
+        </nav>
       )}
+      {shown.map((h) => {
+        const behind = behindIn(h.key);
+        return (
+          <section
+            key={h.key}
+            id={`goals-${h.key}`}
+            aria-labelledby={`goals-${h.key}-h`}
+            className="scroll-mt-20 space-y-3"
+          >
+            <div className="flex items-baseline justify-between gap-2 px-0.5">
+              <h2 id={`goals-${h.key}-h`} className="font-semibold">
+                {h.title}
+              </h2>
+              <span className="text-xs text-muted-foreground">
+                {behind > 0
+                  ? `${behind} of ${byTime[h.key].length} behind`
+                  : byTime[h.key].length}
+              </span>
+            </div>
+            {renderGoals(byTime[h.key])}
+          </section>
+        );
+      })}
       {(
         [
           [

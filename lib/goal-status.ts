@@ -2,10 +2,9 @@
 // plan and its calculations never read these.
 
 import type { Suggestion } from "./allocate";
-import { addMonths } from "./dates";
 import { formatINR, formatMonths } from "./format";
 import { monthYear, type Tone } from "./goal-summary";
-import { requiredSip, type TrackedGoal } from "./tracker";
+import type { TrackedGoal } from "./tracker";
 
 export interface GoalStatus {
   label: string;
@@ -40,14 +39,50 @@ export function goalStatus(g: TrackedGoal, today: string): GoalStatus {
   return { label: "On track", tone: "success" };
 }
 
-export type TimeGroup = "soon" | "later" | "ongoing";
+export type Horizon =
+  | "month"
+  | "quarter"
+  | "half"
+  | "year"
+  | "five"
+  | "beyond"
+  | "ongoing";
 
-/** Next 2 years, later, or no fixed date. Bills funds always count as soon. */
-export function timeGroup(g: TrackedGoal): TimeGroup {
-  if (g.billsFund) return "soon";
-  if (!g.targetDate || g.months === null) return "ongoing";
-  return g.months <= 24 ? "soon" : "later";
+/** Time groups on the Goals list, nearest first, with their headings. */
+export const HORIZONS: { key: Horizon; title: string; short: string }[] = [
+  { key: "month", title: "Next month", short: "1 mo" },
+  { key: "quarter", title: "This quarter", short: "3 mo" },
+  { key: "half", title: "Next 6 months", short: "6 mo" },
+  { key: "year", title: "Within a year", short: "1 yr" },
+  { key: "five", title: "1 to 5 years", short: "5 yr" },
+  { key: "beyond", title: "5+ years", short: "5+ yr" },
+  { key: "ongoing", title: "No fixed date", short: "Ongoing" },
+];
+
+const DAY = 24 * 3600 * 1000;
+
+/** When a goal next needs money: its date, or a bills fund's next payment. */
+export function horizonDate(g: TrackedGoal): string | null {
+  if (g.billsFund) return g.billsFund.upcoming[0]?.date ?? null;
+  return g.targetDate;
 }
+
+/** Which time group a goal falls in. A date already passed counts as next month. */
+export function horizonGroup(g: TrackedGoal, today: string): Horizon {
+  const date = horizonDate(g);
+  if (!date) return "ongoing";
+  const days = (Date.parse(date) - Date.parse(today)) / DAY;
+  if (days <= 31) return "month";
+  if (days <= 92) return "quarter";
+  if (days <= 183) return "half";
+  if (days <= 366) return "year";
+  if (days <= 5 * 365.25) return "five";
+  return "beyond";
+}
+
+/** Sort rank: nearer groups first. */
+export const horizonRank = (h: Horizon) =>
+  HORIZONS.findIndex((x) => x.key === h);
 
 /** The line under a goal's name: its date and time left, or what it's for. */
 export function goalSubline(g: TrackedGoal): string {
@@ -105,64 +140,24 @@ export function goalHint(
 }
 
 export interface GapOptions {
-  /** Total a month needed to keep the date and target. */
-  neededNow: number;
-  /** A later date, with the total a month that then gets there. */
-  later: { date: string; monthly: number } | null;
-  /** A target a fifth smaller (today's money), with the total a month for it. */
-  smaller: { target: number; monthly: number } | null;
-  /** Extra a month, beyond what's going in and the plan, to keep both. */
+  /** Extra a month, beyond what's going in and the plan, to keep the date and target. */
   moreMonthly: number;
   /** Nothing going in yet, so it's "start" rather than "more". */
   fromZero: boolean;
 }
 
-const up100 = (n: number) => Math.ceil(n / 100) * 100;
-
 /**
- * For a dated savings goal still behind after the plan: realistic trade-offs,
- * each with what it then takes a month. Never "lower it to whatever today's
- * savings reach", which for a long goal with little invested is meaningless.
+ * For a dated savings goal still behind after the plan: how much more a
+ * month keeps it on track. Kept to one simple step on purpose.
  */
 export function gapOptions(
   g: TrackedGoal,
-  today: string,
+  _today: string,
   planMonthly = 0,
 ): GapOptions | null {
   if (g.loanState || g.billsFund || !g.targetDate || !g.months) return null;
   if (g.status !== "behind") return null;
-  const going = g.monthlySip + planMonthly;
   const moreMonthly = Math.max(0, g.extraSipNeeded - planMonthly);
   if (moreMonthly <= 0) return null;
-  const infl = (g.inflationPct ?? 0) / 100;
-  // Total a month to reach `target` (today's money) in `m` months.
-  const needed = (target: number, m: number) =>
-    up100(
-      requiredSip(
-        target * Math.pow(1 + infl, m / 12),
-        g.current,
-        g.returnPct,
-        m,
-      ),
-    );
-  const neededNow = needed(g.target, g.months);
-
-  // Push the date out by about a sixth of the time left (6 months to 3 years).
-  const shift = Math.min(36, Math.max(6, Math.round(g.months / 6)));
-  const laterMonthly = needed(g.target, g.months + shift);
-  const later =
-    laterMonthly < neededNow * 0.97
-      ? { date: addMonths(g.targetDate, shift), monthly: laterMonthly }
-      : null;
-
-  // Aim a fifth lower: a real trade-off, not a different goal.
-  const raw = g.target * 0.8;
-  const step = raw >= 1e7 ? 1e5 : raw >= 1e5 ? 1e4 : 1000;
-  const smallerTarget = Math.round(raw / step) * step;
-  const smaller =
-    smallerTarget > g.current
-      ? { target: smallerTarget, monthly: needed(smallerTarget, g.months) }
-      : null;
-
-  return { neededNow, later, smaller, moreMonthly, fromZero: going === 0 };
+  return { moreMonthly, fromZero: g.monthlySip + planMonthly === 0 };
 }
