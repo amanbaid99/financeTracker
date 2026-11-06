@@ -49,14 +49,14 @@ export type Horizon =
   | "ongoing";
 
 /** Time groups on the Goals list, nearest first, with their headings. */
-export const HORIZONS: { key: Horizon; title: string; short: string }[] = [
-  { key: "month", title: "Next month", short: "Next month" },
-  { key: "quarter", title: "This quarter", short: "3 months" },
-  { key: "half", title: "Next 6 months", short: "6 months" },
-  { key: "year", title: "Within a year", short: "1 year" },
-  { key: "five", title: "1 to 5 years", short: "1 to 5 years" },
-  { key: "beyond", title: "5+ years", short: "5+ years" },
-  { key: "ongoing", title: "No fixed date", short: "No date" },
+export const HORIZONS: { key: Horizon; title: string }[] = [
+  { key: "month", title: "Next month" },
+  { key: "quarter", title: "This quarter" },
+  { key: "half", title: "Next 6 months" },
+  { key: "year", title: "Within a year" },
+  { key: "five", title: "1 to 5 years" },
+  { key: "beyond", title: "5+ years" },
+  { key: "ongoing", title: "No fixed date" },
 ];
 
 const DAY = 24 * 3600 * 1000;

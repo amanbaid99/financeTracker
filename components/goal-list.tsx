@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   DeleteGoalButton,
   EditGoalButton,
@@ -277,16 +277,6 @@ export function GoalList({
 
   return (
     <div className="space-y-6">
-      {shown.length > 1 && (
-        <Timeline
-          items={shown.map((h) => ({
-            key: h.key,
-            label: h.short,
-            count: byTime[h.key].length,
-            behind: behindIn(h.key),
-          }))}
-        />
-      )}
       {shown.map((h) => {
         const behind = behindIn(h.key);
         return (
@@ -294,7 +284,7 @@ export function GoalList({
             key={h.key}
             id={`goals-${h.key}`}
             aria-labelledby={`goals-${h.key}-h`}
-            className="scroll-mt-28 space-y-3"
+            className="scroll-mt-20 space-y-3"
           >
             <div className="flex items-baseline justify-between gap-2 px-0.5">
               <h2 id={`goals-${h.key}-h`} className="font-semibold">
@@ -358,85 +348,5 @@ export function GoalList({
           ),
       )}
     </div>
-  );
-}
-
-/**
- * When your goals fall due, as a strip that stays at the top while you
- * scroll. The group you're looking at is highlighted; tap one to jump.
- */
-function Timeline({
-  items,
-}: {
-  items: { key: Horizon; label: string; count: number; behind: number }[];
-}) {
-  const [active, setActive] = useState<Horizon>(items[0].key);
-  const keys = items.map((i) => i.key).join(",");
-  useEffect(() => {
-    // The group whose heading has reached the strip is the one in view.
-    const onScroll = () => {
-      let current = keys.split(",")[0];
-      for (const k of keys.split(",")) {
-        const el = document.getElementById(`goals-${k}`);
-        if (el && el.getBoundingClientRect().top <= 140) current = k;
-      }
-      setActive(current as Horizon);
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [keys]);
-  useEffect(() => {
-    document
-      .getElementById(`tl-${active}`)
-      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
-  }, [active]);
-  return (
-    <nav
-      aria-label="When your goals are due"
-      className="sticky top-[calc(3rem+env(safe-area-inset-top))] z-20 -mx-4 bg-background/90 px-4 py-2 backdrop-blur"
-    >
-      <ol className="flex gap-1.5 overflow-x-auto [scrollbar-width:none]">
-        {items.map((it) => {
-          const on = it.key === active;
-          return (
-            <li key={it.key} id={`tl-${it.key}`} className="shrink-0">
-              <button
-                type="button"
-                aria-current={on ? "true" : undefined}
-                onClick={() => {
-                  setActive(it.key);
-                  document
-                    .getElementById(`goals-${it.key}`)
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-                className={cn(
-                  "press inline-flex min-h-9 items-center gap-1.5 rounded-full px-3 text-xs font-medium transition-colors",
-                  on
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted/70 text-muted-foreground hover:bg-muted",
-                )}
-              >
-                {it.label}
-                <span
-                  className={cn("tabular", on ? "opacity-80" : "opacity-70")}
-                >
-                  {it.count}
-                </span>
-                {it.behind > 0 && (
-                  <span
-                    className={cn(
-                      "size-1.5 rounded-full",
-                      on ? "bg-primary-foreground" : "bg-warning",
-                    )}
-                    aria-label={`${it.behind} behind`}
-                  />
-                )}
-              </button>
-            </li>
-          );
-        })}
-      </ol>
-    </nav>
   );
 }
