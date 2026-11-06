@@ -25,7 +25,7 @@ import {
   type PlanStep,
   type SipStrategy,
 } from "@/lib/sip-plan";
-import type { Investment, Link } from "@/lib/tracker";
+import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
 import { useQuickAction } from "@/components/quick-add";
 import { formatINR, formatINRCompact } from "@/lib/format";
 
@@ -366,7 +366,10 @@ export function MoneyPlanCard({
   budgetMonthly = null,
   strategy,
   onStrategyChange,
+  goals = [],
 }: {
+  /** To say what the goals still need before there's a plan. */
+  goals?: TrackedGoal[];
   budget: Budget;
   budgetMonthly?: number | null;
   plan: MoneyPlan | null;
@@ -399,6 +402,9 @@ export function MoneyPlanCard({
     />
   );
 
+  const needed = goals
+    .filter((g) => g.status !== "reached" && !g.emisCloseFirst)
+    .reduce((s, g) => s + g.extraSipNeeded, 0);
   if (!plan)
     return (
       <section
@@ -420,7 +426,9 @@ export function MoneyPlanCard({
           <span className="min-w-0 flex-1">
             <span className="block text-sm font-medium">Plan my money</span>
             <span className="block text-xs text-muted-foreground">
-              Split your monthly savings across goals.
+              {needed > 0
+                ? `Your goals need about ${formatINR(Math.round(needed / 1000) * 1000)} a month more. See how to split what you can.`
+                : "Split your monthly savings across goals."}
             </span>
           </span>
           <ArrowUpRight className="size-4 shrink-0 text-primary" aria-hidden />
@@ -481,40 +489,38 @@ export function MoneyPlanCard({
           Edit plan
         </button>
       </div>
-      <div className="grid grid-cols-2 gap-3 rounded-xl bg-muted/50 p-3">
-        <div>
-          <p className="text-xs text-muted-foreground">Available / month</p>
-          <p className="tabular mt-1 text-xl font-semibold tracking-tight">
-            {budget.income > 0 ? (
-              formatINR(budget.planMonthly)
-            ) : (
-              <NextLink
-                href="/goals/budget"
-                className="inline-flex min-h-11 items-center text-base text-primary"
+      <div>
+        <p className="tabular text-2xl font-semibold tracking-tight">
+          {formatINR(plan.monthlyTotal)}
+          <span className="text-sm font-normal text-muted-foreground">
+            {" "}
+            a month
+          </span>
+        </p>
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+          {lumpTotal > 0 && <span>plus {formatINR(lumpTotal)} once</span>}
+          {budget.income > 0 ? (
+            plan.monthlyTotal > budget.planMonthly ? (
+              <span
+                role="status"
+                className="rounded-full bg-warning-soft px-2 py-0.5 font-medium text-warning"
               >
-                Set budget
-              </NextLink>
-            )}
-          </p>
-        </div>
-        <div className="border-l pl-3">
-          <p className="text-xs text-muted-foreground">Planned / month</p>
-          <p className="tabular mt-1 text-xl font-semibold tracking-tight">
-            {formatINR(plan.monthlyTotal)}
-          </p>
-        </div>
+                {formatINR(plan.monthlyTotal - budget.planMonthly)} over your
+                budget
+              </span>
+            ) : (
+              <span>of {formatINR(budget.planMonthly)} your budget allows</span>
+            )
+          ) : (
+            <NextLink
+              href="/goals/budget"
+              className="inline-flex min-h-11 items-center font-medium text-primary"
+            >
+              Set budget
+            </NextLink>
+          )}
+        </p>
       </div>
-      {lumpTotal > 0 && (
-        <p className="text-xs text-muted-foreground">
-          plus {formatINR(lumpTotal)} once
-        </p>
-      )}
-      {budget.income > 0 && plan.monthlyTotal > budget.planMonthly && (
-        <p role="status" className="text-xs text-warning">
-          Your plan is {formatINR(plan.monthlyTotal - budget.planMonthly)} above
-          your monthly budget. Review it before investing.
-        </p>
-      )}
       {steps.length > 0 ? (
         <Checklist steps={steps} investments={investments} links={links} />
       ) : (

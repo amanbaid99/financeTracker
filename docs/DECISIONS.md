@@ -41,6 +41,13 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   to 3 months of essentials, keeps a fifth of the monthly money for 5+ year goals so retirement
   isn't always last, then nearer goals by group with must-haves first. Each goal can be Must have
   or Nice to have.
+- **Goals top section (Nov 6, owner asked):** a summary card (saved, going in a month, a status
+  bar with counts) replaces the subtitle line. Status filters were removed. This month leads with
+  the monthly amount, with "over your budget" as a small pill. Before a plan exists, the row says
+  what the goals still need a month. The time-group strip is sticky and highlights the group in
+  view.
+- **EMI Mark paid from the 1st of the due month (Nov 6, owner asked):** earlier, the button is a
+  note ("Mark paid from 1 Dec"), and the server refuses early marks too.
 - **One way to close a gap (Nov 6, owner's call):** a goal the plan can't cover only shows "invest
   ₹X a month more". The later date and smaller target options were removed to keep it simple.
 

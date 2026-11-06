@@ -814,15 +814,23 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("EMI", { exact: true }).fill("12000");
   await page.getByLabel("Interest, % a year").fill("9");
   await page.getByLabel("Total EMIs").fill("48");
+  // An EMI can be marked paid from the 1st of its month: due on the 28th,
+  // it's this month's unless today is already past the 27th (IST).
+  const dayIST = new Date(Date.now() + 5.5 * 3600 * 1000).getUTCDate();
+  await page.getByLabel("EMI date").selectOption("28");
   await page.getByLabel("Outstanding balance").fill("400000");
   await page.getByRole("button", { name: "Add loan" }).click();
   await expect(loansList).toContainText("Car finance");
   await expect(loansList).toContainText("₹1L of ₹5L repaid");
   await expect(loansList).toContainText(/a month in EMIs/);
-  await loansList.getByRole("button", { name: "Mark Car finance EMI paid" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Car finance EMI marked paid" })).toBeVisible();
-  await page.getByRole("status").filter({ hasText: "Car finance EMI marked paid" }).getByRole("button", { name: "Undo" }).click();
-  await expect(loansList.getByRole("button", { name: "Mark Car finance EMI paid" })).toBeVisible();
+  if (dayIST < 28) {
+    await loansList.getByRole("button", { name: "Mark Car finance EMI paid" }).click();
+    await expect(page.getByRole("status").filter({ hasText: "Car finance EMI marked paid" })).toBeVisible();
+    await page.getByRole("status").filter({ hasText: "Car finance EMI marked paid" }).getByRole("button", { name: "Undo" }).click();
+    await expect(loansList.getByRole("button", { name: "Mark Car finance EMI paid" })).toBeVisible();
+  } else {
+    await expect(loansList).toContainText("Mark paid from 1");
+  }
   await expect(loansList).toContainText("₹1L of ₹5L repaid");
   await page.screenshot({ path: "test-results/loans-375.png", fullPage: true });
   // A loan on a separate card the lender gave you, not one of your credit cards.

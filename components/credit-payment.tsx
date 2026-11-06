@@ -11,6 +11,8 @@ import { useRouter } from "next/navigation";
 import { setBillPaid } from "@/lib/cards-actions";
 import { markEmiPaid, undoEmiPaid } from "@/lib/loans-actions";
 import { Button } from "@/components/ui/button";
+import { todayIST } from "@/lib/dates";
+import { monthYear } from "@/lib/goal-summary";
 
 type Payment =
   | { kind: "bill"; id: string; label: string }
@@ -112,6 +114,13 @@ export function CreditPaymentButton({
 }) {
   const ctx = useContext(PaymentContext);
   if (!ctx) throw new Error("Credit payments need their provider");
+  // An EMI can be marked paid from the 1st of the month it's due.
+  if (payment.kind === "emi" && todayIST() < `${payment.date.slice(0, 7)}-01`)
+    return (
+      <span className="shrink-0 text-xs text-muted-foreground">
+        Mark paid from 1 {monthYear(payment.date).split(" ")[0]}
+      </span>
+    );
   return (
     <Button
       type="button"

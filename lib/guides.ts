@@ -38,7 +38,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap Add a goal and pick a type: a purchase, a trip, an emergency fund, a bills fund or paying off a loan.",
       "Link the mutual funds, savings or deposits that pay for it. One investment can be split across goals.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
-      "Tap a status filter to narrow your goals. Goals are grouped by when they're due, from next month to 5+ years. Tap a chip at the top to jump to a group. Must-haves come first in each group. A label on each says On track, Behind or what needs action. Covered bills funds, loans covered by EMIs and reached goals are folded away. If a bills fund develops a shortfall, it returns to the active list.",
+      "The card at the top shows what's saved, what goes in each month and how many goals are on track. Goals are grouped by when they're due, from next month to 5+ years. The strip of chips stays at the top as you scroll: tap one to jump to that group. Must-haves come first in each group. A label on each says On track, Behind or what needs action. Covered bills funds, loans covered by EMIs and reached goals are folded away. If a bills fund develops a shortfall, it returns to the active list.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
       "This month, above your goals, lists what to invest and where. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
       "Open a goal for its What to do box. If your plan can't cover it, it says how much more a month keeps it on track.",
@@ -114,8 +114,12 @@ export const RELEASES: Release[] = [
     title: "Not sure how much to save?",
     items: [
       {
-        title: "Goals by when they're due",
-        text: "Goals are grouped from next month to 5+ years, with chips at the top to jump between them. Mark a goal Must have or Nice to have, and must-haves come first.",
+        title: "A clearer Goals page",
+        text: "One card shows what's saved, what goes in each month and how your goals are doing. This month leads with the amount to invest. Goals are grouped from next month to 5+ years, with a strip that stays at the top as you scroll. Mark a goal Must have or Nice to have, and must-haves come first.",
+      },
+      {
+        title: "EMIs when they're due",
+        text: "Mark paid shows for an EMI from the 1st of the month it's due, so next month's EMI doesn't ask for attention early.",
       },
       {
         title: "A plan that looks ahead",

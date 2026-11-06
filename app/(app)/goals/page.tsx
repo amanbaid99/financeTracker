@@ -7,7 +7,6 @@ import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
 import { BudgetCard } from "@/components/budget-card";
 import { loadBudget, loadGoals } from "@/lib/data";
-import { formatINR, formatINRCompact } from "@/lib/format";
 import { planMoney } from "@/lib/allocate";
 import { sortGoals } from "@/lib/goal-summary";
 import { freePercent } from "@/lib/tracker";
@@ -42,8 +41,6 @@ export default async function GoalsPage({
         essentialsMonthly: monthBudget.costs + monthBudget.emis,
       })
     : null;
-  const saved = goals.reduce((s, g) => s + g.current, 0);
-  const sips = goals.reduce((s, g) => s + g.monthlySip, 0);
   // Every investment remains updatable from the + menu.
   const goalNames = new Map(goals.map((g) => [g.id, g.name]));
   const updatable = investments.map((i) => ({
@@ -61,11 +58,11 @@ export default async function GoalsPage({
             <h1 className="text-2xl font-semibold tracking-tight">Goals</h1>
             <GuideButton id="goals" />
           </div>
-          <p className="tabular mt-1 text-sm text-muted-foreground">
-            {goals.length > 0
-              ? `${formatINRCompact(saved)} saved · ${formatINR(sips)} a month going in`
-              : "Make room for what matters to you."}
-          </p>
+          {goals.length === 0 && (
+            <p className="mt-1 text-sm text-muted-foreground">
+              Make room for what matters to you.
+            </p>
+          )}
         </div>
       </div>
 

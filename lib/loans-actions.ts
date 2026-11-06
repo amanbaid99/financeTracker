@@ -1,5 +1,7 @@
 "use server";
 
+import { todayIST } from "@/lib/dates";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -170,6 +172,11 @@ export async function markEmiPaid(
 ): Promise<Result> {
   try {
     const v = paySchema.parse(input);
+    if (todayIST() < `${v.dueDate.slice(0, 7)}-01`)
+      return {
+        ok: false,
+        error: "You can mark this EMI paid from the 1st of the month it's due.",
+      };
     const { supabase, userId } = await session();
     const loan = await loadLoan(supabase, v.loanId);
     const after = afterPayment(loan, v.dueDate);

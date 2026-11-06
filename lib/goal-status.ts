@@ -50,13 +50,13 @@ export type Horizon =
 
 /** Time groups on the Goals list, nearest first, with their headings. */
 export const HORIZONS: { key: Horizon; title: string; short: string }[] = [
-  { key: "month", title: "Next month", short: "1 mo" },
-  { key: "quarter", title: "This quarter", short: "3 mo" },
-  { key: "half", title: "Next 6 months", short: "6 mo" },
-  { key: "year", title: "Within a year", short: "1 yr" },
-  { key: "five", title: "1 to 5 years", short: "5 yr" },
-  { key: "beyond", title: "5+ years", short: "5+ yr" },
-  { key: "ongoing", title: "No fixed date", short: "Ongoing" },
+  { key: "month", title: "Next month", short: "Next month" },
+  { key: "quarter", title: "This quarter", short: "3 months" },
+  { key: "half", title: "Next 6 months", short: "6 months" },
+  { key: "year", title: "Within a year", short: "1 year" },
+  { key: "five", title: "1 to 5 years", short: "1 to 5 years" },
+  { key: "beyond", title: "5+ years", short: "5+ years" },
+  { key: "ongoing", title: "No fixed date", short: "No date" },
 ];
 
 const DAY = 24 * 3600 * 1000;
