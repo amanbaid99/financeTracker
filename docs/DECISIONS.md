@@ -50,6 +50,9 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   split by plan step), "Where it goes, and why" by step (`Suggestion.stage`), then the This month
   checklist and details. Goals shows one row ("Your plan: ₹X a month", View plan) plus a budget
   link. Saving the plan form opens the plan page.
+- **Portfolio and Credit simplified (Nov 6, owner asked):** Portfolio's "Where your money is" has
+  Asset type and Instrument tabs instead of a separate "By kind" fold. Credit has no All/Loans/
+  Cards chips: Payments due shows only when something is due, then Cards, then Loans.
 - **EMI Mark paid from the 1st of the due month (Nov 6, owner asked):** earlier, the button is a
   note ("Mark paid from 1 Dec"), and the server refuses early marks too.
 - **One way to close a gap (Nov 6, owner's call):** a goal the plan can't cover only shows "invest

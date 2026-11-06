@@ -52,7 +52,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro: "Everything you hold, across all goals, in one place.",
     steps: [
       "Open the Portfolio review row for checks and settings. Turn on automatic reviews for checks after imports and holding updates. Review suggestions yourself before changing investments.",
-      "The overview shows your total, monthly investments and asset split. Tap an asset class to filter the holdings below. Clear the filter to see everything again. Open By kind for the detailed breakdown.",
+      "The overview shows your total, monthly investments and asset split. Tap an asset class to filter the holdings below. Clear the filter to see everything again. Switch to Instrument to see it by kind of investment, like mutual funds, stocks or EPF.",
       "Search holdings by name or category. Sort by value, name or simple growth. Unknown growth comes last. Growth compares today's value with what you put in, not an annual return.",
       "Last edited is when a holding record changed, not a market price date. CAS import dates are recorded for new successful imports; older dates may be unknown.",
       "Tap + to add an investment or saving, update values or import a CAS statement. Tap a holding to edit it.",
@@ -64,7 +64,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "See what needs paying, then how far each loan has come and your card milestones.",
     steps: [
       "Add each loan with its type, the amount you withdrew, the EMI and what you owe now. For a loan on a card, pick one of your credit cards or a separate card the lender gave you, with its bill and payment dates.",
-      "Payments due shows overdue payments and those due this month, ordered by date. Existing bills without dates stay visible for review. Later payments stay inside their card or loan. Card-linked EMIs are included in their card bill. Use All, Loans or Cards to narrow the page.",
+      "Payments due shows overdue payments and those due this month, ordered by date. Existing bills without dates stay visible for review. Later payments stay inside their card or loan. Card-linked EMIs are included in their card bill. Below it come your cards, then your loans.",
       "Each loan shows its next EMI and how soon it's due. Tap Mark paid once you've paid: what you owe goes down and the progress bar moves. A page confirmation offers Undo for 10 seconds.",
       "Loan balances, payoff dates and elapsed EMI counts are estimates based on the schedule. Payments you explicitly record appear inside each loan. Closed loans are folded below active loans.",
       "EMIs on a card are part of its bill, but they don't count toward the card's milestones.",

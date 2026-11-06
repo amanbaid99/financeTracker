@@ -27,42 +27,14 @@ export function CreditOverview({
   initialOpen: string | null;
   action: string | null;
 }) {
-  const [filter, setFilter] = useState<"all" | "loans" | "cards">("all");
   const [cardOpen, setCardOpen] = useState(initialOpen);
   const [showAll, setShowAll] = useState(false);
-  const payments = creditPayments(cards, loans, today).filter(
-    (p) =>
-      filter === "all" ||
-      (filter === "cards" ? p.kind === "bill" : p.kind !== "bill"),
-  );
+  const payments = creditPayments(cards, loans, today);
   const shown = showAll ? payments : payments.slice(0, 3);
   return (
     <CreditPaymentProvider>
-      <div className="flex gap-1.5" role="group" aria-label="Filter credit">
-        {(
-          [
-            ["all", "All"],
-            ["loans", "Loans"],
-            ["cards", "Cards"],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={filter === key}
-            onClick={() => setFilter(key)}
-            className={cn(
-              "press min-h-11 rounded-full border px-4 text-sm font-medium",
-              filter === key
-                ? "border-primary/20 bg-primary-soft text-primary"
-                : "border-transparent bg-muted/60 text-muted-foreground",
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      {(cards.length > 0 || loans.length > 0) && (
+      {/* Only when something is due: cards, then loans, otherwise. */}
+      {payments.length > 0 && (
         <section
           className="surface-card rounded-2xl border bg-card p-4"
           aria-labelledby="payments-h"
@@ -123,7 +95,6 @@ export function CreditOverview({
                         type="button"
                         className="min-h-11 px-2 text-xs font-medium text-primary"
                         onClick={() => {
-                          setFilter("cards");
                           setCardOpen(p.cardId!);
                           requestAnimationFrame(() =>
                             document
@@ -176,16 +147,8 @@ export function CreditOverview({
         </section>
       )}
 
-      <div hidden={filter === "cards"}>
-        <LoanList
-          loans={loans}
-          cards={cards.map((c) => ({ id: c.id, label: c.label }))}
-          today={today}
-        />
-      </div>
       <section
         id="credit-cards"
-        hidden={filter === "loans"}
         aria-labelledby="cards-h"
         className="scroll-mt-16 space-y-3"
       >
@@ -201,6 +164,11 @@ export function CreditOverview({
           action={action}
         />
       </section>
+      <LoanList
+        loans={loans}
+        cards={cards.map((c) => ({ id: c.id, label: c.label }))}
+        today={today}
+      />
     </CreditPaymentProvider>
   );
 }

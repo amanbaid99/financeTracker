@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { AllocationBar } from "@/components/allocation-bar";
 import { PortfolioHoldings } from "@/components/portfolio-holdings";
-import { formatINR, formatINRCompact } from "@/lib/format";
+import { formatINR } from "@/lib/format";
 import { editedDate } from "@/lib/portfolio-view";
 import {
   ASSET_CLASSES,
@@ -30,6 +30,9 @@ export function PortfolioOverview({
   autoAdd?: boolean;
 }) {
   const [assetClass, setAssetClass] = useState<AssetClass | null>(null);
+  const [view, setView] = useState<"asset" | "kind">("asset");
+  const kindSlot = (c: AssetClass) =>
+    ASSET_CLASSES.find((x) => x.key === c)?.slot ?? 7;
   const lastEdit = investments
     .map((i) => i.updatedAt)
     .filter((v): v is string => !!v && Number.isFinite(Date.parse(v)))
@@ -58,43 +61,96 @@ export function PortfolioOverview({
           </p>
         )}
         <div className="mt-4 border-t pt-3">
-          <h2 className="text-sm font-semibold">Where your money is</h2>
-          <AllocationBar
-            classes={p.classes}
-            active={assetClass}
-            onSelect={setAssetClass}
-          />
-        </div>
-        <details className="mt-2 border-t">
-          <summary className="flex min-h-11 cursor-pointer items-center text-xs font-medium text-primary">
-            By kind
-          </summary>
-          <ul className="space-y-2 pb-2 text-xs">
-            {p.kinds.map((k) => (
-              <li
-                key={k.label}
-                className="flex items-baseline justify-between gap-3"
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold">Where your money is</h2>
+            <div
+              className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+              role="tablist"
+              aria-label="Group by"
+            >
+              {(
+                [
+                  ["asset", "Asset type"],
+                  ["kind", "Instrument"],
+                ] as const
+              ).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={view === key}
+                  onClick={() => {
+                    setView(key);
+                    if (key === "kind") setAssetClass(null);
+                  }}
+                  className={cn(
+                    "min-h-8 rounded-md px-2.5 text-xs",
+                    view === key
+                      ? "bg-card font-medium shadow-sm"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {view === "asset" ? (
+            <AllocationBar
+              classes={p.classes}
+              active={assetClass}
+              onSelect={setAssetClass}
+            />
+          ) : (
+            <div className="space-y-1">
+              <div
+                className="flex min-h-11 w-full items-center gap-0.5"
+                aria-hidden
               >
-                <span className="flex min-w-0 items-center gap-2">
+                {p.kinds.map((k, i) => (
                   <span
+                    key={k.label}
+                    style={{ flexGrow: Math.max(k.share, 0.005), flexBasis: 0 }}
                     className={cn(
-                      "size-2 shrink-0 rounded-full",
-                      swatchFor(
-                        ASSET_CLASSES.find((c) => c.key === k.assetClass)
-                          ?.slot ?? 7,
-                      ),
+                      "block h-3 min-w-[3px]",
+                      swatchFor(kindSlot(k.assetClass)),
+                      i === 0 && "rounded-l-full",
+                      i === p.kinds.length - 1 && "rounded-r-full",
                     )}
-                    aria-hidden
                   />
-                  {k.label}
-                </span>
-                <span className="tabular shrink-0">
-                  {formatINRCompact(k.value)} · {Math.round(k.share * 100)}%
-                </span>
-              </li>
-            ))}
-          </ul>
-        </details>
+                ))}
+              </div>
+              <ul
+                className="divide-y divide-border/50"
+                aria-label="By instrument"
+              >
+                {p.kinds.map((k) => (
+                  <li
+                    key={k.label}
+                    className="grid min-h-11 grid-cols-[minmax(0,1fr)_6.5rem_3.25rem] items-center gap-x-3 px-2 text-xs"
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span
+                        className={cn(
+                          "size-2 shrink-0 rounded-full",
+                          swatchFor(kindSlot(k.assetClass)),
+                        )}
+                        aria-hidden
+                      />
+                      <span className="min-w-0 break-words">{k.label}</span>
+                    </span>
+                    <span className="tabular whitespace-nowrap text-right font-medium">
+                      {formatINR(k.value)}
+                    </span>
+                    <span className="tabular text-right text-muted-foreground">
+                      {Math.round(k.share * 100)}%
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
         <p className="border-t pt-2 text-[11px] text-muted-foreground">
           {edited ? `Last edited ${edited}` : "Edit date unavailable"}
           {imported
