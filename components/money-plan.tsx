@@ -1,7 +1,6 @@
 "use client";
 
 import { Check, ChevronDown, Plus, Sparkles } from "lucide-react";
-import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { NextStep } from "@/components/next-step";

@@ -28,8 +28,11 @@ export function homeCardSummary(cards: Card[], today: string) {
   };
 }
 
-/** Preview active goals without repeating reached or already-covered groups. */
+/** Preview active savings goals without repeating reached or already-covered groups. */
 export function homeGoals(goals: TrackedGoal[]): TrackedGoal[] {
   const groups = groupGoals(goals);
-  return sortGoals([...groups.attention, ...groups.growing]).slice(0, 3);
+  // Loans have their own place in Credit, so they aren't previewed as goals.
+  return sortGoals([...groups.attention, ...groups.growing])
+    .filter((g) => !g.loanState)
+    .slice(0, 3);
 }

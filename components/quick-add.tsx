@@ -14,6 +14,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { GuideButton, useGuides } from "@/components/guides";
 import { Sheet } from "@/components/sheet";
+import { cn } from "@/lib/utils";
 
 /** Event sent when a + action targets the page you're already on. */
 export const QUICK_ACTION = "tracker:quick-action";
@@ -100,6 +101,20 @@ export function QuickAdd() {
         ]
       : ACTIONS;
   const close = useCallback(() => setOpen(false), []);
+  // Slides away while you scroll down so it never sits on what you're
+  // reading; scrolling up, or reaching the top, brings it back.
+  const [away, setAway] = useState(false);
+  useEffect(() => {
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (Math.abs(y - lastY) < 8) return;
+      setAway(y > lastY && y > 80);
+      lastY = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
   // Each tab's first-visit guide already points to the + button, so there's
   // no separate hint bubble.
   if (!hasQuickActions(path)) return null;
@@ -113,7 +128,10 @@ export function QuickAdd() {
           setOpen(true);
         }}
         aria-label="Add or update"
-        className="press fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-30 inline-flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-black/15 hover:brightness-110 sm:right-[max(1rem,calc(50%-24rem+1rem))]"
+        className={cn(
+          "press fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-30 inline-flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-black/15 transition-[translate,opacity] duration-200 hover:brightness-110 sm:right-[max(1rem,calc(50%-24rem+1rem))]",
+          away && "pointer-events-none translate-y-24 opacity-0",
+        )}
       >
         <Plus className="size-6" aria-hidden />
       </button>

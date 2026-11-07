@@ -107,6 +107,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(goalsGuide).toHaveCount(0);
   // One welcome per tab: no separate hint bubble for the + button.
   await expect(page.getByRole("complementary", { name: "About the plus button" })).toHaveCount(0);
+  await page.evaluate(() => window.scrollTo(0, 0)); // + hides while scrolling down
   await page.getByRole("button", { name: "Add or update", exact: true }).click();
   const shortcuts = page.getByRole("dialog", { name: "What would you like to do?" });
   await expect(shortcuts.getByRole("link", { name: /^Add a card/ })).toHaveCount(0);
@@ -327,6 +328,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText(/grown at 6% a year/)).toBeVisible();
 
   // Update amounts for everything in one go.
+  await page.evaluate(() => window.scrollTo(0, 0)); // + hides while scrolling down
   await page.getByRole("button", { name: "Add or update", exact: true }).click();
   await page.getByRole("link", { name: /^Update values/ }).click();
   await expect(
@@ -527,6 +529,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   const PP = "Parag Parikh Flexi Cap Fund - Direct Plan Growth";
   const LIQ = "Edelweiss Liquid Fund - Direct Growth";
   const MYST = "Quant Mystery Opportunities Fund - Direct Growth";
+  await page.evaluate(() => window.scrollTo(0, 0)); // + hides while scrolling down
   await page.getByRole("button", { name: "Add or update", exact: true }).click();
   await page.getByRole("link", { name: /^Import statement/ }).click();
   await page.getByRole("button", { name: "How to get your statement" }).click();
@@ -696,6 +699,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Edit Index SIP" }).click();
   await expect(page.getByRole("dialog", { name: "Index SIP" })).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
+  await page.evaluate(() => window.scrollTo(0, 0)); // + hides while scrolling down
   await page.getByRole("button", { name: "Add or update", exact: true }).click();
   await page.getByRole("link", { name: /^Update values/ }).click();
   await expect(page.getByText("Type in what each investment is worth today.")).toBeVisible();
@@ -763,6 +767,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(review.getByRole("status")).toContainText(/checks? to review|No flags in these checks/, { timeout: 30_000 });
   const reviewSent = JSON.stringify(await (await page.request.get("http://127.0.0.1:5329/last-review")).json());
   for (const name of ["Bank FD", "House", "Index SIP", email]) expect(reviewSent).not.toContain(name);
+  await page.evaluate(() => window.scrollTo(0, 0)); // + hides while scrolling down
   await page.getByRole("button", { name: "Add or update", exact: true }).click();
   await page.getByRole("link", { name: /^Update values/ }).click();
   const valueInput = page.getByRole("dialog", { name: "Update amounts" }).getByRole("textbox").first();
@@ -1010,6 +1015,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // The + menu: log a card bill from anywhere.
   await tab("Goals").click();
   await expect(page.getByRole("heading", { name: "Goals", exact: true })).toBeVisible();
+  await page.evaluate(() => window.scrollTo(0, 0)); // + hides while scrolling down
   await page.getByRole("button", { name: "Add or update" }).click();
   await expect(
     page.getByRole("dialog", { name: "What would you like to do?" }),

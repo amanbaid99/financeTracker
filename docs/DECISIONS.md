@@ -59,7 +59,9 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
 - **Net worth (Nov 6, owner asked):** holdings minus loans. `net_worth_history` keeps one row per
   day, written by database triggers on holdings and loans (`record_net_worth`, security definer,
   not callable by users), so history needs nothing from the app. Today's point uses live figures
-  (loan balances follow their EMI schedule). Card bills are not counted. History starts on the
+  (loan balances follow their EMI schedule). Unpaid card bills count as owed (Nov 7, owner
+  agreed): `card_bills` column and a trigger on `card_bills`; the card shows loans and card bills
+  apart. History starts on the
   day the table was added.
 - **Portfolio and Credit simplified (Nov 6, owner asked):** Portfolio's "Where your money is" has
   Asset type and Instrument tabs instead of a separate "By kind" fold. Credit has no All/Loans/
@@ -206,4 +208,9 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   small database slowed each to 70-250 ms under that burst. Add new page data to the snapshot
   rather than a new query.
 
+- **Nov 7: Home fixes** (owner asked): the net worth chart picks a day only on a tap (not when a
+  scroll starts), with Back to today; a flat history shows a note, not a line. Next step sits under
+  net worth. One card tile (bills to pay, or the statement total when all paid). The budget tile
+  shows only once there's income (Next step asks for it otherwise). Goal progress skips loans and
+  uses Goals' "Behind today". + slides away while scrolling down.
 - **Nov 6: Home overview** (owner approved). /overview is the new landing page and PWA start URL. /home remains a legacy redirect, now to /overview. The logo, completed sign-in and privacy acceptance open Home. Bottom navigation has Home, Goals, Portfolio, Credit and Ask. + is fixed above the bottom-right corner on the main pages and stays visible while scrolling; page-end padding leaves room to reach the last items. Net worth and its recorded history move from Portfolio to Home, keeping the investments-minus-loans definition and showing card bills separately. This month shows budget free-to-invest after existing costs, EMIs and SIPs; current SIPs; the latest logged statement month with card coverage; and unpaid card bills. No statements is an unknown, never zero live spending. No future statement month is used as the latest month. Payments preview reuses the current-month cutoff and linked-EMI handling from Credit, with payment actions kept there. Home previews three active goals and hosts the dismissible Next step. Goals keeps progress, plan links and the explicit plan form. The existing cached snapshot loaders and history provide the data; no schema or user data mutation is needed to show Home.

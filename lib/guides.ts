@@ -23,8 +23,8 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro:
       "Home brings your saved figures together. Open a section for its details.",
     steps: [
-      "Net worth is your tracked investments and savings minus loans. Card bills are shown separately. The chart starts when history was first recorded.",
-      "This month shows your budget, current SIPs, dated card statement totals and unpaid bills. Statement totals include any EMIs in those bills. Missing statements do not mean zero spending.",
+      "Net worth is your tracked investments and savings, minus loans and unpaid card bills. Tap the chart to see a day, and Back to today to return. It starts when history was first recorded.",
+      "Next step, near the top, suggests one thing to do and Not now hides it. This month shows what your budget leaves to invest, your current SIPs and card bills to pay. Card figures are logged statements, including any EMIs in them. Missing statements do not mean zero spending.",
       "Payments coming up shows up to three overdue or current-month payments. Open Credit to record them.",
       "Goal progress previews three active goals. Your next step suggests one thing to work on, and Not now hides it on this device.",
       "The + button stays at the bottom right on the main pages for adding, importing and updating. The five tabs open Home, Goals, Portfolio, Credit and Ask.",
@@ -124,6 +124,20 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-11-07",
+    title: "A truer net worth",
+    items: [
+      {
+        title: "Card bills count",
+        text: "Unpaid card bills now count in what you owe, shown apart from loans, until you mark them paid.",
+      },
+      {
+        title: "A calmer Home",
+        text: "Your next step sits near the top. Card bills are one figure. The + button slides away while you scroll down.",
+      },
+    ],
+  },
   {
     date: "2026-11-06",
     title: "A Home for your money",

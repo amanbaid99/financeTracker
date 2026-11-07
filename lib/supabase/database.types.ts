@@ -862,6 +862,7 @@ export type Database = {
       net_worth_history: {
         Row: {
           assets: number;
+          card_bills: number;
           day: string;
           liabilities: number;
           updated_at: string;
@@ -870,6 +871,7 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           assets: number;
+          card_bills?: number;
           day: string;
           liabilities: number;
           updated_at?: string;
@@ -877,6 +879,7 @@ export type Database = {
         };
         Update: {
           assets?: number;
+          card_bills?: number;
           day?: string;
           liabilities?: number;
           updated_at?: string;

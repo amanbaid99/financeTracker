@@ -8,7 +8,10 @@ import { cn } from "@/lib/utils";
 export interface NetWorthPoint {
   day: string;
   assets: number;
+  /** Everything owed: loans plus unpaid card bills. */
   liabilities: number;
+  /** The unpaid card bills part of it. */
+  cardBills?: number;
 }
 
 const W = 320;
@@ -70,7 +73,7 @@ function Chart({
         }
       }}
       aria-label={`Net worth from ${formatDate(points[0].day)} to ${formatDate(points[points.length - 1].day)}`}
-      onPointerDown={(e) => {
+      onClick={(e) => {
         const box = e.currentTarget.getBoundingClientRect();
         const rel = ((e.clientX - box.left) / box.width) * W;
         let best = 0;
@@ -139,6 +142,8 @@ export function NetWorthCard({
   const net = points[picked].value;
   const first = points[0].value;
   const change = points[last].value - first;
+  // A flat line says nothing; wait until the value has actually moved.
+  const moved = points.some((p) => p.value !== first);
   return (
     <section
       aria-labelledby="nw-h"
@@ -174,9 +179,24 @@ export function NetWorthCard({
         <div className="border-l pl-3">
           <p className="text-xs text-muted-foreground">You owe</p>
           <p className="tabular font-medium">{formatINR(now.liabilities)}</p>
+          {(now.cardBills ?? 0) > 0 && (
+            <p className="tabular text-[11px] text-muted-foreground">
+              Loans {formatINRCompact(now.liabilities - (now.cardBills ?? 0))} ·
+              Card bills {formatINRCompact(now.cardBills ?? 0)}
+            </p>
+          )}
         </div>
       </div>
-      {points.length > 1 ? (
+      {picked !== last && (
+        <button
+          type="button"
+          onClick={() => setPicked(null)}
+          className="-mt-1 min-h-9 text-xs font-medium text-primary"
+        >
+          Back to today
+        </button>
+      )}
+      {moved ? (
         <Chart
           points={points}
           picked={picked}
@@ -185,13 +205,13 @@ export function NetWorthCard({
         />
       ) : (
         <p className="rounded-lg bg-muted p-2.5 text-xs text-muted-foreground">
-          Your history starts today. Each time you add, update or remove an
-          investment or loan, the chart gets a new point.
+          {points.length > 1
+            ? `No change since ${formatDate(points[0].day)}. The chart fills in as your investments, loans and card bills change.`
+            : "Your history starts today. Each time you update an investment, loan or card bill, the chart gets a new point."}
         </p>
       )}
       <p className="text-[11px] text-muted-foreground">
-        Tracked investments and savings minus loans. Card bills are shown
-        separately.
+        Tracked investments and savings, minus loans and unpaid card bills.
       </p>
     </section>
   );

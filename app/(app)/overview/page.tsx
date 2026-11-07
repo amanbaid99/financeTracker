@@ -53,6 +53,12 @@ export default async function OverviewPage() {
       </div>
 
       <NetWorthCard history={worth.history} compact />
+      <NextStep
+        plan={plan ? { monthlyTotal: plan.monthlyTotal } : null}
+        budget={{ income: budget.income, planMonthly: budget.planMonthly }}
+        steps={steps}
+        needed={needed}
+      />
 
       <section className={surface} aria-labelledby="home-month-h">
         <div className="mb-3 flex items-center justify-between gap-3">
@@ -64,26 +70,27 @@ export default async function OverviewPage() {
           </span>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <Link href="/goals/budget" className={tile}>
-            <p className="text-xs text-muted-foreground">
-              {budget.free < 0 && budget.income > 0
-                ? "Budget shortfall"
-                : "Free to invest / month"}
-            </p>
-            <p
-              className={cn(
-                "tabular break-words text-lg font-semibold tracking-tight",
-                budget.income > 0 && budget.free < 0 && "text-danger",
-              )}
-            >
-              {budget.income > 0
-                ? formatINR(Math.abs(budget.free))
-                : "Set budget"}
-            </p>
-            <p className="text-[11px] text-muted-foreground">
-              After costs, EMIs and current SIPs
-            </p>
-          </Link>
+          {/* No income yet: the Next step card asks for the budget instead. */}
+          {budget.income > 0 && (
+            <Link href="/goals/budget" className={tile}>
+              <p className="text-xs text-muted-foreground">
+                {budget.free < 0
+                  ? "Budget shortfall"
+                  : "Free to invest / month"}
+              </p>
+              <p
+                className={cn(
+                  "tabular break-words text-lg font-semibold tracking-tight",
+                  budget.free < 0 && "text-danger",
+                )}
+              >
+                {formatINR(Math.abs(budget.free))}
+              </p>
+              <p className="text-[11px] text-muted-foreground">
+                After costs, EMIs and current SIPs
+              </p>
+            </Link>
+          )}
           <Link href={plan ? "/goals/plan" : "/goals?do=plan"} className={tile}>
             <p className="text-xs text-muted-foreground">Monthly SIPs</p>
             <p className="tabular break-words text-lg font-semibold tracking-tight">
@@ -93,33 +100,37 @@ export default async function OverviewPage() {
               Recorded in your holdings
             </p>
           </Link>
-          <Link href="/cards" className={tile}>
-            <p className="text-xs text-muted-foreground">Card statements</p>
-            <p className="tabular break-words text-lg font-semibold tracking-tight">
-              {statements.month
-                ? formatINR(statements.total)
-                : cards.length
-                  ? "Not updated yet"
-                  : "No cards added"}
+          <Link
+            href="/cards"
+            className={cn(tile, budget.income > 0 && "col-span-2")}
+          >
+            <p className="text-xs text-muted-foreground">
+              {statements.unpaid > 0 ? "Card bills to pay" : "Card statements"}
+            </p>
+            <p
+              className={cn(
+                "tabular break-words text-lg font-semibold tracking-tight",
+                !statements.month && "text-base",
+              )}
+            >
+              {statements.unpaid > 0
+                ? formatINR(statements.unpaid)
+                : statements.month
+                  ? formatINR(statements.total)
+                  : cards.length
+                    ? "Not logged yet"
+                    : "No cards added"}
             </p>
             <p className="text-[11px] text-muted-foreground">
               {statements.month
-                ? `${monthYear(`${statements.month}-01`)} · ${statements.cardsUpdated} of ${statements.cards} cards`
+                ? `${monthYear(`${statements.month}-01`)} statements · ${statements.cardsUpdated} of ${statements.cards} cards${statements.unpaid > 0 ? "" : " · all paid"}`
                 : "Log statements in Credit"}
-            </p>
-          </Link>
-          <Link href="/cards" className={tile}>
-            <p className="text-xs text-muted-foreground">Unpaid card bills</p>
-            <p className="tabular break-words text-lg font-semibold tracking-tight">
-              {formatINR(statements.unpaid)}
-            </p>
-            <p className="text-[11px] text-muted-foreground">
-              Across logged statements
             </p>
           </Link>
         </div>
         <p className="mt-3 text-[11px] text-muted-foreground">
-          Logged statements, including EMIs. Not live spending.
+          Card figures are logged statements, including any EMIs on them. Not
+          live spending.
         </p>
       </section>
 
@@ -216,7 +227,9 @@ export default async function OverviewPage() {
                       {g.name}
                     </span>
                     <span className="shrink-0 text-xs text-muted-foreground">
-                      {goalStatus(g, today).label}
+                      {goalStatus(g, today).label === "Behind"
+                        ? "Behind today"
+                        : goalStatus(g, today).label}
                     </span>
                   </span>
                   <Progress
@@ -249,13 +262,6 @@ export default async function OverviewPage() {
           </div>
         )}
       </section>
-
-      <NextStep
-        plan={plan ? { monthlyTotal: plan.monthlyTotal } : null}
-        budget={{ income: budget.income, planMonthly: budget.planMonthly }}
-        steps={steps}
-        needed={needed}
-      />
     </main>
   );
 }

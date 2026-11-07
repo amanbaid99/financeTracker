@@ -490,31 +490,43 @@ export const loadMoneyPlan = cache(async () => {
  * their EMI schedule even before you update them).
  */
 export const loadNetWorth = cache(async () => {
-  const [{ supabase }, goals, loans] = await Promise.all([
+  const [{ supabase }, goals, loans, { cards }] = await Promise.all([
     requireUser(),
     loadGoals(),
     loadLoans(),
+    loadCards(),
   ]);
   const { data } = await supabase
     .from("net_worth_history")
-    .select("day, assets, liabilities")
+    .select("day, assets, liabilities, card_bills")
     .order("day", { ascending: true })
     .limit(800);
   const today = goals.today;
   const assets = Math.round(goals.investments.reduce((s, i) => s + i.value, 0));
-  const liabilities = Math.round(
+  const loanTotal = Math.round(
     loans.reduce(
       (s, l) => s + Math.max(0, loanView(l, today).state.balance),
       0,
     ),
   );
+  // Unpaid card statements are debts until they're paid.
+  const cardBills = cards
+    .flatMap((c) => c.bills)
+    .filter((b) => !b.paid)
+    .reduce((s, b) => s + b.amount, 0);
   const history: NetWorthPoint[] = (data ?? [])
     .filter((r) => r.day < today)
     .map((r) => ({
       day: r.day,
       assets: Number(r.assets),
       liabilities: Number(r.liabilities),
+      cardBills: Number(r.card_bills),
     }));
-  history.push({ day: today, assets, liabilities });
-  return { history, assets, liabilities };
+  history.push({
+    day: today,
+    assets,
+    liabilities: loanTotal + cardBills,
+    cardBills,
+  });
+  return { history, assets, liabilities: loanTotal + cardBills };
 });
