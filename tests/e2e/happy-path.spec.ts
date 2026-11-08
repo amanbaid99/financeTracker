@@ -62,7 +62,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   expect(manifest.ok()).toBe(true);
   const manifestData = await manifest.json();
   expect(manifestData.icons.length).toBeGreaterThan(0);
-  expect(manifestData.start_url).toBe("/overview");
+  expect(manifestData.start_url).toBe("/goals");
   expect((await page.request.get("/icon-192.png")).ok()).toBe(true);
 
   // Not invited: friendly error.
@@ -89,13 +89,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText("wrong or has expired")).toBeVisible();
   await page.getByLabel("Code from the email", { exact: true }).fill(code);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page).toHaveURL(/\/overview$/);
-  const homeGuide = page.getByRole("dialog", { name: "Your money at a glance" });
-  await expect(homeGuide).toBeVisible();
-  await homeGuide.getByRole("button", { name: "Got it" }).click();
-  await expect(page.getByRole("heading", { name: "Home", exact: true })).toBeVisible();
-  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link")).toHaveCount(5);
-  await tab("Goals").click();
+  await expect(page).toHaveURL(/\/goals$/);
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link")).toHaveCount(4);
   // First visit: the Goals guide pops up once, and (i) brings it back.
   // A new user gets no "What's new".
   const goalsGuide = page.getByRole("dialog", { name: "How goals work" });
@@ -129,16 +124,18 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
       await d.getByRole("button", { name: "Got it" }).click();
     });
   await closeGuides();
-  // Old pages a Home Screen app may still open go to Home.
+  // Old pages a Home Screen app may still open go to Goals, including the
+  // removed Home page.
   for (const old of [
     "/dashboard",
     "/month",
     "/holdings/new",
     "/budget/build",
     "/update",
+    "/overview",
   ]) {
     await page.goto(old);
-    await expect(page).toHaveURL(/\/overview$/);
+    await expect(page).toHaveURL(/\/goals$/);
   }
   // The session is stored in long-lived, server-set cookies (not capped at 7 days).
   const authCookies = (await page.context().cookies()).filter((c) =>
@@ -917,8 +914,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Log bill" }).click();
   await page.getByLabel("Statement month").fill("2026-09");
   await page.getByLabel("Bill amount").fill("100000");
-  await page.getByRole("checkbox", { name: "I have paid this bill" }).uncheck();
-  await page.getByLabel("Due date (optional)").fill("2026-10-05");
+  // Statements are logged for milestones only: no due date or paid state.
+  await expect(page.getByRole("checkbox", { name: "I have paid this bill" })).toHaveCount(0);
   await page
     .getByRole("button", { name: "Log bill", exact: true })
     .last()
@@ -928,11 +925,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   const bills = page.getByRole("region", { name: "Regalia Gold bills" });
   await expect(bills).toContainText("Sep 2026");
   await expect(bills).toContainText("₹1,00,000");
-  await expect(page.getByText(/₹1,00,000 (overdue|due)/).first()).toBeVisible();
-  await bills.getByRole("button", { name: "Mark Sep 2026 bill paid" }).click();
-  await bills.getByText("Payment history", { exact: true }).click();
-  await expect(bills.getByText("Paid", { exact: true })).toBeVisible();
-  await expect(page.getByText(/₹1,00,000 (overdue|due)/)).toHaveCount(0);
+  await expect(page.getByText("Sep 2026 statement: ₹1,00,000")).toBeVisible();
+  await expect(page.getByRole("button", { name: /Mark .* bill paid/ })).toHaveCount(0);
   // Logging the same month again doesn't overwrite it.
   await page.getByRole("button", { name: "Log bill" }).click();
   await page.getByLabel("Statement month").fill("2026-09");
@@ -952,7 +946,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Log bill" }).click();
   await page.getByLabel("Statement month").fill("2026-10");
   await page.getByLabel("Bill amount").fill("300000");
-  await page.getByRole("checkbox", { name: "I have paid this bill" }).check();
   await page.getByRole("button", { name: "Log bill", exact: true }).last().click();
   await page.getByText("Past and reached milestones", { exact: true }).click();
   await expect(feeBar).toHaveAttribute("aria-valuenow", "100");
@@ -1084,10 +1077,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
   await expect(page.getByRole("link", { name: "Your plan", exact: true })).toBeVisible();
 
-  // Home: this month's dues against liquid savings, with Mark paid there.
-  await tab("Home").click();
-  await expect(page.getByRole("heading", { name: "Due this month" })).toBeVisible();
-  await expect(page.getByText(/in liquid savings/).first()).toBeVisible();
+  // Portfolio starts with net worth: holdings minus loans.
+  await tab("Portfolio").click();
+  await expect(page.getByText("You owe on loans")).toBeVisible();
 
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();

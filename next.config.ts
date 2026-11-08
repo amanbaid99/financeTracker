@@ -18,11 +18,10 @@ const nextConfig: NextConfig = {
       "/onboarding",
     ];
     return [
-      { source: "/home", destination: "/overview", permanent: false },
-      { source: "/home/:rest*", destination: "/overview", permanent: false },
-      ...old.flatMap((p) => [
-        { source: p, destination: "/overview", permanent: false },
-        { source: `${p}/:rest*`, destination: "/overview", permanent: false },
+      // Home (/overview) was removed on 8 Nov 2026; Goals is the start page.
+      ...[...old, "/home", "/overview"].flatMap((p) => [
+        { source: p, destination: "/goals", permanent: false },
+        { source: `${p}/:rest*`, destination: "/goals", permanent: false },
       ]),
     ];
   },

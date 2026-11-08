@@ -8,10 +8,8 @@ import { cn } from "@/lib/utils";
 export interface NetWorthPoint {
   day: string;
   assets: number;
-  /** Everything owed: loans plus unpaid card bills. */
+  /** What's owed on loans. */
   liabilities: number;
-  /** The unpaid card bills part of it. */
-  cardBills?: number;
 }
 
 const W = 320;
@@ -197,86 +195,49 @@ export function NetWorthCard({
         </p>
       )}
       <p className="text-[11px] text-muted-foreground">
-        Investments and savings, minus loans and unpaid card bills.
+        Investments and savings, minus loans.
       </p>
     </section>
   );
 }
 
-/** What you own against what you owe: one bar, then the amounts. */
+/** What you own against what you owe on loans: one bar, then the amounts. */
 function OwnOwe({ point }: { point: NetWorthPoint }) {
-  const cards = point.cardBills ?? 0;
-  const loans = point.liabilities - cards;
   const total = point.assets + point.liabilities || 1;
-  const rows: { label: string; value: number; color: string; sub?: boolean }[] =
-    [
-      { label: "You own", value: point.assets, color: "bg-success" },
-      { label: "You owe", value: point.liabilities, color: "" },
-      ...(loans > 0 && cards > 0
-        ? [
-            { label: "Loans", value: loans, color: "bg-danger", sub: true },
-            {
-              label: "Card bills",
-              value: cards,
-              color: "bg-warning",
-              sub: true,
-            },
-          ]
-        : []),
-    ];
-  const segments = [
-    { key: "own", value: point.assets, color: "bg-success" },
-    {
-      key: "loans",
-      value: cards > 0 ? loans : point.liabilities,
-      color: "bg-danger",
-    },
-    { key: "cards", value: cards, color: "bg-warning" },
-  ].filter((x) => x.value > 0);
+  const rows = [
+    { label: "You own", value: point.assets, color: "bg-success" },
+    { label: "You owe on loans", value: point.liabilities, color: "bg-danger" },
+  ];
   return (
     <div className="space-y-2">
       <div
         className="flex h-2 gap-0.5 overflow-hidden rounded-full"
         aria-hidden
       >
-        {segments.map((x) => (
-          <span
-            key={x.key}
-            className={cn("h-full", x.color)}
-            style={{ width: `${(x.value / total) * 100}%` }}
-          />
-        ))}
+        {rows
+          .filter((r) => r.value > 0)
+          .map((r) => (
+            <span
+              key={r.label}
+              className={cn("h-full", r.color)}
+              style={{ width: `${(r.value / total) * 100}%` }}
+            />
+          ))}
       </div>
       <dl className="space-y-1 text-sm">
         {rows.map((r) => (
           <div
             key={r.label}
-            className={cn(
-              "flex items-baseline justify-between gap-3",
-              r.sub && "pl-4 text-xs text-muted-foreground",
-            )}
+            className="flex items-baseline justify-between gap-3"
           >
             <dt className="flex items-center gap-2">
-              {r.color && !r.sub && (
-                <span
-                  className={cn("size-2 rounded-full", r.color)}
-                  aria-hidden
-                />
-              )}
-              {r.sub && (
-                <span
-                  className={cn("size-1.5 rounded-full", r.color)}
-                  aria-hidden
-                />
-              )}
-              {!r.color && (
-                <span className="size-2 rounded-full bg-danger" aria-hidden />
-              )}
+              <span
+                className={cn("size-2 rounded-full", r.color)}
+                aria-hidden
+              />
               {r.label}
             </dt>
-            <dd className={cn("tabular", !r.sub && "font-medium")}>
-              {formatINR(r.value)}
-            </dd>
+            <dd className="tabular font-medium">{formatINR(r.value)}</dd>
           </div>
         ))}
       </dl>

@@ -115,7 +115,6 @@ export function GoalsOverview(props: {
         autoOpen={props.autoExtra}
       />
       <MoneyPlanCard
-        variant="form"
         {...props}
         strategy={strategy}
         onStrategyChange={setStrategy}

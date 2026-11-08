@@ -1,29 +1,19 @@
 "use client";
 
-import {
-  Check,
-  ChevronDown,
-  CreditCard,
-  FileText,
-  Pencil,
-  Plus,
-} from "lucide-react";
+import { ChevronDown, CreditCard, FileText, Pencil, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
-import { CreditPaymentButton } from "@/components/credit-payment";
 import { CardAdvisor } from "@/components/card-advisor";
 import { CardFeaturesSheet } from "@/components/card-features";
 import { Field } from "@/components/forms/field";
 import { MoneyInput } from "@/components/money-input";
 import { Sheet } from "@/components/sheet";
 import { Button } from "@/components/ui/button";
-import { Checkbox, Input, Select } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
   averageBill,
-  billsForReview,
   cardsForReview,
-  dueLabel,
   milestoneState,
   PERIOD_LABELS,
   periodBounds,
@@ -516,9 +506,6 @@ function BillSheet({
     bill ? bill.month.slice(0, 7) : nextBillMonth(card, today),
   );
   const [amount, setAmount] = useState<number | null>(bill?.amount ?? null);
-  const [dueDate, setDueDate] = useState(bill?.dueDate ?? "");
-  // Bills for past months are usually paid already.
-  const [paid, setPaid] = useState(bill?.paid ?? false);
   const [note, setNote] = useState(bill?.note ?? "");
   const [more, setMore] = useState(Boolean(bill?.note));
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -539,8 +526,10 @@ function BillSheet({
               cardId: card.id,
               month,
               amount: amount ?? 0,
-              dueDate: dueDate || null,
-              paid,
+              // Statements are logged for milestones only, never as money
+              // owed, so they're always stored as settled.
+              dueDate: null,
+              paid: true,
               note: note.trim() || null,
             }),
           );
@@ -566,26 +555,6 @@ function BillSheet({
             />
           </Field>
         </div>
-        <label className="flex min-h-11 items-center gap-2 text-sm">
-          <Checkbox
-            checked={paid}
-            onChange={(e) => setPaid(e.target.checked)}
-          />
-          I have paid this bill
-        </label>
-        <Field label="Due date (optional)" htmlFor="b-due">
-          <Input
-            id="b-due"
-            type="date"
-            value={dueDate}
-            onChange={(e) => setDueDate(e.target.value)}
-          />
-        </Field>
-        {!dueDate && !paid && (
-          <p className="text-xs text-muted-foreground">
-            Without a due date, this bill will show Date not set.
-          </p>
-        )}
         {more ? (
           <>
             <Field label="Note (optional)" htmlFor="b-note">
@@ -610,7 +579,8 @@ function BillSheet({
           </Button>
         )}
         <p className="text-xs text-muted-foreground">
-          The bill counts toward this card&apos;s milestones.
+          The statement counts toward this card&apos;s milestones. It isn&apos;t
+          tracked as money you owe.
         </p>
         {errorText}
         <Button type="submit" className="min-h-11 w-full" disabled={pending}>
@@ -637,96 +607,47 @@ function BillSheet({
   );
 }
 
-function BillRow({
-  bill,
-  today,
-  onEdit,
-}: {
-  bill: Bill;
-  today: string;
-  onEdit: () => void;
-}) {
-  const overdue = !bill.paid && bill.dueDate !== null && bill.dueDate < today;
+function BillRow({ bill, onEdit }: { bill: Bill; onEdit: () => void }) {
   const name = monthLabel(bill.month);
-  const sub = [
-    bill.dueDate && !bill.paid
-      ? `${overdue ? "Overdue, was due" : "Due"} ${formatDate(bill.dueDate)}`
-      : "",
-    bill.note ?? "",
-  ]
-    .filter(Boolean)
-    .join(" · ");
   return (
-    <li className="py-2">
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={onEdit}
-          aria-label={`Edit ${name} bill`}
-          className="min-h-11 min-w-0 flex-1 text-left"
-        >
-          <p className="flex items-baseline justify-between gap-2 text-sm">
-            <span>{name}</span>
-            <span className="tabular font-medium">
-              {formatINR(bill.amount)}
-            </span>
-          </p>
-          {sub && (
-            <p
-              className={cn(
-                "truncate text-xs",
-                overdue ? "text-danger" : "text-muted-foreground",
-              )}
-            >
-              {sub}
-            </p>
-          )}
-        </button>
-        {bill.paid ? (
-          <span className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-full bg-success-soft px-3 text-xs font-medium text-success">
-            <Check className="size-3.5" aria-hidden />
-            Paid
-          </span>
-        ) : (
-          <CreditPaymentButton
-            payment={{ kind: "bill", id: bill.id, label: `${name} bill` }}
-          />
+    <li>
+      <button
+        type="button"
+        onClick={onEdit}
+        aria-label={`Edit ${name} bill`}
+        className="min-h-11 w-full py-2 text-left"
+      >
+        <p className="flex items-baseline justify-between gap-2 text-sm">
+          <span>{name}</span>
+          <span className="tabular font-medium">{formatINR(bill.amount)}</span>
+        </p>
+        {bill.note && (
+          <p className="truncate text-xs text-muted-foreground">{bill.note}</p>
         )}
-      </div>
+      </button>
     </li>
-  );
-}
-
-/** Marks a bill paid, with confirmation and Undo retained by the page. */
-function MarkPaidButton({ billId, label }: { billId: string; label: string }) {
-  return (
-    <CreditPaymentButton
-      payment={{ kind: "bill", id: billId, label: `${label} bill` }}
-    />
   );
 }
 
 function BillsSection({
   card,
-  today,
   onLog,
   onEdit,
 }: {
   card: Card;
-  today: string;
   onLog: () => void;
   onEdit: (b: Bill) => void;
 }) {
   const [all, setAll] = useState(false);
   const avg = averageBill(card.bills);
-  const ordered = billsForReview(card.bills, today);
-  const unpaid = ordered.filter((b) => !b.paid);
-  const history = ordered.filter((b) => b.paid);
-  const shown = all ? history : history.slice(0, 3);
+  const ordered = [...card.bills].sort((x, y) =>
+    y.month.localeCompare(x.month),
+  );
+  const shown = all ? ordered : ordered.slice(0, 4);
   return (
     <section className="space-y-1" aria-label={`${card.label} bills`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold">Bills</h3>
+        <h3 className="text-sm font-semibold">Statements</h3>
         <Button
           type="button"
           size="sm"
@@ -742,25 +663,7 @@ function BillsSection({
           Log each statement and it counts toward your milestones.
         </p>
       ) : (
-        <ul className="divide-y">
-          {unpaid.map((b) => (
-            <BillRow
-              key={`${b.id}-${b.paid}`}
-              bill={b}
-              today={today}
-              onEdit={() => onEdit(b)}
-            />
-          ))}
-        </ul>
-      )}
-      {history.length > 0 && (
-        <details className="border-t">
-          <summary className="flex min-h-11 cursor-pointer items-center justify-between text-sm font-medium">
-            <span>Payment history</span>{" "}
-            <span className="text-xs text-muted-foreground">
-              {history.length}
-            </span>
-          </summary>
+        <>
           {avg !== null && (
             <p className="text-xs text-muted-foreground">
               Average statement: {formatINR(avg)}/month
@@ -768,24 +671,19 @@ function BillsSection({
           )}
           <ul className="divide-y">
             {shown.map((b) => (
-              <BillRow
-                key={`${b.id}-${b.paid}`}
-                bill={b}
-                today={today}
-                onEdit={() => onEdit(b)}
-              />
+              <BillRow key={b.id} bill={b} onEdit={() => onEdit(b)} />
             ))}
           </ul>
-          {history.length > 3 && (
+          {ordered.length > 4 && (
             <button
               type="button"
               className="min-h-11 text-sm font-medium text-primary"
               onClick={() => setAll(!all)}
             >
-              {all ? "Show fewer" : `Show all ${history.length} paid bills`}
+              {all ? "Show fewer" : `Show all ${ordered.length}`}
             </button>
           )}
-        </details>
+        </>
       )}
     </section>
   );
@@ -962,8 +860,8 @@ export function CardList({
       {cards.length > 0 && (
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
-            {cards.length} {cards.length === 1 ? "card" : "cards"}. Unpaid bills
-            come first.
+            {cards.length} {cards.length === 1 ? "card" : "cards"}. Log
+            statements to track milestones.
           </p>
           <Button
             type="button"
@@ -1006,14 +904,9 @@ export function CardList({
         <ul className="space-y-3">
           {cardsForReview(cards, today).map((c) => {
             const states = c.milestones.map((m) => milestoneState(m, today, c));
-            const unpaid = billsForReview(c.bills, today).filter(
-              (b) => !b.paid && b.amount > 0,
-            );
-            const due = unpaid[0];
-            const { text: dueText, tone: dueTone } = dueLabel(
-              due?.dueDate ?? null,
-              today,
-            );
+            const latest = [...c.bills].sort((x, y) =>
+              y.month.localeCompare(x.month),
+            )[0];
             const isOpen = open === c.id;
             return (
               <li
@@ -1023,8 +916,7 @@ export function CardList({
                   isOpen && "border-primary",
                 )}
               >
-                {/* The whole header opens the card (the name's button covers it);
-                    Mark paid sits above that so it can be tapped on its own. */}
+                {/* The whole header opens the card (the name's button covers it). */}
                 <div className="relative p-4">
                   <div className="flex items-start gap-3">
                     <span
@@ -1049,44 +941,24 @@ export function CardList({
                       aria-hidden
                     />
                   </div>
-                  <div className="mt-3 space-y-1">
-                    {due ? (
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <p
-                          className={cn(
-                            "tabular min-w-0 text-sm font-semibold",
-                            dueTone === "danger"
-                              ? "text-danger"
-                              : dueTone === "warning"
-                                ? "text-warning"
-                                : "text-foreground",
-                          )}
-                        >
-                          {formatINR(due.amount)}{" "}
-                          <span className="font-medium">{dueText}</span>
-                        </p>
-                        <MarkPaidButton billId={due.id} label={c.label} />
-                      </div>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {latest ? (
+                      <>
+                        {monthLabel(latest.month)} statement:{" "}
+                        <span className="tabular font-medium text-foreground">
+                          {formatINR(latest.amount)}
+                        </span>
+                      </>
                     ) : (
-                      <p className="text-sm text-muted-foreground">
-                        {c.bills.length === 0
-                          ? "No statements logged"
-                          : "No unpaid bills recorded"}
-                      </p>
+                      "No statements logged"
                     )}
-                    {unpaid.length > 1 && (
-                      <p className="text-xs text-muted-foreground">
-                        {unpaid.length} unpaid bills. Open to review all.
-                      </p>
-                    )}
-                  </div>
+                  </p>
                 </div>
 
                 {isOpen && (
                   <div className="expand-in space-y-4 border-t px-4 pb-4 pt-2">
                     <BillsSection
                       card={c}
-                      today={today}
                       onLog={() =>
                         setSheet({ kind: "bill", card: c, bill: null })
                       }

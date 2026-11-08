@@ -208,6 +208,15 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   small database slowed each to 70-250 ms under that burst. Add new page data to the snapshot
   rather than a new query.
 
+- **Nov 8: Home removed, card bills log-only** (owner asked; supersedes the Nov 6 to 8 Home
+  entries below). Goals is the start page again, `/overview` redirects to it, and + is back in
+  the centre of the bottom bar (Goals, Portfolio, +, Credit, Ask). Net worth sits at the top of
+  Portfolio and is holdings minus loans: card statements are logged (month and amount) only to
+  count toward milestones, never as money owed, because counting them inflated debt and the bank
+  balance that pays them isn't tracked. New bills save as settled with no due date; the old
+  `due_date`/`paid` columns stay but nothing reads them. Credit lists Cards, then Loans; there's
+  no separate Payments due list (each loan shows its next EMI with Mark paid). The net worth
+  trigger on `card_bills` was dropped and history corrected.
 - **Nov 8: Due this month on Home** (owner chose ideas 1 to 3): card bills and EMIs overdue or
   due this month (`creditPayments`, linked card EMIs left out) against liquid savings
   (`isLiquid`: savings, FDs, liquid and overnight funds, goal-linked ones included), and how many

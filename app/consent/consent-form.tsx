@@ -34,7 +34,7 @@ export function ConsentForm() {
             start(async () => {
               const r = await acceptPrivacy();
               if (!r.ok) setError(r.error);
-              else router.replace("/overview");
+              else router.replace("/goals");
             })
           }
         >

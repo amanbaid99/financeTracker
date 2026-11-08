@@ -14,7 +14,6 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { GuideButton, useGuides } from "@/components/guides";
 import { Sheet } from "@/components/sheet";
-import { cn } from "@/lib/utils";
 
 /** Event sent when a + action targets the page you're already on. */
 export const QUICK_ACTION = "tracker:quick-action";
@@ -71,7 +70,7 @@ const ACTIONS = [
 
 /** Where an action goes from this page: updates stay on Portfolio, and Import comes back to it. */
 function hrefFor(href: string, path: string): string {
-  if (path !== "/portfolio" && path !== "/overview") return href;
+  if (path !== "/portfolio") return href;
   if (href === "/goals?do=update") return "/portfolio?do=update";
   if (href === "/import") return "/import?from=portfolio";
   return href;
@@ -83,13 +82,13 @@ export function hasQuickActions(path: string): boolean {
   );
 }
 
-/** Fixed on main pages, with a clear gutter beside the page content. */
+/** One docked action for adding and updating, without covering page content. */
 export function QuickAdd() {
   const path = usePathname();
   const { seen, markSeen } = useGuides();
   const [open, setOpen] = useState(false);
   const actions =
-    path === "/portfolio" || path === "/overview"
+    path === "/portfolio"
       ? [
           {
             href: "/portfolio?do=add",
@@ -101,20 +100,6 @@ export function QuickAdd() {
         ]
       : ACTIONS;
   const close = useCallback(() => setOpen(false), []);
-  // Slides away while you scroll down so it never sits on what you're
-  // reading; scrolling up, or reaching the top, brings it back.
-  const [away, setAway] = useState(false);
-  useEffect(() => {
-    let lastY = window.scrollY;
-    const onScroll = () => {
-      const y = window.scrollY;
-      if (Math.abs(y - lastY) < 8) return;
-      setAway(y > lastY && y > 80);
-      lastY = y;
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
   // Each tab's first-visit guide already points to the + button, so there's
   // no separate hint bubble.
   if (!hasQuickActions(path)) return null;
@@ -128,10 +113,7 @@ export function QuickAdd() {
           setOpen(true);
         }}
         aria-label="Add or update"
-        className={cn(
-          "press fixed bottom-[calc(4.75rem+env(safe-area-inset-bottom))] right-4 z-30 inline-flex size-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-black/15 transition-[translate,opacity] duration-200 hover:brightness-110 sm:right-[max(1rem,calc(50%-24rem+1rem))]",
-          away && "pointer-events-none translate-y-24 opacity-0",
-        )}
+        className="press inline-flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm hover:brightness-110"
       >
         <Plus className="size-6" aria-hidden />
       </button>

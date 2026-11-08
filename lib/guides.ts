@@ -3,7 +3,6 @@
 // from server and client code.
 
 export type GuideId =
-  | "home"
   | "goals"
   | "portfolio"
   | "cards"
@@ -18,18 +17,6 @@ export interface Guide {
 }
 
 export const GUIDES: Record<GuideId, Guide> = {
-  home: {
-    title: "Your money at a glance",
-    intro:
-      "Home brings your saved figures together. Open a section for its details.",
-    steps: [
-      "Net worth is your tracked investments and savings, minus loans and unpaid card bills. Tap the chart to see a day, and Back to today to return. It starts when history was first recorded.",
-      "Next step, near the top, suggests one thing to do and Not now hides it. This month shows what your budget leaves to invest, your current SIPs and card bills to pay. Card figures are logged statements, including any EMIs in them. Missing statements do not mean zero spending.",
-      "Due this month adds up card bills and EMIs that are overdue or due this month, and checks them against your liquid savings: savings accounts, FDs and liquid funds. It also says how long what's left would last at your usual costs and EMIs. Tap Mark paid on any payment once it's done.",
-      "Goal progress previews three active goals. Your next step suggests one thing to work on, and Not now hides it on this device.",
-      "The + button stays at the bottom right on the main pages for adding, importing and updating. The five tabs open Home, Goals, Portfolio, Credit and Ask.",
-    ],
-  },
   "quick-add": {
     title: "Using the plus button",
     intro:
@@ -53,7 +40,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
       "The card at the top shows what's saved, what goes in each month and how many goals are on track. Goals are grouped by when they're due, from next month to 5+ years. Must-haves come first in each group. A label on each says On track, Behind or what needs action. Covered bills funds, loans covered by EMIs and reached goals are folded away. If a bills fund develops a shortfall, it returns to the active list.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
-      "Home has a Next step card when there's something to do: set your budget, start a SIP plan or set up this month's SIPs. Tap Not now to hide it. Got a bonus or idle savings? Tap +, then I have extra money.",
+      "A Next step card shows when there's something to do: set your budget, start a SIP plan or set up this month's SIPs. Tap Not now to hide it. Got a bonus or idle savings? Tap +, then I have extra money.",
       "Your plan has its own page: tap Your plan. It shows where the money goes and why, then This month lists what to add to your SIPs. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
       "Open a goal for its What to do box. If your plan can't cover it, it says how much more a month keeps it on track.",
       "The plan page shows what your budget allows and what your plan uses. Open Budget and plan details there for income, costs, EMIs and SIPs.",
@@ -65,7 +52,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "Your portfolio",
     intro: "Everything you hold, across all goals, in one place.",
     steps: [
-      "Home shows your net worth and its history. Portfolio focuses on the value and allocation of your holdings.",
+      "Net worth at the top is what you own minus what you owe on loans, with a chart once there are a few days of history. Tap the chart to see a day.",
       "Open the Portfolio review row for checks and settings. Turn on automatic reviews for checks after imports and holding updates. Review suggestions yourself before changing investments.",
       "The overview shows your total, monthly investments and asset split. Tap an asset class to filter the holdings below. Clear the filter to see everything again. Switch to Instrument to see it by kind of investment, like mutual funds, stocks or EPF.",
       "Search holdings by name or category. Sort by value, name or simple growth. Unknown growth comes last. Growth compares today's value with what you put in, not an annual return.",
@@ -76,18 +63,16 @@ export const GUIDES: Record<GuideId, Guide> = {
   cards: {
     title: "Loans and cards",
     intro:
-      "See what needs paying, then how far each loan has come and your card milestones.",
+      "Your cards and their milestones, then how far each loan has come.",
     steps: [
       "Add each loan with its type, the amount you withdrew, the EMI and what you owe now. For a loan on a card, pick one of your credit cards or a separate card the lender gave you, with its bill and payment dates.",
-      "Payments due shows overdue payments and those due this month, ordered by date. Existing bills without dates stay visible for review. Later payments stay inside their card or loan. Card-linked EMIs are included in their card bill. Below it come your cards, then your loans.",
       "Each loan shows its next EMI and how soon it's due. Tap Mark paid once you've paid: what you owe goes down and the progress bar moves. A page confirmation offers Undo for 10 seconds.",
       "Loan balances, payoff dates and elapsed EMI counts are estimates based on the schedule. Payments you explicitly record appear inside each loan. Closed loans are folded below active loans.",
       "EMIs on a card are part of its bill, but they don't count toward the card's milestones.",
-      "Cards with overdue bills appear first. Older unpaid bills stay ahead of newer paid statements. A missing due date is shown clearly, not treated as overdue.",
       "Add a card with its annual fee, the date its card year starts, rewards and benefits. Never enter the card number.",
       "Add milestones like a fee waiver or bonus points, with the spend target and when it resets.",
-      "Log each monthly statement with its due date and say whether you have paid it. Unpaid bills stay visible; paid bills go into Payment history. Only logged bills count toward milestones, with card-loan EMIs excluded.",
-      "Tap + (or Log bill on a card) to record each month's statement. The card shows what's due and when; tap Mark paid right there once you've paid it.",
+      "Log each monthly statement: the month and the amount. Statements only count toward milestones. They aren't tracked as money you owe, and card-loan EMIs are left out.",
+      "Tap + (or Log bill on a card) to record each month's statement. The card shows your latest statement.",
       "When a new card year or quarter starts, progress counts the statements in that new period.",
       "Open Which card to use for suggestions on where planned spending could help a milestone. Open Why this card for the breakdown. Do not spend extra just to reach a reward.",
       "Read features fills in a card from its features PDF or your description. You tick what to keep.",
@@ -126,47 +111,19 @@ export interface Release {
 export const RELEASES: Release[] = [
   {
     date: "2026-11-08",
-    title: "Know where this month stands",
+    title: "Simpler, back to basics",
     items: [
       {
-        title: "Due this month",
-        text: "Home adds up this month's card bills and EMIs and checks them against your liquid savings, so you can see if you're covered.",
+        title: "Card statements for milestones only",
+        text: "Log a statement with its month and amount, and it counts toward milestones. Card bills are no longer tracked as money you owe, so there's no due date or Mark paid for them.",
       },
       {
-        title: "How long it lasts",
-        text: "It also says how many months what's left would last at your usual costs and EMIs.",
+        title: "Net worth on Portfolio",
+        text: "Net worth, what you own minus loans, now sits at the top of Portfolio.",
       },
       {
-        title: "Mark paid from Home",
-        text: "Each payment due has Mark paid right there, with Undo.",
-      },
-    ],
-  },
-  {
-    date: "2026-11-07",
-    title: "A truer net worth",
-    items: [
-      {
-        title: "Card bills count",
-        text: "Unpaid card bills now count in what you owe, shown apart from loans, until you mark them paid.",
-      },
-      {
-        title: "A calmer Home",
-        text: "Your next step sits near the top. Card bills are one figure. The + button slides away while you scroll down.",
-      },
-    ],
-  },
-  {
-    date: "2026-11-06",
-    title: "A Home for your money",
-    items: [
-      {
-        title: "Your overview",
-        text: "Home brings together net worth, monthly figures, dated card statements, upcoming payments and goal progress. Details stay in their own tabs.",
-      },
-      {
-        title: "One useful next step",
-        text: "Next-step guidance now lives on Home. The + button stays above the bottom-right corner while you scroll the main pages.",
+        title: "+ is back in the middle",
+        text: "The + button sits in the centre of the bottom bar again, and Goals opens first.",
       },
     ],
   },

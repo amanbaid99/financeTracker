@@ -41,5 +41,5 @@ export async function finishSignIn(
     store.set(THEME_COOKIE, profile.theme, THEME_COOKIE_OPTIONS);
     store.set(ACCENT_COOKIE, profile.accent, THEME_COOKIE_OPTIONS);
   }
-  return "/overview";
+  return "/goals";
 }

@@ -8,7 +8,8 @@ import { PortfolioOverview } from "@/components/portfolio-overview";
 import { PortfolioHoldings } from "@/components/portfolio-holdings";
 import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
-import { loadGoals, loadSnapshot } from "@/lib/data";
+import { loadGoals, loadNetWorth, loadSnapshot } from "@/lib/data";
+import { NetWorthCard } from "@/components/net-worth-card";
 import { AI_CONSENT_VERSION } from "@/lib/legal";
 import { buildPortfolio } from "@/lib/portfolio";
 
@@ -21,9 +22,10 @@ export default async function PortfolioPage({
 }) {
   const { do: action } = await searchParams;
   // One snapshot for everything here (shared with the layout).
-  const [{ investments, links, goals }, snap] = await Promise.all([
+  const [{ investments, links, goals }, snap, worth] = await Promise.all([
     loadGoals(),
     loadSnapshot(),
+    loadNetWorth(),
   ]);
   const review = { data: snap.review, error: null };
   const aiEnabled = Boolean(
@@ -106,6 +108,7 @@ export default async function PortfolioPage({
         />
       )}
 
+      <NetWorthCard history={worth.history} />
       <PortfolioOverview
         portfolio={p}
         investments={investments}

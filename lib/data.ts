@@ -485,20 +485,20 @@ export const loadMoneyPlan = cache(async () => {
 });
 
 /**
- * Net worth over time. The database keeps a row per day whenever a holding
+ * Net worth over time: holdings minus loans. Card statements are logged for
+ * milestones only, so they don't count. The database keeps a row per day whenever a holding
  * or loan changes; today's point uses the live figures (loan balances follow
  * their EMI schedule even before you update them).
  */
 export const loadNetWorth = cache(async () => {
-  const [{ supabase }, goals, loans, { cards }] = await Promise.all([
+  const [{ supabase }, goals, loans] = await Promise.all([
     requireUser(),
     loadGoals(),
     loadLoans(),
-    loadCards(),
   ]);
   const { data } = await supabase
     .from("net_worth_history")
-    .select("day, assets, liabilities, card_bills")
+    .select("day, assets, liabilities")
     .order("day", { ascending: true })
     .limit(800);
   const today = goals.today;
@@ -509,24 +509,17 @@ export const loadNetWorth = cache(async () => {
       0,
     ),
   );
-  // Unpaid card statements are debts until they're paid.
-  const cardBills = cards
-    .flatMap((c) => c.bills)
-    .filter((b) => !b.paid)
-    .reduce((s, b) => s + b.amount, 0);
   const history: NetWorthPoint[] = (data ?? [])
     .filter((r) => r.day < today)
     .map((r) => ({
       day: r.day,
       assets: Number(r.assets),
       liabilities: Number(r.liabilities),
-      cardBills: Number(r.card_bills),
     }));
   history.push({
     day: today,
     assets,
-    liabilities: loanTotal + cardBills,
-    cardBills,
+    liabilities: loanTotal,
   });
-  return { history, assets, liabilities: loanTotal + cardBills };
+  return { history, assets, liabilities: loanTotal };
 });

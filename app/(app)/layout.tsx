@@ -4,8 +4,6 @@ import { ViewTransition } from "react";
 import { AppTabs } from "@/components/app-tabs";
 import { DisclaimerFooter } from "@/components/disclaimer";
 import { GuidesProvider } from "@/components/guides";
-import { QuickAdd } from "@/components/quick-add";
-import { LaunchHome } from "@/components/launch-home";
 import { Logo } from "@/components/logo";
 import { SettingsLink } from "@/components/nav-pending";
 import { loadOnboarding, needsPrivacyConsent } from "@/lib/data";
@@ -24,13 +22,13 @@ export default async function AppLayout({
     <GuidesProvider seenGuides={seenGuides} releases={releases}>
       <header className="sticky top-0 z-30 bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur">
         <div className="mx-auto flex h-12 w-full max-w-3xl items-center justify-between gap-2 px-4">
-          <Link href="/overview" aria-label="Tracker home">
+          <Link href="/goals" aria-label="Tracker home">
             <Logo />
           </Link>
           <SettingsLink />
         </div>
       </header>
-      <div className="mx-auto w-full max-w-3xl px-4 pb-[calc(10rem+env(safe-area-inset-bottom))] pt-3">
+      <div className="mx-auto w-full max-w-3xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-3">
         {/* Fades only on tab changes (links tagged "tab"); saves and
             refreshes update in place. */}
         <ViewTransition
@@ -41,8 +39,6 @@ export default async function AppLayout({
         </ViewTransition>
         <DisclaimerFooter />
       </div>
-      <LaunchHome />
-      <QuickAdd />
       <AppTabs />
     </GuidesProvider>
   );

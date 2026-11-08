@@ -29,7 +29,7 @@ export default async function CreditPage({
           <GuideButton id="cards" />
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Loans and cards: what&apos;s due comes first.
+          Your cards and their milestones, then your loans.
         </p>
       </div>
       <CreditOverview
