@@ -5,6 +5,7 @@ import { AppTabs } from "@/components/app-tabs";
 import { DisclaimerFooter } from "@/components/disclaimer";
 import { GuidesProvider } from "@/components/guides";
 import { QuickAdd } from "@/components/quick-add";
+import { LaunchHome } from "@/components/launch-home";
 import { Logo } from "@/components/logo";
 import { SettingsLink } from "@/components/nav-pending";
 import { loadOnboarding, needsPrivacyConsent } from "@/lib/data";
@@ -40,6 +41,7 @@ export default async function AppLayout({
         </ViewTransition>
         <DisclaimerFooter />
       </div>
+      <LaunchHome />
       <QuickAdd />
       <AppTabs />
     </GuidesProvider>

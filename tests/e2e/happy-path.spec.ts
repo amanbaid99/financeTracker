@@ -129,7 +129,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
       await d.getByRole("button", { name: "Got it" }).click();
     });
   await closeGuides();
-  // Old pages a Home Screen app may still open go to Goals.
+  // Old pages a Home Screen app may still open go to Home.
   for (const old of [
     "/dashboard",
     "/month",
@@ -138,7 +138,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     "/update",
   ]) {
     await page.goto(old);
-    await expect(page).toHaveURL(/\/goals$/);
+    await expect(page).toHaveURL(/\/overview$/);
   }
   // The session is stored in long-lived, server-set cookies (not capped at 7 days).
   const authCookies = (await page.context().cookies()).filter((c) =>
@@ -149,6 +149,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     expect(c.expires * 1000 - Date.now()).toBeGreaterThan(300 * 86_400_000);
 
   // Empty state, then a first goal picked by type.
+  await page.goto("/goals");
   await expect(page.getByText("What are you saving for?")).toBeVisible();
   await page.getByRole("link", { name: "Add your first goal" }).click();
   await expect(page).toHaveURL(/\/goals\/new$/);

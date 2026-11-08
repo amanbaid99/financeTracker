@@ -208,6 +208,9 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   small database slowed each to 70-250 ms under that burst. Add new page data to the snapshot
   rather than a new query.
 
+- **Nov 8: Home is the default tab** (owner asked). Old routes redirect to `/overview`, and a
+  fresh launch of an installed app that opens on `/goals` (its remembered start URL) moves to
+  Home once per launch. Tapping the Goals tab is never redirected.
 - **Nov 7: Home fixes** (owner asked): the net worth chart picks a day only on a tap (not when a
   scroll starts), with Back to today; a flat history shows a note, not a line. Next step sits under
   net worth. One card tile (bills to pay, or the statement total when all paid). The budget tile

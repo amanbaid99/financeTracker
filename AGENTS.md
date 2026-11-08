@@ -97,8 +97,10 @@ file; update its steps when the tab's flow changes.
 ## Gotchas
 
 - `requireUser()` uses `getClaims()` (local JWT check), not `getUser()`. Keep it that way for speed.
-- `/home`, `/dashboard`, `/budget`, `/holdings` and other old routes redirect to `/goals`
-  (`next.config.ts`), because installed PWAs remember their old start URL. Don't reuse them.
+- `/home`, `/dashboard`, `/budget`, `/holdings` and other old routes redirect to `/overview`
+  (Home, `next.config.ts`), because installed PWAs remember their old start URL. Don't reuse them.
+  Older installs start on `/goals`; `components/launch-home.tsx` moves a fresh installed-app
+  launch from `/goals` to Home.
 - Quick actions from the + button (`components/quick-add.tsx`) navigate with `?do=...`, or, when
   already on that page, fire a `tracker:quick-action` event. Pages listen with `useQuickAction`.
   Clear the param with `clearParam` after opening.
