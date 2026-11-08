@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { homeCardSummary, homeGoals } from "@/lib/home-summary";
+import { cashCheck, homeCardSummary, homeGoals } from "@/lib/home-summary";
 import type { Card } from "@/lib/cards";
 import { trackGoal } from "@/lib/tracker";
 const card: Card = {
@@ -109,4 +109,43 @@ it("previews at most three active goals without altering inputs or including rea
     false,
   );
   expect(JSON.stringify(goals)).toBe(before);
+});
+
+describe("cash check", () => {
+  const inv = (kind: string, category: string | null, value: number) => ({
+    kind,
+    category,
+    value,
+  });
+  it("counts only money you can reach quickly", () => {
+    const c = cashCheck({
+      dues: [213430],
+      investments: [
+        inv("savings", "savings_account", 10000),
+        inv("mutual_fund", "liquid_fund", 164000),
+        inv("epf", "epf_vpf", 200000),
+        inv("mutual_fund", "flexi_cap", 2457),
+      ],
+      monthlyOut: 53726,
+    });
+    expect(c.due).toBe(213430);
+    expect(c.liquid).toBe(174000);
+    expect(c.after).toBe(-39430);
+    expect(c.months).toBe(0);
+  });
+
+  it("says how many months what's left would last", () => {
+    const c = cashCheck({
+      dues: [20000],
+      investments: [inv("mutual_fund", "liquid_fund", 180000)],
+      monthlyOut: 50000,
+    });
+    expect(c.after).toBe(160000);
+    expect(c.months).toBe(3.2);
+  });
+
+  it("leaves months unknown without monthly costs", () => {
+    const c = cashCheck({ dues: [], investments: [], monthlyOut: 0 });
+    expect(c.months).toBeNull();
+  });
 });

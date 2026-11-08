@@ -208,6 +208,12 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   small database slowed each to 70-250 ms under that burst. Add new page data to the snapshot
   rather than a new query.
 
+- **Nov 8: Due this month on Home** (owner chose ideas 1 to 3): card bills and EMIs overdue or
+  due this month (`creditPayments`, linked card EMIs left out) against liquid savings
+  (`isLiquid`: savings, FDs, liquid and overnight funds, goal-linked ones included), and how many
+  months the rest lasts at budget costs + EMIs (`cashCheck` in `lib/home-summary.ts`). Bills-fund
+  payments aren't added, since their funds already hold the money. Each payment has Mark paid
+  (same confirm and Undo as Credit). It replaces "Payments coming up".
 - **Nov 8: Home is the default tab** (owner asked). Old routes redirect to `/overview`, and a
   fresh launch of an installed app that opens on `/goals` (its remembered start URL) moves to
   Home once per launch. Tapping the Goals tab is never redirected.

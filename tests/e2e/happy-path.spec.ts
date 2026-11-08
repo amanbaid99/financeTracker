@@ -1084,6 +1084,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
   await expect(page.getByRole("link", { name: "Your plan", exact: true })).toBeVisible();
 
+  // Home: this month's dues against liquid savings, with Mark paid there.
+  await tab("Home").click();
+  await expect(page.getByRole("heading", { name: "Due this month" })).toBeVisible();
+  await expect(page.getByText(/in liquid savings/).first()).toBeVisible();
+
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();
   const savedBeige = page.waitForResponse((r) => r.request().method() === "POST");

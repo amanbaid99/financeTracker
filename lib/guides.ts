@@ -25,7 +25,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     steps: [
       "Net worth is your tracked investments and savings, minus loans and unpaid card bills. Tap the chart to see a day, and Back to today to return. It starts when history was first recorded.",
       "Next step, near the top, suggests one thing to do and Not now hides it. This month shows what your budget leaves to invest, your current SIPs and card bills to pay. Card figures are logged statements, including any EMIs in them. Missing statements do not mean zero spending.",
-      "Payments coming up shows up to three overdue or current-month payments. Open Credit to record them.",
+      "Due this month adds up card bills and EMIs that are overdue or due this month, and checks them against your liquid savings: savings accounts, FDs and liquid funds. It also says how long what's left would last at your usual costs and EMIs. Tap Mark paid on any payment once it's done.",
       "Goal progress previews three active goals. Your next step suggests one thing to work on, and Not now hides it on this device.",
       "The + button stays at the bottom right on the main pages for adding, importing and updating. The five tabs open Home, Goals, Portfolio, Credit and Ask.",
     ],
@@ -124,6 +124,24 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-11-08",
+    title: "Know where this month stands",
+    items: [
+      {
+        title: "Due this month",
+        text: "Home adds up this month's card bills and EMIs and checks them against your liquid savings, so you can see if you're covered.",
+      },
+      {
+        title: "How long it lasts",
+        text: "It also says how many months what's left would last at your usual costs and EMIs.",
+      },
+      {
+        title: "Mark paid from Home",
+        text: "Each payment due has Mark paid right there, with Undo.",
+      },
+    ],
+  },
   {
     date: "2026-11-07",
     title: "A truer net worth",

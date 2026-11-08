@@ -7,8 +7,8 @@ import { NextStep } from "@/components/next-step";
 import { Progress } from "@/components/ui/progress";
 import { loadCards, loadLoans, loadMoneyPlan, loadNetWorth } from "@/lib/data";
 import { creditPayments } from "@/lib/credit-payments";
-import { homeCardSummary, homeGoals } from "@/lib/home-summary";
-import { dueLabel } from "@/lib/cards";
+import { cashCheck, homeCardSummary, homeGoals } from "@/lib/home-summary";
+import { HomeDues } from "@/components/home-dues";
 import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
 import { monthYear } from "@/lib/goal-summary";
 import { goalStatus } from "@/lib/goal-status";
@@ -33,6 +33,11 @@ export default async function OverviewPage() {
   const payments = creditPayments(cards, loans, today).filter(
     (p) => p.kind !== "linked",
   );
+  const check = cashCheck({
+    dues: payments.map((p) => p.amount),
+    investments,
+    monthlyOut: budget.costs + budget.emis,
+  });
   const preview = homeGoals(goals);
   const steps = plan
     ? planSteps(plan.suggestions, investments, links, "diversified").length
@@ -53,6 +58,7 @@ export default async function OverviewPage() {
       </div>
 
       <NetWorthCard history={worth.history} compact />
+      <HomeDues payments={payments} check={check} today={today} />
       <NextStep
         plan={plan ? { monthlyTotal: plan.monthlyTotal } : null}
         budget={{ income: budget.income, planMonthly: budget.planMonthly }}
@@ -104,26 +110,22 @@ export default async function OverviewPage() {
             href="/cards"
             className={cn(tile, budget.income > 0 && "col-span-2")}
           >
-            <p className="text-xs text-muted-foreground">
-              {statements.unpaid > 0 ? "Card bills to pay" : "Card statements"}
-            </p>
+            <p className="text-xs text-muted-foreground">Card statements</p>
             <p
               className={cn(
                 "tabular break-words text-lg font-semibold tracking-tight",
                 !statements.month && "text-base",
               )}
             >
-              {statements.unpaid > 0
-                ? formatINR(statements.unpaid)
-                : statements.month
-                  ? formatINR(statements.total)
-                  : cards.length
-                    ? "Not logged yet"
-                    : "No cards added"}
+              {statements.month
+                ? formatINR(statements.total)
+                : cards.length
+                  ? "Not logged yet"
+                  : "No cards added"}
             </p>
             <p className="text-[11px] text-muted-foreground">
               {statements.month
-                ? `${monthYear(`${statements.month}-01`)} statements · ${statements.cardsUpdated} of ${statements.cards} cards${statements.unpaid > 0 ? "" : " · all paid"}`
+                ? `${monthYear(`${statements.month}-01`)} · ${statements.cardsUpdated} of ${statements.cards} cards`
                 : "Log statements in Credit"}
             </p>
           </Link>
@@ -131,73 +133,6 @@ export default async function OverviewPage() {
         <p className="mt-3 text-[11px] text-muted-foreground">
           Card figures are logged statements, including any EMIs on them. Not
           live spending.
-        </p>
-      </section>
-
-      <section className={surface} aria-labelledby="home-payments-h">
-        <div className="flex items-center justify-between gap-3">
-          <h2 id="home-payments-h" className="font-semibold">
-            Payments coming up
-          </h2>
-          <Link
-            href="/cards"
-            className="inline-flex min-h-11 items-center gap-1 text-xs font-medium text-primary"
-          >
-            View all
-            <ArrowUpRight className="size-3.5" aria-hidden />
-          </Link>
-        </div>
-        {payments.length ? (
-          <ul className="divide-y" aria-label="Upcoming payments">
-            {payments.slice(0, 3).map((p) => {
-              const due = dueLabel(p.date, today);
-              return (
-                <li key={p.key}>
-                  <Link
-                    href={
-                      p.cardId
-                        ? `/cards?open=${encodeURIComponent(p.cardId)}`
-                        : "/cards#loans-h"
-                    }
-                    className="press flex min-h-16 items-center justify-between gap-3 py-3"
-                  >
-                    <span className="min-w-0 flex-1">
-                      <span className="block break-words text-sm font-medium">
-                        {p.name}
-                      </span>
-                      <span
-                        className={cn(
-                          "block text-xs",
-                          due.tone === "danger"
-                            ? "text-danger"
-                            : due.tone === "warning"
-                              ? "text-warning"
-                              : "text-muted-foreground",
-                        )}
-                      >
-                        {due.text}
-                      </span>
-                      {p.statementMonth && (
-                        <span className="block text-[11px] text-muted-foreground">
-                          {monthYear(p.statementMonth)} statement
-                        </span>
-                      )}
-                    </span>
-                    <span className="tabular shrink-0 text-sm font-semibold">
-                      {formatINR(p.amount)}
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            No overdue or current-month payments recorded.
-          </p>
-        )}
-        <p className="mt-2 text-[11px] text-muted-foreground">
-          Overdue and due this month. Record payments in Credit.
         </p>
       </section>
 
