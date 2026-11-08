@@ -143,7 +143,8 @@ export function NetWorthCard({
   const first = points[0].value;
   const change = points[last].value - first;
   // A flat line says nothing; wait until the value has actually moved.
-  const moved = points.some((p) => p.value !== first);
+  // Two points draw a line, not a trend, so wait for a few days of history.
+  const moved = points.length >= 3 && points.some((p) => p.value !== first);
   return (
     <section
       aria-labelledby="nw-h"
@@ -171,22 +172,7 @@ export function NetWorthCard({
         {net < 0 ? "−" : ""}
         {formatINR(Math.abs(net))}
       </p>
-      <div className="grid grid-cols-2 gap-3 text-sm">
-        <div>
-          <p className="text-xs text-muted-foreground">You own</p>
-          <p className="tabular font-medium">{formatINR(now.assets)}</p>
-        </div>
-        <div className="border-l pl-3">
-          <p className="text-xs text-muted-foreground">You owe</p>
-          <p className="tabular font-medium">{formatINR(now.liabilities)}</p>
-          {(now.cardBills ?? 0) > 0 && (
-            <p className="tabular text-[11px] text-muted-foreground">
-              Loans {formatINRCompact(now.liabilities - (now.cardBills ?? 0))} ·
-              Card bills {formatINRCompact(now.cardBills ?? 0)}
-            </p>
-          )}
-        </div>
-      </div>
+      <OwnOwe point={now} />
       {picked !== last && (
         <button
           type="button"
@@ -204,15 +190,96 @@ export function NetWorthCard({
           compact={compact}
         />
       ) : (
-        <p className="rounded-lg bg-muted p-2.5 text-xs text-muted-foreground">
-          {points.length > 1
-            ? `No change since ${formatDate(points[0].day)}. The chart fills in as your investments, loans and card bills change.`
-            : "Your history starts today. Each time you update an investment, loan or card bill, the chart gets a new point."}
+        <p className="text-xs text-muted-foreground">
+          {points.length < 3
+            ? "A chart appears after a few days of history."
+            : `No change since ${formatDate(points[0].day)}. A chart appears once it moves.`}
         </p>
       )}
       <p className="text-[11px] text-muted-foreground">
-        Tracked investments and savings, minus loans and unpaid card bills.
+        Investments and savings, minus loans and unpaid card bills.
       </p>
     </section>
+  );
+}
+
+/** What you own against what you owe: one bar, then the amounts. */
+function OwnOwe({ point }: { point: NetWorthPoint }) {
+  const cards = point.cardBills ?? 0;
+  const loans = point.liabilities - cards;
+  const total = point.assets + point.liabilities || 1;
+  const rows: { label: string; value: number; color: string; sub?: boolean }[] =
+    [
+      { label: "You own", value: point.assets, color: "bg-success" },
+      { label: "You owe", value: point.liabilities, color: "" },
+      ...(loans > 0 && cards > 0
+        ? [
+            { label: "Loans", value: loans, color: "bg-danger", sub: true },
+            {
+              label: "Card bills",
+              value: cards,
+              color: "bg-warning",
+              sub: true,
+            },
+          ]
+        : []),
+    ];
+  const segments = [
+    { key: "own", value: point.assets, color: "bg-success" },
+    {
+      key: "loans",
+      value: cards > 0 ? loans : point.liabilities,
+      color: "bg-danger",
+    },
+    { key: "cards", value: cards, color: "bg-warning" },
+  ].filter((x) => x.value > 0);
+  return (
+    <div className="space-y-2">
+      <div
+        className="flex h-2 gap-0.5 overflow-hidden rounded-full"
+        aria-hidden
+      >
+        {segments.map((x) => (
+          <span
+            key={x.key}
+            className={cn("h-full", x.color)}
+            style={{ width: `${(x.value / total) * 100}%` }}
+          />
+        ))}
+      </div>
+      <dl className="space-y-1 text-sm">
+        {rows.map((r) => (
+          <div
+            key={r.label}
+            className={cn(
+              "flex items-baseline justify-between gap-3",
+              r.sub && "pl-4 text-xs text-muted-foreground",
+            )}
+          >
+            <dt className="flex items-center gap-2">
+              {r.color && !r.sub && (
+                <span
+                  className={cn("size-2 rounded-full", r.color)}
+                  aria-hidden
+                />
+              )}
+              {r.sub && (
+                <span
+                  className={cn("size-1.5 rounded-full", r.color)}
+                  aria-hidden
+                />
+              )}
+              {!r.color && (
+                <span className="size-2 rounded-full bg-danger" aria-hidden />
+              )}
+              {r.label}
+            </dt>
+            <dd className={cn("tabular", !r.sub && "font-medium")}>
+              {formatINR(r.value)}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   );
 }
