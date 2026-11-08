@@ -54,7 +54,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     steps: [
       "Net worth at the top is what you own minus what you owe on loans, with a chart once there are a few days of history. Tap the chart to see a day.",
       "Open the Portfolio review row for checks and settings. Turn on automatic reviews for checks after imports and holding updates. Review suggestions yourself before changing investments.",
-      "The overview shows your total, monthly investments and asset split. Tap an asset class to filter the holdings below. Clear the filter to see everything again. Switch to Instrument to see it by kind of investment, like mutual funds, stocks or EPF.",
+      "The overview shows your total, monthly investments and asset split. A short line sums it up, then a bar and small chips with each share. Tap a chip to filter the holdings below, and again to clear it. Switch to Instrument to see it by kind of investment, like mutual funds, stocks or EPF.",
       "Search holdings by name or category. Sort by value, name or simple growth. Unknown growth comes last. Growth compares today's value with what you put in, not an annual return.",
       "Last edited is when a holding record changed, not a market price date. CAS import dates are recorded for new successful imports; older dates may be unknown.",
       "Tap + to add an investment or saving, update values or import a CAS statement. Tap a holding to edit it.",

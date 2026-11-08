@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { AllocationBar } from "@/components/allocation-bar";
+import { AllocationBar, CompactAllocation } from "@/components/allocation-bar";
 import { PortfolioHoldings } from "@/components/portfolio-holdings";
 import { formatINR } from "@/lib/format";
 import { editedDate } from "@/lib/portfolio-view";
 import {
   ASSET_CLASSES,
-  swatchFor,
   type AssetClass,
   type Portfolio,
 } from "@/lib/portfolio";
@@ -102,53 +101,16 @@ export function PortfolioOverview({
               onSelect={setAssetClass}
             />
           ) : (
-            <div className="space-y-1">
-              <div
-                className="flex min-h-11 w-full items-center gap-0.5"
-                aria-hidden
-              >
-                {p.kinds.map((k, i) => (
-                  <span
-                    key={k.label}
-                    style={{ flexGrow: Math.max(k.share, 0.005), flexBasis: 0 }}
-                    className={cn(
-                      "block h-3 min-w-[3px]",
-                      swatchFor(kindSlot(k.assetClass)),
-                      i === 0 && "rounded-l-full",
-                      i === p.kinds.length - 1 && "rounded-r-full",
-                    )}
-                  />
-                ))}
-              </div>
-              <ul
-                className="divide-y divide-border/50"
-                aria-label="By instrument"
-              >
-                {p.kinds.map((k) => (
-                  <li
-                    key={k.label}
-                    className="grid min-h-11 grid-cols-[minmax(0,1fr)_6.5rem_3.25rem] items-center gap-x-3 px-2 text-xs"
-                  >
-                    <span className="flex min-w-0 items-center gap-2">
-                      <span
-                        className={cn(
-                          "size-2 shrink-0 rounded-full",
-                          swatchFor(kindSlot(k.assetClass)),
-                        )}
-                        aria-hidden
-                      />
-                      <span className="min-w-0 break-words">{k.label}</span>
-                    </span>
-                    <span className="tabular whitespace-nowrap text-right font-medium">
-                      {formatINR(k.value)}
-                    </span>
-                    <span className="tabular text-right text-muted-foreground">
-                      {Math.round(k.share * 100)}%
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <CompactAllocation
+              label="By instrument"
+              items={p.kinds.map((k) => ({
+                key: k.label,
+                label: k.label,
+                value: k.value,
+                share: k.share,
+                slot: kindSlot(k.assetClass),
+              }))}
+            />
           )}
         </div>
         <p className="border-t pt-2 text-[11px] text-muted-foreground">
