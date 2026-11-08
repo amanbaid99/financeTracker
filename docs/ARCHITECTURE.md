@@ -40,7 +40,8 @@ decisions are in [DECISIONS.md](DECISIONS.md).
 | `/goals/plan` | The money plan: where it goes and why, and this month's SIP steps |
 | `/goals/budget` | Budget: take-home, monthly costs, EMIs and SIPs from the app, free to invest |
 | `/goals/new`, `/goals/[id]` | New goal; one goal with its plan, investments and suggestions          |
-| `/portfolio`                | Net worth (holdings minus loans, with history), total value, allocation, holdings |
+| `/portfolio`                | Net worth today, total value, allocation, holdings |
+| `/portfolio/net-worth`      | Net worth, what you own and what you owe over time, by asset class and by loan |
 | `/cards`                    | Credit: cards (statements for milestones only, advisor), then loans (next EMI, Mark paid) |
 | `/ask`                      | Private Q&A about your own numbers (AI, opt-in)                        |
 | `/import`                   | CAS statement import with a review step                                |

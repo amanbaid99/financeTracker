@@ -52,7 +52,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "Your portfolio",
     intro: "Everything you hold, across all goals, in one place.",
     steps: [
-      "Net worth at the top is what you own minus what you owe on loans, with a chart once there are a few days of history. Tap the chart to see a day.",
+      "Net worth at the top is what you own minus what you owe on loans. Tap See progress over time for charts of net worth, what you own and what you owe, plus each loan's progress.",
       "Open the Portfolio review row for checks and settings. Turn on automatic reviews for checks after imports and holding updates. Review suggestions yourself before changing investments.",
       "The overview shows your total, monthly investments and asset split. A short line sums it up, then a bar and small chips with each share. Tap a chip to filter the holdings below, and again to clear it. Switch to Instrument to see it by kind of investment, like mutual funds, stocks or EPF.",
       "Search holdings by name or category. Sort by value, name or simple growth. Unknown growth comes last. Growth compares today's value with what you put in, not an annual return.",
@@ -119,7 +119,7 @@ export const RELEASES: Release[] = [
       },
       {
         title: "Net worth on Portfolio",
-        text: "Net worth, what you own minus loans, now sits at the top of Portfolio.",
+        text: "Net worth, what you own minus loans, sits at the top of Portfolio. Tap See progress over time for charts of net worth, what you own and what you owe, and each loan's progress.",
       },
       {
         title: "+ is back in the middle",

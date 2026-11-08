@@ -1080,6 +1080,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Portfolio starts with net worth: holdings minus loans.
   await tab("Portfolio").click();
   await expect(page.getByText("You owe on loans")).toBeVisible();
+  await page.getByRole("link", { name: /See progress over time/ }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Net worth" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "What you owe on loans" })).toBeVisible();
 
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();

@@ -208,6 +208,10 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   small database slowed each to 70-250 ms under that burst. Add new page data to the snapshot
   rather than a new query.
 
+- **Nov 8: Net worth page** (owner asked): the Portfolio card shows today's figures only (no
+  chart, so nothing to tap by mistake) and links to `/portfolio/net-worth`: three `TrendChart`s
+  (net worth, what you own, what you owe), each scaled to its own range, then own by asset class
+  and owe by loan with repaid progress.
 - **Nov 8: Home removed, card bills log-only** (owner asked; supersedes the Nov 6 to 8 Home
   entries below). Goals is the start page again, `/overview` redirects to it, and + is back in
   the centre of the bottom bar (Goals, Portfolio, +, Credit, Ask). Net worth sits at the top of
