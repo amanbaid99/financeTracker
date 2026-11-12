@@ -35,7 +35,7 @@ tests, as `SUPABASE_SECRET_KEY` from `npx supabase status -o env`.
 ## CI
 
 `.github/workflows/checks.yml` runs on every push and pull request: `npm ci`, a Python venv with
-`requirements.txt` and pytest, then lint, typecheck, unit tests and Python tests. It needs no
+`requirements.txt`, pytest and pypdf (test PDFs only), then lint, typecheck, unit tests and Python tests. It needs no
 secrets. The RLS and end-to-end tests need Docker and a local Supabase stack, so they run locally
 (`npm run test:rls`, `npm run test:e2e:local`).
 

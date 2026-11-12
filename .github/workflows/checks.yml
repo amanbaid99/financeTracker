@@ -17,14 +17,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
           cache: pip
@@ -34,7 +34,7 @@ jobs:
       - name: Python statement reader
         run: |
           python -m venv .venv-cas
-          .venv-cas/bin/pip install -q -r requirements.txt pytest
+          .venv-cas/bin/pip install -q -r requirements.txt pytest pypdf  # pypdf: tests only, not on Vercel
 
       - run: npm run lint
       - run: npm run typecheck

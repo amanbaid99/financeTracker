@@ -11,7 +11,7 @@ echo "2/4 Python statement reader (.venv-cas)"
 if [ ! -x .venv-cas/bin/python ]; then
   python3 -m venv .venv-cas
 fi
-.venv-cas/bin/pip install -q -r requirements.txt pytest
+.venv-cas/bin/pip install -q -r requirements.txt pytest pypdf  # pypdf builds test PDFs only
 
 echo "3/4 Local Supabase (needs Docker running)"
 if ! docker info >/dev/null 2>&1; then
