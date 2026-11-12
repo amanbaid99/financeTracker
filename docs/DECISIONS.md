@@ -220,6 +220,7 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   GitHub Action for lint, types, unit and Python tests; a test that fails on em dashes; and
   docs/STATUS.md and docs/SETUP.md. Not chosen: export, soft delete, feedback form, /demo,
   analytics. The tour isn't shown automatically, since first-visit guides already greet new users.
+  The owner approved the "Help, a tour and a safer app" What's new wording on 12 Nov.
 - **Nov 8: Net worth page** (owner asked): the Portfolio card shows today's figures only (no
   chart, so nothing to tap by mistake) and links to `/portfolio/net-worth`: three `TrendChart`s
   (net worth, what you own, what you owe), each scaled to its own range, then own by asset class
