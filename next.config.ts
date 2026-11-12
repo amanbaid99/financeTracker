@@ -25,6 +25,24 @@ const nextConfig: NextConfig = {
       ]),
     ];
   },
+  async headers() {
+    return [
+      {
+        // Always check for a new service worker, so updates reach the app.
+        source: "/sw.js",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "no-cache, no-store, must-revalidate",
+          },
+          {
+            key: "Content-Type",
+            value: "application/javascript; charset=utf-8",
+          },
+        ],
+      },
+    ];
+  },
   async rewrites() {
     const dev = process.env.CAS_PARSER_DEV_URL;
     return dev

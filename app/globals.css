@@ -353,3 +353,19 @@
   box-shadow: 0 2px 8px -4px
     color-mix(in srgb, var(--foreground) 12%, transparent);
 }
+
+/* Toasts rise in briefly; still with reduced motion. */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+.toast-in {
+  animation: toast-in 180ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast-in {
+    animation: none;
+  }
+}

@@ -25,7 +25,8 @@ export function MoneyInput({
   required?: boolean;
   "aria-label"?: string;
 }) {
-  const display = value === null || value === undefined ? "" : fmt.format(value);
+  const display =
+    value === null || value === undefined ? "" : fmt.format(value);
   return (
     <div className={cn("relative", className)}>
       <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">

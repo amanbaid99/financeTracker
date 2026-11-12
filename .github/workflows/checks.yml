@@ -1,0 +1,42 @@
+# The same fast checks as `npm run check`, on every push and pull request:
+# lint, typecheck, unit tests (incl. the no-em-dash test) and Python tests.
+# The security (RLS) and end-to-end tests need a local Supabase stack, so they
+# still run locally before pushing (see AGENTS.md).
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: npm ci
+
+      - name: Python statement reader
+        run: |
+          python -m venv .venv-cas
+          .venv-cas/bin/pip install -q -r requirements.txt pytest
+
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run test:py

@@ -208,6 +208,18 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   small database slowed each to 70-250 ms under that burst. Add new page data to the snapshot
   rather than a new query.
 
+- **Nov 12: playbook gaps filled** (owner chose from the App Starter Playbook review):
+  error boundaries (`app/error.tsx`, `app/(app)/error.tsx`, `app/global-error.tsx`) with Try
+  again; a small service worker (`public/sw.js`) that caches only built files and serves
+  `offline.html` when there's no connection (pages and data are never cached); a searchable Help
+  page from `lib/help.ts`; a What's new archive at `/whats-new`; a spotlight tour
+  (`lib/tour.ts`, `components/tour.tsx`) started from Settings, and "Show me around" in What's new
+  for items with `show`; Back that returns to the exact previous screen (in-app history in
+  sessionStorage, else the parent page); drafts for new goals and loans in localStorage with
+  Restore or Discard; a shared toast (`components/ui/toast.tsx`) used for Mark paid with Undo; a
+  GitHub Action for lint, types, unit and Python tests; a test that fails on em dashes; and
+  docs/STATUS.md and docs/SETUP.md. Not chosen: export, soft delete, feedback form, /demo,
+  analytics. The tour isn't shown automatically, since first-visit guides already greet new users.
 - **Nov 8: Net worth page** (owner asked): the Portfolio card shows today's figures only (no
   chart, so nothing to tap by mistake) and links to `/portfolio/net-worth`: three `TrendChart`s
   (net worth, what you own, what you owe), each scaled to its own range, then own by asset class

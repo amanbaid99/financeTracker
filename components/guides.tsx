@@ -3,6 +3,8 @@
 import { Info, Sparkles } from "lucide-react";
 import { createContext, useCallback, useContext, useState } from "react";
 import { Sheet } from "@/components/sheet";
+import { useTour } from "@/components/tour";
+import type { TourStep } from "@/lib/tour";
 import { Button } from "@/components/ui/button";
 import { markGuideSeen, markWhatsNewSeen } from "@/lib/guide-actions";
 import { GUIDES, type GuideId, type Release } from "@/lib/guides";
@@ -54,11 +56,22 @@ export function WhatsNewSheet({
   releases: Release[];
   onClose: () => void;
 }) {
+  const tour = useTour();
+  // The new features you can be shown on screen, as one short tour.
+  const stops: TourStep[] = releases.flatMap((r) =>
+    r.items
+      .filter((it) => it.show)
+      .map((it) => ({ ...it.show!, title: it.title, text: it.text })),
+  );
   return (
     <Sheet title="What's new" onClose={onClose}>
       <div className="space-y-5">
         {releases.map((r) => (
-          <section key={`${r.date}-${r.title}`} className="space-y-3" aria-label={r.title}>
+          <section
+            key={`${r.date}-${r.title}`}
+            className="space-y-3"
+            aria-label={r.title}
+          >
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
               {r.title}
             </p>
@@ -80,7 +93,24 @@ export function WhatsNewSheet({
             </ul>
           </section>
         ))}
-        <Button type="button" className="w-full" onClick={onClose}>
+        {stops.length > 0 && (
+          <Button
+            type="button"
+            className="w-full"
+            onClick={() => {
+              onClose();
+              tour(stops);
+            }}
+          >
+            Show me around
+          </Button>
+        )}
+        <Button
+          type="button"
+          variant={stops.length ? "outline" : "default"}
+          className="w-full"
+          onClick={onClose}
+        >
           Got it
         </Button>
       </div>
@@ -92,7 +122,13 @@ export function WhatsNewSheet({
  * (i) button next to a page title. Opens the section's guide on the first
  * visit, and any time it's tapped after that.
  */
-export function GuideButton({ id, autoShow = true }: { id: GuideId; autoShow?: boolean }) {
+export function GuideButton({
+  id,
+  autoShow = true,
+}: {
+  id: GuideId;
+  autoShow?: boolean;
+}) {
   const { seen, markSeen, busy } = useContext(Ctx);
   const [tapped, setTapped] = useState(false);
   const first = !seen.has(id);

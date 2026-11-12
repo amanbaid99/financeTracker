@@ -59,7 +59,7 @@ export function PortfolioOverview({
             {formatINR(p.monthlySips)} a month going in
           </p>
         )}
-        <div className="mt-4 border-t pt-3">
+        <div data-guide="allocation" className="mt-4 border-t pt-3">
           <div className="space-y-2">
             <h2 className="text-sm font-semibold">Where your money is</h2>
             <div

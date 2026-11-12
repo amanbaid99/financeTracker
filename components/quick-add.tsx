@@ -113,6 +113,7 @@ export function QuickAdd() {
           setOpen(true);
         }}
         aria-label="Add or update"
+        data-guide="quick-add"
         className="press inline-flex size-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm hover:brightness-110"
       >
         <Plus className="size-6" aria-hidden />

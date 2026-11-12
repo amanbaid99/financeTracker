@@ -1025,10 +1025,28 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Guides in Settings: read what's new, and replay the section guides.
   await page.removeLocatorHandler(sectionGuide);
   await page.getByRole("link", { name: "Settings" }).click();
-  await page.getByRole("button", { name: "See what's new" }).click();
-  const whatsNew = page.getByRole("dialog", { name: "What's new" });
-  await expect(whatsNew).toContainText("Monthly bills");
-  await whatsNew.getByRole("button", { name: "Got it" }).click();
+  // Every past update on its own page, and Back returns to Settings.
+  await page.getByRole("link", { name: /What's new, every update/ }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "What's new" })).toBeVisible();
+  await expect(page.getByText("Monthly bills").first()).toBeVisible();
+  await page.getByRole("link", { name: "Settings", exact: true }).first().click();
+  await expect(page).toHaveURL(/\/settings$/);
+  // Help: searchable answers.
+  await page.getByRole("link", { name: /Help and common questions/ }).click();
+  await page.getByRole("searchbox", { name: "Search help" }).fill("net worth");
+  await expect(page.getByText("How is net worth worked out?")).toBeVisible();
+  await expect(page.getByText("What does AI see?")).toHaveCount(0);
+  await page.getByRole("link", { name: "Settings", exact: true }).first().click();
+  // The tour points at real things, moving between tabs, and can be skipped.
+  await page.getByRole("button", { name: "Take the tour" }).click();
+  const tourCard = page.getByRole("dialog", { name: "Your goals at a glance" });
+  await expect(tourCard).toBeVisible();
+  await expect(page).toHaveURL(/\/goals$/);
+  await tourCard.getByRole("button", { name: "Next" }).click();
+  await expect(page.getByRole("dialog").filter({ hasText: /of 10/ })).toBeVisible();
+  await page.getByRole("button", { name: "Skip" }).click();
+  await expect(page.getByRole("dialog").filter({ hasText: /of 10/ })).toHaveCount(0);
+  await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("button", { name: "Show guides again" }).click();
   await expect(
     page.getByText("Guides will show again when you open each section."),
@@ -1049,7 +1067,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText(/That takes about ₹[\d.]+ Cr at 60/)).toBeVisible();
   await page.getByRole("button", { name: /^Use ₹/ }).click();
   await expect(page.getByLabel("How much do you need?")).not.toHaveValue("");
-  await page.getByRole("link", { name: "Your goals" }).click();
+  // Back is named after the screen you came from, not always "Your goals".
+  await page.getByRole("main").getByRole("link").first().click();
 
   // Budget: take-home and costs give what's free, which can feed the plan.
   await tab("Goals").click();

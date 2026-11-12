@@ -25,6 +25,7 @@ export function NetWorthCard({ history }: { history: NetWorthPoint[] }) {
   return (
     <section
       aria-labelledby="nw-h"
+      data-guide="net-worth"
       className="surface-card space-y-3 rounded-2xl border border-border/70 bg-card p-4"
     >
       <div className="flex items-baseline justify-between gap-3">

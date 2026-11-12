@@ -8,6 +8,7 @@ import { Field } from "@/components/forms/field";
 import { MoneyInput } from "@/components/money-input";
 import { CreditPaymentButton } from "@/components/credit-payment";
 import { Sheet } from "@/components/sheet";
+import { DraftBanner, useDraft } from "@/components/use-draft";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Input, Select } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -282,14 +283,55 @@ function LoanSheet({
   const [gst, setGst] = useState(loan?.foreclosureGst ?? true);
   const isCard = type === "card";
 
+  // A new loan keeps a draft on this device until it's saved.
+  const values = {
+    name,
+    type,
+    cardId,
+    principal,
+    takenOn,
+    rate,
+    emi,
+    totalEmis,
+    emiDay,
+    billDay,
+    owed,
+    asOfPicked,
+    fee,
+    gst,
+  };
+  const drafts = useDraft(
+    loan ? null : "draft:new-loan",
+    values,
+    !name && principal === null && emi === null && owed === null && !rate,
+  );
+  const restoreDraft = () => {
+    const d = drafts.draft!;
+    setName(d.name);
+    setType(d.type);
+    setCardId(d.cardId);
+    setPrincipal(d.principal);
+    setTakenOn(d.takenOn);
+    setRate(d.rate);
+    setEmi(d.emi);
+    setTotalEmis(d.totalEmis);
+    setEmiDay(d.emiDay);
+    setBillDay(d.billDay);
+    setOwed(d.owed);
+    setAsOf(d.asOfPicked);
+    setFee(d.fee);
+    setGst(d.gst);
+    drafts.restore();
+  };
+
   return (
     <Sheet title={loan ? "Edit loan" : "Add a loan"} onClose={onClose}>
       <form
         className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault();
-          run(() =>
-            saveLoan({
+          run(async () => {
+            const res = await saveLoan({
               id: loan?.id,
               name,
               type,
@@ -305,10 +347,19 @@ function LoanSheet({
               asOf: asOf && asOf <= today ? asOf : today,
               foreclosurePct: fee === "" ? null : Number(fee),
               foreclosureGst: gst,
-            }),
-          );
+            });
+            if (res.ok) drafts.clear();
+            return res;
+          });
         }}
       >
+        {drafts.draft && (
+          <DraftBanner
+            what={`loan${drafts.draft.name ? ` (${drafts.draft.name})` : ""}`}
+            onRestore={restoreDraft}
+            onDiscard={drafts.discard}
+          />
+        )}
         <Field
           label="Name"
           htmlFor="ln-name"
@@ -629,7 +680,7 @@ export function LoanList({
     </ul>
   );
   return (
-    <section aria-labelledby="loans-h" className="space-y-3">
+    <section aria-labelledby="loans-h" data-guide="loans" className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <h2 id="loans-h" className="text-lg font-semibold">
           Loans

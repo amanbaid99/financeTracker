@@ -97,6 +97,7 @@ export function NextStep({
   return (
     <section
       aria-label="Next step"
+      data-guide="next-step"
       className="surface-card space-y-3 rounded-2xl border border-primary/15 bg-card p-4"
     >
       <div className="flex items-start gap-3">

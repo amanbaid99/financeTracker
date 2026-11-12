@@ -1,4 +1,4 @@
-import { ChevronLeft } from "lucide-react";
+import { BackLink } from "@/components/back-link";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { TrendChart } from "@/components/trend-chart";
@@ -29,12 +29,7 @@ export default async function NetWorthPage() {
 
   return (
     <main className="space-y-4">
-      <Link
-        href="/portfolio"
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ChevronLeft className="size-4" aria-hidden /> Portfolio
-      </Link>
+      <BackLink fallback="/portfolio" label="Portfolio" />
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Net worth</h1>
         <p className="text-sm text-muted-foreground">

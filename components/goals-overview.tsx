@@ -53,6 +53,7 @@ export function GoalsOverview(props: {
     <>
       <section
         aria-label="Your goals at a glance"
+        data-guide="goals-summary"
         className="surface-card space-y-3 rounded-2xl border bg-card p-4"
       >
         <div className="grid grid-cols-2 gap-3">
@@ -119,7 +120,7 @@ export function GoalsOverview(props: {
         strategy={strategy}
         onStrategyChange={setStrategy}
       />
-      <div id="your-goals" className="scroll-mt-20">
+      <div id="your-goals" data-guide="goal-list" className="scroll-mt-20">
         <GoalList {...props} strategy={strategy} />
       </div>
     </>

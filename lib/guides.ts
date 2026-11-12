@@ -62,8 +62,7 @@ export const GUIDES: Record<GuideId, Guide> = {
   },
   cards: {
     title: "Loans and cards",
-    intro:
-      "Your cards and their milestones, then how far each loan has come.",
+    intro: "Your cards and their milestones, then how far each loan has come.",
     steps: [
       "Add each loan with its type, the amount you withdrew, the EMI and what you owe now. For a loan on a card, pick one of your credit cards or a separate card the lender gave you, with its bill and payment dates.",
       "Each loan shows its next EMI and how soon it's due. Tap Mark paid once you've paid: what you owe goes down and the progress bar moves. A page confirmation offers Undo for 10 seconds.",
@@ -105,10 +104,43 @@ export interface Release {
   /** Launch date, YYYY-MM-DD. Newest first. */
   date: string;
   title: string;
-  items: { title: string; text: string }[];
+  items: {
+    title: string;
+    text: string;
+    /** Where "Show me" points for this item: a page and a data-guide. */
+    show?: { path: string; target: string };
+  }[];
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-11-12",
+    title: "Help, a tour and a safer app",
+    items: [
+      {
+        title: "Take the tour",
+        text: "A short walk through each tab, pointing at the real thing. Find it any time in Settings, under Help and guides.",
+        show: { path: "/settings", target: "help" },
+      },
+      {
+        title: "Help when you need it",
+        text: "Search plain answers about goals, the plan, net worth, cards and privacy. Every past update is there too.",
+        show: { path: "/settings", target: "help" },
+      },
+      {
+        title: "Nothing typed is lost",
+        text: "A new goal or loan keeps a draft on your phone. Open the form again and tap Restore.",
+      },
+      {
+        title: "Back goes back",
+        text: "Back now returns to the exact screen you came from.",
+      },
+      {
+        title: "Calmer when things go wrong",
+        text: "No signal or a page that won't load now shows a clear message and Try again. Your data is always safe.",
+      },
+    ],
+  },
   {
     date: "2026-11-08",
     title: "Simpler, back to basics",

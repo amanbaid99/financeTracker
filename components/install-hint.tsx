@@ -41,7 +41,11 @@ function isDismissed(): boolean {
 type Platform = "ios" | "android" | "other";
 function platform(): Platform {
   const ua = navigator.userAgent;
-  if (/iPhone|iPad|iPod/.test(ua) || (ua.includes("Macintosh") && navigator.maxTouchPoints > 1)) return "ios";
+  if (
+    /iPhone|iPad|iPod/.test(ua) ||
+    (ua.includes("Macintosh") && navigator.maxTouchPoints > 1)
+  )
+    return "ios";
   if (/Android/.test(ua)) return "android";
   return "other";
 }
@@ -53,7 +57,11 @@ function platform(): Platform {
 export function InstallHint({ className }: { className?: string }) {
   const standalone = useIsStandalone();
   const dismissed = useSyncExternalStore(subscribe, isDismissed, () => true);
-  const os = useSyncExternalStore(subscribe, platform, () => "other" as Platform);
+  const os = useSyncExternalStore(
+    subscribe,
+    platform,
+    () => "other" as Platform,
+  );
   if (standalone || dismissed) return null;
 
   return (
@@ -86,26 +94,48 @@ export function InstallHint({ className }: { className?: string }) {
         <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
           <li>Tap the ⋮ menu in Chrome.</li>
           <li>
-            Tap <span className="font-medium text-foreground">Install app</span> or{" "}
-            <span className="font-medium text-foreground">Add to Home screen</span>.
+            Tap <span className="font-medium text-foreground">Install app</span>{" "}
+            or{" "}
+            <span className="font-medium text-foreground">
+              Add to Home screen
+            </span>
+            .
           </li>
         </ol>
       ) : os === "ios" ? (
         <ol className="list-decimal space-y-1 pl-5 text-muted-foreground">
           <li>
-            In Safari, tap <Share className="inline size-4 align-text-bottom text-foreground" aria-label="Share" />{" "}
+            In Safari, tap{" "}
+            <Share
+              className="inline size-4 align-text-bottom text-foreground"
+              aria-label="Share"
+            />{" "}
             <span className="font-medium text-foreground">Share</span>.
           </li>
           <li>
-            Tap <Plus className="inline size-4 align-text-bottom text-foreground" aria-hidden />{" "}
-            <span className="font-medium text-foreground">Add to Home Screen</span>, then Add.
+            Tap{" "}
+            <Plus
+              className="inline size-4 align-text-bottom text-foreground"
+              aria-hidden
+            />{" "}
+            <span className="font-medium text-foreground">
+              Add to Home Screen
+            </span>
+            , then Add.
           </li>
-          <li>Open Tracker from your Home Screen and sign in once with the email code.</li>
+          <li>
+            Open Tracker from your Home Screen and sign in once with the email
+            code.
+          </li>
         </ol>
       ) : (
         <p className="text-muted-foreground">
-          On your phone, open this page and choose <span className="font-medium text-foreground">Add to Home Screen</span>{" "}
-          (iPhone: Share menu; Android: ⋮ menu). It opens full screen and keeps you signed in.
+          On your phone, open this page and choose{" "}
+          <span className="font-medium text-foreground">
+            Add to Home Screen
+          </span>{" "}
+          (iPhone: Share menu; Android: ⋮ menu). It opens full screen and keeps
+          you signed in.
         </p>
       )}
     </aside>

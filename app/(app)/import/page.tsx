@@ -1,7 +1,6 @@
-import { ChevronLeft } from "lucide-react";
+import { BackLink } from "@/components/back-link";
 import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { ImportFlow } from "@/components/import-flow";
 
 export const metadata: Metadata = { title: "Import statement" };
@@ -18,12 +17,7 @@ export default async function ImportPage({
       : { href: "/goals", label: "Your goals" };
   return (
     <main className="space-y-4">
-      <Link
-        href={back.href}
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ChevronLeft className="size-4" aria-hidden /> {back.label}
-      </Link>
+      <BackLink fallback={back.href} label={back.label} />
       <div className="space-y-1">
         <div className="flex items-center gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">

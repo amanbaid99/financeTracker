@@ -247,6 +247,7 @@ export function AskChat() {
       <div ref={end} />
 
       <form
+        data-guide="ask"
         className="fixed inset-x-0 bottom-[calc(3.75rem+env(safe-area-inset-bottom))] z-20 border-t bg-background/95 px-4 py-3 backdrop-blur"
         onSubmit={(e) => {
           e.preventDefault();

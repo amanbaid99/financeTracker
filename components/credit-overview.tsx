@@ -29,6 +29,7 @@ export function CreditOverview({
     <CreditPaymentProvider>
       <section
         id="credit-cards"
+        data-guide="cards"
         aria-labelledby="cards-h"
         className="scroll-mt-16 space-y-3"
       >

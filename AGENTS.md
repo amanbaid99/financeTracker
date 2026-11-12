@@ -4,9 +4,10 @@ Tracker is a private, invite-only personal finance PWA for one owner and a few f
 goals, the investments that pay for them, credit card milestones, and suggests how to split money
 across goals. Mobile first (designed at 375px), Indian rupees, IST dates.
 
-Read this file first, then [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the code fits
-together and [docs/DECISIONS.md](docs/DECISIONS.md) for product rules and why things are the way
-they are. [SPEC.md](SPEC.md) is the original build spec; parts of it are superseded (see
+Read this file first, then [docs/STATUS.md](docs/STATUS.md) for what's live and open,
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for how the code fits together,
+[docs/DECISIONS.md](docs/DECISIONS.md) for product rules and why things are the way they are, and
+[docs/SETUP.md](docs/SETUP.md) for accounts, secret names and CI. [SPEC.md](SPEC.md) is the original build spec; parts of it are superseded (see
 DECISIONS).
 
 ## Rules you must follow
@@ -88,9 +89,14 @@ Vercel builds every push to the working branch (region `bom1`). `api/*.py` are P
 (statement reader and PDF text). `requirements.txt` is what Vercel installs, so only `casparser`
 and its dependencies are available there (it brings `pypdfium2`; `pypdf` is **not** available).
 
-## Releases and guides
+## Help, releases and guides
 
-User-visible features get a "What's new" entry: add it to the top of `RELEASES` in
+- `lib/help.ts` is the Help page. When behaviour it describes changes, update the answer in the
+  same commit.
+- Update `docs/STATUS.md` at the end of each task.
+- The tour (`lib/tour.ts`) points at elements marked `data-guide="..."`. Keep those attributes
+  when you move things. A What's new item can set `show` to be part of "Show me around".
+- User-visible features get a "What's new" entry: add it to the top of `RELEASES` in
 `lib/guides.ts` (date = launch date). Each tab has a first-visit guide in `GUIDES` in the same
 file; update its steps when the tab's flow changes.
 

@@ -33,7 +33,11 @@ export function ThemePicker({
         <p className="text-sm font-medium" id="theme-label">
           Theme
         </p>
-        <div role="radiogroup" aria-labelledby="theme-label" className="grid grid-cols-3 gap-2">
+        <div
+          role="radiogroup"
+          aria-labelledby="theme-label"
+          className="grid grid-cols-3 gap-2"
+        >
           {THEMES.map((t) => (
             <button
               key={t}
@@ -60,7 +64,11 @@ export function ThemePicker({
         <p className="text-sm font-medium" id="accent-label">
           Accent colour
         </p>
-        <div role="radiogroup" aria-labelledby="accent-label" className="flex flex-wrap gap-3">
+        <div
+          role="radiogroup"
+          aria-labelledby="accent-label"
+          className="flex flex-wrap gap-3"
+        >
           {ACCENTS.map((a) => (
             <button
               key={a}
@@ -76,7 +84,9 @@ export function ThemePicker({
               )}
               style={{ background: ACCENT_SWATCH[a] }}
             >
-              {accent === a && <Check className="size-4 text-white" aria-hidden />}
+              {accent === a && (
+                <Check className="size-4 text-white" aria-hidden />
+              )}
             </button>
           ))}
         </div>

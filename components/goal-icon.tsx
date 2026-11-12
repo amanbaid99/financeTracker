@@ -26,11 +26,20 @@ const ICONS: Record<string, LucideIcon> = {
   custom: Target,
 };
 
-export function GoalIcon({ type, className }: { type: string; className?: string }) {
+export function GoalIcon({
+  type,
+  className,
+}: {
+  type: string;
+  className?: string;
+}) {
   const Icon = ICONS[type] ?? Target;
   return (
     <span
-      className={cn("inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary", className)}
+      className={cn(
+        "inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary",
+        className,
+      )}
       aria-hidden
     >
       <Icon className="size-5" />

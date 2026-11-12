@@ -30,8 +30,8 @@ export default async function PortfolioPage({
   const review = { data: snap.review, error: null };
   const aiEnabled = Boolean(
     snap.profile?.ai_enabled &&
-      snap.ai_consent?.granted &&
-      snap.ai_consent.version === AI_CONSENT_VERSION,
+    snap.ai_consent?.granted &&
+    snap.ai_consent.version === AI_CONSENT_VERSION,
   );
   const importHistory = { data: snap.settings, error: null };
   const parsedReview = resultSchema.safeParse(review.data?.result);

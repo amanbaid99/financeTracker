@@ -27,7 +27,11 @@ decisions are in [DECISIONS.md](DECISIONS.md).
    version changed.
 4. Each tab has a `loading.tsx` (`components/page-skeleton.tsx`) so navigation is instant, and
    `components/nav-pending.tsx` shows a strip while the next tab loads.
-5. Client components call server actions (`lib/actions.ts`, `lib/cards-actions.ts`,
+5. The app layout also holds the shared pieces: `ToastProvider` (`components/ui/toast.tsx`,
+   `useToast()`), `TourProvider` (`components/tour.tsx`, `useTour()`), `NavHistory` for
+   `BackLink` (`components/back-link.tsx`), and `error.tsx` boundaries. The root layout registers
+   `public/sw.js` (offline page only). Form drafts use `useDraft` (`components/use-draft.tsx`).
+6. Client components call server actions (`lib/actions.ts`, `lib/cards-actions.ts`,
    `lib/statement/actions.ts`, `lib/ask/actions.ts`, ...) and then `router.refresh()`.
 
 ## Routes
@@ -44,6 +48,8 @@ decisions are in [DECISIONS.md](DECISIONS.md).
 | `/portfolio/net-worth`      | Net worth, what you own and what you owe over time, by asset class and by loan |
 | `/cards`                    | Credit: cards (statements for milestones only, advisor), then loans (next EMI, Mark paid) |
 | `/ask`                      | Private Q&A about your own numbers (AI, opt-in)                        |
+| `/help`                     | Searchable answers from `lib/help.ts`                                  |
+| `/whats-new`                | Every past release note from `RELEASES` in `lib/guides.ts`             |
 | `/import`                   | CAS statement import with a review step                                |
 | `/settings`                 | Theme and accent, guides, AI opt-in, invites (admins), delete account  |
 | `/privacy`                  | Public privacy policy                                                  |

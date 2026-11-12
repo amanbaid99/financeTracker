@@ -2,6 +2,7 @@
 
 import { Calculator, ChevronLeft } from "lucide-react";
 import { useState, useTransition } from "react";
+import { DraftBanner, useDraft } from "@/components/use-draft";
 import { Field } from "@/components/forms/field";
 import {
   BillsEditor,
@@ -146,9 +147,70 @@ export function GoalForm({
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
 
+  // A new goal keeps a draft on this device until it's saved.
+  const values = {
+    type,
+    name,
+    target,
+    noDate,
+    date,
+    inflate,
+    inflation,
+    nice,
+    loanMode,
+    outstanding,
+    original,
+    emiDay,
+    firstEmi,
+    tenure,
+    emi,
+    rate,
+    monthsLeft,
+    feePct,
+    feeGst,
+    bills,
+  };
+  const drafts = useDraft(
+    goal || initial ? null : "draft:new-goal",
+    values,
+    !type,
+  );
+  const restoreDraft = () => {
+    const d = drafts.draft!;
+    setType(d.type);
+    setName(d.name);
+    setTarget(d.target);
+    setNoDate(d.noDate);
+    setDate(d.date);
+    setInflate(d.inflate);
+    setInflation(d.inflation);
+    setNice(d.nice);
+    setLoanMode(d.loanMode);
+    setOutstanding(d.outstanding);
+    setOriginal(d.original);
+    setEmiDay(d.emiDay);
+    setFirstEmi(d.firstEmi);
+    setTenure(d.tenure);
+    setEmi(d.emi);
+    setRate(d.rate);
+    setMonthsLeft(d.monthsLeft);
+    setFeePct(d.feePct);
+    setFeeGst(d.feeGst);
+    setBills(d.bills);
+    drafts.restore();
+  };
+  const draftBanner = drafts.draft && (
+    <DraftBanner
+      what={`goal${drafts.draft.name ? ` (${drafts.draft.name})` : ""}`}
+      onRestore={restoreDraft}
+      onDiscard={drafts.discard}
+    />
+  );
+
   if (!type || !info) {
     return (
       <div className="space-y-3">
+        {draftBanner}
         <p className="text-sm text-muted-foreground">
           What are you working toward?
         </p>
@@ -246,6 +308,7 @@ export function GoalForm({
           : null,
       });
       if (!res.ok) return setError(res.error);
+      drafts.clear();
       onSaved(res.id!);
     });
   }
@@ -258,6 +321,7 @@ export function GoalForm({
         submit();
       }}
     >
+      {draftBanner}
       <div className="flex items-center gap-3">
         <GoalIcon type={type} />
         <div className="min-w-0 flex-1">
