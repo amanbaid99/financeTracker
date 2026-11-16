@@ -97,12 +97,15 @@ export function GoalList({
   const byTime = Object.fromEntries(
     HORIZONS.map((h) => [h.key, [] as TrackedGoal[]]),
   ) as Record<Horizon, TrackedGoal[]>;
+  // Between jobs, goals on hold fold away: nothing to do on them yet.
+  const held: TrackedGoal[] = [];
   for (const g of [...groups.attention, ...groups.growing].sort(
     (a, b) =>
       Number(!!a.niceToHave) - Number(!!b.niceToHave) ||
       goals.indexOf(a) - goals.indexOf(b),
   ))
-    byTime[horizonGroup(g, today)].push(g);
+    if (onHold(g, between) && !filter) held.push(g);
+    else byTime[horizonGroup(g, today)].push(g);
   const shown = HORIZONS.filter((h) => byTime[h.key].length > 0);
   const behindIn = (key: Horizon) =>
     byTime[key].filter((g) => {
@@ -308,6 +311,32 @@ export function GoalList({
           </section>
         );
       })}
+      {held.length > 0 && (
+        <details
+          open={held.some((g) => g.id === open) || undefined}
+          className="group rounded-2xl border border-border/70 bg-muted/30 p-4"
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium [&::-webkit-details-marker]:hidden">
+            <span>
+              On hold till salary{" "}
+              <span className="ml-1 text-sm text-muted-foreground">
+                {held.length}
+              </span>
+            </span>
+            <ChevronDown
+              className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
+              aria-hidden
+            />
+          </summary>
+          <div className="mt-3 space-y-3">
+            <p className="text-sm text-muted-foreground">
+              These start again once your salary comes in. Nothing to do on them
+              for now.
+            </p>
+            {renderGoals(held)}
+          </div>
+        </details>
+      )}
       {(
         [
           [

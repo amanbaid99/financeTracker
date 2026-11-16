@@ -8,6 +8,8 @@ import { buttonVariants } from "@/components/ui/button";
 import { BudgetCard } from "@/components/budget-card";
 import { loadMoneyPlan, loadRunway } from "@/lib/data";
 import { sortGoals } from "@/lib/goal-summary";
+import { betweenFocus, usualFocus } from "@/lib/focus";
+import { onHold } from "@/lib/goal-status";
 
 export const metadata: Metadata = { title: "Goals" };
 
@@ -38,6 +40,28 @@ export default async function GoalsPage({
       .filter((l) => l.investmentId === i.id)
       .map((l) => goalNames.get(l.goalId) ?? ""),
   }));
+
+  const lastUpdated =
+    investments
+      .map((i) => i.updatedAt)
+      .filter((v): v is string => !!v)
+      .sort()
+      .at(-1) ?? null;
+  const focus =
+    between.active && between.runway
+      ? betweenFocus({
+          today,
+          runway: between.runway,
+          itemCount: between.items.length,
+          heldGoals: goals.filter((g) => onHold(g, true)).length,
+        })
+      : usualFocus({
+          today,
+          goals,
+          hasBudget: monthBudget.income > 0,
+          hasPlan: !!plan,
+          lastUpdated,
+        });
 
   return (
     <main className="space-y-5">
@@ -104,11 +128,7 @@ export default async function GoalsPage({
             autoExtra={action === "extra"}
             budgetMonthly={budgetMonthly}
             between={between.active}
-            runway={
-              between.active && between.runway
-                ? { runway: between.runway }
-                : null
-            }
+            focus={focus}
           />
         </>
       )}

@@ -38,9 +38,10 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap Add a goal and pick a type: a purchase, a trip, an emergency fund, a bills fund or paying off a loan.",
       "Link the mutual funds, savings or deposits that pay for it. One investment can be split across goals.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
-      "The card at the top shows what's saved, what goes in each month and how many goals are on track. Goals are grouped by when they're due, from next month to 5+ years. Must-haves come first in each group. A label on each says On track, Behind or what needs action. Covered bills funds, loans covered by EMIs and reached goals are folded away. If a bills fund develops a shortfall, it returns to the active list.",
+      "Where you are, at the very top, sums up how things stand in one sentence and lists at most three things to focus on. Tap one to do it.",
+      "The card below shows what's saved, what goes in each month and how many goals are on track. Goals are grouped by when they're due, from next month to 5+ years. Must-haves come first in each group. A label on each says On track, Behind or what needs action. Covered bills funds, loans covered by EMIs and reached goals are folded away. If a bills fund develops a shortfall, it returns to the active list.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
-      "Between jobs? Covered till salary shows if your money lasts until your salary, with a weekly amount to spend. Your savings goals wait, on hold, until then.",
+      "Between jobs? Where you are shows if your money lasts until your salary, with a weekly amount to spend. Your savings goals wait, folded under On hold till salary, until then.",
       "Your order (under the summary) lets you choose which goals the plan funds first, and Roadmap shows the plan as steps from today.",
       "A Next step card shows when there's something to do: set your budget, start a SIP plan or set up this month's SIPs. Tap Not now to hide it. Got a bonus or idle savings? Tap +, then I have extra money.",
       "Your plan has its own page: tap Your plan. It shows where the money goes and why, then This month lists what to add to your SIPs. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
@@ -55,7 +56,6 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro: "Everything you hold, across all goals, in one place.",
     steps: [
       "Net worth at the top is what you own minus what you owe on loans. Tap See progress over time for charts of net worth, what you own and what you owe, plus each loan's progress.",
-      "Open the Portfolio review row for checks and settings. Turn on automatic reviews for checks after imports and holding updates. Review suggestions yourself before changing investments.",
       "The overview shows your total, monthly investments and asset split. A short line sums it up, then a bar and small chips with each share. Tap a chip to filter the holdings below, and again to clear it. Switch to Instrument to see it by kind of investment, like mutual funds, stocks or EPF.",
       "Search holdings by name or category. Sort by value, name or simple growth. Unknown growth comes last. Growth compares today's value with what you put in, not an annual return.",
       "Last edited is when a holding record changed, not a market price date. CAS import dates are recorded for new successful imports; older dates may be unknown.",
@@ -120,14 +120,19 @@ export const RELEASES: Release[] = [
     title: "A calmer plan for between jobs",
     items: [
       {
+        title: "Where you are, and three things",
+        text: "Goals now opens with one sentence on where you stand and at most three things to focus on. Goals on hold fold away, so the page shows only what needs you.",
+        show: { path: "/goals", target: "runway" },
+      },
+      {
         title: "Your roadmap",
         text: "See your plan as steps from today: first salary, bills months, loans paid off and each goal's date. Green is on plan, grey waits for salary, amber needs you.",
         show: { path: "/goals/roadmap", target: "roadmap" },
       },
       {
         title: "Covered till salary",
-        text: "Add the earliest and latest your salary could start. One card answers whether your money lasts till then, with a weekly amount you can spend and stay on plan.",
-        show: { path: "/goals", target: "runway" },
+        text: "Add the earliest and latest your salary could start. See whether your money lasts till then, with a weekly amount you can spend and stay on plan.",
+        show: { path: "/goals/runway", target: "runway" },
       },
       {
         title: "On hold, not behind",

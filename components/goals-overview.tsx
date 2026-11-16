@@ -4,7 +4,8 @@ import { useState } from "react";
 import { GoalList } from "@/components/goal-list";
 import { MoneyPlanCard } from "@/components/money-plan";
 import { ExtraMoney } from "@/components/extra-money";
-import { RunwayCard, type RunwayView } from "@/components/runway-card";
+import { FocusCard } from "@/components/focus-card";
+import type { Focus } from "@/lib/focus";
 import NextLink from "next/link";
 import { goalStatus } from "@/lib/goal-status";
 import { formatINR, formatINRCompact } from "@/lib/format";
@@ -29,9 +30,10 @@ export function GoalsOverview(props: {
   autoOpen: boolean;
   autoExtra?: boolean;
   budgetMonthly: number | null;
-  /** Between jobs, with what's covered till salary. */
+  /** Between jobs: savings goals wait for the salary. */
   between?: boolean;
-  runway?: RunwayView | null;
+  /** Where you are and the top things to do. */
+  focus?: Focus | null;
 }) {
   const [strategy, setStrategy] = useState<SipStrategy>("diversified");
   const counts = (
@@ -60,26 +62,29 @@ export function GoalsOverview(props: {
   const going = props.goals.reduce((s, g) => s + g.monthlySip, 0);
   return (
     <>
-      {props.runway && <RunwayCard view={props.runway} />}
+      {props.focus && <FocusCard focus={props.focus} />}
       <section
         aria-label="Your goals at a glance"
         data-guide="goals-summary"
         className="surface-card space-y-3 rounded-2xl border bg-card p-4"
       >
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <p className="text-xs text-muted-foreground">Saved for goals</p>
-            <p className="tabular mt-0.5 text-2xl font-semibold tracking-tight">
-              {formatINRCompact(saved)}
-            </p>
+        {/* Between jobs, "₹0 going in" is expected, so it isn't shown. */}
+        {!props.between && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="text-xs text-muted-foreground">Saved for goals</p>
+              <p className="tabular mt-0.5 text-2xl font-semibold tracking-tight">
+                {formatINRCompact(saved)}
+              </p>
+            </div>
+            <div className="border-l pl-3">
+              <p className="text-xs text-muted-foreground">Going in a month</p>
+              <p className="tabular mt-0.5 text-2xl font-semibold tracking-tight">
+                {going > 0 ? formatINR(going) : "₹0"}
+              </p>
+            </div>
           </div>
-          <div className="border-l pl-3">
-            <p className="text-xs text-muted-foreground">Going in a month</p>
-            <p className="tabular mt-0.5 text-2xl font-semibold tracking-tight">
-              {going > 0 ? formatINR(going) : "₹0"}
-            </p>
-          </div>
-        </div>
+        )}
         {total > 0 && (
           <div className="space-y-1.5">
             <div

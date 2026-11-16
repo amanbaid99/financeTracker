@@ -756,26 +756,10 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     expect(sent, `${name} was sent to the AI`).not.toContain(name);
   }
   expect(sent).toContain("[G1] house goal");
-  // Portfolio reviews are a separate opt-in. A full review is saved, but a tiny
-  // balance edit only refreshes the basic checks.
+  // The AI portfolio review is hidden for now.
   await tab("Portfolio").click();
-  const review = page.getByRole("region", { name: "Portfolio review" });
-  await review.locator("summary").first().click();
-  await review.getByRole("button", { name: "Turn on automatic reviews" }).click();
-  await expect(review.getByRole("status")).toContainText(/checks? to review|No flags in these checks/, { timeout: 30_000 });
-  const reviewSent = JSON.stringify(await (await page.request.get("http://127.0.0.1:5329/last-review")).json());
-  for (const name of ["Bank FD", "House", "Index SIP", email]) expect(reviewSent).not.toContain(name);
-  await page.evaluate(() => window.scrollTo(0, 0)); // + hides while scrolling down
-  await page.getByRole("button", { name: "Add or update", exact: true }).click();
-  await page.getByRole("link", { name: /^Update values/ }).click();
-  const valueInput = page.getByRole("dialog", { name: "Update amounts" }).getByRole("textbox").first();
-  const oldValue = Number((await valueInput.inputValue()).replace(/,/g, ""));
-  await valueInput.fill(String(oldValue + 1));
-  await page.getByRole("button", { name: "Save 1 change", exact: true }).click();
-  await expect(review.getByRole("status")).toContainText("No major change since your last review", { timeout: 30_000 });
-  await review.getByText("Review details & settings", { exact: true }).click();
-  await review.getByRole("button", { name: "Turn off reviews" }).click();
-  await expect(review.getByRole("button", { name: "Turn on automatic reviews" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Portfolio overview" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Portfolio review" })).toHaveCount(0);
 
   // Ask can be turned off in Settings.
   await page.getByRole("link", { name: "Settings" }).click();
@@ -1133,7 +1117,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Paid", exact: true }).click();
   await expect(page.getByText(/Card dues paid/)).toBeVisible();
   await page.goto("/goals");
-  await expect(page.getByText("Covered till salary").first()).toBeVisible();
+  // Goals opens with where you are and at most three things to focus on.
+  const focus = page.getByRole("region", { name: "Where you are" });
+  await expect(focus).toBeVisible();
+  await expect(focus).toContainText("Ask for the ₹22,000 owed to you");
+  await expect(focus.getByRole("listitem")).toHaveCount(3);
   await page.screenshot({ path: "test-results/runway-375.png", fullPage: true });
   await page.goto("/goals/runway");
   await page.getByRole("button", { name: "My salary has started" }).click();

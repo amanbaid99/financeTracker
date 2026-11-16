@@ -14,9 +14,11 @@ Last updated: 16 Nov 2026.
   "Covered till salary" card and page (money you can reach vs everything due till each salary
   date, weekly amount, money owed to you, your own payments). Your order for the plan
   (`/goals/order`). Roadmap (`/goals/roadmap`): the plan as steps from today.
+  Goals opens with "Where you are" (`lib/focus.ts`, `components/focus-card.tsx`): one sentence and at
+  most three things to focus on. Between jobs, goals on hold fold into one section.
 - **Portfolio**: net worth today (holdings minus loans) linking to `/portfolio/net-worth` (three
   charts, own by asset type, owe by loan), allocation by asset type or instrument, holdings with
-  search and sort, portfolio review, CAS import with review, withdrawal check and insights.
+  search and sort, portfolio review (hidden for now, commented out in `app/(app)/portfolio/page.tsx`), CAS import with review, withdrawal check and insights.
 - **Credit**: cards (statements logged for milestones only, never as money owed), milestones,
   which card to use, then loans with next EMI, Mark paid from the 1st of the due month, progress.
 - **Ask**: private Q&A (codes only to AI), amount questions split by the app's own planner.

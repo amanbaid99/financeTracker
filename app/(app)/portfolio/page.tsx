@@ -1,5 +1,6 @@
-import { PortfolioReview } from "@/components/portfolio-review";
-import { resultSchema } from "@/lib/portfolio-review/checks";
+// Hidden for now with the AI portfolio review (see below).
+// import { PortfolioReview } from "@/components/portfolio-review";
+// import { resultSchema } from "@/lib/portfolio-review/checks";
 import { FileUp } from "lucide-react";
 import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
@@ -10,7 +11,7 @@ import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
 import { loadGoals, loadNetWorth, loadSnapshot } from "@/lib/data";
 import { NetWorthCard } from "@/components/net-worth-card";
-import { AI_CONSENT_VERSION } from "@/lib/legal";
+// import { AI_CONSENT_VERSION } from "@/lib/legal";
 import { buildPortfolio } from "@/lib/portfolio";
 
 export const metadata: Metadata = { title: "Portfolio" };
@@ -27,25 +28,27 @@ export default async function PortfolioPage({
     loadSnapshot(),
     loadNetWorth(),
   ]);
-  const review = { data: snap.review, error: null };
-  const aiEnabled = Boolean(
-    snap.profile?.ai_enabled &&
-    snap.ai_consent?.granted &&
-    snap.ai_consent.version === AI_CONSENT_VERSION,
-  );
   const importHistory = { data: snap.settings, error: null };
-  const parsedReview = resultSchema.safeParse(review.data?.result);
-  const reviewCard = (
-    <PortfolioReview
-      available={!review.error}
-      enabled={review.data?.enabled ?? false}
-      aiEnabled={aiEnabled}
-      state={review.data?.state ?? "idle"}
-      checkedAt={review.data?.checked_at ?? null}
-      reviewedAt={review.data?.reviewed_at ?? null}
-      result={parsedReview.success ? parsedReview.data : null}
-    />
-  );
+  // The AI portfolio review is hidden for now. To bring it back, uncomment
+  // this (and the imports above) and pass review={reviewCard} below.
+  // const review = { data: snap.review, error: null };
+  // const aiEnabled = Boolean(
+  //   snap.profile?.ai_enabled &&
+  //     snap.ai_consent?.granted &&
+  //     snap.ai_consent.version === AI_CONSENT_VERSION,
+  // );
+  // const parsedReview = resultSchema.safeParse(review.data?.result);
+  // const reviewCard = (
+  //   <PortfolioReview
+  //     available={!review.error}
+  //     enabled={review.data?.enabled ?? false}
+  //     aiEnabled={aiEnabled}
+  //     state={review.data?.state ?? "idle"}
+  //     checkedAt={review.data?.checked_at ?? null}
+  //     reviewedAt={review.data?.reviewed_at ?? null}
+  //     result={parsedReview.success ? parsedReview.data : null}
+  //   />
+  // );
   const p = buildPortfolio(investments);
   const goalNames = new Map(goals.map((g) => [g.id, g.name]));
   // Every investment, with the goals it counts toward (if any).
@@ -113,7 +116,7 @@ export default async function PortfolioPage({
         portfolio={p}
         investments={investments}
         links={links}
-        review={reviewCard}
+        review={null}
         lastImportAt={
           importHistory.error
             ? null

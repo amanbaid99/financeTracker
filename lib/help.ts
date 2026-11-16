@@ -85,6 +85,17 @@ export const HELP: HelpTopic[] = [
     tags: "job gap salary on hold paused",
   },
   {
+    id: "focus",
+    section: "Goals",
+    q: "What is Where you are?",
+    a: [
+      "The first card on Goals. One sentence says how things stand, then it lists at most three things to focus on, most important first. Tap one to go straight to it.",
+      "Between jobs, it's about getting to salary: what you have ready to use, what's due, a weekly amount to spend, and your next payment. Otherwise it points at goals that need a look and the next small step.",
+      "Everything not listed can wait. That's on purpose.",
+    ],
+    tags: "focus top three where am i anxious overwhelmed today",
+  },
+  {
     id: "runway",
     section: "Goals",
     q: "How does Covered till salary work?",
