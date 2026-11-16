@@ -12,6 +12,17 @@ export interface HelpTopic {
 }
 
 export const HELP: HelpTopic[] = [
+  {
+    id: "updates-due",
+    section: "Goals",
+    q: "What appears in Updates due?",
+    a: [
+      "One update at a time on Goals. Missing card statements use the statement day in Edit card. Days beyond the end of a month use its last day. Without a statement day, card reminders stay off.",
+      "Loan balance updates start on the 2nd. Monthly CAS reminders start on the 5th when you hold mutual funds. Saving a relevant update clears its reminder. Remind me tomorrow postpones that item until the next day, across your devices.",
+      "A missing statement or balance update never means you missed a payment. Card statements count only for milestones; the app does not track card payment confirmations.",
+    ],
+    tags: "reminder nudge statement monthly CAS loan balance snooze",
+  },
   // Goals and the plan
   {
     id: "goal-status",
@@ -181,7 +192,7 @@ export const HELP: HelpTopic[] = [
     q: "Where are my loans?",
     a: [
       "Loans are goals. Add one with New goal, then Close my loan, with what you owe now and the EMI. A loan on a card works the same way.",
-      "The balance goes down on its own as each EMI date passes, so there's nothing to tick. If your lender's figure is different, edit the goal and enter what you owe now.",
+      "Open a loan and tap Update loan balance. Enter the outstanding principal from your lender and confirm. It stays until your next update, with a reminder from the 2nd each month. Amount borrowed is optional; when known, it shows principal repaid. Older unconfirmed balances and future payoff figures are estimates.",
     ],
     tags: "loan emi debt owe balance outstanding personal card",
   },

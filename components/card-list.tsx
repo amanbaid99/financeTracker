@@ -188,6 +188,9 @@ function CardSheet({
 }) {
   const [label, setLabel] = useState(card?.label ?? "");
   const [fee, setFee] = useState<number | null>(card?.annualFee ?? null);
+  const [statementDay, setStatementDay] = useState(
+    String(card?.statementDay ?? ""),
+  );
   const [yearStart, setYearStart] = useState(card?.yearStart ?? "");
   const [rewards, setRewards] = useState(card?.rewards ?? "");
   const [benefits, setBenefits] = useState((card?.benefits ?? []).join("\n"));
@@ -228,6 +231,7 @@ function CardSheet({
               id: card?.id ?? null,
               label,
               annualFee: fee,
+              statementDay: statementDay ? Number(statementDay) : null,
               yearStart: yearStart || null,
               rewards: rewards.trim() || null,
               benefits: benefits
@@ -271,6 +275,21 @@ function CardSheet({
             />
           </Field>
         </div>
+        <Field
+          label="Statement day (optional)"
+          htmlFor="c-statement"
+          hint="Day of the month your statement is generated. Used for reminders, not payment tracking. Leave blank to turn reminders off."
+        >
+          <Input
+            id="c-statement"
+            type="number"
+            min={1}
+            max={31}
+            value={statementDay}
+            onChange={(e) => setStatementDay(e.target.value)}
+            placeholder="e.g. 20"
+          />
+        </Field>
         <Field label="Rewards (optional)" htmlFor="c-rewards">
           <Input
             id="c-rewards"
@@ -520,14 +539,18 @@ function BillSheet({
   bill,
   today,
   onClose,
+  initialMonth,
 }: {
   card: Card;
   bill: Bill | null;
   today: string;
   onClose: () => void;
+  initialMonth?: string;
 }) {
   const [month, setMonth] = useState(
-    bill ? bill.month.slice(0, 7) : nextBillMonth(card, today),
+    bill
+      ? bill.month.slice(0, 7)
+      : (initialMonth ?? nextBillMonth(card, today)),
   );
   const [amount, setAmount] = useState<number | null>(bill?.amount ?? null);
   const [note, setNote] = useState(bill?.note ?? "");
@@ -823,7 +846,7 @@ function AboutCard({
 type SheetState =
   | { kind: "card"; card: Card | null }
   | { kind: "milestone"; cardId: string; milestone: MilestoneState | null }
-  | { kind: "bill"; card: Card; bill: Bill | null }
+  | { kind: "bill"; card: Card; bill: Bill | null; month?: string }
   | { kind: "features"; card: Card | null }
   | { kind: "pick" }
   | null;
@@ -848,6 +871,12 @@ export function CardList({
   const open = openCardId === undefined ? localOpen : openCardId;
   const setOpen = onOpenChange ?? setLocalOpen;
   const [sheet, setSheet] = useState<SheetState>(() => {
+    if (action?.startsWith("bill:")) {
+      const [, id, month] = action.split(":");
+      const card = cards.find((c) => c.id === id);
+      if (card && /^\d{4}-(0[1-9]|1[0-2])$/.test(month ?? ""))
+        return { kind: "bill", card, bill: null, month };
+    }
     if (action === "card" || (action === "bill" && cards.length === 0))
       return { kind: "card", card: null };
     if (action === "bill")
@@ -1124,6 +1153,7 @@ export function CardList({
         <BillSheet
           card={sheet.card}
           bill={sheet.bill}
+          initialMonth={sheet.month}
           today={today}
           onClose={close}
         />

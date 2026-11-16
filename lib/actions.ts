@@ -20,8 +20,7 @@ import {
 } from "@/lib/theme";
 
 export type ActionResult =
-  | { ok: true; id?: string }
-  | { ok: false; error: string };
+  { ok: true; id?: string } | { ok: false; error: string };
 
 const money = z.number().int().min(0).max(1e13);
 const uuid = z.string().uuid();
@@ -175,13 +174,15 @@ export async function saveGoal(
     if (loan) {
       // Keep the tracked loan in step with the goal's loan details.
       const loanRow = {
+        ...(loan.firstEmi ? { principal: loan.outstanding } : {}),
         rate: loan.ratePct,
         emi: loan.emi ?? null,
         months_left: loan.monthsLeft ?? null,
         emi_day: loan.emiDay,
         first_emi: loan.firstEmi ?? null,
         outstanding: loan.outstanding,
-        outstanding_as_of: row.loan_as_of!,
+        outstanding_as_of: loan.firstEmi ? row.loan_as_of! : todayIST(),
+        balance_confirmed_on: loan.firstEmi ? null : todayIST(),
         foreclosure_pct: loan.foreclosurePct ?? null,
         foreclosure_gst: loan.foreclosureGst ?? true,
       };

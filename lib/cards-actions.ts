@@ -31,6 +31,7 @@ function fail(e: unknown): Result {
 
 function done(id?: string): Result {
   revalidatePath("/cards");
+  revalidatePath("/goals");
   return { ok: true, id };
 }
 
@@ -41,6 +42,7 @@ const cardSchema = z.object({
   id: z.string().uuid().nullable(),
   label: z.string().trim().min(1, "name the card").max(40),
   annualFee: money.nullable(),
+  statementDay: z.number().int().min(1).max(31).nullable().optional(),
   yearStart: isoDate.nullable(),
   rewards: z.string().trim().max(200).nullable(),
   benefits: z.array(z.string().trim().min(1).max(120)).max(30),
@@ -56,6 +58,9 @@ export async function saveCard(
     const row = {
       label: v.label,
       annual_fee: v.annualFee,
+      ...(v.statementDay !== undefined
+        ? { statement_day: v.statementDay }
+        : {}),
       year_start: v.yearStart,
       rewards: v.rewards || null,
       benefits: v.benefits,

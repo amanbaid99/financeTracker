@@ -1,6 +1,7 @@
 // Plain-language plan for a goal: what's going in, what it needs, and for
 // loans the EMI breakdown. Renders on the server or inside client components.
 
+import Link from "next/link";
 import { formatDate, formatINR, formatMonths } from "@/lib/format";
 import { monthYear } from "@/lib/goal-summary";
 import type { TrackedGoal } from "@/lib/tracker";
@@ -245,10 +246,38 @@ export function LoanPlan({
 
   return (
     <div className="space-y-3">
+      <div className="text-sm space-y-1">
+        <p className="text-muted-foreground">
+          {g.loan?.confirmed
+            ? `Balance confirmed ${formatDate(g.loan.asOf)}`
+            : "Balance estimated from the EMI schedule"}
+          . Future payoff figures are estimates.
+        </p>
+        {g.loan?.principal != null && (
+          <p>
+            Borrowed {formatINR(g.loan.principal)} · Principal repaid{" "}
+            {formatINR(Math.max(0, g.loan.principal - l.balance))}
+          </p>
+        )}
+        {g.loanId && (
+          <Link
+            className="inline-flex min-h-11 items-center text-primary font-medium"
+            href={`/updates?loan=${g.loanId}`}
+          >
+            Update loan balance
+          </Link>
+        )}
+      </div>
       {verdict && <p className="rounded-lg bg-muted p-3 text-sm">{plan}</p>}
       {details && (
         <dl className="expand-in divide-y">
-          <Row label="Owed today" value={formatINR(l.balance)} strong />
+          <Row
+            label={
+              g.loan?.confirmed ? "Last confirmed balance" : "Estimated balance"
+            }
+            value={formatINR(l.balance)}
+            strong
+          />
           <Row label="EMI" value={`${formatINR(l.emi)} at ${l.ratePct}%`} />
           {l.nextEmi && <Row label="Next EMI" value={formatDate(l.nextEmi)} />}
           <Row
@@ -260,7 +289,7 @@ export function LoanPlan({
             value={formatINR(l.principalThisMonth)}
           />
           <Row
-            label="Closes on its own"
+            label="Estimated payoff"
             value={
               l.monthsLeft === null
                 ? "Never at this EMI"

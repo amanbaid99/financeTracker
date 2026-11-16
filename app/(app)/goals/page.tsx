@@ -1,3 +1,6 @@
+import { UpdatesDue } from "@/components/updates-due";
+import { updatesDue } from "@/lib/updates";
+import { loadSnapshot, loadCards, loadLoans } from "@/lib/data";
 import { Plus } from "lucide-react";
 import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
@@ -29,7 +32,23 @@ export default async function GoalsPage({
     unassigned,
     budgetMonthly,
   } = await loadMoneyPlan();
-  const between = await loadRunway();
+  const [between, snapshot, cardData, loans] = await Promise.all([
+    loadRunway(),
+    loadSnapshot(),
+    loadCards(),
+    loadLoans(),
+  ]);
+  const due = updatesDue({
+    today,
+    cards: cardData.cards,
+    loans,
+    lastCas: snapshot.settings?.last_cas_import_at ?? null,
+    hasFunds: investments.some((i) => i.kind === "mutual_fund"),
+    snoozes: (snapshot.settings?.update_snoozes ?? {}) as Record<
+      string,
+      unknown
+    >,
+  });
   // Every investment remains updatable from the + menu.
   const goalNames = new Map(goals.map((g) => [g.id, g.name]));
   const updatable = investments.map((i) => ({
@@ -65,6 +84,8 @@ export default async function GoalsPage({
           )}
         </div>
       </div>
+
+      <UpdatesDue items={due} today={today} />
 
       {goals.length === 0 && (
         <BudgetCard b={monthBudget} planMonthly={planInput?.monthly ?? null} />

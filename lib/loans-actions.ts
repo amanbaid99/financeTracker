@@ -196,7 +196,11 @@ export async function markEmiPaid(
       );
     const { error } = await supabase
       .from("loans")
-      .update({ outstanding: after.outstanding, outstanding_as_of: after.asOf })
+      .update({
+        outstanding: after.outstanding,
+        outstanding_as_of: after.asOf,
+        balance_confirmed_on: null,
+      })
       .eq("id", loan.id)
       .eq("user_id", userId);
     if (error) throw new Error(error.message);
@@ -229,6 +233,7 @@ export async function undoEmiPaid(
       .update({
         outstanding: p.prev_outstanding,
         outstanding_as_of: p.prev_as_of,
+        balance_confirmed_on: null,
       })
       .eq("id", v.loanId)
       .eq("user_id", userId);

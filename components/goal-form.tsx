@@ -104,7 +104,7 @@ export function GoalForm({
         (goal ? goalTypeInfo(goal.type).inflation || 6 : ""),
     ),
   );
-  const fromStart = !!goal?.loan?.firstEmi;
+  const fromStart = !!goal?.loan?.firstEmi && !goal?.loan?.confirmed;
   // "now": what's owed after the latest EMI. "start": worked out from the original loan.
   const [loanMode, setLoanMode] = useState<"now" | "start">(
     fromStart ? "start" : "now",

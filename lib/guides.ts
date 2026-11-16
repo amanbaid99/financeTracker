@@ -3,13 +3,7 @@
 // from server and client code.
 
 export type GuideId =
-  | "goals"
-  | "portfolio"
-  | "cards"
-  | "budget"
-  | "ask"
-  | "import"
-  | "quick-add";
+  "goals" | "portfolio" | "cards" | "budget" | "ask" | "import" | "quick-add";
 
 export interface Guide {
   title: string;
@@ -40,7 +34,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Link the mutual funds, savings or deposits that pay for it. One investment can be split across goals.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
       "Every goal shows in one list, in your order. The first three are under Focus on these first, the rest under Everything else. Goals on hold and goals reached come last. Change order to move them.",
-      "Loans are goals too. Each shows what's left, the EMI and when it ends. The balance goes down on its own as EMIs pass. If it's off, edit the goal and enter what you owe now.",
+      "Loans are goals too. Each shows what's left, the EMI and when it ends. Confirm the outstanding amount from your lender each month. Once confirmed, it stays until your next update. Older schedule-based balances and future payoff figures are estimates.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
       "Between jobs? Your savings goals wait, On hold till salary. The Budget tab shows whether your money lasts till then.",
       "Your plan (top right) shows how your monthly money is split, top of your order first. Edit order there to choose which goals come first.",
@@ -123,6 +117,25 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-11-16",
+    title: "A gentle reminder to stay up to date",
+    items: [
+      {
+        title: "Updates due",
+        text: "Goals shows one update at a time: missing card statements, monthly loan balances and a CAS refresh from the 5th. Update now or ask again tomorrow. Set each card's statement day in Edit card. No payment is assumed missed.",
+        show: { path: "/goals", target: "updates-due" },
+      },
+      {
+        title: "Loan balances you confirm",
+        text: "Confirm your lender's outstanding amount from the 2nd each month. See borrowed, outstanding and principal repaid. Confirmed balances stay until you update them; future payoff figures are estimates.",
+      },
+      {
+        title: "CAS amounts clearly reviewed",
+        text: "The confirmation step shows invested amount changes as well as current values. A CAS without cost information preserves the amount already recorded.",
+      },
+    ],
+  },
   {
     date: "2026-11-16",
     title: "Card milestones at a glance",

@@ -543,3 +543,18 @@ describe("admin invites", () => {
     expect((await c.rpc("add_invite", { p_email: friend })).error).toBeTruthy();
   });
 });
+
+describe("monthly update snoozes", () => {
+  it("merges snoozes only into the signed-in user's settings", async () => {
+    const { data: before } = await a.from("settings").select("update_snoozes").single();
+    const until = new Date().toISOString().slice(0, 10);
+    const first = await b.rpc("snooze_update", { update_key: "cas:2099-01", until_day: until });
+    expect(first.error).toBeNull();
+    const second = await b.rpc("snooze_update", { update_key: "loan:test:2099-01", until_day: until });
+    expect(second.error).toBeNull();
+    const { data: own } = await b.from("settings").select("update_snoozes").single();
+    expect(own?.update_snoozes).toMatchObject({ "cas:2099-01": until, "loan:test:2099-01": until });
+    const { data: after } = await a.from("settings").select("update_snoozes").single();
+    expect(after).toEqual(before);
+  });
+});

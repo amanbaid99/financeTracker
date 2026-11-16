@@ -108,6 +108,7 @@ export interface Snapshot {
     | "first_emi"
     | "outstanding"
     | "outstanding_as_of"
+    | "balance_confirmed_on"
     | "foreclosure_pct"
     | "foreclosure_gst"
   >[];
@@ -125,6 +126,7 @@ export interface Snapshot {
     | "id"
     | "label"
     | "annual_fee"
+    | "statement_day"
     | "year_start"
     | "rewards"
     | "benefits"
@@ -167,7 +169,7 @@ export interface Snapshot {
   >[];
   settings: Pick<
     Row<"settings">,
-    "seen_guides" | "whats_new_seen" | "last_cas_import_at"
+    "seen_guides" | "whats_new_seen" | "last_cas_import_at" | "update_snoozes"
   > | null;
   review: Row<"portfolio_reviews"> | null;
   privacy_ok: boolean;
@@ -323,6 +325,7 @@ export const loadCards = cache(
         id: c.id,
         label: c.label,
         annualFee: c.annual_fee,
+        statementDay: c.statement_day,
         yearStart: c.year_start,
         rewards: c.rewards,
         benefits: c.benefits ?? [],
@@ -404,6 +407,7 @@ export const loadLoans = cache(async (): Promise<Loan[]> => {
       firstEmi: l.first_emi,
       outstanding: l.outstanding,
       asOf: l.outstanding_as_of,
+      confirmedOn: l.balance_confirmed_on,
       foreclosurePct:
         l.foreclosure_pct === null ? null : Number(l.foreclosure_pct),
       foreclosureGst: l.foreclosure_gst,

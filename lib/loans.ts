@@ -54,6 +54,7 @@ export interface Loan {
   /** Owed on `asOf`. */
   outstanding: number;
   asOf: string;
+  confirmedOn?: string | null;
   foreclosurePct: number | null;
   foreclosureGst: boolean;
   payments: LoanPayment[];
@@ -69,6 +70,8 @@ export function loanInput(l: Loan): LoanInput {
     ratePct: l.ratePct,
     monthsLeft: l.monthsLeft,
     asOf: l.asOf,
+    confirmed: !!l.confirmedOn,
+    principal: l.principal,
     emiDay: l.emiDay,
     firstEmi: l.firstEmi,
     foreclosurePct: l.foreclosurePct,

@@ -17,7 +17,7 @@ Last updated: 16 Nov 2026.
   jobs and a calm note instead of a deficit while there's no income.
   Goals is just the goals. Every goal shows in one list in plan order (`lib/goal-order.ts`):
   "Focus on these first" (top three), then "Everything else". Nothing is folded. Loans are goals:
-  balances go down on schedule, nothing to tick.
+  monthly lender balance confirmations; confirmed balances stay until the next update. Older unconfirmed balances remain schedule estimates.
 - **Assets** (`/assets`, was Portfolio): net worth today (holdings minus loans) linking to `/assets/net-worth` (three
   charts, own by asset type, owe by loan), allocation by asset type or instrument, holdings with
   search and sort, portfolio review (hidden for now, commented out in `app/(app)/assets/page.tsx`), CAS import with review, withdrawal check and insights.
@@ -49,3 +49,11 @@ Last updated: 16 Nov 2026.
 - Card bills still have `due_date` and `paid` columns; nothing reads them now.
 - Deletes are permanent (no soft delete), and imports can't be undone as one unit.
 - Net worth history starts on 6 Nov 2026 and only records days when something changed.
+
+## Latest changes: monthly updates
+
+- Goals shows one Updates due item at a time. Card statement dates are configurable in Edit card; reminders open the right card and month. Loans ask for monthly confirmation from the 2nd; mutual fund holders get a CAS reminder from the 5th. Legacy card payment flags and removed one-off payment records are ignored. Remind me tomorrow is stored per item across devices.
+- Confirmed loan balances do not amortise automatically. Loan details show the confirmation date, optional borrowed amount and principal repaid. Schedule-based balances and future payoff figures are labelled estimates. A zero balance closes the monthly reminder.
+- CAS confirmation includes invested-only changes and withdrawal adjustments. An unchanged import can still be confirmed to record a monthly refresh. Missing CAS cost preserves the existing cost.
+
+- Verification: lint, TypeScript, unit and Python checks, production build and 36 component browser checks across 320/375/768/1024px and three themes. Hosted migration applied; new RPC and snapshot use invoker security, with an isolated foreign-subject query confirming no access to settings or loans. Full signed-in e2e and local type generation remain blocked by the Supabase CLI writing telemetry to a read-only home directory. Added two-user snooze isolation coverage for the next local RLS run.

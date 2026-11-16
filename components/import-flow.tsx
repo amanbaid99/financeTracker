@@ -32,6 +32,11 @@ import { createClient } from "@/lib/supabase/client";
 import { importInsights, type Insight } from "@/lib/statement/insights";
 import { isBigDrop } from "@/lib/withdrawal";
 import { WithdrawQuestion } from "@/components/withdraw-question";
+import {
+  describeChanges,
+  type Change,
+  type RowState,
+} from "@/lib/statement/changes";
 import { cn } from "@/lib/utils";
 
 const SOURCE_LABEL: Record<string, string> = {
@@ -49,20 +54,6 @@ const HOW: Record<ReviewRow["categoryHow"], string> = {
 };
 
 type Ready = Extract<PrepareResult, { ok: true }>;
-
-interface RowState {
-  /** "new", "skip", or an existing investment id. */
-  target: string;
-  category: string | null;
-  sip: number | null;
-  goalId: string;
-  /** The user answered "is this your …?" (by tapping yes/no or picking an investment). */
-  matchAnswered: boolean;
-  /** The user answered "has your SIP stopped?". */
-  sipAnswered: boolean;
-  /** For a big drop in value: did you take money out? */
-  withdrew?: boolean;
-}
 
 /** Updates whose value fell a lot: worth asking whether money was taken out. */
 function dropFor(ready: Ready, r: Ready["rows"][number], s: RowState): number {
@@ -113,65 +104,6 @@ function openQuestions(r: ReviewRow, s: RowState): Question[] {
     open.push({ kind: "category", text: "What kind of fund is this?" });
   }
   return open;
-}
-
-interface Change {
-  key: string;
-  action: "update" | "add" | "skip";
-  title: string;
-  lines: string[];
-  unchanged: boolean;
-}
-
-/** Plain list of what saving will do, for the confirm step. */
-function describeChanges(
-  ready: Ready,
-  state: Record<string, RowState>,
-): Change[] {
-  return ready.rows.map((r) => {
-    const s = state[r.key];
-    if (s.target === "skip")
-      return {
-        key: r.key,
-        action: "skip",
-        title: r.name,
-        lines: [],
-        unchanged: true,
-      };
-    const goal = ready.goals.find((g) => g.id === s.goalId)?.name;
-    if (s.target === "new") {
-      const lines = [`Value ${formatINR(r.value)}`];
-      if (s.sip) lines.push(`SIP ${formatINR(s.sip)} a month`);
-      if (s.category) lines.push(categoryLabel(s.category));
-      lines.push(goal ? `Counts toward ${goal}` : "Not linked to a goal");
-      return {
-        key: r.key,
-        action: "add",
-        title: r.name,
-        lines,
-        unchanged: false,
-      };
-    }
-    const inv = ready.investments.find((i) => i.id === s.target)!;
-    const lines: string[] = [];
-    if (inv.value !== r.value)
-      lines.push(`Value ${formatINR(inv.value)} → ${formatINR(r.value)}`);
-    if (s.sip !== null && s.sip !== inv.sip)
-      lines.push(`SIP ${formatINR(inv.sip)} → ${formatINR(s.sip)} a month`);
-    if (r.kind === "mutual_fund" && s.category && s.category !== inv.category) {
-      lines.push(
-        `Kind ${categoryLabel(inv.category)} → ${categoryLabel(s.category)}`,
-      );
-    }
-    if (goal) lines.push(`Also counts toward ${goal}`);
-    return {
-      key: r.key,
-      action: "update",
-      title: inv.name,
-      lines,
-      unchanged: lines.length === 0,
-    };
-  });
 }
 
 /** Sends the PDF straight to the statement reader with the user's sign-in token. */
@@ -509,7 +441,8 @@ export function ImportFlow({
             {adds.length} new investment
             {adds.length === 1 ? "" : "s"}
             {skips.length ? `, ${skips.length} skipped` : ""}. Check them
-            against your statement; nothing changes until you confirm.
+            against your statement; nothing changes until you confirm. Saving
+            also records this month’s CAS refresh.
             {asking.length
               ? ` ${asking.length} fell by 10% or more: tell us if you took money out.`
               : ""}
@@ -540,7 +473,7 @@ export function ImportFlow({
                 onClick={save}
                 disabled={
                   pending ||
-                  updates.length + adds.length === 0 ||
+                  updates.length + adds.length + same.length === 0 ||
                   unanswered > 0
                 }
               >

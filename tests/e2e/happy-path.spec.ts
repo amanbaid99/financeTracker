@@ -277,7 +277,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   expect(order[0]).toMatch(/^House/);
   expect(order[1]).toMatch(/^Close my loan/);
   await page.getByRole("button", { name: "Show details" }).click();
-  await expect(page.getByText("Owed today", { exact: true })).toBeVisible();
+  await expect(page.getByText("Last confirmed balance", { exact: true })).toBeVisible();
   await expect(page.getByText("This month: principal")).toBeVisible();
   await expect(page.getByText("₹5,168", { exact: true })).toBeVisible();
 
@@ -600,7 +600,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     "Index SIP",
   );
   await expect(page.getByRole("region", { name: "Will update" })).toContainText(
-    "Value ₹4,00,000 → ₹4,20,000",
+    "Current amount ₹4,00,000 → ₹4,20,000",
   );
   await expect(page.getByRole("region", { name: "Will add" })).toContainText(
     MYST,

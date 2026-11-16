@@ -43,6 +43,7 @@ export interface Card {
   id: string;
   label: string;
   annualFee: number | null;
+  statementDay?: number | null;
   /** The day the card year starts (any year; only month and day are used). */
   yearStart: string | null;
   rewards: string | null;

@@ -54,6 +54,9 @@ export interface LoanInput {
   /** EMIs left on `asOf`, used when the EMI isn't given. */
   monthsLeft: number | null;
   asOf: string;
+  /** Keep the lender-confirmed balance until another manual update. */
+  confirmed?: boolean;
+  principal?: number | null;
   /** Day of the month the EMI is paid. Defaults to the day of `asOf`. */
   emiDay?: number | null;
   /** Set when the loan was entered from its start: the first EMI date. */
@@ -106,7 +109,7 @@ export function loanState(input: LoanInput, todayISO: string): LoanState {
       ? emiFor(input.outstanding, input.ratePct, input.monthsLeft)
       : 0);
   const emiDay = input.emiDay ?? parseISODate(input.asOf).d;
-  const paid = emisBetween(input.asOf, todayISO, emiDay);
+  const paid = input.confirmed ? 0 : emisBetween(input.asOf, todayISO, emiDay);
   const balance = Math.round(
     balanceAfter(input.outstanding, input.ratePct, emi, paid),
   );
