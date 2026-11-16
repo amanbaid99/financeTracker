@@ -136,10 +136,13 @@ export function nextEmi(
   if (state.balance <= 0 || state.emi <= 0) return null;
   const paid = new Set(l.payments.map((p) => p.dueDate));
   const recent = lastEmiOnOrBefore(today, state.emiDay);
-  const date =
+  let date =
     recent > l.asOf && !paid.has(recent) && days(recent, today) <= RECENT_DAYS
       ? recent
       : nextEmiAfter(l.asOf > today ? l.asOf : today, state.emiDay);
+  // Paid early (before its due date): the next one is due instead.
+  for (let n = 0; paid.has(date) && n < 24; n++)
+    date = nextEmiAfter(date, state.emiDay);
   return { date, amount: state.emi, ...labelFor(date, today) };
 }
 

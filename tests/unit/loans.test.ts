@@ -26,6 +26,18 @@ const loan = (over: Partial<Loan> = {}): Loan => ({
 });
 
 describe("loan view", () => {
+  it("moves to the next EMI when this one was paid early", () => {
+    const v = loanView(
+      loan({
+        payments: [
+          { dueDate: "2026-11-05", amount: 10000, paidOn: "2026-10-20" },
+        ],
+      }),
+      TODAY,
+    );
+    expect(v.next?.date).toBe("2026-12-05");
+  });
+
   it("shows what's repaid against the amount withdrawn, and the next EMI", () => {
     const v = loanView(loan(), TODAY);
     expect(v.state.balance).toBe(200000);
