@@ -1,9 +1,15 @@
-import { CalendarClock, ChevronRight } from "lucide-react";
+import {
+  CalendarClock,
+  ChevronRight,
+  ShieldCheck,
+  TriangleAlert,
+} from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BudgetPlanner } from "@/components/budget-planner";
 import { GuideButton } from "@/components/guides";
-import { RunwayCard } from "@/components/runway-card";
+import { runwayHeadline } from "@/components/runway-card";
+import { formatINR } from "@/lib/format";
 import { loadBudget, loadRunway } from "@/lib/data";
 
 export const metadata: Metadata = { title: "Budget" };
@@ -14,6 +20,7 @@ export default async function BudgetPage() {
     loadBudget(),
     loadRunway(),
   ]);
+  const head = r.active && r.runway ? runwayHeadline(r.runway) : null;
   return (
     <main className="space-y-5">
       <div className="space-y-1">
@@ -22,31 +29,44 @@ export default async function BudgetPage() {
           <GuideButton id="budget" />
         </div>
         <p className="text-sm text-muted-foreground">
-          What comes in, what&apos;s fixed, and what&apos;s free to invest each
-          month. A plan, not a spend tracker.
+          What comes in, what goes out, and what&apos;s left to invest each
+          month.
         </p>
       </div>
-      {r.active && r.runway ? (
-        <RunwayCard view={{ runway: r.runway }} />
-      ) : (
-        <Link
-          href="/goals/salary"
-          data-guide="runway"
-          className="surface-card press flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-4 hover:border-primary/40"
-        >
+      <Link
+        href="/goals/salary"
+        data-guide="runway"
+        className="surface-card press flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-4 hover:border-primary/40"
+      >
+        {head ? (
+          head.tone === "good" ? (
+            <ShieldCheck className="size-5 shrink-0 text-success" aria-hidden />
+          ) : (
+            <TriangleAlert
+              className="size-5 shrink-0 text-warning"
+              aria-hidden
+            />
+          )
+        ) : (
           <CalendarClock className="size-5 shrink-0 text-primary" aria-hidden />
-          <span className="min-w-0 flex-1">
-            <span className="block font-medium">Between jobs?</span>
-            <span className="block text-xs text-muted-foreground">
-              Check your money lasts till your next salary.
-            </span>
+        )}
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium">
+            {head ? head.text : "Between jobs?"}
           </span>
-          <ChevronRight
-            className="size-4 shrink-0 text-muted-foreground"
-            aria-hidden
-          />
-        </Link>
-      )}
+          <span className="block text-xs text-muted-foreground">
+            {head && r.runway
+              ? r.runway.worst.weekly > 0
+                ? `Covered till salary · spend up to ${formatINR(r.runway.worst.weekly)} a week`
+                : "Covered till salary · hold off on what can wait"
+              : "Check your money lasts till your next salary."}
+          </span>
+        </span>
+        <ChevronRight
+          className="size-4 shrink-0 text-muted-foreground"
+          aria-hidden
+        />
+      </Link>
       <BudgetPlanner
         incomes={incomes}
         costs={costs}

@@ -111,7 +111,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "I have a bonus. Where should it go?",
     a: [
-      "Tap +, then I have extra money. Type the amount to see where it helps most, in the same order the plan uses. Nothing is saved until you tap Add to my plan.",
+      "Open Your plan (on Goals) and tap I have extra money. Type the amount to see where it helps most, in the same order the plan uses. Nothing is saved until you tap Add to my plan.",
     ],
     tags: "lump sum one time bonus",
   },

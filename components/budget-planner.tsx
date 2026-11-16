@@ -4,7 +4,7 @@ import { ChevronRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { BudgetSummary, UseForPlan } from "@/components/budget-card";
+import { UseForPlan } from "@/components/budget-card";
 import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
@@ -19,10 +19,9 @@ import { deleteBudgetRow, saveCost, saveIncome } from "@/lib/budget-actions";
 import { formatINR } from "@/lib/format";
 
 type Kind = "income" | "cost";
-/** A row being edited, added to, or a new one. */
+/** A row being edited, or a new one. */
 type Editing =
   | { mode: "edit"; kind: Kind; id: string }
-  | { mode: "add"; kind: Kind; id: string }
   | { mode: "new"; kind: Kind; name: string }
   | null;
 
@@ -36,6 +35,7 @@ function EditRow({
   name: name0,
   amount: amount0,
   type: type0,
+  suggestions = [],
   onAmount,
   onDone,
 }: {
@@ -44,6 +44,8 @@ function EditRow({
   name: string;
   amount: number | null;
   type?: string;
+  /** Common names to pick from while typing a new row's name. */
+  suggestions?: string[];
   /** Typing updates the summary at the top before saving. */
   onAmount: (v: number | null) => void;
   onDone: () => void;
@@ -72,8 +74,16 @@ function EditRow({
           placeholder={kind === "income" ? "e.g. Salary" : "e.g. Rent"}
           onChange={(e) => setName(e.target.value)}
           maxLength={60}
+          list={suggestions.length ? `${kind}-names` : undefined}
           className="min-w-0 flex-1"
         />
+        {suggestions.length > 0 && (
+          <datalist id={`${kind}-names`}>
+            {suggestions.map((n) => (
+              <option key={n} value={n} />
+            ))}
+          </datalist>
+        )}
         <MoneyInput
           aria-label={`${label} a month`}
           value={amount}
@@ -145,109 +155,25 @@ function EditRow({
   );
 }
 
-/** "+ ₹" on a row: add an amount to what's already there. */
-function AddToRow({
-  kind,
-  row,
-  onAmount,
-  onDone,
-}: {
-  kind: Kind;
-  row: { id: string; name: string; amount: number; type?: string };
-  onAmount: (v: number | null) => void;
-  onDone: () => void;
-}) {
-  const router = useRouter();
-  const [extra, setExtra] = useState<number | null>(null);
-  const [error, setError] = useState("");
-  const [pending, start] = useTransition();
-  const total = row.amount + (extra ?? 0);
-  return (
-    <li className="space-y-2 rounded-xl bg-muted/50 p-3">
-      <div className="flex items-center gap-2">
-        <span className="min-w-0 flex-1 text-sm">
-          Add to <b>{row.name}</b>
-        </span>
-        <MoneyInput
-          aria-label={`Amount to add to ${row.name}`}
-          value={extra}
-          placeholder="e.g. 2,000"
-          onChange={(v) => {
-            setExtra(v);
-            onAmount(row.amount + (v ?? 0));
-          }}
-          className="w-32 shrink-0"
-        />
-      </div>
-      <p className="tabular text-xs text-muted-foreground">
-        {formatINR(row.amount)} + {formatINR(extra ?? 0)} ={" "}
-        <b>{formatINR(total)}</b> a month
-      </p>
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          size="sm"
-          disabled={pending || !extra}
-          onClick={() =>
-            start(async () => {
-              setError("");
-              const res =
-                kind === "income"
-                  ? await saveIncome({
-                      id: row.id,
-                      label: row.name,
-                      type: (row.type ?? "stable_salary") as "stable_salary",
-                      amount: total,
-                    })
-                  : await saveCost({
-                      id: row.id,
-                      name: row.name,
-                      amount: total,
-                    });
-              if (!res.ok) return setError(res.error);
-              router.refresh();
-              onDone();
-            })
-          }
-        >
-          {pending ? "Adding…" : `Add ${formatINR(extra ?? 0)}`}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          variant="ghost"
-          onClick={onDone}
-          disabled={pending}
-        >
-          Cancel
-        </Button>
-      </div>
-      {error && <p className="text-xs text-danger">{error}</p>}
-    </li>
-  );
-}
-
-/** A saved row: tap to edit, + to add to it. */
+/** A saved row: tap to edit. */
 function ReadRow({
   name,
   sub,
   amount,
   onEdit,
-  onAdd,
 }: {
   name: string;
   sub?: string;
   amount: number;
   onEdit: () => void;
-  onAdd: () => void;
 }) {
   return (
-    <li className="flex items-center gap-1">
+    <li>
       <button
         type="button"
         onClick={onEdit}
         aria-label={`Edit ${name}`}
-        className="press flex min-h-12 min-w-0 flex-1 items-center justify-between gap-3 rounded-lg px-1 py-2 text-left hover:bg-muted/50"
+        className="press flex min-h-12 w-full items-center justify-between gap-3 rounded-lg px-1 py-2 text-left hover:bg-muted/50"
       >
         <span className="min-w-0">
           <span className="block break-words text-sm font-medium">{name}</span>
@@ -256,14 +182,6 @@ function ReadRow({
           )}
         </span>
         <span className="tabular shrink-0 text-sm">{formatINR(amount)}</span>
-      </button>
-      <button
-        type="button"
-        onClick={onAdd}
-        aria-label={`Add to ${name}`}
-        className="press inline-flex size-9 shrink-0 items-center justify-center rounded-full text-primary hover:bg-primary-soft"
-      >
-        <Plus className="size-4" aria-hidden />
       </button>
     </li>
   );
@@ -299,9 +217,10 @@ function Section({
 }
 
 /**
- * The whole budget on one page: money in, monthly costs, and what the app
- * already counts (EMIs, SIPs). Tap a line to change it, + to add to it.
- * The free amount at the top follows what you type, before you save.
+ * The whole budget on one page: one summary (what's free, and how it adds
+ * up, with EMIs and SIPs counted for you), then money in and monthly costs.
+ * Tap a line to change it. The summary follows what you type, before you
+ * save.
  */
 export function BudgetPlanner({
   incomes,
@@ -387,14 +306,6 @@ export function BudgetPlanner({
           onAmount={(v) => setDraft({ [r.id]: v })}
           onDone={done}
         />
-      ) : editing?.mode === "add" && editing.id === r.id ? (
-        <AddToRow
-          key={r.id}
-          kind={kind}
-          row={r}
-          onAmount={(v) => setDraft({ [r.id]: v })}
-          onDone={done}
-        />
       ) : (
         <ReadRow
           key={r.id}
@@ -404,10 +315,6 @@ export function BudgetPlanner({
           onEdit={() => {
             setDraft({});
             setEditing({ mode: "edit", kind, id: r.id });
-          }}
-          onAdd={() => {
-            setDraft({});
-            setEditing({ mode: "add", kind, id: r.id });
           }}
         />
       ),
@@ -419,63 +326,111 @@ export function BudgetPlanner({
         kind={kind}
         name={editing.name}
         amount={null}
+        suggestions={kind === "cost" ? missing : []}
         onAmount={(v) => setDraft({ new: v })}
         onDone={done}
       />
     ) : null;
 
+  const line = (
+    label: string,
+    value: number,
+    sign: "+" | "-",
+    href?: string,
+    sub?: string,
+  ) => {
+    const body = (
+      <>
+        <span className="min-w-0">
+          <span className="block">{label}</span>
+          {sub && (
+            <span className="block text-xs text-muted-foreground">{sub}</span>
+          )}
+        </span>
+        <span className="tabular flex shrink-0 items-center gap-1">
+          {sign === "-" && value > 0 ? "−" : ""}
+          {formatINR(value)}
+          {href && (
+            <ChevronRight
+              className="size-4 text-muted-foreground"
+              aria-hidden
+            />
+          )}
+        </span>
+      </>
+    );
+    return (
+      <li key={label}>
+        {href ? (
+          <Link
+            href={href}
+            className="flex min-h-10 items-center justify-between gap-3 py-1 hover:opacity-80"
+          >
+            {body}
+          </Link>
+        ) : (
+          <div className="flex min-h-10 items-center justify-between gap-3 py-1">
+            {body}
+          </div>
+        )}
+      </li>
+    );
+  };
+  const calm = between && b.income === 0;
+
   return (
     <>
-      {between && b.income === 0 ? (
-        <section
-          aria-label="Your month"
-          className="space-y-2 rounded-2xl border bg-card p-4"
-        >
-          <p className="font-semibold">
-            Your budget starts again with your salary.
+      <section
+        aria-label="Your month"
+        className="space-y-3 rounded-2xl border bg-card p-4"
+      >
+        {calm ? (
+          <div>
+            <p className="font-semibold">
+              Your budget starts again with your salary.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Add your salary below once you know it.
+            </p>
+          </div>
+        ) : (
+          <p className="tabular">
+            <span
+              className={`text-3xl font-semibold tracking-tight ${b.free < 0 ? "text-danger" : ""}`}
+            >
+              {formatINR(Math.abs(b.free))}
+            </span>{" "}
+            <span
+              className={`text-sm ${b.free < 0 ? "text-danger" : "text-muted-foreground"}`}
+            >
+              {b.free >= 0
+                ? "free to invest a month"
+                : "a month more going out than coming in"}
+            </span>
           </p>
-          <p className="text-sm text-muted-foreground">
-            Till then, your costs ({formatINR(b.costs + b.emis)} a month with
-            EMIs) are counted in{" "}
-            <Link href="/goals/salary" className="text-primary underline">
-              Covered till salary
-            </Link>
-            . Add your salary here once you know it.
+        )}
+        <ul className="divide-y border-t text-sm">
+          {line("Money in", b.income, "+")}
+          {line("Monthly costs", b.costs, "-")}
+          {line(
+            "EMIs",
+            emis,
+            "-",
+            "/goals",
+            loanEmis.length
+              ? `${loanEmis.length} ${loanEmis.length === 1 ? "loan" : "loans"}, from your loan goals`
+              : undefined,
+          )}
+          {line("SIPs running", sips, "-", "/assets", "From your investments")}
+        </ul>
+        {unsaved ? (
+          <p className="text-xs text-muted-foreground">
+            Showing what you&apos;re typing. Save to keep it.
           </p>
-        </section>
-      ) : (
-        <>
-          <section
-            aria-label="Your month"
-            className="space-y-3 rounded-2xl border bg-card p-4"
-          >
-            <BudgetSummary b={b} />
-            {unsaved ? (
-              <p className="text-xs text-muted-foreground">
-                Showing what you&apos;re typing. Save to keep it.
-              </p>
-            ) : (
-              <UseForPlan b={saved} planMonthly={planMonthly} />
-            )}
-          </section>
-          {/* Stays in view while you scroll and edit, following what you type. */}
-          <p
-            aria-hidden
-            className="tabular sticky top-[calc(3rem+env(safe-area-inset-top))] z-20 -my-2 rounded-full border bg-card/95 px-4 py-2 text-center text-sm shadow-sm backdrop-blur"
-          >
-            {b.free >= 0 ? (
-              <>
-                <b>{formatINR(b.free)}</b> free to invest a month
-              </>
-            ) : (
-              <span className="text-danger">
-                <b>{formatINR(-b.free)}</b> a month over
-              </span>
-            )}
-            {unsaved ? " · not saved yet" : ""}
-          </p>
-        </>
-      )}
+        ) : (
+          !calm && <UseForPlan b={saved} planMonthly={planMonthly} />
+        )}
+      </section>
 
       <Section id="in-h" title="Money in" total={b.income}>
         <ul className="space-y-1">
@@ -498,7 +453,11 @@ export function BudgetPlanner({
             variant="ghost"
             size="sm"
             onClick={() =>
-              setEditing({ mode: "new", kind: "income", name: "" })
+              setEditing({
+                mode: "new",
+                kind: "income",
+                name: incomes.length ? "" : "Salary",
+              })
             }
           >
             <Plus /> Add income
@@ -516,108 +475,21 @@ export function BudgetPlanner({
           {costs.length === 0 &&
             !(editing?.mode === "new" && editing.kind === "cost") && (
               <li className="py-2 text-sm text-muted-foreground">
-                Add rent, groceries and the rest below.
+                Rent, groceries, bills and day-to-day spending. A rough figure
+                is fine.
               </li>
             )}
         </ul>
         {!editing && (
-          <div className="flex flex-wrap gap-2 pt-1">
-            {missing.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() =>
-                  setEditing({ mode: "new", kind: "cost", name: s })
-                }
-                className="press rounded-full border bg-card px-3 py-1 text-sm hover:border-primary"
-              >
-                + {s}
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() =>
-                setEditing({ mode: "new", kind: "cost", name: "" })
-              }
-              className="press rounded-full border bg-card px-3 py-1 text-sm hover:border-primary"
-            >
-              + Something else
-            </button>
-          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => setEditing({ mode: "new", kind: "cost", name: "" })}
+          >
+            <Plus /> Add a cost
+          </Button>
         )}
-        <p className="text-xs text-muted-foreground">
-          &quot;Day-to-day spending&quot; covers food out, shopping and the rest
-          you don&apos;t plan for. A rough figure is fine. Card spends friends
-          pay back don&apos;t count.
-        </p>
-      </Section>
-
-      <Section id="auto-h" title="Counted for you" total={emis + sips}>
-        <ul className="space-y-1 text-sm">
-          {loanEmis.map((l) => (
-            <li key={l.name}>
-              <Link
-                href="/goals"
-                className="flex min-h-12 items-center justify-between gap-3 rounded-lg px-1 py-2 hover:bg-muted/50"
-              >
-                <span className="min-w-0">
-                  <span className="block break-words font-medium">
-                    EMI · {l.name}
-                  </span>
-                  <span className="block text-xs text-muted-foreground">
-                    Auto · from your loan goals
-                  </span>
-                </span>
-                <span className="flex shrink-0 items-center gap-1">
-                  <span className="tabular">{formatINR(l.emi)}</span>
-                  <ChevronRight
-                    className="size-4 text-muted-foreground"
-                    aria-hidden
-                  />
-                </span>
-              </Link>
-            </li>
-          ))}
-          <li>
-            <Link
-              href="/assets"
-              className="flex min-h-12 items-center justify-between gap-3 rounded-lg px-1 py-2 hover:bg-muted/50"
-            >
-              <span className="min-w-0">
-                <span className="block font-medium">SIPs running</span>
-                <span className="block text-xs text-muted-foreground">
-                  Auto · from your investments
-                </span>
-              </span>
-              <span className="flex shrink-0 items-center gap-1">
-                <span className="tabular">{formatINR(sips)}</span>
-                <ChevronRight
-                  className="size-4 text-muted-foreground"
-                  aria-hidden
-                />
-              </span>
-            </Link>
-          </li>
-        </ul>
-        <div className="flex flex-wrap gap-2 pt-1">
-          <Link
-            href="/goals/new"
-            className="press rounded-full border bg-card px-3 py-1 text-sm hover:border-primary"
-          >
-            + Add a loan
-          </Link>
-          <Link
-            href="/assets?do=update"
-            className="press rounded-full border bg-card px-3 py-1 text-sm hover:border-primary"
-          >
-            + Change a SIP
-          </Link>
-        </div>
-        <p className="text-xs text-muted-foreground">
-          These update by themselves when you change a loan or a SIP. Yearly
-          payments like insurance belong in a bills fund goal, which is already
-          a SIP.
-        </p>
       </Section>
     </>
   );

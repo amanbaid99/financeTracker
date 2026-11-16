@@ -28,6 +28,12 @@ export default async function PlanPage() {
           How your monthly money is split across goals, top of your order first.
         </p>
       </div>
+      <Link
+        href="/goals?do=extra"
+        className="inline-flex min-h-10 items-center text-sm font-medium text-primary"
+      >
+        I have extra money
+      </Link>
       {d.plan ? (
         <PlanView
           plan={d.plan}

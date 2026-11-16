@@ -1022,19 +1022,21 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Salary a month").fill("200000");
   await page.getByRole("button", { name: "Save Salary" }).click();
   await expect(page.getByRole("button", { name: "Save Salary" })).toHaveCount(0);
-  await page.getByRole("button", { name: "+ Rent" }).click();
+  await page.getByRole("button", { name: "Add a cost" }).click();
+  await page.getByLabel("Cost name").fill("Rent");
   await page.getByLabel("Rent a month").fill("30000");
   await page.getByRole("button", { name: "Save Rent" }).click();
   await expect(page.getByRole("button", { name: "Save Rent" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: "+ Rent" })).toHaveCount(0);
   await expect(page.getByText(/free to invest a month/).first()).toBeVisible();
-  // + on a line adds to it.
-  await page.getByRole("button", { name: "Add to Rent" }).click();
-  await page.getByLabel("Amount to add to Rent").fill("2000");
-  await expect(page.getByText("= ₹32,000 a month")).toBeVisible();
-  await page.getByRole("button", { name: "Add ₹2,000" }).click();
+  // Tap a line to change it.
+  await page.getByRole("button", { name: "Edit Rent" }).click();
+  await page.getByLabel("Rent a month").fill("32000");
+  await page.getByRole("button", { name: "Save Rent" }).click();
   await expect(page.getByRole("button", { name: "Edit Rent" })).toContainText("₹32,000");
-  await expect(page.getByText(/^EMI · /).first()).toBeVisible();
+  // EMIs and SIPs are counted for you in the summary.
+  const month = page.getByRole("region", { name: "Your month" });
+  await expect(month).toContainText("EMIs");
+  await expect(month).toContainText("SIPs running");
   await page.screenshot({ path: "test-results/budget-375.png", fullPage: true });
   await page.getByRole("button", { name: /a month for This month$/ }).click();
   await expect(page.getByRole("button", { name: /a month for This month$/ })).toHaveCount(0);
@@ -1073,7 +1075,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Budget", exact: true })).toBeVisible();
   await expect(page.getByText("a month more going out than coming in")).toHaveCount(0);
   // Budget shows Covered till salary at the top while between jobs.
-  await expect(page.getByText("If salary comes 31 Jan").first()).toBeVisible();
+  await expect(page.getByText(/^Covered till salary · /)).toBeVisible();
   await page.goto("/goals");
   // Goals is just the goals: the top three first, then everything else.
   await expect(page.getByRole("heading", { name: "Focus on these first" })).toBeVisible();
