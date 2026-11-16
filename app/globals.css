@@ -215,6 +215,17 @@
   * {
     border-color: var(--border);
   }
+  /* iOS Safari gives date inputs a fixed intrinsic width, so they spill out
+     of narrow grid columns. Let them shrink and keep the text left aligned. */
+  input[type="date"] {
+    min-width: 0;
+    max-width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  input[type="date"]::-webkit-date-and-time-value {
+    text-align: left;
+  }
   body {
     background: var(--background);
     color: var(--foreground);

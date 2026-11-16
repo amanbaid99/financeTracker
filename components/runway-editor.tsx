@@ -97,7 +97,7 @@ function SalaryDates({
           });
         }}
       >
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
           <Field label="Earliest" htmlFor="sal-best">
             <Input
               id="sal-best"
