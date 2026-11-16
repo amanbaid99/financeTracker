@@ -86,7 +86,10 @@ export function SavingsPlan({
   details = true,
   verdict = true,
   extra,
+  onHold = false,
 }: {
+  /** Between jobs: this goal waits for the salary. */
+  onHold?: boolean;
   g: TrackedGoal;
   details?: boolean;
   /** Show the one-line verdict (off when a "What to do" box says it). */
@@ -95,7 +98,12 @@ export function SavingsPlan({
   extra?: React.ReactNode;
 }) {
   const needed = g.monthlySip + g.extraSipNeeded;
-  const v = savingsVerdict(g);
+  const v = onHold
+    ? {
+        tone: "bg-muted text-foreground",
+        text: "On hold till your salary, as planned. Nothing is needed now. The plan for this goal starts after your first salary.",
+      }
+    : savingsVerdict(g);
   return (
     <div className="space-y-3">
       {verdict && (

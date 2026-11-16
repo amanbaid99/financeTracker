@@ -55,6 +55,37 @@ export const HELP: HelpTopic[] = [
     tags: "money plan priority split sip allocate emergency floor fifth",
   },
   {
+    id: "your-order",
+    section: "Goals",
+    q: "Can I choose which goal comes first?",
+    a: [
+      "Yes. Open Your order (on Goals, under the summary) and move goals up or down, then save. The plan gives each goal what it needs to be on time before moving to the next, top first. A goal without a date is built over two years.",
+      "Bills funds always stay first, since a missed payment costs more. Your order replaces the app's own rules, and Use the app's order brings them back.",
+    ],
+    tags: "priority rank order first emergency",
+  },
+  {
+    id: "between-jobs",
+    section: "Goals",
+    q: "I'm between jobs. Why do my goals say On hold till salary?",
+    a: [
+      "Add when your salary should start (the earliest and latest dates) in Covered till salary. Until then, savings goals wait, as planned, instead of showing Behind. Bills funds and loans still show their real state.",
+      "When the salary starts, tap My salary has started and your goals are active again.",
+    ],
+    tags: "job gap salary on hold paused",
+  },
+  {
+    id: "runway",
+    section: "Goals",
+    q: "How does Covered till salary work?",
+    a: [
+      "It adds up everything due until your salary: EMIs from your loans, living costs from your budget, payments from bills funds, and anything you add, like card dues. Then it compares that with money you can reach quickly: savings accounts, FDs and liquid funds.",
+      "It works this out for both salary dates, and gives one weekly amount for day-to-day spending that keeps you covered even if salary is late. Money owed to you is shown apart until it arrives.",
+      "A bills-fund payment that looks like an EMI or living costs already counted isn't added twice. You can change that on each line.",
+    ],
+    tags: "runway cash salary weekly safe to spend owed card dues",
+  },
+  {
     id: "plan-steps",
     section: "Goals",
     q: "What happens when I tick a step on the plan?",

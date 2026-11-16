@@ -111,3 +111,31 @@ describe("plan priorities", () => {
     );
   });
 });
+
+describe("your own order", () => {
+  it("funds goals in the order you set, before the app's own rules", () => {
+    // Emergency fund due later than the trip, but you want it first.
+    const s = setup([
+      goal({ id: "trip", target: 300_000, targetDate: "2027-10-25", planRank: 2 }),
+      goal({ id: "ef", type: "emergency_fund", target: 300_000, targetDate: "2028-10-25", planRank: 1 }),
+    ]);
+    const p = planMoney({ ...s, lump: 0, monthlyTotal: 15_000, todayISO: TODAY });
+    expect(p.suggestions[0].goalId).toBe("ef");
+    expect(p.suggestions[0].stage).toBe("ranked");
+    const ef = p.suggestions.find((x) => x.goalId === "ef")!;
+    const trip = p.suggestions.find((x) => x.goalId === "trip")!;
+    // The first gets all it needs to be on time; the second gets the rest.
+    expect(ef.after.status).toBe("on_track");
+    expect(ef.monthly + trip.monthly).toBe(15_000);
+  });
+
+  it("builds an undated goal over two years, and keeps bills funds first", () => {
+    const s = setup([
+      goal({ id: "open", type: "emergency_fund", target: 240_000, targetDate: null, planRank: 1 }),
+      goal({ id: "later", target: 100_000, targetDate: "2030-10-25", planRank: 2 }),
+    ]);
+    const p = planMoney({ ...s, lump: 0, monthlyTotal: 50_000, todayISO: TODAY });
+    expect(p.suggestions.find((x) => x.goalId === "open")!.monthly).toBeGreaterThanOrEqual(10_000);
+    expect(p.suggestions.map((x) => x.goalId)).toEqual(["open", "later"]);
+  });
+});

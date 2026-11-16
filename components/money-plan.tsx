@@ -369,10 +369,13 @@ export function MoneyPlanCard({
   strategy,
   onStrategyChange,
   goals = [],
+  between = false,
   variant = "summary",
 }: {
   /** "form" keeps Goals actions available; "full" is the plan page. */
   variant?: "summary" | "full" | "form";
+  /** Between jobs: no nudges to start a plan yet. */
+  between?: boolean;
   /** To say what the goals still need before there's a plan. */
   goals?: TrackedGoal[];
   budget: Budget;
@@ -425,6 +428,7 @@ export function MoneyPlanCard({
           steps={steps.length}
           needed={needed}
           onStart={() => setOpen(true)}
+          between={between}
         />
         {form}
       </>

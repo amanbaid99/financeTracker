@@ -19,6 +19,7 @@ import { groupGoals } from "@/lib/goal-summary";
 import {
   goalHint,
   goalStatus,
+  onHold,
   gapOptions,
   goalSubline,
   HORIZONS,
@@ -70,7 +71,10 @@ export function GoalList({
   suggestions = [],
   strategy = "diversified",
   filter = null,
+  between = false,
 }: {
+  /** Between jobs: savings goals wait for the salary instead of being behind. */
+  between?: boolean;
   filter?: GoalStatus["tone"] | null;
   suggestions?: Suggestion[];
   strategy?: SipStrategy;
@@ -84,7 +88,7 @@ export function GoalList({
   const [details, setDetails] = useState(false);
 
   const filtered = filter
-    ? goals.filter((g) => goalStatus(g, today).tone === filter)
+    ? goals.filter((g) => goalStatus(g, today, between).tone === filter)
     : goals;
   const groups = groupGoals(filtered);
   // Active goals by when they need the money, must-haves first in each
@@ -102,18 +106,21 @@ export function GoalList({
   const shown = HORIZONS.filter((h) => byTime[h.key].length > 0);
   const behindIn = (key: Horizon) =>
     byTime[key].filter((g) => {
-      const t = goalStatus(g, today).tone;
+      const t = goalStatus(g, today, between).tone;
       return t === "warning" || t === "danger";
     }).length;
   const renderGoals = (items: TrackedGoal[]) => (
     <ul className="space-y-3">
       {items.map((g) => {
         const suggestion = suggestions.find((x) => x.goalId === g.id);
-        const st = goalStatus(g, today);
+        const st = goalStatus(g, today, between);
         const sub = goalSubline(g);
-        const hint = goalHint(g, today, suggestion);
+        const hint = goalHint(g, today, suggestion, between);
+        const held = onHold(g, between);
         // Still behind after the plan: offer ways to close the gap.
-        const gap = gapOptions(g, today, suggestion?.monthly ?? 0);
+        const gap = held
+          ? null
+          : gapOptions(g, today, suggestion?.monthly ?? 0);
         const isOpen = open === g.id;
         const panelId = `goal-${g.id}`;
         return (
@@ -238,6 +245,7 @@ export function GoalList({
                 ) : (
                   <SavingsPlan
                     g={g}
+                    onHold={held}
                     details={details}
                     verdict={!suggestion}
                     extra={gap && <GapChoices options={gap} />}

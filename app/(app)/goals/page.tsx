@@ -6,7 +6,7 @@ import { GoalsOverview } from "@/components/goals-overview";
 import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
 import { BudgetCard } from "@/components/budget-card";
-import { loadMoneyPlan } from "@/lib/data";
+import { loadMoneyPlan, loadRunway } from "@/lib/data";
 import { sortGoals } from "@/lib/goal-summary";
 
 export const metadata: Metadata = { title: "Goals" };
@@ -29,6 +29,7 @@ export default async function GoalsPage({
     unassigned,
     budgetMonthly,
   } = await loadMoneyPlan();
+  const between = await loadRunway();
   // Every investment remains updatable from the + menu.
   const goalNames = new Map(goals.map((g) => [g.id, g.name]));
   const updatable = investments.map((i) => ({
@@ -102,6 +103,12 @@ export default async function GoalsPage({
             autoOpen={action === "plan"}
             autoExtra={action === "extra"}
             budgetMonthly={budgetMonthly}
+            between={between.active}
+            runway={
+              between.active && between.runway
+                ? { runway: between.runway }
+                : null
+            }
           />
         </>
       )}

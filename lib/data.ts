@@ -10,6 +10,7 @@ import { PRIVACY_VERSION } from "@/lib/legal";
 import type { Database, Tables } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 import { planMoney } from "@/lib/allocate";
+import { betweenJobs, runway, type RunwayItem } from "@/lib/runway";
 import type { NetWorthPoint } from "@/components/net-worth-card";
 import {
   freePercent,
@@ -68,6 +69,7 @@ export interface Snapshot {
     | "loan_emi_day"
     | "loan_first_emi"
     | "priority"
+    | "plan_rank"
   >[];
   holdings: Pick<
     Row<"holdings">,
@@ -155,7 +157,14 @@ export interface Snapshot {
     | "dob"
     | "dependents"
     | "sole_earner"
+    | "salary_best"
+    | "salary_worst"
+    | "runway_choices"
   > | null;
+  runway_items: Pick<
+    Row<"runway_items">,
+    "id" | "kind" | "label" | "amount" | "due" | "done" | "created_at"
+  >[];
   settings: Pick<
     Row<"settings">,
     "seen_guides" | "whats_new_seen" | "last_cas_import_at"
@@ -239,6 +248,7 @@ export async function readGoals(): Promise<GoalsData> {
           g.inflation_rate === null ? null : Number(g.inflation_rate),
         loanId: g.loan_id,
         niceToHave: (g.priority ?? 3) >= 4,
+        planRank: g.plan_rank ?? null,
         // A linked loan is the source of truth; older goals kept their own copy.
         loan:
           g.type === "loan_payoff" && g.loan_id && loanById.has(g.loan_id)
@@ -522,4 +532,55 @@ export const loadNetWorth = cache(async () => {
     liabilities: loanTotal,
   });
   return { history, assets, liabilities: loanTotal };
+});
+
+/** Between jobs and "Covered till salary", worked out once per request. */
+export const loadRunway = cache(async () => {
+  const [snap, g, loans, b] = await Promise.all([
+    loadSnapshot(),
+    loadGoals(),
+    loadLoans(),
+    loadBudget(),
+  ]);
+  const p = snap.profile;
+  const items: RunwayItem[] = (snap.runway_items ?? []).map((i) => ({
+    id: i.id,
+    kind: i.kind as RunwayItem["kind"],
+    label: i.label,
+    amount: i.amount,
+    due: i.due,
+    done: i.done,
+  }));
+  const active = betweenJobs(p, g.today);
+  const bills = g.goals.flatMap((goal) =>
+    (goal.billsFund?.upcoming ?? []).map((e) => ({
+      goalId: goal.id,
+      name: e.name,
+      amount: e.amount,
+      date: e.date,
+    })),
+  );
+  const result =
+    p?.salary_best && p.salary_worst
+      ? runway({
+          today: g.today,
+          salaryBest: p.salary_best,
+          salaryWorst: p.salary_worst,
+          investments: g.investments,
+          loans,
+          monthlyLiving: b.budget.costs,
+          bills,
+          items,
+          choices: (p.runway_choices as Record<string, boolean>) ?? {},
+        })
+      : null;
+  return {
+    active,
+    salaryBest: p?.salary_best ?? null,
+    salaryWorst: p?.salary_worst ?? null,
+    runway: result,
+    items,
+    today: g.today,
+    monthlyLiving: b.budget.costs,
+  };
 });

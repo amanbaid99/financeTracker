@@ -44,6 +44,8 @@ export interface GoalInput {
   bills?: Bill[] | null;
   /** Nice to have rather than must have: the plan funds it after the rest. */
   niceToHave?: boolean;
+  /** Your place for it in the money plan (1 first), or null for the app's order. */
+  planRank?: number | null;
 }
 
 export interface Link {

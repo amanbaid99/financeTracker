@@ -30,7 +30,10 @@ export function NextStep({
   steps,
   needed,
   onStart,
+  between = false,
 }: {
+  /** Between jobs: the "Covered till salary" card takes this place. */
+  between?: boolean;
   plan: Pick<MoneyPlan, "monthlyTotal"> | null;
   budget: Pick<Budget, "income" | "planMonthly">;
   steps: number;
@@ -62,6 +65,14 @@ export function NextStep({
     text: string;
     action: { label: string; href?: string; onClick?: () => void };
   }[] = [];
+  if (between) return null;
+  if (!plan && budget.income <= 0)
+    options.push({
+      key: "between-jobs",
+      title: "Between jobs?",
+      text: "Add when your salary should start, and see if you're covered till then.",
+      action: { label: "Check", href: "/goals/runway" },
+    });
   if (plan && steps > 0)
     options.push({
       key: `steps-${plan.monthlyTotal}-${steps}`,

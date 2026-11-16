@@ -1,7 +1,7 @@
 # Status
 
 What's live, what's open and the known gaps. Update this at the end of every task.
-Last updated: 12 Nov 2026.
+Last updated: 16 Nov 2026.
 
 ## Live (deployed from `claude/cool-davinci-9zjka6` to Vercel, region bom1)
 
@@ -10,6 +10,10 @@ Last updated: 12 Nov 2026.
   sure? Work it out", AI cost estimates), budget (plan only), and the money plan on its own page
   (`/goals/plan`) with where it goes and why, plus the This month SIP checklist. "I have extra
   money" from +.
+- **Between jobs**: salary dates turn on "On hold till salary" for savings goals and the
+  "Covered till salary" card and page (money you can reach vs everything due till each salary
+  date, weekly amount, money owed to you, your own payments). Your order for the plan
+  (`/goals/order`).
 - **Portfolio**: net worth today (holdings minus loans) linking to `/portfolio/net-worth` (three
   charts, own by asset type, owe by loan), allocation by asset type or instrument, holdings with
   search and sort, portfolio review, CAS import with review, withdrawal check and insights.
@@ -32,6 +36,10 @@ Last updated: 12 Nov 2026.
   imports, goal and loan progress charts, a feedback form, a /demo route, analytics.
 
 ## Known gaps
+
+- The 16 Nov migration (`20261123000000_runway_and_plan_order.sql`) must be applied to the
+  hosted database before saving salary dates, runway items or an order works there. Reading
+  works without it.
 
 - The security (RLS) and end-to-end tests need a local Supabase stack, so CI doesn't run them;
   run them locally before pushing (AGENTS.md).

@@ -218,6 +218,10 @@ describe("row level security", () => {
       prev_as_of: "2026-09-05",
     });
     if (pay.error) throw pay.error;
+    const owed = await a
+      .from("runway_items")
+      .insert({ user_id: idA, kind: "owed_to_me", label: "Friend", amount: 2000 });
+    if (owed.error) throw owed.error;
   });
 
   const tables = [
@@ -243,6 +247,7 @@ describe("row level security", () => {
     "loans",
     "loan_payments",
     "net_worth_history",
+    "runway_items",
   ] as const;
 
   for (const t of tables.filter((x) => x !== "ai_requests")) {

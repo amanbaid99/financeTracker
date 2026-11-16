@@ -22,6 +22,8 @@ function read(): string[] {
 /** Where each screen sits, for the Back label. */
 const LABELS: [RegExp, string][] = [
   [/^\/goals\/plan/, "Your plan"],
+  [/^\/goals\/runway/, "Covered till salary"],
+  [/^\/goals\/order/, "Your order"],
   [/^\/goals\/budget/, "Budget"],
   [/^\/goals\/new/, "New goal"],
   [/^\/goals/, "Goals"],

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { gapOptions, goalHint, goalStatus, horizonGroup } from "@/lib/goal-status";
+import {
+  gapOptions,
+  goalHint,
+  goalStatus,
+  horizonGroup,
+  onHold,
+} from "@/lib/goal-status";
 import type { Suggestion } from "@/lib/allocate";
 import { trackGoal, type GoalInput } from "@/lib/tracker";
 
@@ -131,5 +137,37 @@ describe("current position and proposed plan", () => {
     expect(goalHint(g, TODAY, { after: covered } as Suggestion)).toBe(
       "Covered by your plan",
     );
+  });
+});
+
+describe("between jobs", () => {
+  it("puts savings goals that need money on hold, not behind", () => {
+    const g = trackGoal(goal({}), [inv(77000, 3000)], link, TODAY);
+    expect(goalStatus(g, TODAY).label).toBe("Behind");
+    expect(goalStatus(g, TODAY, true)).toEqual({
+      label: "On hold till salary",
+      tone: "muted",
+    });
+    expect(goalHint(g, TODAY, undefined, true)).toBe("starts after salary");
+  });
+
+  it("leaves on-track goals and bills funds as they are", () => {
+    const fine = trackGoal(goal({ target: 50000 }), [inv(77000, 3000)], link, TODAY);
+    expect(onHold(fine, true)).toBe(false);
+    const bills = trackGoal(
+      {
+        id: "g",
+        name: "Bills",
+        type: "bills_fund",
+        target: 0,
+        targetDate: null,
+        inflationPct: 0,
+        bills: [{ name: "Fee", amount: 50000, everyMonths: 12, nextDue: "2027-01-01" }],
+      },
+      [inv(0, 0)],
+      link,
+      TODAY,
+    );
+    expect(onHold(bills, true)).toBe(false);
   });
 });

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { GoalList } from "@/components/goal-list";
 import { MoneyPlanCard } from "@/components/money-plan";
 import { ExtraMoney } from "@/components/extra-money";
+import { RunwayCard, type RunwayView } from "@/components/runway-card";
 import NextLink from "next/link";
 import { goalStatus } from "@/lib/goal-status";
 import { formatINR, formatINRCompact } from "@/lib/format";
@@ -28,6 +29,9 @@ export function GoalsOverview(props: {
   autoOpen: boolean;
   autoExtra?: boolean;
   budgetMonthly: number | null;
+  /** Between jobs, with what's covered till salary. */
+  between?: boolean;
+  runway?: RunwayView | null;
 }) {
   const [strategy, setStrategy] = useState<SipStrategy>("diversified");
   const counts = (
@@ -35,15 +39,20 @@ export function GoalsOverview(props: {
       ["danger", "need action", "bg-danger"],
       ["warning", "behind", "bg-warning"],
       ["success", "on track", "bg-success"],
-      ["muted", "not started", "bg-muted-foreground/40"],
+      [
+        "muted",
+        props.between ? "on hold or not started" : "not started",
+        "bg-muted-foreground/40",
+      ],
     ] as const
   )
     .map(([tone, label, bar]) => ({
       tone,
       label,
       bar,
-      count: props.goals.filter((g) => goalStatus(g, props.today).tone === tone)
-        .length,
+      count: props.goals.filter(
+        (g) => goalStatus(g, props.today, props.between).tone === tone,
+      ).length,
     }))
     .filter((c) => c.count > 0);
   const total = counts.reduce((s, c) => s + c.count, 0);
@@ -51,6 +60,7 @@ export function GoalsOverview(props: {
   const going = props.goals.reduce((s, g) => s + g.monthlySip, 0);
   return (
     <>
+      {props.runway && <RunwayCard view={props.runway} />}
       <section
         aria-label="Your goals at a glance"
         data-guide="goals-summary"
@@ -103,6 +113,12 @@ export function GoalsOverview(props: {
             className="inline-flex min-h-10 items-center text-muted-foreground hover:text-primary"
           >
             {props.budget.income > 0 ? "Budget" : "Set budget"}
+          </NextLink>
+          <NextLink
+            href="/goals/order"
+            className="inline-flex min-h-10 items-center text-muted-foreground hover:text-primary"
+          >
+            Your order
           </NextLink>
         </div>
       </section>

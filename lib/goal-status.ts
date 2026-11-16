@@ -15,7 +15,27 @@ export interface GoalStatus {
 const URGENT_DAYS = 92;
 
 /** A short label for a goal's state: "On track", "Behind", "Short in Feb"... */
-export function goalStatus(g: TrackedGoal, today: string): GoalStatus {
+/**
+ * Between jobs, savings goals that need money aren't "behind": they wait for
+ * the salary, as planned. Bills funds and loans keep their real status.
+ */
+export function onHold(g: TrackedGoal, between: boolean): boolean {
+  if (!between || g.billsFund || g.status === "reached") return false;
+  if (g.loanState && g.emisCloseFirst) return false;
+  return (
+    g.status === "behind" ||
+    g.status === "no_investments" ||
+    (!g.targetDate && g.monthsToReach === null)
+  );
+}
+
+export function goalStatus(
+  g: TrackedGoal,
+  today: string,
+  between = false,
+): GoalStatus {
+  if (onHold(g, between))
+    return { label: "On hold till salary", tone: "muted" };
   if (g.status === "reached") return { label: "Reached", tone: "success" };
   if (g.status === "overdue") return { label: "Date passed", tone: "danger" };
   const bf = g.billsFund;
@@ -114,7 +134,9 @@ export function goalHint(
   g: TrackedGoal,
   today: string,
   suggestion?: Suggestion,
+  between = false,
 ): string {
+  if (onHold(g, between)) return "starts after salary";
   const st = goalStatus(g, today);
   const bf = g.billsFund;
   if (bf) {

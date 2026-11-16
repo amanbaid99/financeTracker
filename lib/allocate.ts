@@ -34,7 +34,13 @@ export interface Suggestion {
 }
 
 /** The plan's steps, in the order it funds them. */
-export type PlanStage = "bills" | "emergency" | "soon" | "long" | "open";
+export type PlanStage =
+  | "bills"
+  | "emergency"
+  | "ranked"
+  | "soon"
+  | "long"
+  | "open";
 
 export interface MoneyPlan {
   lump: number;
@@ -88,6 +94,8 @@ const FLOOR_MONTHS = 12;
 /** Goals this far away get a fifth of the monthly money kept for them. */
 const LONG_TERM_MONTHS = 60;
 const LONG_TERM_SHARE = 0.2;
+/** In your own order, a goal with no date is built over this many months. */
+const OPEN_BUILD_MONTHS = 24;
 
 export function planMoney(opts: {
   goals: TrackedGoal[];
@@ -148,6 +156,11 @@ export function planMoney(opts: {
     monthlyLeft -= a.monthly;
   }
 
+  // Your own order, when you've set one, replaces the app's rules below
+  // (emergency floor, the fifth for long-term goals, time groups). Bills
+  // funds still come first: a missed payment costs more than anything.
+  const ranked = active.some((g) => !g.billsFund && g.planRank != null);
+
   // 1. Emergency savings up to a floor of 3 months of essentials, built
   // within about a year. Counts every emergency fund together. A dated
   // emergency fund already gets its own plan below, so then this is skipped.
@@ -160,7 +173,7 @@ export function planMoney(opts: {
   const datedEmergency = active.some(
     (x) => x.type === "emergency_fund" && x.targetDate,
   );
-  if (openEmergency.length && !datedEmergency) {
+  if (!ranked && openEmergency.length && !datedEmergency) {
     const g = openEmergency[0];
     const a = alloc.get(g.id)!;
     const floor =
@@ -204,8 +217,10 @@ export function planMoney(opts: {
     );
     return a.monthly;
   };
-  const longTerm = dated.filter((g) => g.months! >= LONG_TERM_MONTHS);
-  const near = dated
+  const longTerm = ranked
+    ? []
+    : dated.filter((g) => g.months! >= LONG_TERM_MONTHS);
+  const near = (ranked ? [] : dated)
     .filter((g) => g.months! < LONG_TERM_MONTHS)
     .sort(
       (x, y) =>
@@ -242,6 +257,36 @@ export function planMoney(opts: {
   ))
     monthlyLeft -= fund(g, monthlyLeft);
 
+  // Your order: each goal gets what it needs to be on time, top first.
+  // A goal with no date is built over two years.
+  const rankedList = ranked
+    ? active
+        .filter((g) => !g.billsFund)
+        .sort(
+          (x, y) =>
+            (x.planRank ?? 999) - (y.planRank ?? 999) ||
+            horizonRank(horizonGroup(x, todayISO)) -
+              horizonRank(horizonGroup(y, todayISO)),
+        )
+    : [];
+  for (const g of rankedList) {
+    if (g.targetDate && g.months) {
+      monthlyLeft -= fund(g, monthlyLeft);
+      continue;
+    }
+    const a = alloc.get(g.id)!;
+    const gap = Math.max(0, g.futureTarget - g.current);
+    if (gap <= 0) continue;
+    a.lump = Math.min(lumpLeft, roundUp(gap, 1000));
+    lumpLeft -= a.lump;
+    const rest = gap - a.lump - g.monthlySip * OPEN_BUILD_MONTHS;
+    if (rest > 0) {
+      a.monthly = Math.min(monthlyLeft, roundUp(rest / OPEN_BUILD_MONTHS, 500));
+      monthlyLeft -= a.monthly;
+    }
+    floorGiven.set(g.id, a.lump + a.monthly * OPEN_BUILD_MONTHS);
+  }
+
   // 5. Whatever is left goes to goals with no date, by how much each still
   // needs. An emergency fund counts what its floor already gave.
   const open = active.filter((g) => !g.targetDate && !g.billsFund);
@@ -272,7 +317,8 @@ export function planMoney(opts: {
   // Show each goal as it would look with its suggestion, in priority order.
   const order = [
     ...active.filter((g) => g.billsFund),
-    ...active.filter((g) => floorGiven.has(g.id)),
+    ...active.filter((g) => !ranked && floorGiven.has(g.id)),
+    ...rankedList,
     ...near,
     ...longTerm,
     ...active,
@@ -307,13 +353,15 @@ export function planMoney(opts: {
       after,
       stage: g.billsFund
         ? "bills"
-        : floorGiven.has(g.id)
-          ? "emergency"
-          : near.includes(g)
-            ? "soon"
-            : longTerm.includes(g)
-              ? "long"
-              : "open",
+        : rankedList.includes(g)
+          ? "ranked"
+          : floorGiven.has(g.id)
+            ? "emergency"
+            : near.includes(g)
+              ? "soon"
+              : longTerm.includes(g)
+                ? "long"
+                : "open",
     });
   }
 

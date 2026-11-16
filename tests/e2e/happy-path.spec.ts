@@ -1096,6 +1096,44 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
   await expect(page.getByRole("link", { name: "Your plan", exact: true })).toBeVisible();
 
+  // Your order: move a goal and save; the plan follows it.
+  await page.getByRole("link", { name: "Your order", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Your order" })).toBeVisible();
+  await expect(page.getByRole("list", { name: "Your order" })).toBeVisible();
+  await page.getByRole("button", { name: "Save this order" }).click();
+  await expect(page.getByText("Your order is saved.")).toBeVisible();
+  await page.goto("/goals/plan");
+  await expect(page.getByRole("heading", { name: "Where it goes, and why" })).toBeVisible();
+  await page.goto("/goals/order");
+  await page.getByRole("button", { name: "Use the app's order instead" }).click();
+  await expect(page.getByText("Back to the app's order.")).toBeVisible();
+
+  // Between jobs: covered till salary, with goals on hold meanwhile.
+  await page.goto("/goals/runway");
+  await page.getByLabel("Earliest").fill("2027-01-05");
+  await page.getByLabel("Latest").fill("2027-01-31");
+  await page.getByRole("button", { name: "Save dates" }).click();
+  await expect(page.getByText("If salary comes 31 Jan").first()).toBeVisible();
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByLabel("Who or what").fill("Friends");
+  await page.getByLabel("Amount").fill("22000");
+  await page.getByRole("button", { name: "Add money owed" }).click();
+  await expect(page.getByText("Plus money owed to you").first()).toBeVisible();
+  await page.getByRole("button", { name: "Add something to pay" }).click();
+  await page.getByLabel("What it's for").fill("Card dues");
+  await page.getByLabel("Amount").fill("50000");
+  await page.getByRole("button", { name: "Add payment" }).click();
+  await expect(page.getByText("Card dues", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Paid", exact: true }).click();
+  await expect(page.getByText(/Card dues paid/)).toBeVisible();
+  await page.goto("/goals");
+  await expect(page.getByText("Covered till salary").first()).toBeVisible();
+  await page.screenshot({ path: "test-results/runway-375.png", fullPage: true });
+  await page.goto("/goals/runway");
+  await page.getByRole("button", { name: "My salary has started" }).click();
+  await expect(page.getByText(/Your goals are active again/)).toBeVisible();
+  await page.goto("/goals");
+
   // Portfolio starts with net worth: holdings minus loans.
   await tab("Portfolio").click();
   await expect(page.getByText("You owe on loans")).toBeVisible();

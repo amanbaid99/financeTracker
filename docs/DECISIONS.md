@@ -208,6 +208,21 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   small database slowed each to 70-250 ms under that burst. Add new page data to the snapshot
   rather than a new query.
 
+- **Nov 16: between jobs, covered till salary, your order** (owner chose A, B, C from a review
+  focused on anxiety). Salary dates (`profiles.salary_best` / `salary_worst`) turn on "between
+  jobs": savings goals that need money show "On hold till salary" (muted), not Behind, and the
+  Next step card is quiet; bills funds and loans keep their real state (`onHold` in
+  `lib/goal-status.ts`). "Covered till salary" (`lib/runway.ts`, card on Goals,
+  `/goals/runway`) compares liquid money (savings, FDs, liquid funds, goal-linked ones included)
+  with everything due till each salary date: EMIs from loans, living costs from the budget
+  (pro-rated by day), bills-fund payments, and your own items (`runway_items`: card dues, money
+  owed to you). A bills-fund line that looks like an EMI or living costs already counted isn't
+  counted twice; `profiles.runway_choices` remembers when you say otherwise. The weekly amount is
+  living costs per week, trimmed only when short. Money owed to you is shown apart until
+  received. Your order (`goals.plan_rank`, `/goals/order`) replaces the app's plan rules
+  (emergency floor, the long-term fifth, time groups): each goal gets what it needs to be on time,
+  top first; an undated goal is built over 24 months; bills funds stay first. Must have / Nice to
+  have still applies when no order is set.
 - **Nov 12: playbook gaps filled** (owner chose from the App Starter Playbook review):
   error boundaries (`app/error.tsx`, `app/(app)/error.tsx`, `app/global-error.tsx`) with Try
   again; a small service worker (`public/sw.js`) that caches only built files and serves

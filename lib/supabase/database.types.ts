@@ -421,6 +421,7 @@ export type Database = {
           loan_outstanding: number | null;
           loan_rate: number | null;
           name: string;
+          plan_rank: number | null;
           priority: number;
           saved_amount: number;
           status: string | null;
@@ -445,6 +446,7 @@ export type Database = {
           loan_outstanding?: number | null;
           loan_rate?: number | null;
           name: string;
+          plan_rank?: number | null;
           priority?: number;
           saved_amount?: number;
           status?: string | null;
@@ -468,6 +470,7 @@ export type Database = {
           loan_outstanding?: number | null;
           loan_rate?: number | null;
           name?: string;
+          plan_rank?: number | null;
           priority?: number;
           saved_amount?: number;
           status?: string | null;
@@ -975,6 +978,9 @@ export type Database = {
           plan_lump_sum: number | null;
           plan_monthly: number | null;
           risk_profile: Database["public"]["Enums"]["risk_profile"] | null;
+          runway_choices: NonNullable<Json>;
+          salary_best: string | null;
+          salary_worst: string | null;
           sole_earner: boolean | null;
           theme: string;
           updated_at: string;
@@ -997,6 +1003,9 @@ export type Database = {
           plan_lump_sum?: number | null;
           plan_monthly?: number | null;
           risk_profile?: Database["public"]["Enums"]["risk_profile"] | null;
+          runway_choices?: NonNullable<Json>;
+          salary_best?: string | null;
+          salary_worst?: string | null;
           sole_earner?: boolean | null;
           theme?: string;
           updated_at?: string;
@@ -1018,9 +1027,46 @@ export type Database = {
           plan_lump_sum?: number | null;
           plan_monthly?: number | null;
           risk_profile?: Database["public"]["Enums"]["risk_profile"] | null;
+          runway_choices?: NonNullable<Json>;
+          salary_best?: string | null;
+          salary_worst?: string | null;
           sole_earner?: boolean | null;
           theme?: string;
           updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      runway_items: {
+        Row: {
+          amount: number;
+          created_at: string;
+          done: boolean;
+          due: string | null;
+          id: string;
+          kind: string;
+          label: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          amount: number;
+          created_at?: string;
+          done?: boolean;
+          due?: string | null;
+          id?: string;
+          kind: string;
+          label: string;
+          user_id?: string;
+        };
+        Update: {
+          amount?: number;
+          created_at?: string;
+          done?: boolean;
+          due?: string | null;
+          id?: string;
+          kind?: string;
+          label?: string;
           user_id?: string;
         };
         Relationships: [];

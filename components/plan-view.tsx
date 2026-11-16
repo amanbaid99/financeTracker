@@ -1,5 +1,6 @@
 "use client";
 
+import NextLink from "next/link";
 import { useState } from "react";
 import { MoneyPlanCard } from "@/components/money-plan";
 import type { MoneyPlan, PlanStage, Suggestion } from "@/lib/allocate";
@@ -21,6 +22,12 @@ const STAGES: {
     title: "Bills coming up",
     why: "Payments due in the next 12 months come first, so they're never short.",
     color: "bg-series-1",
+  },
+  {
+    key: "ranked",
+    title: "In your order",
+    why: "Each goal gets what it needs to be on time before the next one, in the order you set.",
+    color: "bg-series-3",
   },
   {
     key: "emergency",
@@ -176,7 +183,10 @@ export function PlanView(props: {
             Where it goes, and why
           </h2>
           <p className="text-xs text-muted-foreground">
-            The plan fills these in order, top to bottom.
+            The plan fills these in order, top to bottom.{" "}
+            <NextLink href="/goals/order" className="text-primary underline">
+              Change the order
+            </NextLink>
           </p>
         </div>
         <ol className="space-y-3">
