@@ -13,10 +13,9 @@ Last updated: 16 Nov 2026.
 - **Between jobs**: salary dates turn on "On hold till salary" for savings goals and the
   "Covered till salary" page (`/goals/salary`: money you can reach vs EMIs, living costs and
   bills till each salary date, weekly amount). Your plan (`/goals/plan`) shows the split, with
-  Edit order (`/goals/order`). Budget shows a calm note instead of a deficit while there's no
-  income.
-  Goals opens with "Where you are" (`lib/focus.ts`, `components/focus-card.tsx`): one sentence and at
-  most three things to focus on. Every goal shows in one list in plan order (`lib/goal-order.ts`):
+  Edit order (`/goals/order`). Budget is its own tab (`/goals/budget`), with Covered till salary at the top while between
+  jobs and a calm note instead of a deficit while there's no income.
+  Goals is just the goals. Every goal shows in one list in plan order (`lib/goal-order.ts`):
   "Focus on these first" (top three), then "Everything else". Nothing is folded. Loans are goals:
   balances go down on schedule, nothing to tick.
 - **Assets** (`/assets`, was Portfolio): net worth today (holdings minus loans) linking to `/assets/net-worth` (three
@@ -27,7 +26,7 @@ Last updated: 16 Nov 2026.
 - **Ask**: private Q&A (codes only to AI), amount questions split by the app's own planner.
 - **Settings**: look, invites (admin), Ask on/off, Help and guides (Help page, What's new archive,
   Take the tour, show guides again), account and delete.
-- **App shell**: bottom bar (Goals, +, Assets, Cards), Ask and Settings in the header, Back to the exact previous screen,
+- **App shell**: bottom bar (Goals, Budget, +, Assets, Cards), Ask and Settings in the header, Back to the exact previous screen,
   error screens with Try again, offline page via a service worker, toasts with Undo, drafts for
   new goals and loans, first-visit guides, What's new with "Show me around".
 - **Checks**: GitHub Action runs lint, typecheck, unit and Python tests on every push.

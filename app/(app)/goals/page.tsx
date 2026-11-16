@@ -8,8 +8,6 @@ import { buttonVariants } from "@/components/ui/button";
 import { BudgetCard } from "@/components/budget-card";
 import { loadMoneyPlan, loadRunway } from "@/lib/data";
 import { sortGoals } from "@/lib/goal-summary";
-import { betweenFocus, usualFocus } from "@/lib/focus";
-import { onHold } from "@/lib/goal-status";
 
 export const metadata: Metadata = { title: "Goals" };
 
@@ -41,34 +39,24 @@ export default async function GoalsPage({
       .map((l) => goalNames.get(l.goalId) ?? ""),
   }));
 
-  const lastUpdated =
-    investments
-      .map((i) => i.updatedAt)
-      .filter((v): v is string => !!v)
-      .sort()
-      .at(-1) ?? null;
-  const focus =
-    between.active && between.runway
-      ? betweenFocus({
-          today,
-          runway: between.runway,
-          heldGoals: goals.filter((g) => onHold(g, true)).length,
-        })
-      : usualFocus({
-          today,
-          goals,
-          hasBudget: monthBudget.income > 0,
-          hasPlan: !!plan,
-          lastUpdated,
-        });
-
   return (
     <main className="space-y-5">
       <div className="space-y-4">
         <div className="min-w-0">
-          <div className="flex items-center gap-1">
-            <h1 className="text-2xl font-semibold tracking-tight">Goals</h1>
-            <GuideButton id="goals" />
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1">
+              <h1 className="text-2xl font-semibold tracking-tight">Goals</h1>
+              <GuideButton id="goals" />
+            </div>
+            {goals.length > 0 && (
+              <Link
+                href="/goals/plan"
+                data-guide="plan-link"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                Your plan
+              </Link>
+            )}
           </div>
           {goals.length === 0 && (
             <p className="mt-1 text-sm text-muted-foreground">
@@ -127,7 +115,6 @@ export default async function GoalsPage({
             autoExtra={action === "extra"}
             budgetMonthly={budgetMonthly}
             between={between.active}
-            focus={focus}
           />
         </>
       )}

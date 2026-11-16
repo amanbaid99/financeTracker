@@ -20,7 +20,7 @@ decisions are in [DECISIONS.md](DECISIONS.md).
 1. `proxy.ts` (Next 16's middleware) refreshes the Supabase session cookie on every request.
 2. `app/(app)/layout.tsx` is the signed-in shell: slim header (logo, settings), page content in a
    `ViewTransition`, the disclaimer footer, and the bottom tabs
-   (`AppTabs`: Goals, + (`QuickAdd`), Assets, Cards; Ask and Settings are in the header).
+   (`AppTabs`: Goals, Budget, + (`QuickAdd`), Assets, Cards; Ask and Settings are in the header).
 3. Pages call loaders in `lib/data.ts` (`loadGoals`, `loadCards`, `loadOnboarding`). They're
    wrapped in React `cache`, so several components on one page share one database round trip.
    `requireUser()` redirects to `/login` when signed out and to `/consent` when the privacy policy
@@ -44,7 +44,7 @@ decisions are in [DECISIONS.md](DECISIONS.md).
 | `/goals/plan` | Your plan: where the money goes and why, and this month's SIP steps, with Edit order |
 | `/goals/salary` | Covered till salary: salary dates, money you can reach, EMIs, living costs and bills till salary |
 | `/goals/order` | Your order for the plan (`goals.plan_rank`), from Edit order on Your plan |
-| `/goals/budget` | Budget: take-home, monthly costs, EMIs and SIPs from the app, free to invest |
+| `/goals/budget` | Budget tab (own tab, though under /goals): Covered till salary card between jobs, take-home, monthly costs, EMIs and SIPs from the app, free to invest |
 | `/goals/new`, `/goals/[id]` | New goal; one goal with its plan, investments and suggestions          |
 | `/assets`                   | Net worth today, total value, allocation, holdings |
 | `/assets/net-worth`         | Net worth, what you own and what you owe over time, by asset class and by loan |

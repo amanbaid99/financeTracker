@@ -6,6 +6,7 @@ export type GuideId =
   | "goals"
   | "portfolio"
   | "cards"
+  | "budget"
   | "ask"
   | "import"
   | "quick-add";
@@ -38,13 +39,11 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap Add a goal and pick a type: a purchase, a trip, an emergency fund, a bills fund or paying off a loan.",
       "Link the mutual funds, savings or deposits that pay for it. One investment can be split across goals.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
-      "Where you are, at the very top, sums up how things stand in one sentence and lists at most three things to focus on. Tap one to do it.",
-      "The card below shows what's saved, what goes in each month and how many goals are on track.",
       "Every goal shows in one list, in your order. The first three are under Focus on these first, the rest under Everything else. Goals on hold and goals reached come last. Change order to move them.",
       "Loans are goals too. Each shows what's left, the EMI and when it ends. The balance goes down on its own as EMIs pass. If it's off, edit the goal and enter what you owe now.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
-      "Between jobs? Where you are shows if your money lasts until your salary, with a weekly amount to spend. Your savings goals wait, On hold till salary, until then.",
-      "Your plan (under the summary) shows how your monthly money is split, top of your order first. Edit order there to choose which goals come first.",
+      "Between jobs? Your savings goals wait, On hold till salary. The Budget tab shows whether your money lasts till then.",
+      "Your plan (top right) shows how your monthly money is split, top of your order first. Edit order there to choose which goals come first.",
       "A Next step card shows when there's something to do: set your budget, start a SIP plan or set up this month's SIPs. Tap Not now to hide it. ",
       "Your plan has its own page: tap Your plan. It shows where the money goes and why, then This month lists what to add to your SIPs. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
       "Open a goal for its What to do box. If your plan can't cover it, it says how much more a month keeps it on track.",
@@ -76,6 +75,15 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Open Which card to use for suggestions on where planned spending could help a milestone. Do not spend extra just to reach a reward.",
       "Read features fills in a card from its features PDF or your description. You tick what to keep.",
       "Loans, including EMIs on a card, are goals: add one with New goal, then Close my loan.",
+    ],
+  },
+  budget: {
+    title: "Your budget",
+    intro: "What comes in, what's fixed, and what's free to invest each month.",
+    steps: [
+      "Add your take-home pay and your monthly costs. EMIs from your loan goals and SIPs from your investments are counted for you.",
+      "The number at the top is what's free to invest a month. Use it for your plan to split it across goals.",
+      "Between jobs? Covered till salary at the top shows whether your money lasts till your salary, with a weekly amount to spend. Tap it to set your salary dates.",
     ],
   },
   ask: {
@@ -119,8 +127,8 @@ export const RELEASES: Release[] = [
     title: "A simpler Tracker",
     items: [
       {
-        title: "Goals, Assets and Cards",
-        text: "Three tabs. Loans are goals now, with their balance going down on its own as EMIs pass. Ask is the speech bubble at the top.",
+        title: "Goals, Budget, Assets and Cards",
+        text: "Four tabs. Loans are goals now, with their balance going down on its own as EMIs pass. Ask is the speech bubble at the top.",
       },
       {
         title: "One list of goals",
@@ -128,8 +136,8 @@ export const RELEASES: Release[] = [
         show: { path: "/goals", target: "goal-list" },
       },
       {
-        title: "Calmer between jobs",
-        text: "Covered till salary counts your EMIs, living costs and bills. Budget waits for your salary instead of showing a red number.",
+        title: "A Budget tab",
+        text: "Goals now shows just your goals. Budget has its own tab, with Covered till salary at the top while you're between jobs, and no red number while there's no salary.",
       },
     ],
   },
@@ -140,7 +148,6 @@ export const RELEASES: Release[] = [
       {
         title: "Where you are, and three things",
         text: "Goals now opens with one sentence on where you stand and at most three things to focus on. Goals on hold fold away, so the page shows only what needs you.",
-        show: { path: "/goals", target: "runway" },
       },
       {
         title: "Your roadmap",

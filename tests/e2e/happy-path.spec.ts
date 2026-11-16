@@ -90,7 +90,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Code from the email", { exact: true }).fill(code);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/goals$/);
-  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link")).toHaveCount(3);
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link")).toHaveCount(4);
   // First visit: the Goals guide pops up once, and (i) brings it back.
   // A new user gets no "What's new".
   const goalsGuide = page.getByRole("dialog", { name: "How goals work" });
@@ -974,13 +974,13 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("link", { name: "Settings", exact: true }).first().click();
   // The tour points at real things, moving between tabs, and can be skipped.
   await page.getByRole("button", { name: "Take the tour" }).click();
-  const tourCard = page.getByRole("dialog", { name: "Your goals at a glance" });
+  const tourCard = page.getByRole("dialog", { name: "Your goals, in your order" });
   await expect(tourCard).toBeVisible();
   await expect(page).toHaveURL(/\/goals$/);
   await tourCard.getByRole("button", { name: "Next" }).click();
-  await expect(page.getByRole("dialog").filter({ hasText: /of 9/ })).toBeVisible();
+  await expect(page.getByRole("dialog").filter({ hasText: /of 8/ })).toBeVisible();
   await page.getByRole("button", { name: "Skip" }).click();
-  await expect(page.getByRole("dialog").filter({ hasText: /of 9/ })).toHaveCount(0);
+  await expect(page.getByRole("dialog").filter({ hasText: /of 8/ })).toHaveCount(0);
   await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("button", { name: "Show guides again" }).click();
   await expect(
@@ -1006,8 +1006,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("main").getByRole("link").first().click();
 
   // Budget: take-home and costs give what's free, which can feed the plan.
-  await tab("Goals").click();
-  await page.getByRole("link", { name: /^Set budget$|Set up your budget/ }).click();
+  await tab("Budget").click();
   await expect(page.getByRole("heading", { name: "Budget", exact: true })).toBeVisible();
   await page.getByLabel("Salary a month").fill("200000");
   await page.getByRole("button", { name: "Save Salary" }).click();
@@ -1062,12 +1061,12 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.goto("/goals/budget");
   await expect(page.getByRole("heading", { name: "Budget", exact: true })).toBeVisible();
   await expect(page.getByText("a month more going out than coming in")).toHaveCount(0);
+  // Budget shows Covered till salary at the top while between jobs.
+  await expect(page.getByText("If salary comes 31 Jan").first()).toBeVisible();
   await page.goto("/goals");
-  // Goals opens with where you are and at most three things to focus on.
-  const focus = page.getByRole("region", { name: "Where you are" });
-  await expect(focus).toBeVisible();
-  await expect(focus).toContainText(/Spend up to|Only spend on what can't wait/);
+  // Goals is just the goals: the top three first, then everything else.
   await expect(page.getByRole("heading", { name: "Focus on these first" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Where you are" })).toHaveCount(0);
   await page.screenshot({ path: "test-results/runway-375.png", fullPage: true });
   await page.goto("/goals/salary");
   await page.getByRole("button", { name: "My salary has started" }).click();

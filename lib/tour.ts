@@ -14,18 +14,6 @@ export interface TourStep {
 export const INTRO_TOUR: TourStep[] = [
   {
     path: "/goals",
-    target: "goals-summary",
-    title: "Your goals at a glance",
-    text: "What's saved, what goes in each month, and how many goals are on track.",
-  },
-  {
-    path: "/goals",
-    target: "next-step",
-    title: "One next step",
-    text: "When there's something to do, like starting a SIP plan, it shows here. Not now hides it.",
-  },
-  {
-    path: "/goals",
     target: "goal-list",
     title: "Your goals, in your order",
     text: "Focus on the top three first. Tap a goal to see its plan, investments and what to do.",
@@ -35,6 +23,12 @@ export const INTRO_TOUR: TourStep[] = [
     target: "quick-add",
     title: "Add or update anything",
     text: "New goals, new values, a statement import or extra money: it all starts with +.",
+  },
+  {
+    path: "/goals/budget",
+    target: "runway",
+    title: "Your budget",
+    text: "Money in and out each month. Between jobs, whether you're covered till salary.",
   },
   {
     path: "/assets",

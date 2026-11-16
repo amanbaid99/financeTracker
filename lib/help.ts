@@ -69,21 +69,10 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "I'm between jobs. Why do my goals say On hold till salary?",
     a: [
-      "Add when your salary should start (the earliest and latest dates) in Covered till salary (Goals, Where you are). Until then, savings goals wait, as planned, instead of showing Behind. Bills funds and loans still show their real state.",
+      "Add when your salary should start (the earliest and latest dates) in Covered till salary, at the top of the Budget tab. Until then, savings goals wait, as planned, instead of showing Behind. Bills funds and loans still show their real state.",
       "When the salary starts, tap My salary has started and your goals are active again.",
     ],
     tags: "job gap salary on hold paused",
-  },
-  {
-    id: "focus",
-    section: "Goals",
-    q: "What is Where you are?",
-    a: [
-      "The first card on Goals. One sentence says how things stand, then it lists at most three things to focus on, most important first. Tap one to go straight to it.",
-      "Between jobs, it's about getting to salary: what you have ready to use, what's due, a weekly amount to spend, and your next payment. Otherwise it points at goals that need a look and the next small step.",
-      "Everything not listed can wait. That's on purpose.",
-    ],
-    tags: "focus top three where am i anxious overwhelmed today",
   },
   {
     id: "runway",
