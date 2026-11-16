@@ -570,7 +570,8 @@ export const loadRunway = cache(async () => {
           loans,
           monthlyLiving: b.budget.costs,
           bills,
-          items,
+          // One-off payments and money owed were removed on 17 Nov 2026.
+          items: [],
           choices: (p?.runway_choices as Record<string, boolean>) ?? {},
         })
       : null;

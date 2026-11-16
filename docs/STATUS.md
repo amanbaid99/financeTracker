@@ -11,22 +11,23 @@ Last updated: 16 Nov 2026.
   (`/goals/plan`) with where it goes and why, plus the This month SIP checklist. "I have extra
   money" from +.
 - **Between jobs**: salary dates turn on "On hold till salary" for savings goals and the
-  "Covered till salary" card and page (`/liabilities/salary`: money you can reach vs everything
-  due till each salary date, weekly amount, money owed to you, your own payments). Your plan
-  (`/goals/plan`) shows the steps from today, then the split, with Edit order (`/goals/order`).
+  "Covered till salary" page (`/goals/salary`: money you can reach vs EMIs, living costs and
+  bills till each salary date, weekly amount). Your plan (`/goals/plan`) shows the split, with
+  Edit order (`/goals/order`). Budget shows a calm note instead of a deficit while there's no
+  income.
   Goals opens with "Where you are" (`lib/focus.ts`, `components/focus-card.tsx`): one sentence and at
-  most three things to focus on. Between jobs, goals on hold fold into one section.
+  most three things to focus on. Every goal shows in one list in plan order (`lib/goal-order.ts`):
+  "Focus on these first" (top three), then "Everything else". Nothing is folded. Loans are goals:
+  balances go down on schedule, nothing to tick.
 - **Assets** (`/assets`, was Portfolio): net worth today (holdings minus loans) linking to `/assets/net-worth` (three
   charts, own by asset type, owe by loan), allocation by asset type or instrument, holdings with
   search and sort, portfolio review (hidden for now, commented out in `app/(app)/assets/page.tsx`), CAS import with review, withdrawal check and insights.
-- **Liabilities** (`/liabilities`, was Credit): you owe (loans plus payments you add), Coming up
-  (every EMI, card due and bills-fund payment by date, two months ahead or till salary, with Paid),
-  loans with next EMI and progress. Cards (`/liabilities/cards`): statements logged for milestones
-  only, never as money owed, milestones, which card to use. Old URLs redirect (`next.config.ts`).
+- **Cards** (`/cards`): statements logged for milestones only, never as money owed, milestones,
+  which card to use. Liabilities was removed on 17 Nov 2026; old URLs redirect (`next.config.ts`).
 - **Ask**: private Q&A (codes only to AI), amount questions split by the app's own planner.
 - **Settings**: look, invites (admin), Ask on/off, Help and guides (Help page, What's new archive,
   Take the tour, show guides again), account and delete.
-- **App shell**: bottom bar (Goals, Liabilities, +, Assets, Ask), Back to the exact previous screen,
+- **App shell**: bottom bar (Goals, +, Assets, Cards), Ask and Settings in the header, Back to the exact previous screen,
   error screens with Try again, offline page via a service worker, toasts with Undo, drafts for
   new goals and loans, first-visit guides, What's new with "Show me around".
 - **Checks**: GitHub Action runs lint, typecheck, unit and Python tests on every push.

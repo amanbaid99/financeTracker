@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { BackLink } from "@/components/back-link";
 import { GuideButton } from "@/components/guides";
 import { CreditOverview } from "@/components/credit-overview";
 import { loadCards, loadLoans } from "@/lib/data";
@@ -24,7 +23,6 @@ export default async function CardsPage({
   }));
   return (
     <main className="space-y-6">
-      <BackLink fallback="/liabilities" label="Liabilities" />
       <div>
         <div className="flex items-center gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">Cards</h1>
@@ -32,7 +30,7 @@ export default async function CardsPage({
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
           Log each statement and see how close you are to fee waivers and bonus
-          points. Card dues you owe live in Liabilities.
+          points.
         </p>
       </div>
       <CreditOverview

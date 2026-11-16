@@ -27,38 +27,14 @@ export const INTRO_TOUR: TourStep[] = [
   {
     path: "/goals",
     target: "goal-list",
-    title: "Goals by when they're due",
-    text: "Nearest first. Tap a goal to see its plan, investments and what to do.",
+    title: "Your goals, in your order",
+    text: "Focus on the top three first. Tap a goal to see its plan, investments and what to do.",
   },
   {
     path: "/goals",
     target: "quick-add",
     title: "Add or update anything",
     text: "New goals, new values, a statement import or extra money: it all starts with +.",
-  },
-  {
-    path: "/liabilities",
-    target: "owed",
-    title: "What you owe",
-    text: "Loans plus card dues and other payments, in one number.",
-  },
-  {
-    path: "/liabilities",
-    target: "coming-up",
-    title: "Coming up",
-    text: "Every EMI, card due and bill by date. Tap Paid once it's gone out.",
-  },
-  {
-    path: "/liabilities",
-    target: "loans",
-    title: "Loans",
-    text: "How far each loan has come and when it ends.",
-  },
-  {
-    path: "/liabilities",
-    target: "cards-link",
-    title: "Cards and milestones",
-    text: "Fee waivers and bonus points have their own page here.",
   },
   {
     path: "/assets",
@@ -71,6 +47,12 @@ export const INTRO_TOUR: TourStep[] = [
     target: "allocation",
     title: "Where your money is",
     text: "By asset type or by instrument. Tap a chip to filter your holdings.",
+  },
+  {
+    path: "/cards",
+    target: "cards",
+    title: "Cards and milestones",
+    text: "Log each statement and see how close you are to fee waivers and bonus points.",
   },
   {
     path: "/ask",

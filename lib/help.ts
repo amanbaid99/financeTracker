@@ -27,12 +27,12 @@ export const HELP: HelpTopic[] = [
   {
     id: "goal-groups",
     section: "Goals",
-    q: "How are goals grouped?",
+    q: "What order are my goals in?",
     a: [
-      "By when they need the money: next month, this quarter, the next 6 months, within a year, 1 to 5 years, 5+ years, and no fixed date. A bills fund goes by its next payment.",
-      "In each group, Must have goals come before Nice to have ones. Covered bills funds, loans the EMIs already cover and reached goals are folded away at the bottom.",
+      "Your order: bills funds first, then the order you set with Change order, or the app's order (emergency fund first, then by when the money is needed). Goals on hold and goals reached come last.",
+      "The first three are under Focus on these first. Nothing is folded away: every goal is in the list.",
     ],
-    tags: "timeline horizon order must have nice to have",
+    tags: "order priority top three list focus",
   },
   {
     id: "inflation",
@@ -65,21 +65,11 @@ export const HELP: HelpTopic[] = [
     tags: "priority rank order first emergency",
   },
   {
-    id: "roadmap",
-    section: "Goals",
-    q: "What is Step by step on Your plan?",
-    a: [
-      "Your plan as steps on a line, starting from today: your first salary, bills months, loans paid off, and each goal's date. Green is on plan, grey is waiting for salary, amber needs you. Tap a step to open it.",
-      "Goals without a date sit at the end, and reached goals and closed loans fold into Done so far. It's at the top of Your plan, on Goals under the summary. The monthly split is below it.",
-    ],
-    tags: "timeline steps journey plan progress",
-  },
-  {
     id: "between-jobs",
     section: "Goals",
     q: "I'm between jobs. Why do my goals say On hold till salary?",
     a: [
-      "Add when your salary should start (the earliest and latest dates) in Covered till salary (on Liabilities). Until then, savings goals wait, as planned, instead of showing Behind. Bills funds and loans still show their real state.",
+      "Add when your salary should start (the earliest and latest dates) in Covered till salary (Goals, Where you are). Until then, savings goals wait, as planned, instead of showing Behind. Bills funds and loans still show their real state.",
       "When the salary starts, tap My salary has started and your goals are active again.",
     ],
     tags: "job gap salary on hold paused",
@@ -100,11 +90,11 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "How does Covered till salary work?",
     a: [
-      "It adds up everything due until your salary: EMIs from your loans, living costs from your budget, payments from bills funds, and anything you add, like card dues. Then it compares that with money you can reach quickly: savings accounts, FDs and liquid funds.",
-      "It works this out for both salary dates, and gives one weekly amount for day-to-day spending that keeps you covered even if salary is late. Money owed to you is shown apart until it arrives.",
+      "It adds up everything due until your salary: EMIs from your loan goals, living costs from your budget and payments from bills funds. Then it compares that with money you can reach quickly: savings accounts, FDs and liquid funds.",
+      "It works this out for both salary dates, and gives one weekly amount for day-to-day spending that keeps you covered even if salary is late.",
       "A bills-fund payment that looks like an EMI or living costs already counted isn't added twice. You can change that on each line.",
     ],
-    tags: "runway cash salary weekly safe to spend owed card dues",
+    tags: "runway cash salary weekly safe to spend",
   },
   {
     id: "plan-steps",
@@ -155,7 +145,7 @@ export const HELP: HelpTopic[] = [
       "Card statements aren't counted. They're logged only for milestones, and the bank balance that pays them isn't tracked.",
       "A point is saved each day something changes. Open See progress over time on Assets for the charts.",
     ],
-    tags: "assets liabilities history chart",
+    tags: "assets loans owe history chart",
   },
   {
     id: "liquid",
@@ -195,45 +185,34 @@ export const HELP: HelpTopic[] = [
     ],
     tags: "import pdf mutual funds update values",
   },
-  // Liabilities
+  // Cards and loans
   {
-    id: "liabilities",
-    section: "Liabilities",
-    q: "What's on the Liabilities tab?",
+    id: "loans",
+    section: "Cards and loans",
+    q: "Where are my loans?",
     a: [
-      "You owe, at the top: your loans plus payments you've added, like card dues. Then Coming up: every EMI, card due and bills-fund payment by date, for the next two months, or till your salary while you're between jobs. Tap Paid once each one has gone out.",
-      "Your loans are below that. Cards and their milestones have their own page, linked at the bottom.",
-      "Card statements you log for milestones never count as money owed. To count what you'll pay on a card, add it as a payment with its due date.",
+      "Loans are goals. Add one with New goal, then Close my loan, with what you owe now and the EMI. A loan on a card works the same way.",
+      "The balance goes down on its own as each EMI date passes, so there's nothing to tick. If your lender's figure is different, edit the goal and enter what you owe now.",
     ],
-    tags: "debt owe dues payments emi card credit loans",
+    tags: "loan emi debt owe balance outstanding personal card",
   },
   {
     id: "card-statements",
-    section: "Liabilities",
-    q: "Why don't card bills have a due date or Mark paid?",
+    section: "Cards and loans",
+    q: "Why don't card bills count as money I owe?",
     a: [
-      "Statements are logged only to count toward milestones like fee waivers and bonus points. Tracking them as money owed made debt look bigger than it is, since the bank balance that pays them isn't tracked.",
+      "Statements are logged only to count toward milestones like fee waivers and bonus points. You pay cards from your bank, which isn't tracked, so counting them as debt would make it look bigger than it is.",
     ],
     tags: "credit card bill statement milestone",
   },
   {
     id: "milestones",
-    section: "Liabilities",
+    section: "Cards and loans",
     q: "How do card milestones count my spending?",
     a: [
       "Each logged statement in the current period counts, from when the card year or quarter starts. EMIs on the card are left out. Progress moves only when you log another statement.",
     ],
     tags: "fee waiver bonus points target",
-  },
-  {
-    id: "loan-mark-paid",
-    section: "Liabilities",
-    q: "When should I tap Mark paid on a loan?",
-    a: [
-      "Once the EMI has gone out. It shows from the 1st of the month the EMI is due. What you owe goes down and the progress bar moves, with Undo for a few seconds.",
-      "Balances are estimates from the schedule. If your lender's figure differs, edit the loan and enter what you owe now.",
-    ],
-    tags: "emi paid balance outstanding",
   },
   // Ask and AI
   {

@@ -1,25 +1,16 @@
 "use client";
 
-import { Check, Pencil, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { Field } from "@/components/forms/field";
-import { MoneyInput } from "@/components/money-input";
 import { RunwayCard } from "@/components/runway-card";
-import { Sheet } from "@/components/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/toast";
 import { formatDate, formatINR } from "@/lib/format";
-import type { DueLine, Runway, RunwayItem } from "@/lib/runway";
-import {
-  deleteRunwayItem,
-  saveRunwayItem,
-  saveSalaryDates,
-  setRunwayChoice,
-  setRunwayItemDone,
-} from "@/lib/runway-actions";
+import type { DueLine, Runway } from "@/lib/runway";
+import { saveSalaryDates, setRunwayChoice } from "@/lib/runway-actions";
 import { cn } from "@/lib/utils";
 
 type Result = { ok: boolean; error?: string };
@@ -141,112 +132,6 @@ function SalaryDates({
   );
 }
 
-function ItemSheet({
-  item,
-  kind,
-  onClose,
-}: {
-  item: RunwayItem | null;
-  kind: RunwayItem["kind"];
-  onClose: () => void;
-}) {
-  const [label, setLabel] = useState(item?.label ?? "");
-  const [amount, setAmount] = useState<number | null>(item?.amount ?? null);
-  const [due, setDue] = useState(item?.due ?? "");
-  const [confirm, setConfirm] = useState(false);
-  const { pending, run } = useSave();
-  const owed = kind === "owed_to_me";
-  return (
-    <Sheet
-      title={
-        item
-          ? `Edit ${item.label}`
-          : owed
-            ? "Money owed to you"
-            : "Something to pay"
-      }
-      onClose={onClose}
-    >
-      <form
-        className="space-y-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          run(
-            () =>
-              saveRunwayItem({
-                id: item?.id ?? null,
-                kind,
-                label,
-                amount: amount ?? 0,
-                due: due || null,
-              }),
-            onClose,
-            { text: item ? "Saved." : "Added." },
-          );
-        }}
-      >
-        <Field
-          label={owed ? "Who or what" : "What it's for"}
-          htmlFor="ri-label"
-          hint={
-            owed ? "Like friends' share of a trip." : "Like a card due or rent."
-          }
-        >
-          <Input
-            id="ri-label"
-            value={label}
-            maxLength={60}
-            onChange={(e) => setLabel(e.target.value)}
-            required
-          />
-        </Field>
-        <Field label="Amount" htmlFor="ri-amount">
-          <MoneyInput id="ri-amount" value={amount} onChange={setAmount} />
-        </Field>
-        <Field
-          label={owed ? "Expected by (optional)" : "Due on (optional)"}
-          htmlFor="ri-due"
-          hint={owed ? undefined : "Without a date, it counts as due now."}
-        >
-          <Input
-            id="ri-due"
-            type="date"
-            value={due}
-            onChange={(e) => setDue(e.target.value)}
-          />
-        </Field>
-        <Button type="submit" className="w-full" disabled={pending}>
-          {pending
-            ? "Saving…"
-            : item
-              ? "Save"
-              : owed
-                ? "Add money owed"
-                : "Add payment"}
-        </Button>
-        {item && (
-          <Button
-            type="button"
-            variant={confirm ? "destructive" : "ghost"}
-            size="sm"
-            className="w-full"
-            disabled={pending}
-            onClick={() =>
-              confirm
-                ? run(() => deleteRunwayItem(item.id), onClose, {
-                    text: "Removed.",
-                  })
-                : setConfirm(true)
-            }
-          >
-            {confirm ? "Tap again to remove" : "Remove"}
-          </Button>
-        )}
-      </form>
-    </Sheet>
-  );
-}
-
 const SOURCE: Record<DueLine["source"], string> = {
   emi: "EMI",
   living: "Living costs",
@@ -254,9 +139,13 @@ const SOURCE: Record<DueLine["source"], string> = {
   item: "Added by you",
 };
 
+/**
+ * Covered till salary, kept light: your salary dates, the money you can
+ * reach quickly, and what's due till then (EMIs from your loan goals, living
+ * costs from your budget and bills-fund payments).
+ */
 export function RunwayEditor({
   runway,
-  items,
   liquidHoldings,
   salaryBest,
   salaryWorst,
@@ -264,22 +153,13 @@ export function RunwayEditor({
   monthlyLiving,
 }: {
   runway: Runway | null;
-  items: RunwayItem[];
   liquidHoldings: { name: string; value: number }[];
   salaryBest: string | null;
   salaryWorst: string | null;
   active: boolean;
   monthlyLiving: number;
 }) {
-  const [sheet, setSheet] = useState<{
-    item: RunwayItem | null;
-    kind: RunwayItem["kind"];
-  } | null>(null);
   const { pending, run } = useSave();
-  const owed = items.filter((i) => i.kind === "owed_to_me" && !i.done);
-  const paid = items.filter((i) => i.kind === "to_pay" && i.done);
-  const itemById = new Map(items.map((i) => [i.id, i]));
-
   return (
     <div className="space-y-4">
       {runway && <RunwayCard view={{ runway }} link={false} />}
@@ -315,63 +195,9 @@ export function RunwayEditor({
               for goals. Out of date?{" "}
               <Link href="/goals?do=update" className="text-primary underline">
                 Update values
-              </Link>{" "}
-              or add a bank account from +.
+              </Link>
+              .
             </p>
-            <div className="border-t pt-2">
-              <div className="flex items-center justify-between gap-2">
-                <h3 className="text-sm font-medium">Owed to you</h3>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="min-h-10"
-                  onClick={() => setSheet({ item: null, kind: "owed_to_me" })}
-                >
-                  <Plus /> Add
-                </Button>
-              </div>
-              {owed.length ? (
-                <ul className="divide-y text-sm">
-                  {owed.map((i) => (
-                    <li key={i.id} className="flex items-center gap-2 py-2">
-                      <button
-                        type="button"
-                        onClick={() => setSheet({ item: i, kind: i.kind })}
-                        className="min-h-10 min-w-0 flex-1 text-left"
-                        aria-label={`Edit ${i.label}`}
-                      >
-                        <span className="block break-words">{i.label}</span>
-                        <span className="tabular text-xs text-muted-foreground">
-                          {formatINR(i.amount)}
-                          {i.due ? ` · by ${formatDate(i.due)}` : ""}
-                        </span>
-                      </button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        className="min-h-10"
-                        disabled={pending}
-                        onClick={() =>
-                          run(() => setRunwayItemDone(i.id, true), undefined, {
-                            text: `${i.label}: received. It's in your bank now, so update that balance.`,
-                            undo: () => setRunwayItemDone(i.id, false),
-                          })
-                        }
-                      >
-                        Received
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="py-1 text-xs text-muted-foreground">
-                  Money friends or anyone else will pay you back. It isn&apos;t
-                  counted until it arrives.
-                </p>
-              )}
-            </div>
           </section>
 
           <section
@@ -393,8 +219,8 @@ export function RunwayEditor({
             </div>
             <ul className="divide-y text-sm">
               {runway.worst.lines.map((l) => {
-                const late = l.source !== "living" && l.date > runway.best.until;
-                const item = l.itemId ? itemById.get(l.itemId) : undefined;
+                const late =
+                  l.source !== "living" && l.date > runway.best.until;
                 return (
                   <li key={l.key} className="space-y-1 py-2.5">
                     <div className="flex items-start justify-between gap-3">
@@ -430,94 +256,29 @@ export function RunwayEditor({
                           : `Not counted: ${l.why.toLowerCase()}.`}
                       </p>
                     )}
-                    <div className="flex flex-wrap gap-2">
-                      {l.source === "item" && item && (
-                        <>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            className="min-h-10"
-                            disabled={pending}
-                            onClick={() =>
-                              run(
-                                () => setRunwayItemDone(item.id, true),
-                                undefined,
-                                {
-                                  text: `${item.label} paid. Update your bank balance when you can.`,
-                                  undo: () => setRunwayItemDone(item.id, false),
-                                },
-                              )
-                            }
-                          >
-                            <Check /> Paid
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            className="min-h-10"
-                            onClick={() => setSheet({ item, kind: item.kind })}
-                          >
-                            <Pencil /> Edit
-                          </Button>
-                        </>
-                      )}
-                      {(l.source === "bill" || l.source === "living") && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="ghost"
-                          className="min-h-10"
-                          disabled={pending}
-                          onClick={() =>
-                            run(() => setRunwayChoice(l.key, !l.counted))
-                          }
-                        >
-                          {l.counted ? "Don't count this" : "Count this"}
-                        </Button>
-                      )}
-                      {l.source === "emi" && (
-                        <Link
-                          href="/liabilities#loans-h"
-                          className="inline-flex min-h-10 items-center text-xs text-muted-foreground underline"
-                        >
-                          Mark paid in Liabilities
-                        </Link>
-                      )}
-                    </div>
+                    {(l.source === "bill" || l.source === "living") && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="min-h-10"
+                        disabled={pending}
+                        onClick={() =>
+                          run(() => setRunwayChoice(l.key, !l.counted))
+                        }
+                      >
+                        {l.counted ? "Don't count this" : "Count this"}
+                      </Button>
+                    )}
                   </li>
                 );
               })}
             </ul>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => setSheet({ item: null, kind: "to_pay" })}
-            >
-              <Plus /> Add something to pay
-            </Button>
             <p className="text-xs text-muted-foreground">
-              Add card dues, rent or anything else before salary. EMIs come from
-              your loans and living costs from your budget.
+              EMIs come from your loan goals, living costs from your budget.
             </p>
-            {paid.length > 0 && (
-              <p className="text-xs text-success">
-                Paid so far: {formatINR(paid.reduce((s, i) => s + i.amount, 0))}{" "}
-                across {paid.length}{" "}
-                {paid.length === 1 ? "payment" : "payments"}.
-              </p>
-            )}
           </section>
         </>
-      )}
-      {sheet && (
-        <ItemSheet
-          item={sheet.item}
-          kind={sheet.kind}
-          onClose={() => setSheet(null)}
-        />
       )}
     </div>
   );

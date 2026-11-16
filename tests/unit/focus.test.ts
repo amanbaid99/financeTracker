@@ -30,7 +30,7 @@ describe("betweenFocus", () => {
     const f = betweenFocus({
       today,
       runway: run({ left: 50000 }, { left: 10000 }),
-      itemCount: 2,
+
       heldGoals: 4,
     });
     expect(f.tone).toBe("good");
@@ -38,7 +38,7 @@ describe("betweenFocus", () => {
     expect(f.rest).toContain("4 other goals wait");
   });
 
-  it("asks for balances and dues first when nothing is added yet, and keeps to three", () => {
+  it("lists spending, the next payment and money owed, in that order", () => {
     const f = betweenFocus({
       today,
       runway: run(
@@ -67,12 +67,11 @@ describe("betweenFocus", () => {
         },
         22000,
       ),
-      itemCount: 0,
       heldGoals: 1,
     });
     expect(f.tone).toBe("close");
-    expect(f.items.map((i) => i.key)).toEqual(["setup", "spend", "next"]);
-    expect(f.items[2].title).toBe("Next payment: ₹12,000 on 5 Dec");
+    expect(f.items.map((i) => i.key)).toEqual(["spend", "next", "owed"]);
+    expect(f.items[1].title).toBe("Next payment: ₹12,000 on 5 Dec");
     expect(f.rest).toContain("Your other goal waits");
   });
 
@@ -83,7 +82,7 @@ describe("betweenFocus", () => {
         { left: -1 },
         { left: -40000, leftWithOwed: -40000, weekly: 0 },
       ),
-      itemCount: 1,
+
       heldGoals: 0,
     });
     expect(f.tone).toBe("short");

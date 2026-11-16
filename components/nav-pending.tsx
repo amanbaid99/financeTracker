@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings } from "lucide-react";
+import { MessageCircle, Settings } from "lucide-react";
 import Link, { useLinkStatus } from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +38,20 @@ function SettingsIcon() {
 }
 
 /** The header's settings button; the gear spins while Settings loads. */
+/** Ask, from the header: private questions about your own numbers. */
+export function AskLink() {
+  return (
+    <Link
+      href="/ask"
+      transitionTypes={["tab"]}
+      aria-label="Ask"
+      className="inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+    >
+      <MessageCircle className="size-5" aria-hidden />
+    </Link>
+  );
+}
+
 export function SettingsLink() {
   return (
     <Link

@@ -52,7 +52,6 @@ export default async function GoalsPage({
       ? betweenFocus({
           today,
           runway: between.runway,
-          itemCount: between.items.length,
           heldGoals: goals.filter((g) => onHold(g, true)).length,
         })
       : usualFocus({

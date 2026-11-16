@@ -18,25 +18,32 @@ const nextConfig: NextConfig = {
       "/onboarding",
     ];
     return [
-      // 16 Nov 2026: Credit became Liabilities and Portfolio became Assets;
-      // Roadmap joined Your plan, and Covered till salary moved to Liabilities.
+      // 16 Nov 2026: Portfolio became Assets and Roadmap joined Your plan.
+      // 17 Nov 2026: Liabilities was removed; loans live in goals, cards
+      // are back at /cards and Covered till salary is under Goals.
       { source: "/portfolio", destination: "/assets", permanent: false },
       {
         source: "/portfolio/:rest*",
         destination: "/assets/:rest*",
         permanent: false,
       },
-      { source: "/cards", destination: "/liabilities/cards", permanent: false },
+      {
+        source: "/liabilities/cards",
+        destination: "/cards",
+        permanent: false,
+      },
+      {
+        source: "/liabilities/salary",
+        destination: "/goals/salary",
+        permanent: false,
+      },
+      { source: "/liabilities", destination: "/goals", permanent: false },
       {
         source: "/goals/runway",
-        destination: "/liabilities/salary",
+        destination: "/goals/salary",
         permanent: false,
       },
-      {
-        source: "/goals/roadmap",
-        destination: "/goals/plan",
-        permanent: false,
-      },
+      { source: "/goals/roadmap", destination: "/goals/plan", permanent: false },
       // Home (/overview) was removed on 8 Nov 2026; Goals is the start page.
       ...[...old, "/home", "/overview"].flatMap((p) => [
         { source: p, destination: "/goals", permanent: false },

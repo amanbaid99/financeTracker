@@ -309,15 +309,20 @@ export function BudgetPlanner({
   loanEmis,
   sips,
   planMonthly,
+  between = false,
 }: {
   incomes: Income[];
   costs: Cost[];
   loanEmis: { name: string; emi: number }[];
   sips: number;
   planMonthly: number | null;
+  /** Between jobs: no income yet, so no "over budget" warning. */
+  between?: boolean;
 }) {
   const [editing, setEditing] = useState<Editing>(
-    incomes.length ? null : { mode: "new", kind: "income", name: "Salary" },
+    incomes.length || between
+      ? null
+      : { mode: "new", kind: "income", name: "Salary" },
   );
   // Unsaved amounts, by row ("new" for a row being added).
   const [draft, setDraft] = useState<Record<string, number | null>>({});
@@ -421,35 +426,56 @@ export function BudgetPlanner({
 
   return (
     <>
-      <section
-        aria-label="Your month"
-        className="space-y-3 rounded-2xl border bg-card p-4"
-      >
-        <BudgetSummary b={b} />
-        {unsaved ? (
-          <p className="text-xs text-muted-foreground">
-            Showing what you&apos;re typing. Save to keep it.
+      {between && b.income === 0 ? (
+        <section
+          aria-label="Your month"
+          className="space-y-2 rounded-2xl border bg-card p-4"
+        >
+          <p className="font-semibold">
+            Your budget starts again with your salary.
           </p>
-        ) : (
-          <UseForPlan b={saved} planMonthly={planMonthly} />
-        )}
-      </section>
-      {/* Stays in view while you scroll and edit, following what you type. */}
-      <p
-        aria-hidden
-        className="tabular sticky top-[calc(3rem+env(safe-area-inset-top))] z-20 -my-2 rounded-full border bg-card/95 px-4 py-2 text-center text-sm shadow-sm backdrop-blur"
-      >
-        {b.free >= 0 ? (
-          <>
-            <b>{formatINR(b.free)}</b> free to invest a month
-          </>
-        ) : (
-          <span className="text-danger">
-            <b>{formatINR(-b.free)}</b> a month over
-          </span>
-        )}
-        {unsaved ? " · not saved yet" : ""}
-      </p>
+          <p className="text-sm text-muted-foreground">
+            Till then, your costs ({formatINR(b.costs + b.emis)} a month with
+            EMIs) are counted in{" "}
+            <Link href="/goals/salary" className="text-primary underline">
+              Covered till salary
+            </Link>
+            . Add your salary here once you know it.
+          </p>
+        </section>
+      ) : (
+        <>
+          <section
+            aria-label="Your month"
+            className="space-y-3 rounded-2xl border bg-card p-4"
+          >
+            <BudgetSummary b={b} />
+            {unsaved ? (
+              <p className="text-xs text-muted-foreground">
+                Showing what you&apos;re typing. Save to keep it.
+              </p>
+            ) : (
+              <UseForPlan b={saved} planMonthly={planMonthly} />
+            )}
+          </section>
+          {/* Stays in view while you scroll and edit, following what you type. */}
+          <p
+            aria-hidden
+            className="tabular sticky top-[calc(3rem+env(safe-area-inset-top))] z-20 -my-2 rounded-full border bg-card/95 px-4 py-2 text-center text-sm shadow-sm backdrop-blur"
+          >
+            {b.free >= 0 ? (
+              <>
+                <b>{formatINR(b.free)}</b> free to invest a month
+              </>
+            ) : (
+              <span className="text-danger">
+                <b>{formatINR(-b.free)}</b> a month over
+              </span>
+            )}
+            {unsaved ? " · not saved yet" : ""}
+          </p>
+        </>
+      )}
 
       <Section id="in-h" title="Money in" total={b.income}>
         <ul className="space-y-1">
@@ -531,7 +557,7 @@ export function BudgetPlanner({
           {loanEmis.map((l) => (
             <li key={l.name}>
               <Link
-                href="/liabilities#loans-h"
+                href="/goals"
                 className="flex min-h-12 items-center justify-between gap-3 rounded-lg px-1 py-2 hover:bg-muted/50"
               >
                 <span className="min-w-0">
@@ -539,7 +565,7 @@ export function BudgetPlanner({
                     EMI · {l.name}
                   </span>
                   <span className="block text-xs text-muted-foreground">
-                    Auto · from Liabilities
+                    Auto · from your loan goals
                   </span>
                 </span>
                 <span className="flex shrink-0 items-center gap-1">
@@ -575,7 +601,7 @@ export function BudgetPlanner({
         </ul>
         <div className="flex flex-wrap gap-2 pt-1">
           <Link
-            href="/liabilities#loans-h"
+            href="/goals/new"
             className="press rounded-full border bg-card px-3 py-1 text-sm hover:border-primary"
           >
             + Add a loan

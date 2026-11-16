@@ -7,7 +7,7 @@ import type { Card } from "@/lib/cards";
 
 /**
  * Cards: statements logged for milestones only, never as money owed. Loans
- * and dues live on the Liabilities page.
+ * live in goals.
  */
 export function CreditOverview({
   cards,

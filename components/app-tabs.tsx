@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle, PieChart, Receipt, Target } from "lucide-react";
+import { CreditCard, PieChart, Target } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
@@ -15,14 +15,8 @@ const TABS = [
     icon: Target,
     match: ["/goals", "/import"],
   },
-  {
-    href: "/liabilities",
-    label: "Liabilities",
-    icon: Receipt,
-    match: ["/liabilities"],
-  },
   { href: "/assets", label: "Assets", icon: PieChart, match: ["/assets"] },
-  { href: "/ask", label: "Ask", icon: MessageCircle, match: ["/ask"] },
+  { href: "/cards", label: "Cards", icon: CreditCard, match: ["/cards"] },
 ];
 
 /** The main sections, as a tab bar fixed to the bottom of the screen. */
@@ -37,7 +31,7 @@ export function AppTabs() {
       <ul
         className={cn(
           "mx-auto grid max-w-3xl",
-          showAdd ? "grid-cols-5" : "grid-cols-4",
+          showAdd ? "grid-cols-4" : "grid-cols-3",
         )}
       >
         {TABS.map((t) => {

@@ -8,7 +8,7 @@ import { TourProvider } from "@/components/tour";
 import { DisclaimerFooter } from "@/components/disclaimer";
 import { GuidesProvider } from "@/components/guides";
 import { Logo } from "@/components/logo";
-import { SettingsLink } from "@/components/nav-pending";
+import { AskLink, SettingsLink } from "@/components/nav-pending";
 import { loadOnboarding, needsPrivacyConsent } from "@/lib/data";
 
 export default async function AppLayout({
@@ -30,7 +30,10 @@ export default async function AppLayout({
               <Link href="/goals" aria-label="Tracker home">
                 <Logo />
               </Link>
-              <SettingsLink />
+              <div className="flex items-center gap-1">
+                <AskLink />
+                <SettingsLink />
+              </div>
             </div>
           </header>
           <div className="mx-auto w-full max-w-3xl px-4 pb-[calc(7rem+env(safe-area-inset-bottom))] pt-3">

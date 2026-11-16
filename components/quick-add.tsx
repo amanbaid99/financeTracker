@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  FileUp,
-  Plus,
-  Receipt,
-  RefreshCw,
-  Sparkles,
-  Target,
-  Wallet,
-} from "lucide-react";
+import { FileUp, Plus, Receipt, RefreshCw, Target, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -33,7 +25,7 @@ const ACTIONS = [
   {
     href: "/goals/new",
     label: "New goal",
-    hint: "Something to save for",
+    hint: "Something to save for, or a loan to close",
     icon: Target,
   },
   {
@@ -43,28 +35,16 @@ const ACTIONS = [
     icon: RefreshCw,
   },
   {
-    href: "/liabilities/cards?do=bill",
-    label: "Log a card bill",
-    hint: "Counts toward milestones",
-    icon: Receipt,
-  },
-  {
-    href: "/goals?do=extra",
-    label: "I have extra money",
-    hint: "See where a one-time amount helps most",
-    icon: Wallet,
-  },
-  {
-    href: "/goals?do=plan",
-    label: "Edit SIP plan",
-    hint: "Your monthly split across goals",
-    icon: Sparkles,
-  },
-  {
     href: "/import",
     label: "Import statement",
     hint: "Update every fund from a CAS",
     icon: FileUp,
+  },
+  {
+    href: "/cards?do=bill",
+    label: "Log card spend",
+    hint: "Counts toward milestones",
+    icon: Receipt,
   },
 ];
 

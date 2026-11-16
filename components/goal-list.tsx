@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import NextLink from "next/link";
 import { useState } from "react";
 import {
   DeleteGoalButton,
@@ -15,16 +16,13 @@ import { BillsPlan, LoanPlan, SavingsPlan } from "@/components/goal-details";
 import { GoalIcon } from "@/components/goal-icon";
 import { Progress } from "@/components/ui/progress";
 import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
-import { groupGoals } from "@/lib/goal-summary";
+import { orderGoals } from "@/lib/goal-order";
 import {
   goalHint,
   goalStatus,
   onHold,
   gapOptions,
   goalSubline,
-  HORIZONS,
-  horizonGroup,
-  type Horizon,
   type GoalStatus,
 } from "@/lib/goal-status";
 import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
@@ -90,28 +88,11 @@ export function GoalList({
   const filtered = filter
     ? goals.filter((g) => goalStatus(g, today, between).tone === filter)
     : goals;
-  const groups = groupGoals(filtered);
-  // Active goals by when they need the money, must-haves first in each
-  // group. Covered bills funds, reached goals and loans the EMIs already
-  // cover stay folded away below.
-  const byTime = Object.fromEntries(
-    HORIZONS.map((h) => [h.key, [] as TrackedGoal[]]),
-  ) as Record<Horizon, TrackedGoal[]>;
-  // Between jobs, goals on hold fold away: nothing to do on them yet.
-  const held: TrackedGoal[] = [];
-  for (const g of [...groups.attention, ...groups.growing].sort(
-    (a, b) =>
-      Number(!!a.niceToHave) - Number(!!b.niceToHave) ||
-      goals.indexOf(a) - goals.indexOf(b),
-  ))
-    if (onHold(g, between) && !filter) held.push(g);
-    else byTime[horizonGroup(g, today)].push(g);
-  const shown = HORIZONS.filter((h) => byTime[h.key].length > 0);
-  const behindIn = (key: Horizon) =>
-    byTime[key].filter((g) => {
-      const t = goalStatus(g, today, between).tone;
-      return t === "warning" || t === "danger";
-    }).length;
+  // Every goal in one list, in the plan's order. The first three are the
+  // ones to focus on; nothing is folded away.
+  const ordered = orderGoals(filtered, today, between);
+  const top = ordered.slice(0, 3);
+  const rest = ordered.slice(3);
   const renderGoals = (items: TrackedGoal[]) => (
     <ul className="space-y-3">
       {items.map((g) => {
@@ -288,101 +269,32 @@ export function GoalList({
 
   return (
     <div className="space-y-6">
-      {shown.map((h) => {
-        const behind = behindIn(h.key);
-        return (
-          <section
-            key={h.key}
-            id={`goals-${h.key}`}
-            aria-labelledby={`goals-${h.key}-h`}
-            className="scroll-mt-20 space-y-3"
-          >
-            <div className="flex items-baseline justify-between gap-2 px-0.5">
-              <h2 id={`goals-${h.key}-h`} className="font-semibold">
-                {h.title}
-              </h2>
-              <span className="text-xs text-muted-foreground">
-                {behind > 0
-                  ? `${behind} of ${byTime[h.key].length} behind`
-                  : byTime[h.key].length}
-              </span>
-            </div>
-            {renderGoals(byTime[h.key])}
-          </section>
-        );
-      })}
-      {held.length > 0 && (
-        <details
-          open={held.some((g) => g.id === open) || undefined}
-          className="group rounded-2xl border border-border/70 bg-muted/30 p-4"
-        >
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium [&::-webkit-details-marker]:hidden">
-            <span>
-              On hold till salary{" "}
-              <span className="ml-1 text-sm text-muted-foreground">
-                {held.length}
-              </span>
-            </span>
-            <ChevronDown
-              className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
-              aria-hidden
-            />
-          </summary>
-          <div className="mt-3 space-y-3">
-            <p className="text-sm text-muted-foreground">
-              These start again once your salary comes in. Nothing to do on them
-              for now.
-            </p>
-            {renderGoals(held)}
-          </div>
-        </details>
-      )}
-      {(
-        [
-          [
-            "loans",
-            "Loans covered by EMIs",
-            "Your regular payments are working toward these. Open a loan to see its timeline.",
-          ],
-          [
-            "covered",
-            "Covered at your current pace",
-            "Your current balance and monthly contributions cover these planned bills. Keep contributions going. A shortfall moves a goal back into the active list.",
-          ],
-          [
-            "reached",
-            "Goals reached",
-            "A moment to appreciate how far you've come.",
-          ],
-        ] as const
-      ).map(
-        ([key, title, description]) =>
-          groups[key].length > 0 && (
-            <details
-              key={key}
-              open={
-                !!filter || groups[key].some((g) => g.id === open) || undefined
-              }
-              className="group rounded-2xl border border-border/70 bg-muted/30 p-4"
+      {top.length > 0 && (
+        <section aria-labelledby="goals-top-h" className="space-y-3">
+          <div className="flex items-baseline justify-between gap-2 px-0.5">
+            <h2 id="goals-top-h" className="font-semibold">
+              Focus on these first
+            </h2>
+            <NextLink
+              href="/goals/order"
+              className="text-xs font-medium text-primary"
             >
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium [&::-webkit-details-marker]:hidden">
-                <span>
-                  {title}{" "}
-                  <span className="ml-1 text-sm text-muted-foreground">
-                    {groups[key].length}
-                  </span>
-                </span>
-                <ChevronDown
-                  className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180"
-                  aria-hidden
-                />
-              </summary>
-              <div className="mt-3 space-y-3">
-                <p className="text-sm text-muted-foreground">{description}</p>
-                {renderGoals(groups[key])}
-              </div>
-            </details>
-          ),
+              Change order
+            </NextLink>
+          </div>
+          {renderGoals(top)}
+        </section>
+      )}
+      {rest.length > 0 && (
+        <section aria-labelledby="goals-rest-h" className="space-y-3">
+          <h2 id="goals-rest-h" className="px-0.5 font-semibold">
+            Everything else{" "}
+            <span className="text-sm font-normal text-muted-foreground">
+              {rest.length}
+            </span>
+          </h2>
+          {renderGoals(rest)}
+        </section>
       )}
     </div>
   );

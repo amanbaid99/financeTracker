@@ -1,12 +1,15 @@
 import { BackLink } from "@/components/back-link";
 import type { Metadata } from "next";
 import { BudgetPlanner } from "@/components/budget-planner";
-import { loadBudget } from "@/lib/data";
+import { loadBudget, loadRunway } from "@/lib/data";
 
 export const metadata: Metadata = { title: "Budget" };
 
 export default async function BudgetPage() {
-  const { incomes, costs, loanEmis, sips, plan } = await loadBudget();
+  const [{ incomes, costs, loanEmis, sips, plan }, r] = await Promise.all([
+    loadBudget(),
+    loadRunway(),
+  ]);
   return (
     <main className="space-y-5">
       <BackLink fallback="/goals" label="Goals" />
@@ -23,6 +26,7 @@ export default async function BudgetPage() {
         loanEmis={loanEmis}
         sips={sips}
         planMonthly={plan?.monthly ?? null}
+        between={r.active}
       />
     </main>
   );

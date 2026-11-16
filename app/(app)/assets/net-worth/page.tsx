@@ -144,10 +144,10 @@ export default async function NetWorthPage() {
           <p className="text-sm text-muted-foreground">No loans to repay.</p>
         )}
         <Link
-          href="/liabilities#loans-h"
+          href="/goals"
           className="inline-flex min-h-10 items-center text-sm font-medium text-primary"
         >
-          See loans
+          See loan goals
         </Link>
       </section>
 

@@ -90,7 +90,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Code from the email", { exact: true }).fill(code);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/goals$/);
-  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link")).toHaveCount(4);
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link")).toHaveCount(3);
   // First visit: the Goals guide pops up once, and (i) brings it back.
   // A new user gets no "What's new".
   const goalsGuide = page.getByRole("dialog", { name: "How goals work" });
@@ -373,7 +373,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   ).toBeVisible();
 
   // Money plan: suggests a split, and recording it takes it out of the plan.
-  await quick("Edit SIP plan");
+  await page.goto("/goals?do=plan");
   await page.getByText("Add a one-time amount", { exact: true }).click();
   await expect(
     page.getByText(/is not linked to a goal/),
@@ -442,7 +442,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Edit Planned index fund" }),
   ).toBeVisible();
-  await quick("Edit SIP plan");
+  await page.goto("/goals?do=plan");
   if (!await page.getByLabel("Savings to put toward goals now").isVisible()) await page.getByText("Add a one-time amount", { exact: true }).click();
   await page.getByLabel("Savings to put toward goals now").fill("0");
   await page.getByRole("button", { name: "Show my plan" }).click();
@@ -450,7 +450,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText(/plus ₹[\d,]+ once/)).toHaveCount(0);
   // Extra money: where a one-time amount would go, without saving anything.
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
-  await quick("I have extra money");
+  await page.goto("/goals?do=extra");
   await page.getByLabel("How much?").fill("50000");
   await expect(
     page
@@ -504,11 +504,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     .getByRole("dialog")
     .getByRole("button", { name: "Add investment" })
     .click();
-  const coveredGroup = page.locator("details").filter({ has: page.locator("summary", { hasText: "Covered at your current pace" }) });
-  await expect(coveredGroup).toHaveAttribute("open", "");
-  await coveredGroup.locator("summary").first().click();
-  await expect(billsCard).toBeHidden();
-  await coveredGroup.locator("summary").first().click();
+  // Nothing is folded away: a covered bills fund stays in the one list.
+  await expect(page.locator("main details summary", { hasText: "Covered at your current pace" })).toHaveCount(0);
   await expect(billsCard).toContainText("Covered");
   await expect(billsCard).toContainText(/Next: Gym, \d+ \w{3}/);
   await expect(
@@ -633,8 +630,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText(/^1 new investment$/)).toBeVisible();
   await page.screenshot({ path: "test-results/import-insights-375.png", fullPage: true });
   await page.getByRole("button", { name: "Back to your goals" }).click();
-  // A covered bills fund is folded below the active goals.
-  await page.getByText(/^Covered at your current pace/).click();
+  // A covered bills fund is in the list with every other goal.
   await page.getByRole("button", { name: /^Bills fund/ }).click();
   await expect(
     page.getByRole("button", { name: "Edit Bills liquid fund" }),
@@ -709,7 +705,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   });
 
   // Ask: off until turned on, asks a follow-up, answers with your own names.
-  await tab("Ask").click();
+  await page.getByRole("link", { name: "Ask", exact: true }).click();
   await page.getByText("What's sent to the AI", { exact: true }).click();
   await expect(page.getByText("Sent through OpenRouter:")).toBeVisible();
   await page.screenshot({
@@ -765,7 +761,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("button", { name: "Turn Ask off" }).click();
   await expect(page.getByText("Turned off")).toBeVisible();
-  await tab("Ask").click();
+  await page.getByRole("link", { name: "Ask", exact: true }).click();
   await expect(page.getByRole("button", { name: "Turn on Ask" })).toBeVisible();
 
   // Invites: hidden from normal users; admins can invite and remove people.
@@ -810,57 +806,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     await service.from("allowed_emails").delete().eq("email", friend);
   }
 
-  // Liabilities: what you owe, what's due, then loans. Cards have their own page.
-  await tab("Liabilities").click();
-  await expect(
-    page.getByRole("heading", { name: "Liabilities", exact: true }),
-  ).toBeVisible();
-  await expect(page.getByRole("region", { name: "What you owe" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Coming up" })).toBeVisible();
-  // Loans: the loan goal from earlier is tracked as a loan too.
-  const loansList = page.getByRole("region", { name: "Loans" });
-  await expect(loansList).toContainText("Close my loan");
-  await page.getByRole("button", { name: "Add a loan" }).click();
-  await page.getByLabel("Name").fill("Car finance");
-  await page.getByLabel("Type").selectOption("car");
-  await page.getByText("Original loan and early-closure details", { exact: true }).click();
-  await page.getByLabel("Amount withdrawn").fill("500000");
-  await page.getByLabel("EMI", { exact: true }).fill("12000");
-  await page.getByLabel("Interest, % a year").fill("9");
-  await page.getByLabel("Total EMIs").fill("48");
-  // An EMI can be marked paid from the 1st of its month: due on the 28th,
-  // it's this month's unless today is already past the 27th (IST).
-  const dayIST = new Date(Date.now() + 5.5 * 3600 * 1000).getUTCDate();
-  await page.getByLabel("EMI date").selectOption("28");
-  await page.getByLabel("Outstanding balance").fill("400000");
-  await page.getByRole("button", { name: "Add loan" }).click();
-  await expect(loansList).toContainText("Car finance");
-  await expect(loansList).toContainText("₹1L of ₹5L repaid");
-  await expect(loansList).toContainText(/a month in EMIs/);
-  if (dayIST < 28) {
-    await loansList.getByRole("button", { name: "Mark Car finance EMI paid" }).click();
-    await expect(page.getByRole("status").filter({ hasText: "Car finance EMI marked paid" })).toBeVisible();
-    await page.getByRole("status").filter({ hasText: "Car finance EMI marked paid" }).getByRole("button", { name: "Undo" }).click();
-    await expect(loansList.getByRole("button", { name: "Mark Car finance EMI paid" })).toBeVisible();
-  } else {
-    await expect(loansList).toContainText("Mark paid from 1");
-  }
-  await expect(loansList).toContainText("₹1L of ₹5L repaid");
-  await page.screenshot({ path: "test-results/loans-375.png", fullPage: true });
-  // A loan on a separate card the lender gave you, not one of your credit cards.
-  await page.getByRole("button", { name: "Add a loan" }).click();
-  await page.getByLabel("Name").fill("Store card EMI");
-  await page.getByLabel("Type").selectOption("card");
-  await page.getByLabel("Which card").selectOption({ label: "A separate card, not one of these" });
-  await page.getByLabel("Bill generated on").selectOption("12");
-  await page.getByLabel("Payment due on").selectOption("2");
-  await page.getByLabel("EMI", { exact: true }).fill("3000");
-  await page.getByLabel("Interest, % a year").fill("14");
-  await page.getByLabel("Outstanding balance").fill("24000");
-  await page.getByRole("button", { name: "Add loan" }).click();
-  await expect(loansList).toContainText("Store card EMI");
-  await expect(loansList).toContainText("Loan on a card · its own card");
-  await page.getByRole("link", { name: /Cards and milestones/ }).click();
+  // Cards: milestones only. Loans are goals.
+  await tab("Cards").click();
   await expect(page.getByRole("heading", { name: "Cards", exact: true })).toBeVisible();
   await expect(
     page.getByText("Track your cards' benefits and milestones"),
@@ -1003,12 +950,12 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     page.getByRole("dialog", { name: "What would you like to do?" }),
   ).toBeVisible();
   await page.screenshot({ path: "test-results/quick-add-375.png" });
-  await page.getByRole("link", { name: "Log a card bill" }).click();
+  await page.getByRole("link", { name: "Log card spend" }).click();
   await expect(
     page.getByRole("dialog", { name: "Log a Regalia Gold bill" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
-  await expect(page).toHaveURL(/\/liabilities\/cards$/);
+  await expect(page).toHaveURL(/\/cards$/);
 
   // Guides in Settings: read what's new, and replay the section guides.
   await page.removeLocatorHandler(sectionGuide);
@@ -1031,16 +978,16 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(tourCard).toBeVisible();
   await expect(page).toHaveURL(/\/goals$/);
   await tourCard.getByRole("button", { name: "Next" }).click();
-  await expect(page.getByRole("dialog").filter({ hasText: /of 12/ })).toBeVisible();
+  await expect(page.getByRole("dialog").filter({ hasText: /of 9/ })).toBeVisible();
   await page.getByRole("button", { name: "Skip" }).click();
-  await expect(page.getByRole("dialog").filter({ hasText: /of 12/ })).toHaveCount(0);
+  await expect(page.getByRole("dialog").filter({ hasText: /of 9/ })).toHaveCount(0);
   await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("button", { name: "Show guides again" }).click();
   await expect(
     page.getByText("Guides will show again when you open each section."),
   ).toBeVisible();
-  await tab("Liabilities").click();
-  const cardsGuide = page.getByRole("dialog", { name: "Your liabilities" });
+  await tab("Cards").click();
+  const cardsGuide = page.getByRole("dialog", { name: "Cards and milestones" });
   await expect(cardsGuide).toContainText("Log bill");
   await page.screenshot({ path: "test-results/guide-375.png" });
   await cardsGuide.getByRole("button", { name: "Got it" }).click();
@@ -1077,17 +1024,16 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText("= ₹32,000 a month")).toBeVisible();
   await page.getByRole("button", { name: "Add ₹2,000" }).click();
   await expect(page.getByRole("button", { name: "Edit Rent" })).toContainText("₹32,000");
-  await expect(page.getByText(/^EMI · Car finance$/)).toBeVisible();
+  await expect(page.getByText(/^EMI · /).first()).toBeVisible();
   await page.screenshot({ path: "test-results/budget-375.png", fullPage: true });
   await page.getByRole("button", { name: /a month for This month$/ }).click();
   await expect(page.getByRole("button", { name: /a month for This month$/ })).toHaveCount(0);
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
   await expect(page.getByRole("link", { name: "Your plan", exact: true })).toBeVisible();
 
-  // Your plan: the steps from today, then the split; Edit order lives there.
+  // Your plan: the monthly split, with Edit order.
   await page.getByRole("link", { name: "Your plan", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Your plan" })).toBeVisible();
-  await expect(page.getByText("You are here")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Where it goes, and why" })).toBeVisible();
   await page.getByRole("link", { name: "Edit order" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Your order" })).toBeVisible();
@@ -1100,35 +1046,30 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Old links still land in the right place.
   await page.goto("/goals/roadmap");
   await expect(page).toHaveURL(/\/goals\/plan$/);
-  await page.goto("/cards");
-  await expect(page).toHaveURL(/\/liabilities\/cards$/);
+  await page.goto("/liabilities/cards");
+  await expect(page).toHaveURL(/\/cards$/);
+  await page.goto("/liabilities");
+  await expect(page).toHaveURL(/\/goals$/);
 
   // Between jobs: covered till salary, with goals on hold meanwhile.
-  await page.goto("/liabilities/salary");
+  await page.goto("/goals/salary");
   await page.getByLabel("Earliest").fill("2027-01-05");
   await page.getByLabel("Latest").fill("2027-01-31");
   await page.getByRole("button", { name: "Save dates" }).click();
   await expect(page.getByText("If salary comes 31 Jan").first()).toBeVisible();
-  await page.getByRole("button", { name: "Add", exact: true }).click();
-  await page.getByLabel("Who or what").fill("Friends");
-  await page.getByLabel("Amount").fill("22000");
-  await page.getByRole("button", { name: "Add money owed" }).click();
-  await expect(page.getByText("Plus money owed to you").first()).toBeVisible();
-  await page.getByRole("button", { name: "Add something to pay" }).click();
-  await page.getByLabel("What it's for").fill("Card dues");
-  await page.getByLabel("Amount").fill("50000");
-  await page.getByRole("button", { name: "Add payment" }).click();
-  await expect(page.getByText("Card dues", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Paid", exact: true }).click();
-  await expect(page.getByText(/Card dues paid/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Add something to pay" })).toHaveCount(0);
+  // Budget waits for the salary instead of showing a red number.
+  await page.goto("/goals/budget");
+  await expect(page.getByRole("heading", { name: "Budget", exact: true })).toBeVisible();
+  await expect(page.getByText("a month more going out than coming in")).toHaveCount(0);
   await page.goto("/goals");
   // Goals opens with where you are and at most three things to focus on.
   const focus = page.getByRole("region", { name: "Where you are" });
   await expect(focus).toBeVisible();
-  await expect(focus).toContainText("Ask for the ₹22,000 owed to you");
-  await expect(focus.getByRole("listitem")).toHaveCount(3);
+  await expect(focus).toContainText(/Spend up to|Only spend on what can't wait/);
+  await expect(page.getByRole("heading", { name: "Focus on these first" })).toBeVisible();
   await page.screenshot({ path: "test-results/runway-375.png", fullPage: true });
-  await page.goto("/liabilities/salary");
+  await page.goto("/goals/salary");
   await page.getByRole("button", { name: "My salary has started" }).click();
   await expect(page.getByText(/Your goals are active again/)).toBeVisible();
   await page.goto("/goals");

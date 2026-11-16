@@ -14,7 +14,7 @@ export default async function RunwayPage() {
     .map((i) => ({ name: i.name ?? "Savings", value: i.value }));
   return (
     <main className="space-y-4">
-      <BackLink fallback="/liabilities" label="Liabilities" />
+      <BackLink fallback="/goals" label="Goals" />
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">
           Covered till salary
@@ -26,7 +26,6 @@ export default async function RunwayPage() {
       </div>
       <RunwayEditor
         runway={r.runway}
-        items={r.items}
         liquidHoldings={liquid}
         salaryBest={r.salaryBest}
         salaryWorst={r.salaryWorst}
