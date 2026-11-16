@@ -199,7 +199,7 @@ export const HELP: HelpTopic[] = [
     section: "Cards and loans",
     q: "How do card milestones count my spending?",
     a: [
-      "Each logged statement in the current period counts, from when the card year or quarter starts. EMIs on the card are left out. Progress moves only when you log another statement. Each card shows its milestones without opening it. Cards with every milestone reached appear last; a card with another unfinished milestone stays above them. When a milestone period resets, the card returns to the active list.",
+      "Each logged statement in the current period counts, from when the card year or quarter starts. EMIs on the card are left out. Progress moves only when you log another statement. Each card shows the reward target, amount left and deadline without opening it. Annual fee waiver is a target, not confirmation from the bank. Open a card and How this is counted for eligible spend and monthly pace. Cards with every milestone reached appear last; a card with another unfinished milestone stays above them. When a milestone period resets, the card returns to the active list.",
     ],
     tags: "fee waiver bonus points target",
   },

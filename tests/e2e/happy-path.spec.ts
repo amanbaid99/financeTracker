@@ -887,7 +887,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Bill amount").fill("300000");
   await page.getByRole("button", { name: "Log bill", exact: true }).last().click();
   await expect(feeBar).toHaveAttribute("aria-valuenow", "100");
-  await expect(page.getByText("Reached", { exact: true })).toBeVisible();
+  await expect(page.getByText("Target reached", { exact: true })).toBeVisible();
   await expect(page.getByText("Counted from 2 bills")).toBeVisible();
   // Read features: two readings, checked against the text; nothing saved
   // until chosen. Turning on AI is asked for right here.

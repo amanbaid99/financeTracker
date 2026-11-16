@@ -31,6 +31,7 @@ import {
   saveMilestone,
 } from "@/lib/cards-actions";
 import { SPEND_CATEGORIES, type SpendCategory } from "@/lib/card-advisor";
+import { milestoneLabel } from "@/lib/milestone-label";
 import { formatDate, formatINR } from "@/lib/format";
 import { clearParam } from "@/lib/clear-param";
 import { useQuickAction } from "@/components/quick-add";
@@ -86,17 +87,9 @@ function MilestoneRow({
   const tone =
     s.status === "achieved"
       ? "success"
-      : s.status === "behind"
-        ? "warning"
-        : s.status === "missed"
-          ? "danger"
-          : "primary";
-  let pace = "";
-  if (s.status === "achieved") pace = "Reached";
-  else if (s.status === "missed") pace = "The date has passed";
-  else if (s.neededPerMonth !== null)
-    pace = `about ${formatINR(s.neededPerMonth)} a month`;
-
+      : s.status === "missed"
+        ? "danger"
+        : "neutral";
   const sources: string[] = [];
   if (s.billCount > 0)
     sources.push(s.billCount === 1 ? `1 bill` : `${s.billCount} bills`);
@@ -105,10 +98,18 @@ function MilestoneRow({
     <li className="space-y-1.5 py-3">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-sm font-medium">{s.reward || s.name}</p>
-          <p className="text-xs text-muted-foreground">
-            {formatINR(s.spentNow)} of {formatINR(s.target)}
-            {s.end ? ` by ${formatDate(s.end)}` : ""}
+          <p className="text-sm font-medium">{milestoneLabel(s)}</p>
+          <p
+            className={cn(
+              "tabular mt-1 text-sm",
+              s.status === "achieved"
+                ? "text-success"
+                : "text-muted-foreground",
+            )}
+          >
+            {s.status === "achieved"
+              ? "Target reached"
+              : `${formatINR(s.remaining)} left of ${formatINR(s.target)}`}
           </p>
         </div>
         <Button
@@ -124,39 +125,49 @@ function MilestoneRow({
       </div>
       <Progress
         value={s.progress * 100}
+        className="h-1.5"
         tone={tone}
         label={`${s.name} progress`}
       />
-      <p
-        className={cn(
-          "tabular text-xs",
-          s.status === "achieved"
-            ? "text-success"
-            : s.status === "missed"
-              ? "text-danger"
-              : "text-muted-foreground",
-        )}
-      >
-        {s.remaining > 0 ? `${formatINR(s.remaining)} to go` : ""}
-        {s.remaining > 0 && pace ? " · " : ""}
-        {pace}
-      </p>
+      {s.end && (
+        <p
+          className={cn(
+            "text-xs",
+            s.status === "missed" ? "text-danger" : "text-muted-foreground",
+          )}
+        >
+          {s.status === "missed" ? "Ended" : "By"} {formatDate(s.end)}
+        </p>
+      )}
       {showDetails && (
         <details>
           <summary className="flex min-h-11 cursor-pointer items-center text-xs font-medium text-primary">
             How this is counted
           </summary>
-          <p className="pb-2 text-xs text-muted-foreground">
-            {sources.length
-              ? `Counted from ${sources.join(" + ")}`
-              : "No bills logged in this period yet"}
-            {emi > 0 && s.billCount > 0
-              ? `, leaving out ${formatINR(emi)} of loan EMI a bill`
-              : ""}
-            {s.period === "card_year" && noCardYear
-              ? ". Using Jan to Dec; set the card year in About this card."
-              : ""}
-          </p>
+          <div className="space-y-2 pb-2 text-xs text-muted-foreground">
+            <p className="tabular">
+              Eligible spend: {formatINR(s.spentNow)} of {formatINR(s.target)}.
+            </p>
+            {s.neededPerMonth !== null &&
+              s.status !== "missed" &&
+              s.remaining > 0 && (
+                <p>
+                  About {formatINR(s.neededPerMonth)} a month would be needed
+                  before the deadline. Use planned spending only.
+                </p>
+              )}
+            <p>
+              {sources.length
+                ? `Counted from ${sources.join(" + ")}`
+                : "No bills logged in this period yet"}
+              {emi > 0 && s.billCount > 0
+                ? `, leaving out ${formatINR(emi)} of loan EMI a bill`
+                : ""}
+              {s.period === "card_year" && noCardYear
+                ? ". Using Jan to Dec; set the card year in About this card."
+                : ""}
+            </p>
+          </div>
         </details>
       )}
     </li>
@@ -341,7 +352,7 @@ const PRESETS = [
   {
     name: "Annual fee waiver",
     period: "card_year" as Period,
-    reward: "Annual fee waived",
+    reward: "Annual fee waiver",
   },
   { name: "Milestone bonus", period: "card_year" as Period, reward: "" },
   {

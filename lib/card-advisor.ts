@@ -1,3 +1,4 @@
+import { milestoneLabel } from "./milestone-label";
 // Which card to use next. Plain arithmetic on milestones, deadlines and the
 // person's usual monthly card spend. No AI, nothing saved.
 
@@ -117,13 +118,11 @@ export function adviseCards(
       (p) => p.cardId === chosen.cardId && p.status === chosen.status,
     );
     const top = all[all.length - 1].milestone;
-    const prize = all
-      .map((p) => p.milestone.reward || p.milestone.name)
-      .join(" and ");
+    const prize = all.map((p) => milestoneLabel(p.milestone)).join(" and ");
     pick = {
       cardId: chosen.cardId,
       cardLabel: chosen.cardLabel,
-      reason: `${formatRupees(top.remaining)} more by ${shortDate(top.end!)} gets ${prize}.`,
+      reason: `${formatRupees(top.remaining)} more by ${shortDate(top.end!)} reaches the spend target for ${prize}.`,
     };
   } else if (forCategory.length) {
     pick = {

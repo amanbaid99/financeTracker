@@ -67,7 +67,7 @@ describe("adviseCards", () => {
   it("chases both SBI milestones and picks SBI", () => {
     expect(a.plan.filter((p) => p.cardId === "sbi").map((p) => p.status)).toEqual(["chase", "chase"]);
     expect(a.pick?.cardLabel).toBe("SBI PhonePe");
-    expect(a.pick?.reason).toBe("₹2,49,725 more by 28 Feb 2027 gets Annual fee waived and 5000 voucher.");
+    expect(a.pick?.reason).toBe("₹2,49,725 more by 28 Feb 2027 reaches the spend target for Annual fee waiver and 5000 voucher.");
   });
 
   it("charges each later milestone only the extra it needs", () => {

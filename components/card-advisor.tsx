@@ -10,6 +10,7 @@ import {
   type SpendCategory,
 } from "@/lib/card-advisor";
 import type { Card } from "@/lib/cards";
+import { milestoneLabel } from "@/lib/milestone-label";
 import { formatDate, formatINR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -121,8 +122,7 @@ export function CardAdvisor({
                         <li key={p.milestone.id} className="space-y-0.5 py-2">
                           <div className="flex items-baseline justify-between gap-2">
                             <p className="min-w-0 font-medium">
-                              {p.cardLabel}:{" "}
-                              {p.milestone.reward || p.milestone.name}
+                              {p.cardLabel}: {milestoneLabel(p.milestone)}
                             </p>
                             {a.capacity !== null && (
                               <span
