@@ -22,7 +22,7 @@ Last updated: 16 Nov 2026.
   charts, own by asset type, owe by loan), allocation by asset type or instrument, holdings with
   search and sort, portfolio review (hidden for now, commented out in `app/(app)/assets/page.tsx`), CAS import with review, withdrawal check and insights.
 - **Cards** (`/cards`): statements logged for milestones only, never as money owed, milestones,
-  which card to use. Liabilities was removed on 17 Nov 2026; old URLs redirect (`next.config.ts`).
+  which card to use. All milestone progress is visible without expanding; cards with every milestone reached sort below the rest and return when their period resets. Liabilities was removed on 17 Nov 2026; old URLs redirect (`next.config.ts`).
 - **Ask**: private Q&A (codes only to AI), amount questions split by the app's own planner.
 - **Settings**: look, invites (admin), Ask on/off, Help and guides (Help page, What's new archive,
   Take the tour, show guides again), account and delete.

@@ -841,6 +841,10 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     name: "Annual fee waiver progress",
   });
   await expect(feeBar).toHaveAttribute("aria-valuenow", "0");
+  await cardRow.click();
+  await expect(cardRow).toHaveAttribute("aria-expanded", "false");
+  await expect(feeBar).toBeVisible();
+  await cardRow.click();
   await page.getByText("How this is counted", { exact: true }).click();
   await expect(
     page.getByText("No bills logged in this period yet"),
@@ -882,9 +886,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Statement month").fill("2026-10");
   await page.getByLabel("Bill amount").fill("300000");
   await page.getByRole("button", { name: "Log bill", exact: true }).last().click();
-  await page.getByText("Past and reached milestones", { exact: true }).click();
   await expect(feeBar).toHaveAttribute("aria-valuenow", "100");
-  await page.getByText("How this is counted", { exact: true }).click();
   await expect(page.getByText("Reached", { exact: true })).toBeVisible();
   await expect(page.getByText("Counted from 2 bills")).toBeVisible();
   // Read features: two readings, checked against the text; nothing saved

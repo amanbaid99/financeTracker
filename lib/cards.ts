@@ -286,6 +286,25 @@ export function cardsForReview(cards: Card[], today: string): Card[] {
   return rows.map((row) => row.card);
 }
 
+/** Active cards keep their order; cards with every milestone reached move last.
+ * States are recomputed for today's period, so reset milestones move back up.
+ * Statement payment metadata does not affect this milestone-only view.
+ */
+export function cardsForMilestones(cards: Card[], today: string): Card[] {
+  return cards
+    .map((card, index) => ({
+      card,
+      index,
+      reached:
+        card.milestones.length > 0 &&
+        card.milestones.every(
+          (m) => milestoneState(m, today, card).status === "achieved",
+        ),
+    }))
+    .sort((a, b) => Number(a.reached) - Number(b.reached) || a.index - b.index)
+    .map((row) => row.card);
+}
+
 /** "due in 2 days", "overdue by 3 days"... for an unpaid bill, with how urgent it is. */
 export function dueLabel(
   dueDate: string | null,

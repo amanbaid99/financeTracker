@@ -13,7 +13,7 @@ import { Input, Select } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
   averageBill,
-  cardsForReview,
+  cardsForMilestones,
   milestoneState,
   PERIOD_LABELS,
   periodBounds,
@@ -74,8 +74,10 @@ function MilestoneRow({
   noCardYear,
   emi = 0,
   onEdit,
+  showDetails = false,
 }: {
   s: MilestoneState;
+  showDetails?: boolean;
   noCardYear: boolean;
   /** Loan EMIs on the card, left out of each bill. */
   emi?: number;
@@ -125,27 +127,38 @@ function MilestoneRow({
         tone={tone}
         label={`${s.name} progress`}
       />
-      <p className="tabular text-xs text-muted-foreground">
+      <p
+        className={cn(
+          "tabular text-xs",
+          s.status === "achieved"
+            ? "text-success"
+            : s.status === "missed"
+              ? "text-danger"
+              : "text-muted-foreground",
+        )}
+      >
         {s.remaining > 0 ? `${formatINR(s.remaining)} to go` : ""}
         {s.remaining > 0 && pace ? " · " : ""}
         {pace}
       </p>
-      <details>
-        <summary className="flex min-h-11 cursor-pointer items-center text-xs font-medium text-primary">
-          How this is counted
-        </summary>
-        <p className="pb-2 text-xs text-muted-foreground">
-          {sources.length
-            ? `Counted from ${sources.join(" + ")}`
-            : "No bills logged in this period yet"}
-          {emi > 0 && s.billCount > 0
-            ? `, leaving out ${formatINR(emi)} of loan EMI a bill`
-            : ""}
-          {s.period === "card_year" && noCardYear
-            ? ". Using Jan to Dec; set the card year in About this card."
-            : ""}
-        </p>
-      </details>
+      {showDetails && (
+        <details>
+          <summary className="flex min-h-11 cursor-pointer items-center text-xs font-medium text-primary">
+            How this is counted
+          </summary>
+          <p className="pb-2 text-xs text-muted-foreground">
+            {sources.length
+              ? `Counted from ${sources.join(" + ")}`
+              : "No bills logged in this period yet"}
+            {emi > 0 && s.billCount > 0
+              ? `, leaving out ${formatINR(emi)} of loan EMI a bill`
+              : ""}
+            {s.period === "card_year" && noCardYear
+              ? ". Using Jan to Dec; set the card year in About this card."
+              : ""}
+          </p>
+        </details>
+      )}
     </li>
   );
 }
@@ -902,8 +915,10 @@ export function CardList({
         </div>
       ) : (
         <ul className="space-y-3">
-          {cardsForReview(cards, today).map((c) => {
+          {cardsForMilestones(cards, today).map((c) => {
             const states = c.milestones.map((m) => milestoneState(m, today, c));
+            const allReached =
+              states.length > 0 && states.every((s) => s.status === "achieved");
             const latest = [...c.bills].sort((x, y) =>
               y.month.localeCompare(x.month),
             )[0];
@@ -911,6 +926,7 @@ export function CardList({
             return (
               <li
                 key={c.id}
+                data-card-id={c.id}
                 className={cn(
                   "surface-card overflow-hidden rounded-2xl border border-border/70 bg-card",
                   isOpen && "border-primary",
@@ -955,6 +971,70 @@ export function CardList({
                   </p>
                 </div>
 
+                <section
+                  aria-label={`${c.label} milestones`}
+                  className="border-t px-4 pb-3"
+                >
+                  <div className="flex min-h-11 items-center justify-between gap-3">
+                    <h3 className="text-xs font-medium text-muted-foreground">
+                      Milestones
+                    </h3>
+                    {allReached && (
+                      <span className="rounded-full bg-success-soft px-2 py-1 text-xs font-medium text-success">
+                        All milestones reached
+                      </span>
+                    )}
+                  </div>
+                  {states.length > 0 ? (
+                    <ul className="divide-y">
+                      {[...states]
+                        .sort(
+                          (a, b) =>
+                            Number(a.status === "achieved") -
+                            Number(b.status === "achieved"),
+                        )
+                        .map((s) => (
+                          <MilestoneRow
+                            key={s.id}
+                            s={s}
+                            noCardYear={!c.yearStart}
+                            emi={c.emiPerBill}
+                            showDetails={isOpen}
+                            onEdit={() =>
+                              setSheet({
+                                kind: "milestone",
+                                cardId: c.id,
+                                milestone: s,
+                              })
+                            }
+                          />
+                        ))}
+                    </ul>
+                  ) : (
+                    <p className="pb-2 text-sm text-muted-foreground">
+                      No milestones yet. Add one to track a reward.
+                    </p>
+                  )}
+                  {(isOpen || states.length === 0) && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="min-h-11 w-full"
+                      onClick={() =>
+                        setSheet({
+                          kind: "milestone",
+                          cardId: c.id,
+                          milestone: null,
+                        })
+                      }
+                    >
+                      <Plus />
+                      Add milestone
+                    </Button>
+                  )}
+                </section>
+
                 {isOpen && (
                   <div className="expand-in space-y-4 border-t px-4 pb-4 pt-2">
                     <BillsSection
@@ -966,90 +1046,6 @@ export function CardList({
                         setSheet({ kind: "bill", card: c, bill: b })
                       }
                     />
-
-                    <section
-                      aria-label={`${c.label} milestones`}
-                      className="border-t pt-3"
-                    >
-                      <h3 className="text-sm font-semibold">Milestones</h3>
-                      {states.length === 0 ? (
-                        <p className="py-3 text-sm text-muted-foreground">
-                          Add a milestone like a fee waiver or bonus points.
-                          Your logged bills count toward it automatically.
-                        </p>
-                      ) : (
-                        <ul className="divide-y">
-                          {states
-                            .filter(
-                              (s) =>
-                                s.status !== "achieved" &&
-                                s.status !== "missed",
-                            )
-                            .map((s) => (
-                              <MilestoneRow
-                                key={s.id}
-                                s={s}
-                                noCardYear={!c.yearStart}
-                                emi={c.emiPerBill}
-                                onEdit={() =>
-                                  setSheet({
-                                    kind: "milestone",
-                                    cardId: c.id,
-                                    milestone: s,
-                                  })
-                                }
-                              />
-                            ))}
-                        </ul>
-                      )}
-                      {states.some(
-                        (s) => s.status === "achieved" || s.status === "missed",
-                      ) && (
-                        <details className="border-t">
-                          <summary className="flex min-h-11 cursor-pointer items-center text-sm font-medium">
-                            Past and reached milestones
-                          </summary>
-                          <ul>
-                            {states
-                              .filter(
-                                (s) =>
-                                  s.status === "achieved" ||
-                                  s.status === "missed",
-                              )
-                              .map((s) => (
-                                <MilestoneRow
-                                  key={s.id}
-                                  s={s}
-                                  noCardYear={!c.yearStart}
-                                  emi={c.emiPerBill}
-                                  onEdit={() =>
-                                    setSheet({
-                                      kind: "milestone",
-                                      cardId: c.id,
-                                      milestone: s,
-                                    })
-                                  }
-                                />
-                              ))}
-                          </ul>
-                        </details>
-                      )}
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="min-h-11 w-full"
-                        onClick={() =>
-                          setSheet({
-                            kind: "milestone",
-                            cardId: c.id,
-                            milestone: null,
-                          })
-                        }
-                      >
-                        <Plus /> Add milestone
-                      </Button>
-                    </section>
 
                     <AboutCard
                       card={c}

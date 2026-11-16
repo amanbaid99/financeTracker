@@ -68,6 +68,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro:
       "Your credit cards and how close you are to fee waivers and bonus points. Nothing here counts as money you owe.",
     steps: [
+      "Each card shows milestone progress straight away. Cards with every milestone reached sit below the others. A new milestone period moves a card back up automatically.",
       "Add a card with its annual fee, the date its card year starts, rewards and benefits. Never enter the card number.",
       "Add milestones like a fee waiver or bonus points, with the spend target and when it resets.",
       "Log each monthly statement: the month and the amount. Tap +, then Log card spend, or Log bill on a card. Statements only count toward milestones.",
@@ -122,6 +123,17 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-11-16",
+    title: "Card milestones at a glance",
+    items: [
+      {
+        title: "Progress without opening a card",
+        text: "See each milestone, eligible spend and what is left right on the card. Cards with all milestones reached move below the rest and return when their period resets.",
+        show: { path: "/cards", target: "cards" },
+      },
+    ],
+  },
   {
     date: "2026-11-16",
     title: "A simpler Tracker",
