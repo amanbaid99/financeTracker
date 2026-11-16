@@ -44,7 +44,7 @@ export async function schedulePortfolioReview(supabase: Client, userId: string, 
         const major = majorChanges(parsed.success ? parsed.data : null, snapshot);
         const save = async (patch: Database["public"]["Tables"]["portfolio_reviews"]["Update"]) => {
           await supabase.from("portfolio_reviews").update(patch).eq("user_id", userId).eq("revision", revision).eq("enabled", true);
-          revalidatePath("/portfolio");
+          revalidatePath("/assets");
         };
         const base = { findings, major, ai: false };
         const settings = openRouterSettings();
@@ -88,7 +88,7 @@ export async function schedulePortfolioReview(supabase: Client, userId: string, 
         // Never turn a successful save into an error, or leave a failed review looking current.
         await supabase.from("portfolio_reviews").update({ state: "unavailable", result: null })
           .eq("user_id", userId).eq("revision", revision).eq("enabled", true);
-        revalidatePath("/portfolio");
+        revalidatePath("/assets");
       }
     });
   } catch {

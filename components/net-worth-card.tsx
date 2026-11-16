@@ -84,7 +84,7 @@ export function NetWorthCard({ history }: { history: NetWorthPoint[] }) {
         ))}
       </dl>
       <Link
-        href="/portfolio/net-worth"
+        href="/assets/net-worth"
         className="-mb-1 flex min-h-11 items-center justify-between border-t pt-1 text-sm font-medium text-primary"
       >
         See progress over time

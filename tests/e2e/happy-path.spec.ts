@@ -663,8 +663,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Go back" }).click();
 
   // Portfolio: everything held, split by asset class.
-  await tab("Portfolio").click();
-  await expect(page.getByRole("heading", { name: "Portfolio", exact: true })).toBeVisible();
+  await tab("Assets").click();
+  await expect(page.getByRole("heading", { name: "Assets", exact: true })).toBeVisible();
   await expect(page.getByText("Where your money is")).toBeVisible();
   await expect(
     page
@@ -691,7 +691,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   o = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,
   );
-  expect(o, "/portfolio overflows at 375px").toBeLessThanOrEqual(0);
+  expect(o, "/assets overflows at 375px").toBeLessThanOrEqual(0);
   // Edit, update or import right from Portfolio.
   await expect(page.getByRole("link", { name: "Import CAS", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Edit Index SIP" }).click();
@@ -757,7 +757,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   }
   expect(sent).toContain("[G1] house goal");
   // The AI portfolio review is hidden for now.
-  await tab("Portfolio").click();
+  await tab("Assets").click();
   await expect(page.getByRole("region", { name: "Portfolio overview" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Portfolio review" })).toHaveCount(0);
 
@@ -810,11 +810,13 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     await service.from("allowed_emails").delete().eq("email", friend);
   }
 
-  // Credit cards: benefits and a spend milestone with progress.
-  await tab("Credit").click();
+  // Liabilities: what you owe, what's due, then loans. Cards have their own page.
+  await tab("Liabilities").click();
   await expect(
-    page.getByRole("heading", { name: "Cards", exact: true }),
+    page.getByRole("heading", { name: "Liabilities", exact: true }),
   ).toBeVisible();
+  await expect(page.getByRole("region", { name: "What you owe" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Coming up" })).toBeVisible();
   // Loans: the loan goal from earlier is tracked as a loan too.
   const loansList = page.getByRole("region", { name: "Loans" });
   await expect(loansList).toContainText("Close my loan");
@@ -858,6 +860,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Add loan" }).click();
   await expect(loansList).toContainText("Store card EMI");
   await expect(loansList).toContainText("Loan on a card · its own card");
+  await page.getByRole("link", { name: /Cards and milestones/ }).click();
+  await expect(page.getByRole("heading", { name: "Cards", exact: true })).toBeVisible();
   await expect(
     page.getByText("Track your cards' benefits and milestones"),
   ).toBeVisible();
@@ -1004,7 +1008,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     page.getByRole("dialog", { name: "Log a Regalia Gold bill" }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
-  await expect(page).toHaveURL(/\/cards$/);
+  await expect(page).toHaveURL(/\/liabilities\/cards$/);
 
   // Guides in Settings: read what's new, and replay the section guides.
   await page.removeLocatorHandler(sectionGuide);
@@ -1027,16 +1031,16 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(tourCard).toBeVisible();
   await expect(page).toHaveURL(/\/goals$/);
   await tourCard.getByRole("button", { name: "Next" }).click();
-  await expect(page.getByRole("dialog").filter({ hasText: /of 10/ })).toBeVisible();
+  await expect(page.getByRole("dialog").filter({ hasText: /of 12/ })).toBeVisible();
   await page.getByRole("button", { name: "Skip" }).click();
-  await expect(page.getByRole("dialog").filter({ hasText: /of 10/ })).toHaveCount(0);
+  await expect(page.getByRole("dialog").filter({ hasText: /of 12/ })).toHaveCount(0);
   await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("button", { name: "Show guides again" }).click();
   await expect(
     page.getByText("Guides will show again when you open each section."),
   ).toBeVisible();
-  await tab("Credit").click();
-  const cardsGuide = page.getByRole("dialog", { name: "Loans and cards" });
+  await tab("Liabilities").click();
+  const cardsGuide = page.getByRole("dialog", { name: "Your liabilities" });
   await expect(cardsGuide).toContainText("Log bill");
   await page.screenshot({ path: "test-results/guide-375.png" });
   await cardsGuide.getByRole("button", { name: "Got it" }).click();
@@ -1080,26 +1084,27 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
   await expect(page.getByRole("link", { name: "Your plan", exact: true })).toBeVisible();
 
-  // Your order: move a goal and save; the plan follows it.
-  await page.getByRole("link", { name: "Your order", exact: true }).click();
+  // Your plan: the steps from today, then the split; Edit order lives there.
+  await page.getByRole("link", { name: "Your plan", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Your plan" })).toBeVisible();
+  await expect(page.getByText("You are here")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Where it goes, and why" })).toBeVisible();
+  await page.getByRole("link", { name: "Edit order" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Your order" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Your order" })).toBeVisible();
   await page.getByRole("button", { name: "Save this order" }).click();
   await expect(page.getByText("Your order is saved.")).toBeVisible();
-  await page.goto("/goals/plan");
-  await expect(page.getByRole("heading", { name: "Where it goes, and why" })).toBeVisible();
   await page.goto("/goals/order");
   await page.getByRole("button", { name: "Use the app's order instead" }).click();
   await expect(page.getByText("Back to the app's order.")).toBeVisible();
-
-  // Roadmap: the plan as steps from today.
-  await page.goto("/goals");
-  await page.getByRole("link", { name: "Roadmap", exact: true }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "Roadmap" })).toBeVisible();
-  await expect(page.getByText("You are here")).toBeVisible();
+  // Old links still land in the right place.
+  await page.goto("/goals/roadmap");
+  await expect(page).toHaveURL(/\/goals\/plan$/);
+  await page.goto("/cards");
+  await expect(page).toHaveURL(/\/liabilities\/cards$/);
 
   // Between jobs: covered till salary, with goals on hold meanwhile.
-  await page.goto("/goals/runway");
+  await page.goto("/liabilities/salary");
   await page.getByLabel("Earliest").fill("2027-01-05");
   await page.getByLabel("Latest").fill("2027-01-31");
   await page.getByRole("button", { name: "Save dates" }).click();
@@ -1123,13 +1128,13 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(focus).toContainText("Ask for the ₹22,000 owed to you");
   await expect(focus.getByRole("listitem")).toHaveCount(3);
   await page.screenshot({ path: "test-results/runway-375.png", fullPage: true });
-  await page.goto("/goals/runway");
+  await page.goto("/liabilities/salary");
   await page.getByRole("button", { name: "My salary has started" }).click();
   await expect(page.getByText(/Your goals are active again/)).toBeVisible();
   await page.goto("/goals");
 
   // Portfolio starts with net worth: holdings minus loans.
-  await tab("Portfolio").click();
+  await tab("Assets").click();
   await expect(page.getByText("You owe on loans", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: /See progress over time/ }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Net worth" })).toBeVisible();

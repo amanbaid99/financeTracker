@@ -14,7 +14,7 @@ export async function setPortfolioReviewsEnabled(enabled: boolean): Promise<{ ok
   const { error } = await supabase.from("portfolio_reviews").upsert({ user_id: user.id, enabled, state: "idle", revision: randomUUID(), result: null, baseline: null, reviewed_at: null, checked_at: null });
   if (error) return { ok: false, error: "Portfolio reviews are not available yet. Your holdings are saved as usual." };
   if (enabled) await schedulePortfolioReview(supabase, user.id, "manual");
-  revalidatePath("/portfolio");
+  revalidatePath("/assets");
   return { ok: true };
 }
 
@@ -26,6 +26,6 @@ export async function runPortfolioReview(): Promise<{ ok: boolean; error?: strin
   if (data.state === "pending" && data.checked_at && Date.now() - new Date(data.checked_at).getTime() < 180_000)
     return { ok: false, error: "A review is already running." };
   await schedulePortfolioReview(supabase, user.id, "manual");
-  revalidatePath("/portfolio");
+  revalidatePath("/assets");
   return { ok: true };
 }

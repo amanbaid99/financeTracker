@@ -80,7 +80,11 @@ export function nextEmiAfter(iso: string, day: number): string {
 }
 
 /** How many EMI dates fall after `fromISO` and on or before `toISO`. */
-export function emisBetween(fromISO: string, toISO: string, day: number): number {
+export function emisBetween(
+  fromISO: string,
+  toISO: string,
+  day: number,
+): number {
   if (toISO <= fromISO) return 0;
   let count = 0;
   let d = nextEmiAfter(fromISO, day);

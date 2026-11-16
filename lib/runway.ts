@@ -58,7 +58,8 @@ const ymd = (iso: string) => iso.slice(0, 10);
 
 /** Each EMI due after today and on or before `until`, skipping paid ones. */
 export function emisUntil(loans: Loan[], today: string, until: string) {
-  const out: { key: string; label: string; amount: number; date: string }[] = [];
+  const out: { key: string; label: string; amount: number; date: string }[] =
+    [];
   for (const l of loans) {
     const v = loanView(l, today);
     if (v.closed) continue;
@@ -170,9 +171,12 @@ export function runway(opts: {
       });
     }
     for (const l of lines)
-      if (l.source !== "bill" && opts.choices[l.key] === false) l.counted = false;
+      if (l.source !== "bill" && opts.choices[l.key] === false)
+        l.counted = false;
     lines.sort((a, b) => a.date.localeCompare(b.date) || b.amount - a.amount);
-    const due = lines.filter((l) => l.counted).reduce((s, l) => s + l.amount, 0);
+    const due = lines
+      .filter((l) => l.counted)
+      .reduce((s, l) => s + l.amount, 0);
     const left = liquid - due;
     const weeks = Math.max(1, days / 7);
     const livingCounted = lines.some((l) => l.key === "living" && l.counted);

@@ -29,7 +29,7 @@ export default async function NetWorthPage() {
 
   return (
     <main className="space-y-4">
-      <BackLink fallback="/portfolio" label="Portfolio" />
+      <BackLink fallback="/assets" label="Assets" />
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold tracking-tight">Net worth</h1>
         <p className="text-sm text-muted-foreground">
@@ -96,7 +96,7 @@ export default async function NetWorthPage() {
             ))}
         </ul>
         <Link
-          href="/portfolio"
+          href="/assets"
           className="inline-flex min-h-10 items-center text-sm font-medium text-primary"
         >
           See holdings
@@ -144,7 +144,7 @@ export default async function NetWorthPage() {
           <p className="text-sm text-muted-foreground">No loans to repay.</p>
         )}
         <Link
-          href="/cards#loans-h"
+          href="/liabilities#loans-h"
           className="inline-flex min-h-10 items-center text-sm font-medium text-primary"
         >
           See loans

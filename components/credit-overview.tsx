@@ -2,24 +2,20 @@
 
 import { useState } from "react";
 import { CardList } from "@/components/card-list";
-import { LoanList } from "@/components/loan-list";
 import { CreditPaymentProvider } from "@/components/credit-payment";
 import type { Card } from "@/lib/cards";
-import type { Loan } from "@/lib/loans";
 
 /**
- * Credit: cards first (statements logged for milestones only, never as
- * money owed), then loans with their EMIs.
+ * Cards: statements logged for milestones only, never as money owed. Loans
+ * and dues live on the Liabilities page.
  */
 export function CreditOverview({
   cards,
-  loans,
   today,
   initialOpen,
   action,
 }: {
   cards: Card[];
-  loans: Loan[];
   today: string;
   initialOpen: string | null;
   action: string | null;
@@ -45,11 +41,6 @@ export function CreditOverview({
           action={action}
         />
       </section>
-      <LoanList
-        loans={loans}
-        cards={cards.map((c) => ({ id: c.id, label: c.label }))}
-        today={today}
-      />
     </CreditPaymentProvider>
   );
 }

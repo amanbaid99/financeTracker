@@ -78,9 +78,15 @@ export function budget(opts: {
 }
 
 /** A plain word on the savings rate. 20% or more is a common guide. */
-export function rateNote(rate: number): { text: string; tone: "good" | "ok" | "low" } {
-  if (rate >= 0.3) return { text: "Strong. Well above the usual 20% guide.", tone: "good" };
-  if (rate >= 0.2) return { text: "Healthy. Meets the usual 20% guide.", tone: "good" };
-  if (rate >= 0.1) return { text: "A start. The usual guide is 20% or more.", tone: "ok" };
+export function rateNote(rate: number): {
+  text: string;
+  tone: "good" | "ok" | "low";
+} {
+  if (rate >= 0.3)
+    return { text: "Strong. Well above the usual 20% guide.", tone: "good" };
+  if (rate >= 0.2)
+    return { text: "Healthy. Meets the usual 20% guide.", tone: "good" };
+  if (rate >= 0.1)
+    return { text: "A start. The usual guide is 20% or more.", tone: "ok" };
   return { text: "Low. Try to work toward 20% of take-home.", tone: "low" };
 }

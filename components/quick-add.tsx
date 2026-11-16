@@ -43,7 +43,7 @@ const ACTIONS = [
     icon: RefreshCw,
   },
   {
-    href: "/cards?do=bill",
+    href: "/liabilities/cards?do=bill",
     label: "Log a card bill",
     hint: "Counts toward milestones",
     icon: Receipt,
@@ -70,8 +70,8 @@ const ACTIONS = [
 
 /** Where an action goes from this page: updates stay on Portfolio, and Import comes back to it. */
 function hrefFor(href: string, path: string): string {
-  if (path !== "/portfolio") return href;
-  if (href === "/goals?do=update") return "/portfolio?do=update";
+  if (path !== "/assets") return href;
+  if (href === "/goals?do=update") return "/assets?do=update";
   if (href === "/import") return "/import?from=portfolio";
   return href;
 }
@@ -88,10 +88,10 @@ export function QuickAdd() {
   const { seen, markSeen } = useGuides();
   const [open, setOpen] = useState(false);
   const actions =
-    path === "/portfolio"
+    path === "/assets"
       ? [
           {
-            href: "/portfolio?do=add",
+            href: "/assets?do=add",
             label: "Add an investment or saving",
             hint: "Track something you hold",
             icon: Wallet,

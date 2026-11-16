@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, MessageCircle, PieChart, Target } from "lucide-react";
+import { MessageCircle, PieChart, Receipt, Target } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
@@ -16,12 +16,12 @@ const TABS = [
     match: ["/goals", "/import"],
   },
   {
-    href: "/portfolio",
-    label: "Portfolio",
-    icon: PieChart,
-    match: ["/portfolio"],
+    href: "/liabilities",
+    label: "Liabilities",
+    icon: Receipt,
+    match: ["/liabilities"],
   },
-  { href: "/cards", label: "Credit", icon: CreditCard, match: ["/cards"] },
+  { href: "/assets", label: "Assets", icon: PieChart, match: ["/assets"] },
   { href: "/ask", label: "Ask", icon: MessageCircle, match: ["/ask"] },
 ];
 
@@ -46,7 +46,7 @@ export function AppTabs() {
           );
           return (
             <Fragment key={t.href}>
-              {showAdd && t.href === "/cards" && (
+              {showAdd && t.href === "/assets" && (
                 <li className="flex items-center justify-center">
                   <QuickAdd />
                 </li>

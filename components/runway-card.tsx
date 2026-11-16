@@ -123,7 +123,7 @@ export function RunwayCard({
       </p>
       {link && (
         <Link
-          href="/goals/runway"
+          href="/liabilities/salary"
           className="-mb-1 flex min-h-11 items-center justify-between border-t pt-1 text-sm font-medium text-primary"
         >
           See what&apos;s due and when

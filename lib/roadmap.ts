@@ -79,7 +79,7 @@ export function roadmap(opts: {
                   : ""
             }`,
       status: salary.covered === false ? "needs" : "info",
-      href: "/goals/runway",
+      href: "/liabilities/salary",
     });
     const restart = `${addMonths(salary.worst, 1).slice(0, 7)}-01`;
     if (goals.some((g) => goalStep(g, today, true) === "hold"))
@@ -138,7 +138,7 @@ export function roadmap(opts: {
         title: `${l.name} paid off`,
         sub: "Closed.",
         status: "done",
-        href: "/cards#loans-h",
+        href: "/liabilities#loans-h",
       });
       continue;
     }
@@ -162,7 +162,7 @@ export function roadmap(opts: {
         title: `${l.name} paid off`,
         sub: `${compact(v.state.balance)} left, cleared by EMIs.`,
         status: "on",
-        href: "/cards#loans-h",
+        href: "/liabilities#loans-h",
       });
   }
 

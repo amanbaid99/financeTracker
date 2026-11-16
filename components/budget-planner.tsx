@@ -531,7 +531,7 @@ export function BudgetPlanner({
           {loanEmis.map((l) => (
             <li key={l.name}>
               <Link
-                href="/cards"
+                href="/liabilities#loans-h"
                 className="flex min-h-12 items-center justify-between gap-3 rounded-lg px-1 py-2 hover:bg-muted/50"
               >
                 <span className="min-w-0">
@@ -539,7 +539,7 @@ export function BudgetPlanner({
                     EMI · {l.name}
                   </span>
                   <span className="block text-xs text-muted-foreground">
-                    Auto · from Credit
+                    Auto · from Liabilities
                   </span>
                 </span>
                 <span className="flex shrink-0 items-center gap-1">
@@ -554,13 +554,13 @@ export function BudgetPlanner({
           ))}
           <li>
             <Link
-              href="/portfolio"
+              href="/assets"
               className="flex min-h-12 items-center justify-between gap-3 rounded-lg px-1 py-2 hover:bg-muted/50"
             >
               <span className="min-w-0">
                 <span className="block font-medium">SIPs running</span>
                 <span className="block text-xs text-muted-foreground">
-                  Auto · from Portfolio
+                  Auto · from Assets
                 </span>
               </span>
               <span className="flex shrink-0 items-center gap-1">
@@ -575,13 +575,13 @@ export function BudgetPlanner({
         </ul>
         <div className="flex flex-wrap gap-2 pt-1">
           <Link
-            href="/cards"
+            href="/liabilities#loans-h"
             className="press rounded-full border bg-card px-3 py-1 text-sm hover:border-primary"
           >
             + Add a loan
           </Link>
           <Link
-            href="/portfolio?do=update"
+            href="/assets?do=update"
             className="press rounded-full border bg-card px-3 py-1 text-sm hover:border-primary"
           >
             + Change a SIP

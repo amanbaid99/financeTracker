@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
+import { BackLink } from "@/components/back-link";
 import { GuideButton } from "@/components/guides";
 import { CreditOverview } from "@/components/credit-overview";
 import { loadCards, loadLoans } from "@/lib/data";
 import { cardEmis } from "@/lib/loans";
 
-export const metadata: Metadata = { title: "Credit" };
+export const metadata: Metadata = { title: "Cards" };
 
-export default async function CreditPage({
+export default async function CardsPage({
   searchParams,
 }: {
   searchParams: Promise<{ open?: string; do?: string }>;
@@ -23,18 +24,19 @@ export default async function CreditPage({
   }));
   return (
     <main className="space-y-6">
+      <BackLink fallback="/liabilities" label="Liabilities" />
       <div>
         <div className="flex items-center gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Credit</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Cards</h1>
           <GuideButton id="cards" />
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
-          Your cards and their milestones, then your loans.
+          Log each statement and see how close you are to fee waivers and bonus
+          points. Card dues you owe live in Liabilities.
         </p>
       </div>
       <CreditOverview
         cards={withEmis}
-        loans={loans}
         today={today}
         initialOpen={open ?? null}
         action={action ?? null}

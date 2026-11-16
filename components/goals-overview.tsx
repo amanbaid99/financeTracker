@@ -105,31 +105,18 @@ export function GoalsOverview(props: {
           </div>
         )}
         <div className="flex flex-wrap items-center gap-x-4 border-t pt-2 text-xs font-medium">
-          {props.plan && (
-            <NextLink
-              href="/goals/plan"
-              className="inline-flex min-h-10 items-center text-primary"
-            >
-              Your plan
-            </NextLink>
-          )}
+          <NextLink
+            href="/goals/plan"
+            data-guide="plan-link"
+            className="inline-flex min-h-10 items-center text-primary"
+          >
+            Your plan
+          </NextLink>
           <NextLink
             href="/goals/budget"
             className="inline-flex min-h-10 items-center text-muted-foreground hover:text-primary"
           >
             {props.budget.income > 0 ? "Budget" : "Set budget"}
-          </NextLink>
-          <NextLink
-            href="/goals/roadmap"
-            className="inline-flex min-h-10 items-center font-medium text-primary"
-          >
-            Roadmap
-          </NextLink>
-          <NextLink
-            href="/goals/order"
-            className="inline-flex min-h-10 items-center text-muted-foreground hover:text-primary"
-          >
-            Your order
           </NextLink>
         </div>
       </section>

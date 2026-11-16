@@ -479,10 +479,10 @@ export function RunwayEditor({
                       )}
                       {l.source === "emi" && (
                         <Link
-                          href="/cards#loans-h"
+                          href="/liabilities#loans-h"
                           className="inline-flex min-h-10 items-center text-xs text-muted-foreground underline"
                         >
-                          Mark paid in Credit
+                          Mark paid in Liabilities
                         </Link>
                       )}
                     </div>

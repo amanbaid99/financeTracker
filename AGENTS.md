@@ -105,7 +105,8 @@ file; update its steps when the tab's flow changes.
 - `requireUser()` uses `getClaims()` (local JWT check), not `getUser()`. Keep it that way for speed.
 - `/home`, `/overview`, `/dashboard`, `/budget`, `/holdings` and other old routes redirect to
   `/goals` (`next.config.ts`), because installed PWAs remember their old start URL. Don't reuse
-  them.
+  them. `/portfolio` goes to `/assets`, `/cards` to `/liabilities/cards`, `/goals/runway` to
+  `/liabilities/salary` and `/goals/roadmap` to `/goals/plan`.
 - Quick actions from the + button (`components/quick-add.tsx`) navigate with `?do=...`, or, when
   already on that page, fire a `tracker:quick-action` event. Pages listen with `useQuickAction`.
   Clear the param with `clearParam` after opening.

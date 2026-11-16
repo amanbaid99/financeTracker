@@ -20,7 +20,7 @@ decisions are in [DECISIONS.md](DECISIONS.md).
 1. `proxy.ts` (Next 16's middleware) refreshes the Supabase session cookie on every request.
 2. `app/(app)/layout.tsx` is the signed-in shell: slim header (logo, settings), page content in a
    `ViewTransition`, the disclaimer footer, and the bottom tabs
-   (`AppTabs`: Goals, Portfolio, + (`QuickAdd`), Credit, Ask).
+   (`AppTabs`: Goals, Liabilities, + (`QuickAdd`), Assets, Ask).
 3. Pages call loaders in `lib/data.ts` (`loadGoals`, `loadCards`, `loadOnboarding`). They're
    wrapped in React `cache`, so several components on one page share one database round trip.
    `requireUser()` redirects to `/login` when signed out and to `/consent` when the privacy policy
@@ -41,15 +41,15 @@ decisions are in [DECISIONS.md](DECISIONS.md).
 | `/login`, `/auth/callback`  | Sign in (invite list checked by a database trigger), privacy consent   |
 | `/consent`                  | Re-accept the privacy policy after `PRIVACY_VERSION` changes           |
 | `/goals` | Start page: goal progress, next step and planning; updates and imports via + |
-| `/goals/plan` | The money plan: where it goes and why, and this month's SIP steps |
-| `/goals/runway` | Between jobs: salary dates, money you can reach, what's due till salary |
-| `/goals/order` | Your order for the plan (`goals.plan_rank`) |
-| `/goals/roadmap` | The plan as steps from today (`lib/roadmap.ts`) |
+| `/goals/plan` | Your plan: steps from today (`lib/roadmap.ts`), then where the money goes and why, and this month's SIP steps |
+| `/goals/order` | Your order for the plan (`goals.plan_rank`), from Edit order on Your plan |
 | `/goals/budget` | Budget: take-home, monthly costs, EMIs and SIPs from the app, free to invest |
 | `/goals/new`, `/goals/[id]` | New goal; one goal with its plan, investments and suggestions          |
-| `/portfolio`                | Net worth today, total value, allocation, holdings |
-| `/portfolio/net-worth`      | Net worth, what you own and what you owe over time, by asset class and by loan |
-| `/cards`                    | Credit: cards (statements for milestones only, advisor), then loans (next EMI, Mark paid) |
+| `/assets`                   | Net worth today, total value, allocation, holdings |
+| `/assets/net-worth`         | Net worth, what you own and what you owe over time, by asset class and by loan |
+| `/liabilities` | You owe (loans plus payments), Coming up (`lib/liabilities.ts`: EMIs, dues, bills-fund payments by date), loans |
+| `/liabilities/salary` | Covered till salary: salary dates, money you can reach, what's due till salary, your own payments |
+| `/liabilities/cards` | Cards: statements for milestones only, milestones, which card to use |
 | `/ask`                      | Private Q&A about your own numbers (AI, opt-in)                        |
 | `/help`                     | Searchable answers from `lib/help.ts`                                  |
 | `/whats-new`                | Every past release note from `RELEASES` in `lib/guides.ts`             |

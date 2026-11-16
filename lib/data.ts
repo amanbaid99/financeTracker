@@ -571,7 +571,7 @@ export const loadRunway = cache(async () => {
           monthlyLiving: b.budget.costs,
           bills,
           items,
-          choices: (p.runway_choices as Record<string, boolean>) ?? {},
+          choices: (p?.runway_choices as Record<string, boolean>) ?? {},
         })
       : null;
   return {
@@ -582,5 +582,7 @@ export const loadRunway = cache(async () => {
     items,
     today: g.today,
     monthlyLiving: b.budget.costs,
+    bills,
+    choices: (p?.runway_choices as Record<string, boolean>) ?? {},
   };
 });

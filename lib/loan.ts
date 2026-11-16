@@ -123,7 +123,10 @@ export function loanState(input: LoanInput, todayISO: string): LoanState {
     interestThisMonth: balance > 0 ? interestThisMonth : 0,
     principalThisMonth:
       balance > 0 ? Math.max(0, Math.min(balance, emi - interestThisMonth)) : 0,
-    endDate: monthsLeft === null || !nextEmi ? null : addMonths(nextEmi, monthsLeft - 1),
+    endDate:
+      monthsLeft === null || !nextEmi
+        ? null
+        : addMonths(nextEmi, monthsLeft - 1),
     emiDay,
     emisPaid: paid,
     nextEmi,

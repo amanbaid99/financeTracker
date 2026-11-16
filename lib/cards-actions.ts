@@ -30,7 +30,7 @@ function fail(e: unknown): Result {
 }
 
 function done(id?: string): Result {
-  revalidatePath("/cards");
+  revalidatePath("/liabilities/cards");
   return { ok: true, id };
 }
 

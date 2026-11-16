@@ -14,7 +14,7 @@ import { NetWorthCard } from "@/components/net-worth-card";
 // import { AI_CONSENT_VERSION } from "@/lib/legal";
 import { buildPortfolio } from "@/lib/portfolio";
 
-export const metadata: Metadata = { title: "Portfolio" };
+export const metadata: Metadata = { title: "Assets" };
 
 export default async function PortfolioPage({
   searchParams,
@@ -70,7 +70,7 @@ export default async function PortfolioPage({
           />
         )}
         <div className="flex items-center gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Portfolio</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Assets</h1>
           <GuideButton id="portfolio" />
         </div>
         <div className="space-y-3 rounded-2xl border bg-card p-6 text-center">
@@ -99,7 +99,7 @@ export default async function PortfolioPage({
     <main className="space-y-5">
       <div className="space-y-1">
         <div className="flex items-center gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Portfolio</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Assets</h1>
           <GuideButton id="portfolio" />
         </div>
       </div>

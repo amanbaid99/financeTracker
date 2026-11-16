@@ -67,7 +67,7 @@ export function betweenFocus(opts: {
       key: "setup",
       title: "Add your bank balances and card dues",
       why: "Two minutes, once. Then the numbers here are really yours.",
-      href: "/goals/runway",
+      href: "/liabilities/salary",
       tone: "do",
     });
   items.push(
@@ -76,14 +76,14 @@ export function betweenFocus(opts: {
           key: "spend",
           title: `Spend up to ${formatINR(worst.weekly)} a week`,
           why: "Food, travel and day-to-day things. Stay under it and you're on plan.",
-          href: "/goals/runway",
+          href: "/liabilities/salary",
           tone: "do",
         }
       : {
           key: "spend",
           title: "Only spend on what can't wait",
           why: "Clothes, outings and treats can wait till salary.",
-          href: "/goals/runway",
+          href: "/liabilities/salary",
           tone: "do",
         },
   );
@@ -96,7 +96,7 @@ export function betweenFocus(opts: {
       key: "next",
       title: `Next payment: ${formatINR(next.amount)} on ${dayMonth(next.date)}`,
       why: `${next.label}${days <= 7 ? ", this week" : `, in ${days} days`}. Keep this much in the bank.`,
-      href: "/goals/runway",
+      href: "/liabilities",
       tone: "do",
     });
   }
@@ -105,7 +105,7 @@ export function betweenFocus(opts: {
       key: "owed",
       title: `Ask for the ${formatINR(owedToYou)} owed to you`,
       why: "A friendly reminder now makes January easier.",
-      href: "/goals/runway",
+      href: "/liabilities/salary",
       tone: "do",
     });
 

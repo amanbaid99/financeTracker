@@ -15,13 +15,30 @@ export function formatINRCompact(n: number | null | undefined): string {
   if (n === null || n === undefined || !Number.isFinite(n)) return "₹0";
   const abs = Math.abs(n);
   const sign = n < 0 ? "-" : "";
-  const trim = (x: number) => (x >= 100 ? x.toFixed(0) : x.toFixed(x >= 10 ? 1 : 2)).replace(/\.?0+$/, "");
+  const trim = (x: number) =>
+    (x >= 100 ? x.toFixed(0) : x.toFixed(x >= 10 ? 1 : 2)).replace(
+      /\.?0+$/,
+      "",
+    );
   if (abs >= 1e7) return `${sign}₹${trim(abs / 1e7)}Cr`;
   if (abs >= 1e5) return `${sign}₹${trim(abs / 1e5)}L`;
   return formatINR(n);
 }
 
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
 
 export function monthName(m: number | null | undefined): string {
   if (!m || m < 1 || m > 12) return "";
@@ -48,9 +65,12 @@ export function pct(n: number, digits = 0): string {
 }
 
 /** Parses "1,20,000" or "120000" into integer rupees. */
-export function parseRupees(input: string | number | null | undefined): number | null {
+export function parseRupees(
+  input: string | number | null | undefined,
+): number | null {
   if (input === null || input === undefined) return null;
-  if (typeof input === "number") return Number.isFinite(input) ? Math.round(input) : null;
+  if (typeof input === "number")
+    return Number.isFinite(input) ? Math.round(input) : null;
   const cleaned = input.replace(/[₹,\s]/g, "");
   if (cleaned === "") return null;
   const n = Number(cleaned);
@@ -58,9 +78,14 @@ export function parseRupees(input: string | number | null | undefined): number |
 }
 
 /** "by 15 Mar 2030", "around Mar 2031 (no deadline)" or "no deadline, not reached yet". */
-export function goalWhen(g: { openEnded: boolean; targetDate: string | null; estimatedMonths: number | null }): string {
+export function goalWhen(g: {
+  openEnded: boolean;
+  targetDate: string | null;
+  estimatedMonths: number | null;
+}): string {
   if (!g.openEnded) return `by ${formatDate(g.targetDate)}`;
-  if (g.estimatedMonths === null) return "no deadline · not reached at current pace";
+  if (g.estimatedMonths === null)
+    return "no deadline · not reached at current pace";
   if (g.estimatedMonths === 0) return "no deadline · already there";
   return `no deadline · around ${formatDate(g.targetDate).slice(-8)}`;
 }

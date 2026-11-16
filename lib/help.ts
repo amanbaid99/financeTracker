@@ -59,7 +59,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "Can I choose which goal comes first?",
     a: [
-      "Yes. Open Your order (on Goals, under the summary) and move goals up or down, then save. The plan gives each goal what it needs to be on time before moving to the next, top first. A goal without a date is built over two years.",
+      "Yes. Open Your plan (on Goals, under the summary), tap Edit order, move goals up or down, then save. The plan gives each goal what it needs to be on time before moving to the next, top first. A goal without a date is built over two years.",
       "Bills funds always stay first, since a missed payment costs more. Your order replaces the app's own rules, and Use the app's order brings them back.",
     ],
     tags: "priority rank order first emergency",
@@ -67,10 +67,10 @@ export const HELP: HelpTopic[] = [
   {
     id: "roadmap",
     section: "Goals",
-    q: "What is the Roadmap?",
+    q: "What is Step by step on Your plan?",
     a: [
       "Your plan as steps on a line, starting from today: your first salary, bills months, loans paid off, and each goal's date. Green is on plan, grey is waiting for salary, amber needs you. Tap a step to open it.",
-      "Goals without a date sit at the end, and reached goals and closed loans fold into Done so far. Open it from Goals, under the summary.",
+      "Goals without a date sit at the end, and reached goals and closed loans fold into Done so far. It's at the top of Your plan, on Goals under the summary. The monthly split is below it.",
     ],
     tags: "timeline steps journey plan progress",
   },
@@ -79,7 +79,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "I'm between jobs. Why do my goals say On hold till salary?",
     a: [
-      "Add when your salary should start (the earliest and latest dates) in Covered till salary. Until then, savings goals wait, as planned, instead of showing Behind. Bills funds and loans still show their real state.",
+      "Add when your salary should start (the earliest and latest dates) in Covered till salary (on Liabilities). Until then, savings goals wait, as planned, instead of showing Behind. Bills funds and loans still show their real state.",
       "When the salary starts, tap My salary has started and your goals are active again.",
     ],
     tags: "job gap salary on hold paused",
@@ -145,21 +145,21 @@ export const HELP: HelpTopic[] = [
     ],
     tags: "income costs free to invest",
   },
-  // Portfolio
+  // Assets
   {
     id: "net-worth",
-    section: "Portfolio",
+    section: "Assets",
     q: "How is net worth worked out?",
     a: [
       "What you own (every investment and saving you track) minus what you owe on loans. Loan balances follow their EMI schedule, so they go down each month even before you update them.",
       "Card statements aren't counted. They're logged only for milestones, and the bank balance that pays them isn't tracked.",
-      "A point is saved each day something changes. Open See progress over time on Portfolio for the charts.",
+      "A point is saved each day something changes. Open See progress over time on Assets for the charts.",
     ],
     tags: "assets liabilities history chart",
   },
   {
     id: "liquid",
-    section: "Portfolio",
+    section: "Assets",
     q: "What counts as liquid money?",
     a: [
       "Savings accounts, FDs, liquid and overnight funds: money you can reach within a day or two. Arbitrage funds aren't counted, as they take a little longer and their value moves slightly.",
@@ -168,7 +168,7 @@ export const HELP: HelpTopic[] = [
   },
   {
     id: "asset-classes",
-    section: "Portfolio",
+    section: "Assets",
     q: "What are Retirement, Equity, Debt, Hybrid, Cash and Gold?",
     a: [
       "Retirement: EPF, PPF and NPS, locked until later. Equity: stocks and equity funds. Debt: liquid, debt and arbitrage funds and FDs. Hybrid: funds that mix equity and debt. Cash: savings accounts. Gold: gold ETFs and funds.",
@@ -178,7 +178,7 @@ export const HELP: HelpTopic[] = [
   },
   {
     id: "growth",
-    section: "Portfolio",
+    section: "Assets",
     q: "What does the growth figure on a holding mean?",
     a: [
       "Today's value compared with what you put in, when you've entered or imported that. It's simple growth, not a yearly return.",
@@ -187,7 +187,7 @@ export const HELP: HelpTopic[] = [
   },
   {
     id: "cas",
-    section: "Portfolio",
+    section: "Assets",
     q: "How do I import a CAS statement?",
     a: [
       "Tap +, then Import statement, and pick the PDF from CAMS, KFintech, CDSL or NSDL. The password is usually your PAN. It's read privately on the server and not kept.",
@@ -195,10 +195,21 @@ export const HELP: HelpTopic[] = [
     ],
     tags: "import pdf mutual funds update values",
   },
-  // Credit
+  // Liabilities
+  {
+    id: "liabilities",
+    section: "Liabilities",
+    q: "What's on the Liabilities tab?",
+    a: [
+      "You owe, at the top: your loans plus payments you've added, like card dues. Then Coming up: every EMI, card due and bills-fund payment by date, for the next two months, or till your salary while you're between jobs. Tap Paid once each one has gone out.",
+      "Your loans are below that. Cards and their milestones have their own page, linked at the bottom.",
+      "Card statements you log for milestones never count as money owed. To count what you'll pay on a card, add it as a payment with its due date.",
+    ],
+    tags: "debt owe dues payments emi card credit loans",
+  },
   {
     id: "card-statements",
-    section: "Credit",
+    section: "Liabilities",
     q: "Why don't card bills have a due date or Mark paid?",
     a: [
       "Statements are logged only to count toward milestones like fee waivers and bonus points. Tracking them as money owed made debt look bigger than it is, since the bank balance that pays them isn't tracked.",
@@ -207,7 +218,7 @@ export const HELP: HelpTopic[] = [
   },
   {
     id: "milestones",
-    section: "Credit",
+    section: "Liabilities",
     q: "How do card milestones count my spending?",
     a: [
       "Each logged statement in the current period counts, from when the card year or quarter starts. EMIs on the card are left out. Progress moves only when you log another statement.",
@@ -216,7 +227,7 @@ export const HELP: HelpTopic[] = [
   },
   {
     id: "loan-mark-paid",
-    section: "Credit",
+    section: "Liabilities",
     q: "When should I tap Mark paid on a loan?",
     a: [
       "Once the EMI has gone out. It shows from the 1st of the month the EMI is due. What you owe goes down and the progress bar moves, with Undo for a few seconds.",

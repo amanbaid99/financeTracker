@@ -71,7 +71,7 @@ export function NextStep({
       key: "between-jobs",
       title: "Between jobs?",
       text: "Add when your salary should start, and see if you're covered till then.",
-      action: { label: "Check", href: "/goals/runway" },
+      action: { label: "Check", href: "/liabilities/salary" },
     });
   if (plan && steps > 0)
     options.push({

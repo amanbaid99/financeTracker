@@ -42,7 +42,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "The card below shows what's saved, what goes in each month and how many goals are on track. Goals are grouped by when they're due, from next month to 5+ years. Must-haves come first in each group. A label on each says On track, Behind or what needs action. Covered bills funds, loans covered by EMIs and reached goals are folded away. If a bills fund develops a shortfall, it returns to the active list.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
       "Between jobs? Where you are shows if your money lasts until your salary, with a weekly amount to spend. Your savings goals wait, folded under On hold till salary, until then.",
-      "Your order (under the summary) lets you choose which goals the plan funds first, and Roadmap shows the plan as steps from today.",
+      "Your plan (under the summary) shows the steps from today, then how your monthly money is split. Edit order there to choose which goals come first.",
       "A Next step card shows when there's something to do: set your budget, start a SIP plan or set up this month's SIPs. Tap Not now to hide it. Got a bonus or idle savings? Tap +, then I have extra money.",
       "Your plan has its own page: tap Your plan. It shows where the money goes and why, then This month lists what to add to your SIPs. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
       "Open a goal for its What to do box. If your plan can't cover it, it says how much more a month keeps it on track.",
@@ -52,8 +52,8 @@ export const GUIDES: Record<GuideId, Guide> = {
     ],
   },
   portfolio: {
-    title: "Your portfolio",
-    intro: "Everything you hold, across all goals, in one place.",
+    title: "Your assets",
+    intro: "Everything you own, across all goals, in one place.",
     steps: [
       "Net worth at the top is what you own minus what you owe on loans. Tap See progress over time for charts of net worth, what you own and what you owe, plus each loan's progress.",
       "The overview shows your total, monthly investments and asset split. A short line sums it up, then a bar and small chips with each share. Tap a chip to filter the holdings below, and again to clear it. Switch to Instrument to see it by kind of investment, like mutual funds, stocks or EPF.",
@@ -63,9 +63,13 @@ export const GUIDES: Record<GuideId, Guide> = {
     ],
   },
   cards: {
-    title: "Loans and cards",
-    intro: "Your cards and their milestones, then how far each loan has come.",
+    title: "Your liabilities",
+    intro:
+      "What you owe, and what's due when. Cards and their milestones have their own page here.",
     steps: [
+      "You owe, at the top, adds up your loans and the payments you've added, like card dues.",
+      "Coming up lists every EMI, card due and bills-fund payment by date, month by month. Tap Paid once it's gone out, with Undo for a few seconds. Add a payment, like this month's card dues, from the link at the bottom.",
+      "Between jobs, Covered till salary sits above it, and Coming up runs till your salary.",
       "Add each loan with its type, the amount you withdrew, the EMI and what you owe now. For a loan on a card, pick one of your credit cards or a separate card the lender gave you, with its bill and payment dates.",
       "Each loan shows its next EMI and how soon it's due. Tap Mark paid once you've paid: what you owe goes down and the progress bar moves. A page confirmation offers Undo for 10 seconds.",
       "Loan balances, payoff dates and elapsed EMI counts are estimates based on the schedule. Payments you explicitly record appear inside each loan. Closed loans are folded below active loans.",
@@ -73,7 +77,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Add a card with its annual fee, the date its card year starts, rewards and benefits. Never enter the card number.",
       "Add milestones like a fee waiver or bonus points, with the spend target and when it resets.",
       "Log each monthly statement: the month and the amount. Statements only count toward milestones. They aren't tracked as money you owe, and card-loan EMIs are left out.",
-      "Tap + (or Log bill on a card) to record each month's statement. The card shows your latest statement.",
+      "Open Cards and milestones at the bottom of Liabilities. Tap + (or Log bill on a card) to record each month's statement. The card shows your latest statement.",
       "When a new card year or quarter starts, progress counts the statements in that new period.",
       "Open Which card to use for suggestions on where planned spending could help a milestone. Open Why this card for the breakdown. Do not spend extra just to reach a reward.",
       "Read features fills in a card from its features PDF or your description. You tick what to keep.",
@@ -117,6 +121,26 @@ export interface Release {
 export const RELEASES: Release[] = [
   {
     date: "2026-11-16",
+    title: "Liabilities and Assets",
+    items: [
+      {
+        title: "Liabilities",
+        text: "Credit is now Liabilities: what you owe in one number, then everything due by date, with Paid on each. Loans are below, and cards with their milestones have their own page.",
+        show: { path: "/liabilities", target: "coming-up" },
+      },
+      {
+        title: "Assets",
+        text: "Portfolio is now Assets: your net worth, where your money is and every holding.",
+      },
+      {
+        title: "One plan page",
+        text: "Roadmap and the monthly split are now one page, Your plan. Edit order lives there too.",
+        show: { path: "/goals/plan", target: "roadmap" },
+      },
+    ],
+  },
+  {
+    date: "2026-11-16",
     title: "A calmer plan for between jobs",
     items: [
       {
@@ -127,12 +151,12 @@ export const RELEASES: Release[] = [
       {
         title: "Your roadmap",
         text: "See your plan as steps from today: first salary, bills months, loans paid off and each goal's date. Green is on plan, grey waits for salary, amber needs you.",
-        show: { path: "/goals/roadmap", target: "roadmap" },
+        show: { path: "/goals/plan", target: "roadmap" },
       },
       {
         title: "Covered till salary",
         text: "Add the earliest and latest your salary could start. See whether your money lasts till then, with a weekly amount you can spend and stay on plan.",
-        show: { path: "/goals/runway", target: "runway" },
+        show: { path: "/liabilities/salary", target: "runway" },
       },
       {
         title: "On hold, not behind",
