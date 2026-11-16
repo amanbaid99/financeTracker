@@ -17,7 +17,8 @@ Last updated: 16 Nov 2026.
   jobs and a calm note instead of a deficit while there's no income.
   Goals is just the goals. Every goal shows in one list in plan order (`lib/goal-order.ts`):
   "Focus on these first" (top three), then "Everything else". Nothing is folded. Loans are goals:
-  monthly lender balance confirmations; confirmed balances stay until the next update. Older unconfirmed balances remain schedule estimates.
+  monthly lender balance confirmations; confirmed balances stay until the next update. Older unconfirmed balances remain schedule estimates. Loan cards show repaid of
+  withdrawn (or what's left) and the end date, plus a second bar when saving to close early.
 - **Assets** (`/assets`, was Portfolio): net worth today (holdings minus loans) linking to `/assets/net-worth` (three
   charts, own by asset type, owe by loan), allocation by asset type or instrument, holdings with
   search and sort, portfolio review (hidden for now, commented out in `app/(app)/assets/page.tsx`), CAS import with review, withdrawal check and insights.

@@ -192,7 +192,7 @@ export const HELP: HelpTopic[] = [
     q: "Where are my loans?",
     a: [
       "Loans are goals. Add one with New goal, then Close my loan, with what you owe now and the EMI. A loan on a card works the same way.",
-      "Open a loan and tap Update loan balance. Enter the outstanding principal from your lender and confirm. It stays until your next update, with a reminder from the 2nd each month. Amount borrowed is optional; when known, it shows principal repaid. Older unconfirmed balances and future payoff figures are estimates.",
+      "Open a loan and tap Update loan balance. Enter the outstanding principal from your lender and confirm. It stays until your next update, with a reminder from the 2nd each month. Amount borrowed is optional; when known, the loan card in your goals shows what's repaid of it, otherwise what's left, with the end date. If you're saving to close it early, a second bar shows that saving. Older unconfirmed balances and future payoff figures are estimates.",
     ],
     tags: "loan emi debt owe balance outstanding personal card",
   },
