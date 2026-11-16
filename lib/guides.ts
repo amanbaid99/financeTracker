@@ -58,7 +58,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     steps: [
       "What you owe lists each loan with its balance and how much is repaid. Tap one to open its goal and update it.",
       "Net worth at the top is what you own minus what you owe on loans. Tap See progress over time for charts of net worth, what you own and what you owe, plus each loan's progress.",
-      "The overview shows your total, monthly investments and asset split. A short line sums it up, then a bar and small chips with each share. Tap a chip to filter the holdings below, and again to clear it. Switch to Instrument to see it by kind of investment, like mutual funds, stocks or EPF.",
+      "The overview shows your total, monthly investments and asset split. One bar and small chips with each share. Tap a chip to filter the holdings below, and again to clear it. Switch to Instrument to see it by kind of investment, like mutual funds, stocks or EPF.",
       "Search holdings by name or category. Sort by value, name or simple growth. Unknown growth comes last. Growth compares today's value with what you put in, not an annual return.",
       "Last edited is when a holding record changed, not a market price date. CAS import dates are recorded for new successful imports; older dates may be unknown.",
       "Tap + to add an investment or saving, update values or import a CAS statement. Tap a holding to edit it.",

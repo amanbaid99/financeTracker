@@ -113,7 +113,7 @@ export function PortfolioOverview({
             />
           )}
         </div>
-        <p className="border-t pt-2 text-[11px] text-muted-foreground">
+        <p className="mt-3 border-t pt-2 text-[11px] text-muted-foreground">
           {edited ? `Last edited ${edited}` : "Edit date unavailable"}
           {imported
             ? ` · CAS imported ${imported}`
