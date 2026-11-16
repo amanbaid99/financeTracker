@@ -17,6 +17,7 @@ import { GoalIcon } from "@/components/goal-icon";
 import { Progress } from "@/components/ui/progress";
 import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
 import { orderGoals } from "@/lib/goal-order";
+import { monthYear } from "@/lib/goal-summary";
 import {
   goalHint,
   goalStatus,
@@ -56,6 +57,51 @@ export function StatusPill({ status }: { status: GoalStatus }) {
     >
       {status.label}
     </span>
+  );
+}
+
+/** A loan's repayment: what's repaid of what you withdrew, or what's left. */
+function LoanRepaid({ g }: { g: TrackedGoal }) {
+  const st = g.loanState!;
+  const principal = g.loan?.principal ?? null;
+  const repaid =
+    principal && principal > 0
+      ? Math.max(0, Math.min(principal, principal - st.balance))
+      : null;
+  const end = st.endDate ? monthYear(st.endDate) : null;
+  return (
+    <>
+      {repaid !== null && principal ? (
+        <Progress
+          className="h-1.5"
+          value={(repaid / principal) * 100}
+          tone="neutral"
+          label={`${g.name} repaid`}
+        />
+      ) : null}
+      <p className="tabular flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm">
+        <span>
+          {repaid !== null && principal ? (
+            <>
+              {formatINRCompact(repaid)}
+              <span className="text-muted-foreground">
+                {` repaid of ${formatINRCompact(principal)}`}
+              </span>
+            </>
+          ) : (
+            <>
+              {formatINRCompact(st.balance)}
+              <span className="text-muted-foreground"> left to repay</span>
+            </>
+          )}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {repaid !== null ? `${formatINRCompact(st.balance)} left` : ""}
+          {repaid !== null && end ? " · " : ""}
+          {end ? `ends ${end}` : ""}
+        </span>
+      </p>
+    </>
   );
 }
 
@@ -146,8 +192,14 @@ export function GoalList({
                       .join(" · ")}
                   </span>
                 )}
+                {g.loanState && <LoanRepaid g={g} />}
                 {!(g.loanState && g.emisCloseFirst) && (
                   <>
+                    {g.loanState && (
+                      <p className="pt-1 text-xs font-medium text-muted-foreground">
+                        Saved to close it early
+                      </p>
+                    )}
                     <Progress
                       className="h-1.5"
                       value={g.progress * 100}

@@ -655,7 +655,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(
     page.getByRole("region", { name: "Already up to date" }),
   ).toContainText("Index SIP");
-  await expect(page.getByRole("button", { name: "Yes, save" })).toBeDisabled();
+  // Nothing changed, but saving still counts as this month's update.
+  await expect(page.getByRole("button", { name: "Yes, save" })).toBeEnabled();
   await page.getByRole("button", { name: "Go back" }).click();
 
   // Portfolio: everything held, split by asset class.
@@ -890,7 +891,10 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText("Target reached", { exact: true })).toBeVisible();
   await expect(page.getByText("Counted from 2 bills")).toBeVisible();
   // Read features: two readings, checked against the text; nothing saved
-  // until chosen. Turning on AI is asked for right here.
+  // until chosen. Turning on AI is asked for right here. A card with every
+  // milestone reached moves down the list, so its details may be closed.
+  if (!(await page.getByRole("button", { name: "Read features" }).isVisible()))
+    await page.getByRole("button", { name: "About this card" }).click();
   await page.getByRole("button", { name: "Read features" }).click();
   await page.getByRole("tab", { name: "Describe it" }).click();
   await page
