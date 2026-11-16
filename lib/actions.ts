@@ -20,7 +20,8 @@ import {
 } from "@/lib/theme";
 
 export type ActionResult =
-  { ok: true; id?: string } | { ok: false; error: string };
+  | { ok: true; id?: string }
+  | { ok: false; error: string };
 
 const money = z.number().int().min(0).max(1e13);
 const uuid = z.string().uuid();

@@ -138,18 +138,18 @@ export const HELP: HelpTopic[] = [
   // Assets
   {
     id: "net-worth",
-    section: "Assets",
+    section: "Net worth",
     q: "How is net worth worked out?",
     a: [
       "What you own (every investment and saving you track) minus what you owe on loans. Loan balances follow their EMI schedule, so they go down each month even before you update them.",
       "Card statements aren't counted. They're logged only for milestones, and the bank balance that pays them isn't tracked.",
-      "A point is saved each day something changes. Open See progress over time on Assets for the charts.",
+      "A point is saved each day something changes. Open See progress over time on Net worth for the charts.",
     ],
     tags: "assets loans owe history chart",
   },
   {
     id: "liquid",
-    section: "Assets",
+    section: "Net worth",
     q: "What counts as liquid money?",
     a: [
       "Savings accounts, FDs, liquid and overnight funds: money you can reach within a day or two. Arbitrage funds aren't counted, as they take a little longer and their value moves slightly.",
@@ -158,7 +158,7 @@ export const HELP: HelpTopic[] = [
   },
   {
     id: "asset-classes",
-    section: "Assets",
+    section: "Net worth",
     q: "What are Retirement, Equity, Debt, Hybrid, Cash and Gold?",
     a: [
       "Retirement: EPF, PPF and NPS, locked until later. Equity: stocks and equity funds. Debt: liquid, debt and arbitrage funds and FDs. Hybrid: funds that mix equity and debt. Cash: savings accounts. Gold: gold ETFs and funds.",
@@ -168,7 +168,7 @@ export const HELP: HelpTopic[] = [
   },
   {
     id: "growth",
-    section: "Assets",
+    section: "Net worth",
     q: "What does the growth figure on a holding mean?",
     a: [
       "Today's value compared with what you put in, when you've entered or imported that. It's simple growth, not a yearly return.",
@@ -177,7 +177,7 @@ export const HELP: HelpTopic[] = [
   },
   {
     id: "cas",
-    section: "Assets",
+    section: "Net worth",
     q: "How do I import a CAS statement?",
     a: [
       "Tap +, then Import statement, and pick the PDF from CAMS, KFintech, CDSL or NSDL. The password is usually your PAN. It's read privately on the server and not kept.",

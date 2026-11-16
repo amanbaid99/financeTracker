@@ -20,7 +20,7 @@ const TABS = [
     not: BUDGET,
   },
   { href: "/goals/budget", label: "Budget", icon: Wallet, match: BUDGET },
-  { href: "/assets", label: "Assets", icon: PieChart, match: ["/assets"] },
+  { href: "/assets", label: "Net worth", icon: PieChart, match: ["/assets"] },
   { href: "/cards", label: "Cards", icon: CreditCard, match: ["/cards"] },
 ];
 

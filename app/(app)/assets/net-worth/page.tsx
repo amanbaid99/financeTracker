@@ -9,7 +9,7 @@ import { loanView } from "@/lib/loans";
 import { buildPortfolio, swatchFor } from "@/lib/portfolio";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Net worth" };
+export const metadata: Metadata = { title: "Net worth over time" };
 
 export default async function NetWorthPage() {
   const [{ investments, today }, loans, worth] = await Promise.all([
@@ -29,9 +29,9 @@ export default async function NetWorthPage() {
 
   return (
     <main className="space-y-4">
-      <BackLink fallback="/assets" label="Assets" />
+      <BackLink fallback="/assets" label="Net worth" />
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Net worth</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Over time</h1>
         <p className="text-sm text-muted-foreground">
           What you own minus what you owe on loans, and how each has moved. Tap
           a chart to see a day.

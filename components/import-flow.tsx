@@ -275,7 +275,7 @@ export function ImportFlow({
             </ul>
             <p className="text-xs text-muted-foreground">
               Worked out from the values you confirmed. If portfolio reviews are
-              on, a fuller review shows in Assets shortly. Not investment
+              on, a fuller review shows in Net worth shortly. Not investment
               advice.
             </p>
           </section>
@@ -286,7 +286,7 @@ export function ImportFlow({
             variant="outline"
             onClick={() => router.push("/assets")}
           >
-            See Assets
+            See Net worth
           </Button>
           <Button type="button" onClick={() => router.push(back.href)}>
             Back to {back.label.toLowerCase()}

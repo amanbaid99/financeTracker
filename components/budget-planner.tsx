@@ -586,7 +586,7 @@ export function BudgetPlanner({
               <span className="min-w-0">
                 <span className="block font-medium">SIPs running</span>
                 <span className="block text-xs text-muted-foreground">
-                  Auto · from Assets
+                  Auto · from your investments
                 </span>
               </span>
               <span className="flex shrink-0 items-center gap-1">

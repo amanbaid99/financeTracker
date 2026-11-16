@@ -19,7 +19,8 @@ Last updated: 16 Nov 2026.
   "Focus on these first" (top three), then "Everything else". Nothing is folded. Loans are goals:
   monthly lender balance confirmations; confirmed balances stay until the next update. Older unconfirmed balances remain schedule estimates. Loan cards show repaid of
   withdrawn (or what's left) and the end date, plus a second bar when saving to close early.
-- **Assets** (`/assets`, was Portfolio): net worth today (holdings minus loans) linking to `/assets/net-worth` (three
+- **Net worth** tab (`/assets`, was Assets and Portfolio): net worth today (holdings minus loans),
+  What you owe (each loan with balance and repaid, linking to its goal, `components/owe-list.tsx`), linking to `/assets/net-worth` (three
   charts, own by asset type, owe by loan), allocation by asset type or instrument, holdings with
   search and sort, portfolio review (hidden for now, commented out in `app/(app)/assets/page.tsx`), CAS import with review, withdrawal check and insights.
 - **Cards** (`/cards`): statements logged for milestones only, never as money owed, milestones,
@@ -27,7 +28,7 @@ Last updated: 16 Nov 2026.
 - **Ask**: private Q&A (codes only to AI), amount questions split by the app's own planner.
 - **Settings**: look, invites (admin), Ask on/off, Help and guides (Help page, What's new archive,
   Take the tour, show guides again), account and delete.
-- **App shell**: bottom bar (Goals, Budget, +, Assets, Cards), Ask and Settings in the header, Back to the exact previous screen,
+- **App shell**: bottom bar (Goals, Budget, +, Net worth, Cards), Ask and Settings in the header, Back to the exact previous screen,
   error screens with Try again, offline page via a service worker, toasts with Undo, drafts for
   new goals and loans, first-visit guides, What's new with "Show me around".
 - **Checks**: GitHub Action runs lint, typecheck, unit and Python tests on every push.

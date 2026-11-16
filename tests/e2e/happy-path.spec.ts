@@ -660,8 +660,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Go back" }).click();
 
   // Portfolio: everything held, split by asset class.
-  await tab("Assets").click();
-  await expect(page.getByRole("heading", { name: "Assets", exact: true })).toBeVisible();
+  await tab("Net worth").click();
+  await expect(page.getByRole("heading", { name: "Net worth", exact: true })).toBeVisible();
+  // Net worth shows both sides: what you own and what you owe on loans.
+  await expect(page.getByRole("region", { name: "What you owe" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "What you own" })).toBeVisible();
   await expect(page.getByText("Where your money is")).toBeVisible();
   await expect(
     page
@@ -754,7 +757,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   }
   expect(sent).toContain("[G1] house goal");
   // The AI portfolio review is hidden for now.
-  await tab("Assets").click();
+  await tab("Net worth").click();
   await expect(page.getByRole("region", { name: "Portfolio overview" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Portfolio review" })).toHaveCount(0);
 
@@ -984,9 +987,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(tourCard).toBeVisible();
   await expect(page).toHaveURL(/\/goals$/);
   await tourCard.getByRole("button", { name: "Next" }).click();
-  await expect(page.getByRole("dialog").filter({ hasText: /of 8/ })).toBeVisible();
+  await expect(page.getByRole("dialog").filter({ hasText: /of 9/ })).toBeVisible();
   await page.getByRole("button", { name: "Skip" }).click();
-  await expect(page.getByRole("dialog").filter({ hasText: /of 8/ })).toHaveCount(0);
+  await expect(page.getByRole("dialog").filter({ hasText: /of 9/ })).toHaveCount(0);
   await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("button", { name: "Show guides again" }).click();
   await expect(
@@ -1080,7 +1083,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.goto("/goals");
 
   // Portfolio starts with net worth: holdings minus loans.
-  await tab("Assets").click();
+  await tab("Net worth").click();
   await expect(page.getByText("You owe on loans", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: /See progress over time/ }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Net worth" })).toBeVisible();

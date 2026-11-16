@@ -38,6 +38,12 @@ export const INTRO_TOUR: TourStep[] = [
   },
   {
     path: "/assets",
+    target: "owe",
+    title: "What you owe",
+    text: "Each loan with its balance and how much is repaid. Tap one to open its goal.",
+  },
+  {
+    path: "/assets",
     target: "allocation",
     title: "Where your money is",
     text: "By asset type or by instrument. Tap a chip to filter your holdings.",

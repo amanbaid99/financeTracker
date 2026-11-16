@@ -13,7 +13,7 @@ export default async function ImportPage({
   // Back to where you came from: Portfolio, or Goals by default.
   const back =
     (await searchParams).from === "portfolio"
-      ? { href: "/assets", label: "Assets" }
+      ? { href: "/assets", label: "Net worth" }
       : { href: "/goals", label: "Your goals" };
   return (
     <main className="space-y-4">

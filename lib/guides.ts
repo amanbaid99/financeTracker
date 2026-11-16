@@ -3,7 +3,13 @@
 // from server and client code.
 
 export type GuideId =
-  "goals" | "portfolio" | "cards" | "budget" | "ask" | "import" | "quick-add";
+  | "goals"
+  | "portfolio"
+  | "cards"
+  | "budget"
+  | "ask"
+  | "import"
+  | "quick-add";
 
 export interface Guide {
   title: string;
@@ -47,9 +53,10 @@ export const GUIDES: Record<GuideId, Guide> = {
     ],
   },
   portfolio: {
-    title: "Your assets",
-    intro: "Everything you own, across all goals, in one place.",
+    title: "Your net worth",
+    intro: "What you own and what you owe, in one place.",
     steps: [
+      "What you owe lists each loan with its balance and how much is repaid. Tap one to open its goal and update it.",
       "Net worth at the top is what you own minus what you owe on loans. Tap See progress over time for charts of net worth, what you own and what you owe, plus each loan's progress.",
       "The overview shows your total, monthly investments and asset split. A short line sums it up, then a bar and small chips with each share. Tap a chip to filter the holdings below, and again to clear it. Switch to Instrument to see it by kind of investment, like mutual funds, stocks or EPF.",
       "Search holdings by name or category. Sort by value, name or simple growth. Unknown growth comes last. Growth compares today's value with what you put in, not an annual return.",
@@ -152,13 +159,18 @@ export const RELEASES: Release[] = [
     title: "A simpler Tracker",
     items: [
       {
-        title: "Goals, Budget, Assets and Cards",
+        title: "Goals, Budget, Net worth and Cards",
         text: "Four tabs. Loans are goals now, with their balance going down on its own as EMIs pass. Ask is the speech bubble at the top.",
       },
       {
         title: "One list of goals",
         text: "Every goal in your order, nothing folded away. The top three are the ones to focus on first.",
         show: { path: "/goals", target: "goal-list" },
+      },
+      {
+        title: "Net worth",
+        text: "Assets is now Net worth: what you own and what you owe on one tab. Each loan shows its balance and how much is repaid.",
+        show: { path: "/assets", target: "owe" },
       },
       {
         title: "A Budget tab",

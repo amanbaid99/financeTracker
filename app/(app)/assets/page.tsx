@@ -9,12 +9,13 @@ import { PortfolioOverview } from "@/components/portfolio-overview";
 import { PortfolioHoldings } from "@/components/portfolio-holdings";
 import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
-import { loadGoals, loadNetWorth, loadSnapshot } from "@/lib/data";
+import { loadGoals, loadLoans, loadNetWorth, loadSnapshot } from "@/lib/data";
+import { OweList } from "@/components/owe-list";
 import { NetWorthCard } from "@/components/net-worth-card";
 // import { AI_CONSENT_VERSION } from "@/lib/legal";
 import { buildPortfolio } from "@/lib/portfolio";
 
-export const metadata: Metadata = { title: "Assets" };
+export const metadata: Metadata = { title: "Net worth" };
 
 export default async function PortfolioPage({
   searchParams,
@@ -23,11 +24,13 @@ export default async function PortfolioPage({
 }) {
   const { do: action } = await searchParams;
   // One snapshot for everything here (shared with the layout).
-  const [{ investments, links, goals }, snap, worth] = await Promise.all([
-    loadGoals(),
-    loadSnapshot(),
-    loadNetWorth(),
-  ]);
+  const [{ investments, links, goals, today }, snap, worth, loans] =
+    await Promise.all([
+      loadGoals(),
+      loadSnapshot(),
+      loadNetWorth(),
+      loadLoans(),
+    ]);
   const importHistory = { data: snap.settings, error: null };
   // The AI portfolio review is hidden for now. To bring it back, uncomment
   // this (and the imports above) and pass review={reviewCard} below.
@@ -70,7 +73,7 @@ export default async function PortfolioPage({
           />
         )}
         <div className="flex items-center gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Assets</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Net worth</h1>
           <GuideButton id="portfolio" />
         </div>
         <div className="space-y-3 rounded-2xl border bg-card p-6 text-center">
@@ -99,7 +102,7 @@ export default async function PortfolioPage({
     <main className="space-y-5">
       <div className="space-y-1">
         <div className="flex items-center gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Assets</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Net worth</h1>
           <GuideButton id="portfolio" />
         </div>
       </div>
@@ -112,6 +115,8 @@ export default async function PortfolioPage({
       )}
 
       <NetWorthCard history={worth.history} />
+      <OweList loans={loans} today={today} />
+      <h2 className="-mb-2 px-0.5 text-lg font-semibold">What you own</h2>
       <PortfolioOverview
         portfolio={p}
         investments={investments}
