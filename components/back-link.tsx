@@ -24,6 +24,7 @@ const LABELS: [RegExp, string][] = [
   [/^\/goals\/plan/, "Your plan"],
   [/^\/goals\/runway/, "Covered till salary"],
   [/^\/goals\/order/, "Your order"],
+  [/^\/goals\/roadmap/, "Roadmap"],
   [/^\/goals\/budget/, "Budget"],
   [/^\/goals\/new/, "New goal"],
   [/^\/goals/, "Goals"],

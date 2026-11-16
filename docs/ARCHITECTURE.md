@@ -44,6 +44,7 @@ decisions are in [DECISIONS.md](DECISIONS.md).
 | `/goals/plan` | The money plan: where it goes and why, and this month's SIP steps |
 | `/goals/runway` | Between jobs: salary dates, money you can reach, what's due till salary |
 | `/goals/order` | Your order for the plan (`goals.plan_rank`) |
+| `/goals/roadmap` | The plan as steps from today (`lib/roadmap.ts`) |
 | `/goals/budget` | Budget: take-home, monthly costs, EMIs and SIPs from the app, free to invest |
 | `/goals/new`, `/goals/[id]` | New goal; one goal with its plan, investments and suggestions          |
 | `/portfolio`                | Net worth today, total value, allocation, holdings |

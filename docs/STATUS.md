@@ -13,7 +13,7 @@ Last updated: 16 Nov 2026.
 - **Between jobs**: salary dates turn on "On hold till salary" for savings goals and the
   "Covered till salary" card and page (money you can reach vs everything due till each salary
   date, weekly amount, money owed to you, your own payments). Your order for the plan
-  (`/goals/order`).
+  (`/goals/order`). Roadmap (`/goals/roadmap`): the plan as steps from today.
 - **Portfolio**: net worth today (holdings minus loans) linking to `/portfolio/net-worth` (three
   charts, own by asset type, owe by loan), allocation by asset type or instrument, holdings with
   search and sort, portfolio review, CAS import with review, withdrawal check and insights.

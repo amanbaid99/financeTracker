@@ -208,6 +208,12 @@ The spec's guardrails (no named funds to buy, disclaimer, privacy, RLS, deletion
   small database slowed each to 70-250 ms under that burst. Add new page data to the snapshot
   rather than a new query.
 
+- **Nov 16: Roadmap (D)** (owner asked): `/goals/roadmap` shows the plan as steps from "You are
+  here": first salary and "savings goals restart" when between jobs, bills months over ₹5,000 (or
+  short) for the next year, loans paid off at their EMI end date or closed early by a goal's date,
+  and each savings goal at its date (undated ones at the end). Green on plan, grey on hold, amber
+  needs you; reached goals and closed loans fold into Done so far. Built from existing data by
+  `lib/roadmap.ts`; nothing is stored.
 - **Nov 16: between jobs, covered till salary, your order** (owner chose A, B, C from a review
   focused on anxiety). Salary dates (`profiles.salary_best` / `salary_worst`) turn on "between
   jobs": savings goals that need money show "On hold till salary" (muted), not Behind, and the

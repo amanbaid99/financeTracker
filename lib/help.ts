@@ -65,6 +65,16 @@ export const HELP: HelpTopic[] = [
     tags: "priority rank order first emergency",
   },
   {
+    id: "roadmap",
+    section: "Goals",
+    q: "What is the Roadmap?",
+    a: [
+      "Your plan as steps on a line, starting from today: your first salary, bills months, loans paid off, and each goal's date. Green is on plan, grey is waiting for salary, amber needs you. Tap a step to open it.",
+      "Goals without a date sit at the end, and reached goals and closed loans fold into Done so far. Open it from Goals, under the summary.",
+    ],
+    tags: "timeline steps journey plan progress",
+  },
+  {
     id: "between-jobs",
     section: "Goals",
     q: "I'm between jobs. Why do my goals say On hold till salary?",

@@ -99,7 +99,7 @@ export function GoalsOverview(props: {
             </p>
           </div>
         )}
-        <div className="flex items-center gap-4 border-t pt-2 text-xs font-medium">
+        <div className="flex flex-wrap items-center gap-x-4 border-t pt-2 text-xs font-medium">
           {props.plan && (
             <NextLink
               href="/goals/plan"
@@ -113,6 +113,12 @@ export function GoalsOverview(props: {
             className="inline-flex min-h-10 items-center text-muted-foreground hover:text-primary"
           >
             {props.budget.income > 0 ? "Budget" : "Set budget"}
+          </NextLink>
+          <NextLink
+            href="/goals/roadmap"
+            className="inline-flex min-h-10 items-center font-medium text-primary"
+          >
+            Roadmap
           </NextLink>
           <NextLink
             href="/goals/order"

@@ -41,7 +41,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "The card at the top shows what's saved, what goes in each month and how many goals are on track. Goals are grouped by when they're due, from next month to 5+ years. Must-haves come first in each group. A label on each says On track, Behind or what needs action. Covered bills funds, loans covered by EMIs and reached goals are folded away. If a bills fund develops a shortfall, it returns to the active list.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
       "Between jobs? Covered till salary shows if your money lasts until your salary, with a weekly amount to spend. Your savings goals wait, on hold, until then.",
-      "Your order (under the summary) lets you choose which goals the plan funds first.",
+      "Your order (under the summary) lets you choose which goals the plan funds first, and Roadmap shows the plan as steps from today.",
       "A Next step card shows when there's something to do: set your budget, start a SIP plan or set up this month's SIPs. Tap Not now to hide it. Got a bonus or idle savings? Tap +, then I have extra money.",
       "Your plan has its own page: tap Your plan. It shows where the money goes and why, then This month lists what to add to your SIPs. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
       "Open a goal for its What to do box. If your plan can't cover it, it says how much more a month keeps it on track.",
@@ -119,6 +119,11 @@ export const RELEASES: Release[] = [
     date: "2026-11-16",
     title: "A calmer plan for between jobs",
     items: [
+      {
+        title: "Your roadmap",
+        text: "See your plan as steps from today: first salary, bills months, loans paid off and each goal's date. Green is on plan, grey waits for salary, amber needs you.",
+        show: { path: "/goals/roadmap", target: "roadmap" },
+      },
       {
         title: "Covered till salary",
         text: "Add the earliest and latest your salary could start. One card answers whether your money lasts till then, with a weekly amount you can spend and stay on plan.",

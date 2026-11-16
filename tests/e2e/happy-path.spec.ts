@@ -1108,6 +1108,12 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Use the app's order instead" }).click();
   await expect(page.getByText("Back to the app's order.")).toBeVisible();
 
+  // Roadmap: the plan as steps from today.
+  await page.goto("/goals");
+  await page.getByRole("link", { name: "Roadmap", exact: true }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Roadmap" })).toBeVisible();
+  await expect(page.getByText("You are here")).toBeVisible();
+
   // Between jobs: covered till salary, with goals on hold meanwhile.
   await page.goto("/goals/runway");
   await page.getByLabel("Earliest").fill("2027-01-05");
@@ -1136,7 +1142,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
 
   // Portfolio starts with net worth: holdings minus loans.
   await tab("Portfolio").click();
-  await expect(page.getByText("You owe on loans")).toBeVisible();
+  await expect(page.getByText("You owe on loans", { exact: true })).toBeVisible();
   await page.getByRole("link", { name: /See progress over time/ }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Net worth" })).toBeVisible();
   await expect(page.getByRole("region", { name: "What you owe on loans" })).toBeVisible();
