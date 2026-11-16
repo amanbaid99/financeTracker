@@ -443,6 +443,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     page.getByRole("button", { name: "Edit Planned index fund" }),
   ).toBeVisible();
   await page.goto("/goals?do=plan");
+  // Wait for the form, so the check below doesn't run before it opens.
+  await expect(page.getByRole("button", { name: "Show my plan" })).toBeVisible();
   if (!await page.getByLabel("Savings to put toward goals now").isVisible()) await page.getByText("Add a one-time amount", { exact: true }).click();
   await page.getByLabel("Savings to put toward goals now").fill("0");
   await page.getByRole("button", { name: "Show my plan" }).click();

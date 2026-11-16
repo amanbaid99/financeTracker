@@ -20,7 +20,7 @@ decisions are in [DECISIONS.md](DECISIONS.md).
 1. `proxy.ts` (Next 16's middleware) refreshes the Supabase session cookie on every request.
 2. `app/(app)/layout.tsx` is the signed-in shell: slim header (logo, settings), page content in a
    `ViewTransition`, the disclaimer footer, and the bottom tabs
-   (`AppTabs`: Goals, Budget, + (`QuickAdd`), Net worth, Cards; Ask and Settings are in the header).
+   (`AppTabs`: Goals, Net worth, + (`QuickAdd`), Budget, Cards; Ask and Settings are in the header).
 3. Pages call loaders in `lib/data.ts` (`loadGoals`, `loadCards`, `loadOnboarding`). They're
    wrapped in React `cache`, so several components on one page share one database round trip.
    `requireUser()` redirects to `/login` when signed out and to `/consent` when the privacy policy

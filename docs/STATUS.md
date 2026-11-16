@@ -28,7 +28,7 @@ Last updated: 16 Nov 2026.
 - **Ask**: private Q&A (codes only to AI), amount questions split by the app's own planner.
 - **Settings**: look, invites (admin), Ask on/off, Help and guides (Help page, What's new archive,
   Take the tour, show guides again), account and delete.
-- **App shell**: bottom bar (Goals, Budget, +, Net worth, Cards), Ask and Settings in the header, Back to the exact previous screen,
+- **App shell**: bottom bar (Goals, Net worth, +, Budget, Cards), Ask and Settings in the header, Back to the exact previous screen,
   error screens with Try again, offline page via a service worker, toasts with Undo, drafts for
   new goals and loans, first-visit guides, What's new with "Show me around".
 - **Checks**: GitHub Action runs lint, typecheck, unit and Python tests on every push.

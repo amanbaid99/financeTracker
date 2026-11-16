@@ -39,7 +39,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap Add a goal and pick a type: a purchase, a trip, an emergency fund, a bills fund or paying off a loan.",
       "Link the mutual funds, savings or deposits that pay for it. One investment can be split across goals.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
-      "Every goal shows in one list, in your order. The first three are under Focus on these first, the rest under Everything else. Goals on hold and goals reached come last. Change order to move them.",
+      "Every goal shows in one list, in your order. The first three are under Focus on these first, the rest under Everything else. A goal on hold keeps its place. Change order to move any goal, loans included.",
       "Loans are goals too. Each shows what's left, the EMI and when it ends. Confirm the outstanding amount from your lender each month. Once confirmed, it stays until your next update. Older schedule-based balances and future payoff figures are estimates.",
       "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
       "Between jobs? Your savings goals wait, On hold till salary. The Budget tab shows whether your money lasts till then.",

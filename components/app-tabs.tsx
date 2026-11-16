@@ -19,8 +19,8 @@ const TABS = [
     // Budget pages sit under /goals but have their own tab.
     not: BUDGET,
   },
-  { href: "/goals/budget", label: "Budget", icon: Wallet, match: BUDGET },
   { href: "/assets", label: "Net worth", icon: PieChart, match: ["/assets"] },
+  { href: "/goals/budget", label: "Budget", icon: Wallet, match: BUDGET },
   { href: "/cards", label: "Cards", icon: CreditCard, match: ["/cards"] },
 ];
 
@@ -45,7 +45,7 @@ export function AppTabs() {
             t.match.some(under) && !("not" in t && t.not?.some(under));
           return (
             <Fragment key={t.href}>
-              {showAdd && t.href === "/assets" && (
+              {showAdd && t.href === "/goals/budget" && (
                 <li className="flex items-center justify-center">
                   <QuickAdd />
                 </li>

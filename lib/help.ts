@@ -40,7 +40,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "What order are my goals in?",
     a: [
-      "Your order: bills funds first, then the order you set with Change order, or the app's order (emergency fund first, then by when the money is needed). Goals on hold and goals reached come last.",
+      "Your order: bills funds first, then the order you set with Change order, or the app's order (emergency fund first, then by when the money is needed). A goal on hold keeps its place and says so. Loans the EMIs already close come after the rest unless you place them, and goals reached come last.",
       "The first three are under Focus on these first. Nothing is folded away: every goal is in the list.",
     ],
     tags: "order priority top three list focus",

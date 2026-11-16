@@ -2,16 +2,17 @@ import type { Metadata } from "next";
 import { BackLink } from "@/components/back-link";
 import { OrderEditor, type OrderGoal } from "@/components/order-editor";
 import { loadGoals } from "@/lib/data";
-import { goalSubline, horizonGroup, horizonRank } from "@/lib/goal-status";
+import { goalSubline } from "@/lib/goal-status";
+import { planOrder } from "@/lib/goal-order";
 import type { TrackedGoal } from "@/lib/tracker";
 
 export const metadata: Metadata = { title: "Your order" };
 
 export default async function OrderPage() {
   const { goals, today } = await loadGoals();
-  const active = goals.filter(
-    (g) => g.status !== "reached" && !(g.loanState && g.emisCloseFirst),
-  );
+  // Every goal not reached yet, loans the EMIs close included, so you can
+  // place them too.
+  const active = goals.filter((g) => g.status !== "reached");
   const view = (g: TrackedGoal): OrderGoal => ({
     id: g.id,
     name: g.name,
@@ -21,17 +22,8 @@ export default async function OrderPage() {
   const pinned = active.filter((g) => g.billsFund);
   const rest = active.filter((g) => !g.billsFund);
   const custom = rest.some((g) => g.planRank != null);
-  // Your saved order, or the app's: emergency fund first, then by when
-  // each goal is due.
-  const sorted = [...rest].sort((a, b) =>
-    custom
-      ? (a.planRank ?? 999) - (b.planRank ?? 999)
-      : Number(b.type === "emergency_fund") -
-          Number(a.type === "emergency_fund") ||
-        horizonRank(horizonGroup(a, today)) -
-          horizonRank(horizonGroup(b, today)) ||
-        (a.months ?? 999) - (b.months ?? 999),
-  );
+  // Your saved order, or the app's (see lib/goal-order.ts).
+  const sorted = planOrder(rest, today);
   return (
     <main className="space-y-4">
       <BackLink fallback="/goals/plan" label="Your plan" />

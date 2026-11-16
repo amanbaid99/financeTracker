@@ -136,7 +136,7 @@ export function GoalList({
     : goals;
   // Every goal in one list, in the plan's order. The first three are the
   // ones to focus on; nothing is folded away.
-  const ordered = orderGoals(filtered, today, between);
+  const ordered = orderGoals(filtered, today);
   const top = ordered.slice(0, 3);
   const rest = ordered.slice(3);
   const renderGoals = (items: TrackedGoal[]) => (
