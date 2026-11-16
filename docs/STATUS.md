@@ -37,9 +37,6 @@ Last updated: 16 Nov 2026.
 
 ## Known gaps
 
-- The 16 Nov migration (`20261123000000_runway_and_plan_order.sql`) must be applied to the
-  hosted database before saving salary dates, runway items or an order works there. Reading
-  works without it.
 
 - The security (RLS) and end-to-end tests need a local Supabase stack, so CI doesn't run them;
   run them locally before pushing (AGENTS.md).
