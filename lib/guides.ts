@@ -26,7 +26,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     steps: [
       "Search INDmoney by name, symbol or ISIN. The instrument metadata suggests whether it is a stock, Gold ETF or index ETF before you confirm.",
       "Open an item for Automatic research. It uses your latest saved prices, official NAV and data-quality checks without asking you to set price rules.",
-      "Refresh research fetches current source data. Wait can identify a verified entry risk, such as an excessive same-day NAV premium. Insufficient data lists the exact missing sources or model work.",
+      "Refresh research fetches current source data. Wait can identify a verified entry risk, such as an excessive same-day NAV premium. Research not ready explains missing source connections or model work. Insufficient data flags an instrument or latest-session data that cannot be checked.",
       "Buy candidates, Hold and exit reviews need completed verified research and, for holding or selling, ownership and portfolio context. A watchlist alone is not enough. Missing inputs never force a conclusion.",
       "Optional price alerts are folded below the research and charts. They compare levels you enter and are not automatic investment recommendations. Notifications are not enabled yet.",
       "Only your account can access Radar. The plus button sits above the bottom-right corner so all five tabs fit.",
@@ -140,6 +140,14 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-11-17",
+    title: "Clearer research readiness",
+    items: [{
+      title: "See what is actually blocked",
+      text: "Radar separates missing source connections from model work. Gold calculations and historical comparison tools are in paper testing, not released recommendations. Refresh updates market data but cannot finish model validation.",
+    }],
+  },
   {
     date: "2026-11-17",
     title: "Automatic research comes first",

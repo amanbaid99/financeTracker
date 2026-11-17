@@ -52,6 +52,11 @@ export default async function RadarSetupPage() {
       </section>
       <section className="rounded-2xl border bg-card p-4 space-y-3">
         <h2 className="font-semibold">What is still incomplete?</h2>
+        <p className="text-sm">
+          The first Gold model and historical comparison harness are implemented
+          for paper testing. They have not been validated on real historical data
+          or released as Buy, Hold or Sell recommendations.
+        </p>
         <p className="text-sm text-muted-foreground">
           Verified price adjustments, ETF benchmark/tracking and underlying
           Gold/index context, stock fundamentals and validated research models
@@ -59,9 +64,10 @@ export default async function RadarSetupPage() {
           also need ownership and portfolio context.
         </p>
         <p className="text-sm">
-          Research can identify a verified reason to Wait, but it will show
-          Insufficient data when it cannot support an investment conclusion.
-          Missing inputs are not replaced with a forced recommendation.
+          Research not ready means source connections or model work are still
+          unfinished. Insufficient data means the latest session or instrument
+          cannot be checked. Refresh can update prices and NAV, but cannot
+          resolve unfinished development or add a missing data provider.
         </p>
       </section>
       <section className="rounded-2xl border bg-card p-4 space-y-2">

@@ -108,13 +108,16 @@ describe("provider-derived instrument types", () => {
 describe("automatic evidence-based research", () => {
   it("runs with no manual rules or thresholds and reports actual completed checks", () => {
     const result = automaticResearch(input);
-    expect(result.label).toBe("Insufficient data");
+    expect(result.label).toBe("Research not ready");
     expect(result.checks.find((c) => c.id === "nav")?.state).toBe("ready");
     expect(result.reasons).toContain(
       "Closing price was 0.00% above same-session NAV.",
     );
     expect(result.nextStep).not.toContain("Enable");
     expect(result.score).toBeNull();
+    expect(result.blockers).toContainEqual({ label: "Gold ETF research model", owner: "development" });
+    expect(result.blockers).toContainEqual({ label: "Timestamped bid-ask spread", owner: "source" });
+    expect(result.goldStudy?.release).toBe("paper");
   });
   it("automatically waits on a verified excessive closing premium, without inventing the remaining data", () => {
     const result = automaticResearch({
@@ -139,7 +142,7 @@ describe("automatic evidence-based research", () => {
           etf: { nav: changed, depth: null, errors: [] },
         },
       });
-      expect(result.label).toBe("Insufficient data");
+      expect(result.label).toBe("Research not ready");
       expect(result.reasons).toEqual([]);
     }
   });
@@ -170,7 +173,7 @@ describe("automatic evidence-based research", () => {
       analysis: { ...analysis, etf: { nav, depth, errors: [] } },
     });
     expect(result.checks.find((c) => c.id === "spread")?.state).toBe("missing");
-    expect(result.label).toBe("Insufficient data");
+    expect(result.label).toBe("Research not ready");
   });
   it("a verified wide spread can block entry, while a stale or future spread cannot masquerade as current", () => {
     const depth = {
@@ -196,7 +199,7 @@ describe("automatic evidence-based research", () => {
             etf: { nav, depth: { ...depth, marketTime: time }, errors: [] },
           },
         }).label,
-      ).toBe("Insufficient data");
+      ).toBe("Research not ready");
     }
   });
   it("rejects stale closes and unsupported calendar dates without demanding manual thresholds", () => {
@@ -229,7 +232,7 @@ describe("automatic evidence-based research", () => {
   });
   it("does not issue Hold or Review selling from a watchlist or ownership alone", () => {
     const result = automaticResearch({ ...input, owned: true });
-    expect(result.label).toBe("Insufficient data");
+    expect(result.label).toBe("Research not ready");
     expect(result.checks.find((c) => c.id === "portfolio")?.state).toBe(
       "missing",
     );
@@ -244,7 +247,7 @@ describe("automatic evidence-based research", () => {
         isin: "INE000000001",
       }),
     });
-    expect(result.label).toBe("Insufficient data");
+    expect(result.label).toBe("Research not ready");
     expect(result.checks.find((c) => c.id === "fundamentals")?.state).toBe(
       "missing",
     );

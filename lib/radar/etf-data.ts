@@ -1,3 +1,4 @@
+import type { GoldSources } from "./gold-model";
 import { z } from "zod";
 
 export const NAV_SOURCE = "https://portal.amfiindia.com/spages/NAVAll.txt";
@@ -20,6 +21,8 @@ export interface MarketDepth {
   fetchedAt: string;
 }
 export interface EtfEvidence {
+  /** Only populated by a verified server-side source adapter, never manual rule settings. */
+  goldSources?: GoldSources;
   nav: EtfNav | null;
   depth: MarketDepth | null;
   errors: string[];

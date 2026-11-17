@@ -180,3 +180,8 @@ unit tests in `tests/unit/`.
 ## Personal Investment Radar
 
 /radar, /radar/[id] and /radar/setup use lib/radar/data.ts and authenticated server actions. Dedicated radar_access entitlement plus RLS restrict the feature to the owner. lib/radar/indmoney.ts is a fixed-host read-only market adapter; analysis.ts computes deterministic provisional indicators. Watchlists do not feed holdings or net worth. Immutable snapshots retain inputs, source and engine hash. Full balanced scoring, schedules, Telegram and backtesting are pending verification and implementation; no buying score is fabricated from prices alone.
+
+
+## Gold paper research, 17 Nov 2026
+
+lib/radar/gold-model.ts validates dated NAV/INR Gold benchmark evidence and evaluates explicit paper guardrails. It never enables production recommendations. Optional GoldSources belong to immutable ETF evidence, with no new database table. No current adapter populates them. Research derives readiness from the saved snapshot; paper calculations use the existing candle payload. lib/radar/paper-replay.ts compares model, monthly, immediate and simple-dip policies using next-open execution and actual signal availability. See investment-radar/DATA_REQUIREMENTS.md for the unconnected sources and uncompleted validation work.

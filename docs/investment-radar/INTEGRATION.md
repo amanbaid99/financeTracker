@@ -145,3 +145,7 @@ The primary UI now calls the pure automaticResearch assessment independently of 
 BSE and NSE previous completed sessions are verified only for 9 November through 31 December 2026. Unsupported calendar ranges fail closed. The documented full quote contract does not supply a verified quote timestamp; timestampVerified remains false, even if an undocumented timestamp is present. Fetch time is not market time.
 
 Current automatic output is Insufficient data or an evidence-backed Wait risk. Complete Buy/Hold/Review selling models remain unimplemented pending adjusted history, underlying valuation/benchmark and tracking evidence, model validation and portfolio context. There is no automatic trading or new schema migration.
+
+## Gold paper model implementation, 17 Nov 2026
+
+The first Gold-only assessment and point-in-time historical comparison harness are implemented. They are not a production recommendation release. Source contracts require adjusted history, exact-ISIN NAV history, an INR Gold benchmark and a timestamped bid/ask. No current adapter populates GoldSources. Verified same-session premium risks still produce Wait; source and model gaps produce Research not ready. Missing latest-session data remains Insufficient data. Details distinguish source work from development work. See DATA_REQUIREMENTS.md for verified provider documentation, exact missing payloads, proposed guardrails and release requirements.

@@ -3,6 +3,14 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 17 Nov 2026.
 
+## Gold paper work, 17 Nov 2026
+
+Implemented a first deterministic Gold assessment model, source-contract validation and a point-in-time replay harness comparing model, monthly, immediate and simple-dip policies with equal cash availability and explicit costs. These are paper/testing tools, not production Buy/Hold/Sell recommendations. Real historical inputs, source adapters, out-of-sample evaluation and live paper monitoring remain incomplete. Hold and exit logic remain unfinished.
+
+The readiness UI now separates missing source connections from model development and testing. Research not ready describes those blockers; missing latest-session prices remain Insufficient data. Refresh cannot finish model work. See [the exact data requirements](investment-radar/DATA_REQUIREMENTS.md) for source findings, proposed model parameters and remaining release checks. No new paid provider, schema migration or hosted user-record changes are included.
+
+Checks: 298 unit tests, 18 Python tests, lint, TypeScript and production build passed. Browser component fixtures passed 60 responsive theme/width/state cases. Full local signed-in e2e remains blocked by the Supabase CLI telemetry write to a read-only home. Synthetic tests do not demonstrate investment performance or live API coverage.
+
 ## Radar update, 17 Nov 2026
 
 Automatic research is now the primary detail and watchlist assessment. It runs without manual price rules. Optional manual alerts are folded separately and use entry/exit alert wording. Existing ETF classifications are corrected at read time from instrument metadata or exact AMFI ISIN evidence, without rewriting saved watchlist records. NSE and BSE completed-session checks cover the verified remainder of 2026.

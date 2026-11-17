@@ -1,9 +1,15 @@
 import type { InstrumentClassification } from "./classification";
-import type { RadarAnalysis, RadarAsset } from "./contracts";
+import { evaluateGold, type GoldStudy } from "./gold-model";
+import type { Candle, RadarAnalysis, RadarAsset } from "./contracts";
 import { previousCompletedSession } from "./calendar";
 
 export type ResearchLabel =
-  "Buy candidate" | "Hold" | "Review selling" | "Wait" | "Insufficient data";
+  | "Buy candidate"
+  | "Hold"
+  | "Review selling"
+  | "Wait"
+  | "Insufficient data"
+  | "Research not ready";
 export interface ResearchCheck {
   id: string;
   label: string;
@@ -19,8 +25,13 @@ export interface ResearchResult {
   nextStep: string;
   version: string;
   score: null;
+  goldStudy?: GoldStudy;
+  blockers: {
+    label: string;
+    owner: "source" | "development" | "refresh" | "context";
+  }[];
 }
-const VERSION = "automatic-research-0.3";
+const VERSION = "automatic-research-0.4";
 /** Automatic evidence review, independent of manual price rules. Never claim a validated valuation model exists. */
 export function automaticResearch({
   analysis,
@@ -31,6 +42,7 @@ export function automaticResearch({
   today,
   now,
   owned = false,
+  candles = [],
 }: {
   analysis: RadarAnalysis | null;
   asset: RadarAsset;
@@ -40,8 +52,10 @@ export function automaticResearch({
   today: string;
   now: string;
   owned?: boolean;
+  candles?: Candle[];
 }): ResearchResult {
   const expected = previousCompletedSession(today, exchange);
+  let goldStudy: GoldStudy | undefined;
   const checks: ResearchCheck[] = [];
   const reasons: string[] = [];
   const add = (
@@ -63,6 +77,12 @@ export function automaticResearch({
     reasons,
     version: VERSION,
     score: null,
+    goldStudy,
+    blockers: checks.filter((c) => c.state === "missing").map((c) => ({
+      label: c.label,
+      owner: c.id === "model" ? "development" : c.id === "portfolio" ? "context" :
+        ["prices", "nav", "classification"].includes(c.id) ? "refresh" : "source",
+    })),
   });
   add(
     "classification",
@@ -128,7 +148,7 @@ export function automaticResearch({
       "model",
       "Stock research model",
       "missing",
-      "A tested stock valuation model is not available yet.",
+      "The stock model still needs implementation and testing. Refreshing prices cannot complete this work.",
     );
     if (owned)
       add(
@@ -138,8 +158,8 @@ export function automaticResearch({
         "Ownership is known, but target allocation, thesis and exit costs have not been assessed.",
       );
     return result(
-      "Insufficient data",
-      "Stock prices are available, but they are not enough for an automatic Buy, Hold or exit assessment.",
+      "Research not ready",
+      "Stock research is not ready. Financial-data sources and the stock assessment model are still missing.",
       "Stock research needs a connected financial-data source and a supported sector model. You do not need to configure price rules.",
     );
   }
@@ -206,9 +226,14 @@ export function automaticResearch({
       "model",
       "Index ETF research model",
       "missing",
-      "A tested underlying-index model is not available yet.",
+      "The index model still needs implementation and testing. Refreshing prices cannot complete this work.",
     );
   } else {
+    goldStudy = evaluateGold({
+      candles, adjustmentsVerified: analysis.inputs.adjustmentsVerified,
+      sources: analysis.etf?.goldSources, isin, nav: nav ?? null,
+      depth: depth ?? null, expectedSession: expected, now,
+    });
     add(
       "gold",
       "Underlying Gold context",
@@ -219,7 +244,7 @@ export function automaticResearch({
       "model",
       "Gold ETF research model",
       "missing",
-      "Factor definitions, independent validation and paper monitoring are not complete. No opportunity score is produced.",
+      "The first Gold model is implemented for paper testing. Historical validation and live paper monitoring are still required before releasing recommendations. No predictive score is produced.",
     );
   }
   if (owned)
@@ -263,10 +288,10 @@ export function automaticResearch({
       "Recheck trading conditions and remaining research inputs. A wide spread is not a reason by itself to sell.",
     );
   return result(
-    "Insufficient data",
+    "Research not ready",
     navAligned && navKind
-      ? "NAV comparison is ready. Automatic buy and exit assessments still need verified trading data and a completed research model."
-      : "ETF research runs automatically, but verified inputs are still missing.",
-    "Open Data checks below for the specific missing sources. You do not need to set or enable manual price rules.",
+      ? "NAV comparison works. Buy and exit research still needs additional market data and model validation."
+      : "Buy and exit research is not ready. Some market-data sources and model work are still missing.",
+    "No settings to change. Refresh updates prices and NAV only. Open the checks below to see the source and model work still needed.",
   );
 }

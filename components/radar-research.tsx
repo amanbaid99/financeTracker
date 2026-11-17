@@ -15,7 +15,8 @@ export function RadarResearch({
   pending: boolean;
   connected: boolean;
 }) {
-  const ready = result.checks.filter((c) => c.state === "ready").length;
+  const sources = result.blockers.filter((b) => b.owner === "source");
+  const development = result.blockers.filter((b) => b.owner === "development");
   return (
     <section
       className="rounded-2xl border bg-card p-4 space-y-3"
@@ -58,14 +59,27 @@ export function RadarResearch({
           <RefreshCw className="size-4" aria-hidden />
           {pending ? "Refreshing…" : "Refresh research"}
         </Button>
-        <span className="text-xs text-muted-foreground">
-          {ready} of {result.checks.length} checks ready
-        </span>
       </div>
       <details id="research-data" className="border-t pt-1">
         <summary className="min-h-11 flex items-center cursor-pointer text-sm font-medium">
           Data checks and limitations
         </summary>
+        {(sources.length > 0 || development.length > 0) && (
+          <div className="rounded-xl bg-muted/50 p-3 text-sm space-y-2">
+            {sources.length > 0 && (
+              <p>
+                <span className="font-medium">Data sources needed: </span>
+                {sources.map((b) => b.label).join(", ")}.
+              </p>
+            )}
+            {development.length > 0 && (
+              <p>
+                <span className="font-medium">Still being tested or built: </span>
+                {development.map((b) => b.label).join(", ")}.
+              </p>
+            )}
+          </div>
+        )}
         <ul className="space-y-3 text-sm">
           {result.checks.map((c) => (
             <li key={c.id}>
@@ -83,21 +97,37 @@ export function RadarResearch({
                     ? "Ready"
                     : c.state === "risk"
                       ? "Needs care"
-                      : "Missing"}
+                      : c.id === "model"
+                        ? (result.goldStudy ? "In testing" : "To build")
+                        : "Needs data"}
                 </span>
               </div>
               <p className="text-muted-foreground text-xs mt-0.5">{c.detail}</p>
             </li>
           ))}
         </ul>
+        {result.goldStudy && (
+          <div className="mt-4 border-t pt-3 space-y-2">
+            <p className="font-medium text-sm">Gold model: paper testing</p>
+            <p className="text-xs text-muted-foreground">
+              The calculation code is implemented. It has not passed historical
+              validation or live monitoring. No paper decision is a live
+              recommendation.
+            </p>
+            <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
+              {result.goldStudy.missing.map((message) => (
+                <li key={message}>{message}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         <p className="text-xs text-muted-foreground mt-3">
           {result.version}. No forecast or opportunity score is implied by
           completed data checks.
         </p>
       </details>
       <p className="text-xs text-muted-foreground">
-        No manual price settings are needed. A watchlist alone does not
-        establish that you own an investment or should sell it.
+        Research only. No orders are placed.
       </p>
     </section>
   );

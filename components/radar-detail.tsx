@@ -96,6 +96,7 @@ export function RadarDetail({
   const expected = previousCompletedSession(today, item.exchange);
   const research = automaticResearch({
     analysis: a ?? null,
+    candles: snapshot?.candles ?? [],
     asset: item.assetType,
     classification:
       item.classification ?? classifyInstrument(item, a?.etf?.nav),
