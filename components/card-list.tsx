@@ -619,7 +619,7 @@ function BillSheet({
             type="button"
             variant="link"
             size="sm"
-            className="min-h-11"
+            className="min-h-11 px-0"
             onClick={() => setMore(true)}
           >
             Add a note

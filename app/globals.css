@@ -217,14 +217,31 @@
   }
   /* iOS Safari gives date inputs a fixed intrinsic width, so they spill out
      of narrow grid columns. Let them shrink and keep the text left aligned. */
-  input[type="date"] {
+  input[type="date"],
+  input[type="month"],
+  input[type="time"],
+  input[type="datetime-local"] {
     min-width: 0;
     max-width: 100%;
     -webkit-appearance: none;
     appearance: none;
   }
-  input[type="date"]::-webkit-date-and-time-value {
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="month"]::-webkit-date-and-time-value,
+  input[type="time"]::-webkit-date-and-time-value,
+  input[type="datetime-local"]::-webkit-date-and-time-value {
     text-align: left;
+  }
+  /* Grid cells grow to fit their content by default, which lets those
+     inputs push into the next column. Let any cell holding one shrink. */
+  .grid
+    > :has(
+      input[type="date"],
+      input[type="month"],
+      input[type="time"],
+      input[type="datetime-local"]
+    ) {
+    min-width: 0;
   }
   body {
     background: var(--background);
