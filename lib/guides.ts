@@ -146,6 +146,14 @@ export interface Release {
 export const RELEASES: Release[] = [
   {
     date: "2026-11-17",
+    title: "Stock identity checks use ISIN too",
+    items: [{
+      title: "Match the security when ticker IDs are absent",
+      text: "Company reports can match a source-profile ISIN against the selected instrument. Conflicting identifiers stop collection. Missing identifiers now retain safe field-type diagnostics for investigation. This does not enable Buy, Hold or Sell.",
+    }],
+  },
+  {
+    date: "2026-11-17",
     title: "Stock assessment enters paper testing",
     items: [{
       title: "Quality, valuation, growth and price checks",

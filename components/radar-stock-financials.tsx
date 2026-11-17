@@ -20,7 +20,7 @@ export function StockFinancialsView({ evidence, error, configured }: {
       <div className="space-y-3 pt-2 text-sm">
         {evidence ? <>
           <p className="text-muted-foreground text-xs break-words">
-            IndianAPI. Exact ticker match: {evidence.canonicalSymbol}. Retrieved {formatDate(todayIST(new Date(evidence.fetchedAt)))}.
+            IndianAPI. {evidence.identityMatch === "same-isin" ? "ISIN matched across sources" : `Exact ticker match: ${evidence.canonicalSymbol}`}. Retrieved {formatDate(todayIST(new Date(evidence.fetchedAt)))}.
           </p>
           {evidence.identityMethod === "exchange-directory" && <p className="text-xs text-muted-foreground">The source exchange directory confirms the exact NSE symbol.</p>}
           <dl className="divide-y">

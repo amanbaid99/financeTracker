@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { IndianFinancialProvider, parseFinancialReport, financialSymbol, canReuseFinancials } from "@/lib/radar/stock-financials";
+import { IndianFinancialProvider, parseFinancialReport, financialSymbol, canReuseFinancials, financialIdentityShape, FinancialSourceError } from "@/lib/radar/stock-financials";
 import { automaticResearch } from "@/lib/radar/research";
 import { analyseRadar } from "@/lib/radar/analysis";
 import { classifyInstrument } from "@/lib/radar/classification";
@@ -27,7 +27,7 @@ describe("exact financial-source identity", () => {
   it("does not fetch any report for a mismatched or malformed identity response", async () => {
     for (const body of [{ tickerId: "OTHER", industry: "Industry" }, { companyName: "Synthetic company", industry: "Industry" }]) {
       const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify(body)));
-      await expect(new IndianFinancialProvider("test-key", fetcher).financials(symbol, today, now)).rejects.toThrow(/exact NSE ticker|no usable stock identifier/);
+      await expect(new IndianFinancialProvider("test-key", fetcher).financials(symbol, today, now)).rejects.toThrow(/exact NSE ticker|no matching ISIN or usable stock identifier/);
       expect(fetcher).toHaveBeenCalledTimes(1);
     }
   });
@@ -155,6 +155,42 @@ describe("report parsing without invented metadata", () => {
   });
 });
 describe("safe errors and quota reuse", () => {
+  it.each([undefined, "S0001234", "PREVIOUS-SYMBOL"])("matches source-profile ISIN when ticker ID is missing or changed: %s", async (tickerId) => {
+    const fetcher = vi.fn().mockImplementation(async (url: URL) => new Response(JSON.stringify(
+      url.pathname === "/stock" ? { tickerId, companyProfile: { isInId: instrument.isin }, industry: "Industry" } : reports,
+    )));
+    const evidence = await new IndianFinancialProvider("test-key", fetcher).financials(symbol, today, now, instrument.isin);
+    expect(evidence.identityMatch).toBe("same-isin");
+    expect(evidence.identityMethod).toBe("profile-isin");
+    expect(evidence.identityIsin).toBe(instrument.isin);
+    expect(evidence.isinVerified).toBe(false);
+    expect(evidence.researchReady).toBe(false);
+    expect(fetcher).toHaveBeenCalledTimes(4);
+    expect(canReuseFinancials(evidence, symbol, now, instrument.isin)).toBe(true);
+    expect(canReuseFinancials(evidence, symbol, now, "INE000000009")).toBe(false);
+    expect(canReuseFinancials(evidence, symbol, now)).toBe(false);
+  });
+  it.each(["INE000000009", "invalid", 123, {}])("never ignores a contradictory or malformed source ISIN: %j", async (sourceIsin) => {
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ tickerId: symbol, companyProfile: { isInId: sourceIsin } })));
+    await expect(new IndianFinancialProvider("test-key", fetcher).financials(symbol, today, now, instrument.isin)).rejects.toThrow(/ISIN/);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it("does not accept an ISIN without a trusted expected instrument identity", async () => {
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify({ companyProfile: { isInId: instrument.isin } })));
+    await expect(new IndianFinancialProvider("test-key", fetcher).financials(symbol, today, now)).rejects.toThrow(/no matching ISIN/);
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  });
+  it("retains only allowlisted field types for failed identity diagnostics", async () => {
+    const body = { companyName: "private name", "private-key-name": "secret", companyProfile: { isInId: "private-value", officers: ["private officer"] }, financials: ["private financial"], stockFinancialData: null };
+    const shape = financialIdentityShape(body);
+    expect(shape).toContain("tickerId:missing");
+    expect(shape).toContain("companyProfile.isInId:string");
+    expect(shape).toContain("financials:array");
+    expect(shape).not.toMatch(/private|secret|officers|companyName/);
+    const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify(body)));
+    try { await new IndianFinancialProvider("test-key", fetcher).financials(symbol, today, now, instrument.isin); throw new Error("Expected identity failure"); }
+    catch (error) { expect(error).toBeInstanceOf(FinancialSourceError); expect((error as FinancialSourceError).identityShape).toBe(shape); }
+  });
   it.each([400, 401, 403, 404, 429, 500])("does not leak headers or upstream text on HTTP %s", async (status) => {
     const fetcher = vi.fn().mockResolvedValue(new Response("private test-key upstream", { status }));
     await expect(new IndianFinancialProvider("test-key", fetcher).financials(symbol, today, now)).rejects.not.toThrow(/private|test-key/);

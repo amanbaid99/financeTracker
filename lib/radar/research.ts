@@ -33,7 +33,7 @@ export interface ResearchResult {
     owner: "source" | "development" | "refresh" | "context";
   }[];
 }
-const VERSION = "automatic-research-0.8";
+const VERSION = "automatic-research-0.9";
 /** Automatic evidence review, independent of manual price rules. Never claim a validated valuation model exists. */
 export function automaticResearch({
   analysis,
@@ -148,7 +148,7 @@ export function automaticResearch({
     if (!reports && analysis.financialsError) add("company-reports", "Company report collection", "missing", analysis.financialsError);
     if (reports) add("company-reports", "Company report collection",
       Object.keys(reports.reports).length === 3 ? "ready" : "missing",
-      `${Object.keys(reports.reports).length} report tables collected from IndianAPI with an exact NSE ticker match. Publication times, ISIN, units, currency and report basis remain unverified; this is not a completed financial assessment.`);
+      `${Object.keys(reports.reports).length} report tables collected from IndianAPI with ${reports.identityMatch === "same-isin" ? "an exact cross-source ISIN match" : "an exact NSE ticker match"}. Publication times, independent filing identity, units, currency and report basis remain unverified; this is not a completed financial assessment.`);
     add(
       "fundamentals",
       "Fundamentals and valuation",

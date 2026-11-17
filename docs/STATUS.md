@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 17 Nov 2026.
 
+## Source-profile ISIN and identity diagnostics, 17 Nov 2026
+
+The owner's refreshed ETERNAL snapshot reached engine 0.8 but returned no usable tickerId, so reports were not requested. The adapter now accepts an optional valid profile ISIN only when it exactly matches the selected instrument's ISIN. Conflicting or malformed ISIN stops collection even if a ticker matches. Existing ticker and directory paths remain available without ISIN proof. Reused ISIN-matched evidence must retain the same expected ISIN. This establishes a cross-source match, not independent filing identity or verified financial metadata.
+
+Failed identity checks retain only allowlisted field types, never field values, arbitrary field names, raw profiles or credentials. That shape is included in a future explicitly refreshed snapshot and its input hash. No existing hosted record is rewritten and no schema migration is needed. Source ISIN presence and report coverage remain unverified live until refresh. The paper model and production recommendation lock remain unchanged. Validation: lint, TypeScript, 412 unit tests, 18 Python tests and production build passed. Chromium component fixtures passed 168 responsive cases plus 12 cross-source ISIN collection views. Full signed-in local e2e remains blocked by the Supabase CLI telemetry write to a read-only home. No fixture is claimed as live provider coverage.
+
 ## First stock paper assessment, 17 Nov 2026
 
 Implemented lib/radar/stock-model.ts for a limited profitable non-financial model. Its strict canonical input contract requires matching ISIN, verified eligibility/units/currency/basis, normalized recurring diluted adjusted EPS, actual report/valuation availability times, ordered annual periods, current comparable peers and dated historical P/E. Corporate-action verification, session/date freshness and financial calculations fail closed. Raw IndianAPI tables cannot satisfy this contract and are never silently promoted to canonical sources.

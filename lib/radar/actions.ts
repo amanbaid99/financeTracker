@@ -214,9 +214,10 @@ export async function refreshRadar(id: string) {
         const canonical = financialSymbol(item, master?.ok ? master.instruments : []);
         if (!canonical) throw new FinancialSourceError("This stock could not be mapped to one exact NSE ticker by ISIN. No company-name guess was used.");
         const previous = last?.analysis.financials;
-        analysis.financials = canReuseFinancials(previous, canonical, now)
-          ? previous : await financialProvider.financials(canonical, today, now);
+        analysis.financials = canReuseFinancials(previous, canonical, now, item.isin)
+          ? previous : await financialProvider.financials(canonical, today, now, item.isin);
       } catch (error) {
+        if (error instanceof FinancialSourceError && error.identityShape) analysis.financialsIdentityShape = error.identityShape;
         analysis.financialsError = error instanceof FinancialSourceError
           ? error.message : "Company financial reports could not be read. Prices and trading checks are retained.";
       }
@@ -239,6 +240,7 @@ export async function refreshRadar(id: string) {
             market: analysis.market ?? null,
             financials: analysis.financials ?? null,
             financialsError: analysis.financialsError ?? null,
+            financialsIdentityShape: analysis.financialsIdentityShape ?? null,
             version: analysis.version,
           }),
         )

@@ -14,8 +14,9 @@ export interface StockFinancials {
   provider: "IndianAPI";
   source: string;
   canonicalSymbol: string;
-  identityMatch: "exact-nse-ticker";
-  identityMethod?: "ticker-id" | "exchange-directory";
+  identityMatch: "exact-nse-ticker" | "same-isin";
+  identityMethod?: "ticker-id" | "exchange-directory" | "profile-isin";
+  identityIsin?: string;
   providerId?: string;
   isinVerified: false;
   industry: string;
@@ -29,7 +30,18 @@ export interface StockFinancials {
   consolidationVerified: false;
   researchReady: false;
 }
-export class FinancialSourceError extends Error {}
+export class FinancialSourceError extends Error {
+  constructor(message: string, readonly identityShape?: string) { super(message); }
+}
+/** Retain only allowlisted field types, never names, raw profiles or upstream text. */
+export function financialIdentityShape(body: unknown): string {
+  const object = (value: unknown): Record<string, unknown> => value !== null && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  const root = object(body), profile = object(root.companyProfile);
+  const type = (value: unknown) => value === undefined ? "missing" : value === null ? "null" : Array.isArray(value) ? "array" : typeof value;
+  return [["tickerId", root.tickerId], ["companyProfile", root.companyProfile], ["companyProfile.isInId", profile.isInId],
+    ["companyProfile.exchangeCodeNse", profile.exchangeCodeNse], ["financials", root.financials], ["stockFinancialData", root.stockFinancialData]]
+    .map(([name, value]) => `${name}:${type(value)}`).join(", ");
+}
 const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const reportKinds = { annual: "yoy_results", balance: "balancesheet", cashflow: "cashflow" } as const;
 const symbolSchema = z.string().regex(/^[A-Z0-9&._-]{1,60}$/);
@@ -122,28 +134,38 @@ export class IndianFinancialProvider {
       throw new FinancialSourceError("The financial-data source did not find a usable report for this instrument.");
     return body;
   }
-  async financials(symbol: string, today: string, fetchedAt: string): Promise<StockFinancials> {
+  async financials(symbol: string, today: string, fetchedAt: string, expectedIsin?: string | null): Promise<StockFinancials> {
     const canonical = symbol.trim().toUpperCase();
-    if (!symbolSchema.safeParse(canonical).success || !validDate(today) || !z.iso.datetime({ offset: true }).safeParse(fetchedAt).success)
+    if (!symbolSchema.safeParse(canonical).success || !validDate(today) || !z.iso.datetime({ offset: true }).safeParse(fetchedAt).success ||
+      (expectedIsin != null && !/^IN[A-Z0-9]{10}$/.test(expectedIsin)))
       throw new FinancialSourceError("A valid stock identity and assessment time are required.");
     const body = await this.get("/stock", { symbol: canonical });
+    const rawProfile = z.object({ companyProfile: z.object({ isInId: z.unknown().optional() }) }).safeParse(body);
+    const profile = z.object({ companyProfile: z.object({ isInId: z.string().trim().regex(/^IN[A-Z0-9]{10}$/) }) }).safeParse(body);
+    const sourceIsin = profile.success ? profile.data.companyProfile.isInId : undefined;
+    const isinMatch = !!expectedIsin && /^IN[A-Z0-9]{10}$/.test(expectedIsin) && sourceIsin === expectedIsin;
+    const shape = financialIdentityShape(body);
+    if (expectedIsin && rawProfile.success && rawProfile.data.companyProfile.isInId != null && !sourceIsin)
+      throw new FinancialSourceError("The financial source returned an invalid ISIN. Company reports were not requested.", shape);
+    if (sourceIsin && expectedIsin && sourceIsin !== expectedIsin)
+      throw new FinancialSourceError("The financial source returned a different ISIN. Company reports were not requested.", shape);
     const identity = z.object({ tickerId: z.string().trim().min(1).max(60) }).safeParse(body);
-    if (!identity.success)
-      throw new FinancialSourceError("The financial source returned no usable stock identifier. Company reports were not requested.");
-    const providerId = identity.data.tickerId;
-    let identityMethod: StockFinancials["identityMethod"] = "ticker-id";
-    if (providerId.toUpperCase() !== canonical) {
+    if (!identity.success && !isinMatch)
+      throw new FinancialSourceError("The financial source returned no matching ISIN or usable stock identifier. Company reports were not requested.", shape);
+    const providerId = identity.success ? identity.data.tickerId : undefined;
+    let identityMethod: StockFinancials["identityMethod"] = isinMatch ? "profile-isin" : "ticker-id";
+    if (!isinMatch && providerId!.toUpperCase() !== canonical) {
       // The documented directory exposes exchangeCodeNsi separately from its
       // internal ID. Never compare names or assume an old symbol is an alias.
-      if (!/^S\d{1,12}$/.test(providerId))
-        throw new FinancialSourceError("The returned company did not match the exact NSE ticker. No name-based substitution was used.");
+      if (!/^S\d{1,12}$/.test(providerId!))
+        throw new FinancialSourceError("The returned company did not match the exact NSE ticker. No name-based substitution was used.", shape);
       const directory = z.array(z.object({ id: z.string().trim().min(1).max(60), exchangeCodeNsi: z.string().max(60).nullish() })).max(5000)
         .safeParse(await this.get("/industry_search", { query: canonical }));
       const matches = directory.success ? directory.data.filter((entry) => entry.exchangeCodeNsi?.trim().toUpperCase() === canonical) : [];
       const ids = new Set(matches.map((entry) => entry.id));
       const conflictingId = directory.success && directory.data.some((entry) => entry.id === providerId && entry.exchangeCodeNsi?.trim().toUpperCase() !== canonical);
-      if (ids.size !== 1 || !ids.has(providerId) || conflictingId)
-        throw new FinancialSourceError("The source returned an internal stock ID, but its exchange directory did not confirm one matching NSE symbol. No company-name or old-symbol substitution was used.");
+      if (ids.size !== 1 || !ids.has(providerId!) || conflictingId)
+        throw new FinancialSourceError("The source returned an internal stock ID, but its exchange directory did not confirm one matching NSE symbol. No company-name or old-symbol substitution was used.", shape);
       identityMethod = "exchange-directory";
     }
     const industry = z.object({ industry: z.string().max(160).nullish() }).safeParse(body);
@@ -163,7 +185,8 @@ export class IndianFinancialProvider {
     });
     if (!Object.keys(reports).length) throw new FinancialSourceError(errors[0] ?? "No company financial reports could be verified. Check source access and coverage.");
     return { provider: "IndianAPI", source: `${STOCK_FINANCIAL_ORIGIN}/stock`, canonicalSymbol: canonical,
-      identityMatch: "exact-nse-ticker", identityMethod, providerId, isinVerified: false,
+      identityMatch: isinMatch ? "same-isin" : "exact-nse-ticker", identityMethod, providerId,
+      ...(isinMatch ? { identityIsin: sourceIsin } : {}), isinVerified: false,
       industry: industry.success ? industry.data.industry?.trim() || "Not provided" : "Not provided", fetchedAt,
       status: Object.keys(reports).length === kinds.length ? "collected" : "partial", reports, errors,
       publicationTimesVerified: false, unitsVerified: false, currencyVerified: false, consolidationVerified: false, researchReady: false };
@@ -171,8 +194,9 @@ export class IndianFinancialProvider {
 }
 
 /** Reused reports keep their original retrieval time. A future or invalid time cannot pass. */
-export function canReuseFinancials(evidence: StockFinancials | undefined, canonicalSymbol: string, now: string) {
+export function canReuseFinancials(evidence: StockFinancials | undefined, canonicalSymbol: string, now: string, expectedIsin?: string | null) {
   if (!evidence || evidence.canonicalSymbol !== canonicalSymbol) return false;
+  if (evidence.identityMatch === "same-isin" && (!expectedIsin || evidence.identityIsin !== expectedIsin)) return false;
   const age = Date.parse(now) - Date.parse(evidence.fetchedAt);
   return Number.isFinite(age) && age >= 0 && age < 24 * 60 * 60 * 1000;
 }
