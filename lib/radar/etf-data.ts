@@ -1,3 +1,4 @@
+import type { NavHistory } from "./nav-history";
 import type { GoldSources } from "./gold-model";
 import { z } from "zod";
 
@@ -21,6 +22,7 @@ export interface MarketDepth {
   fetchedAt: string;
 }
 export interface EtfEvidence {
+  navHistory?: NavHistory;
   /** Only populated by a verified server-side source adapter, never manual rule settings. */
   goldSources?: GoldSources;
   nav: EtfNav | null;

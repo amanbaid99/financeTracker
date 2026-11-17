@@ -81,7 +81,7 @@ export function automaticResearch({
     blockers: checks.filter((c) => c.state === "missing").map((c) => ({
       label: c.label,
       owner: c.id === "model" ? "development" : c.id === "portfolio" ? "context" :
-        ["prices", "nav", "classification"].includes(c.id) ? "refresh" : "source",
+        ["prices", "nav", "nav-history", "classification"].includes(c.id) ? "refresh" : "source",
     })),
   });
   add(
@@ -187,6 +187,16 @@ export function automaticResearch({
       `Closing price was ${Math.abs(premium).toFixed(2)}% ${premium >= 0 ? "above" : "below"} same-session NAV.`,
     );
   }
+  const navHistory = analysis.etf?.navHistory;
+  const historyMatched = navAligned && !!navHistory && navHistory.isin === isin &&
+    navHistory.schemeCode === nav!.schemeCode && navHistory.officialCheck.date === expected &&
+    navHistory.points.at(-1)?.date === expected;
+  add(
+    "nav-history", "Historical NAV", historyMatched && navHistory.points.length >= 252 ? "ready" : "missing",
+    historyMatched
+      ? `${navHistory.points.length} published NAV observations from MFapi, latest NAV reconciled with AMFI. Historical values are not independently audited; publication times and adjustments are unverified.`
+      : "Refresh research to fetch matching NAV history after the official latest NAV is available. This is a secondary source, not a replacement for AMFI.",
+  );
   const depth = analysis.etf?.depth;
   // quote_time is not part of INDmoney's documented REST contract. Stored/fetch timestamps are not sufficient evidence.
   const depthAge = depth?.marketTime
@@ -231,7 +241,8 @@ export function automaticResearch({
   } else {
     goldStudy = evaluateGold({
       candles, adjustmentsVerified: analysis.inputs.adjustmentsVerified,
-      sources: analysis.etf?.goldSources, isin, nav: nav ?? null,
+      sources: analysis.etf?.goldSources, collectedNavHistory: analysis.etf?.navHistory,
+      isin, nav: nav ?? null,
       depth: depth ?? null, expectedSession: expected, now,
     });
     add(

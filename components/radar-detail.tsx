@@ -14,6 +14,7 @@ import {
   type WatchItem,
 } from "@/lib/radar/contracts";
 import { refreshRadar, removeRadar, saveRadarRules } from "@/lib/radar/actions";
+import { NavHistoryView } from "@/components/radar-nav-history";
 import { RadarResearch } from "@/components/radar-research";
 import { automaticResearch } from "@/lib/radar/research";
 import { classifyInstrument } from "@/lib/radar/classification";
@@ -207,6 +208,14 @@ export function RadarDetail({
               </dd>
             </div>
           </dl>
+          {a?.etf?.navHistory ? (
+            <NavHistoryView history={a.etf.navHistory} />
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Historical NAV is not saved for this snapshot. Refresh research to
+              fetch it after the official latest NAV is available.
+            </p>
+          )}
           <p className="text-xs text-muted-foreground">
             NAV is matched by ISIN from AMFI. A previous-day NAV is not used as
             a live fair value. Spread freshness is{" "}

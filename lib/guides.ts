@@ -26,6 +26,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     steps: [
       "Search INDmoney by name, symbol or ISIN. The instrument metadata suggests whether it is a stock, Gold ETF or index ETF before you confirm.",
       "Open an item for Automatic research. It uses your latest saved prices, official NAV and data-quality checks without asking you to set price rules.",
+      "Published NAV history shows a dated secondary-source chart when the scheme code, ISIN and latest NAV match AMFI. Unknown publication times and adjustments still block trading-model use.",
       "Refresh research fetches current source data. Wait can identify a verified entry risk, such as an excessive same-day NAV premium. Research not ready explains missing source connections or model work. Insufficient data flags an instrument or latest-session data that cannot be checked.",
       "Buy candidates, Hold and exit reviews need completed verified research and, for holding or selling, ownership and portfolio context. A watchlist alone is not enough. Missing inputs never force a conclusion.",
       "Optional price alerts are folded below the research and charts. They compare levels you enter and are not automatic investment recommendations. Notifications are not enabled yet.",
@@ -140,6 +141,14 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-11-17",
+    title: "Historical NAV in Radar",
+    items: [{
+      title: "A dated history with source checks",
+      text: "Refresh research now attempts historical ETF NAV from MFapi after checking the official AMFI scheme identity and latest NAV. Open Published NAV history for the chart. A failed history request leaves current prices and official NAV intact. Publication times and adjustments remain unverified, so history does not enable investment calls.",
+    }],
+  },
   {
     date: "2026-11-17",
     title: "Clearer research readiness",

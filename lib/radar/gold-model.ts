@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { candleSchema, type Candle } from "./contracts";
 import { technicals } from "./analysis";
+import type { NavHistory } from "./nav-history";
 import type { EtfNav, MarketDepth } from "./etf-data";
 
 /** Paper-only engineering model. These explicit guardrails are not calibrated return forecasts. */
@@ -86,10 +87,11 @@ export function trackingMetrics(nav: number[], benchmark: number[]) {
 }
 
 /** Missing evidence stops paper decisions too. No caller-supplied flag can release this model. */
-export function evaluateGold({ candles, adjustmentsVerified, sources, isin, nav, depth, expectedSession, now }: {
+export function evaluateGold({ candles, adjustmentsVerified, sources, isin, nav, depth, expectedSession, now, collectedNavHistory }: {
   candles: Candle[];
   adjustmentsVerified: boolean;
   sources?: GoldSources;
+  collectedNavHistory?: NavHistory;
   isin: string | null;
   nav: EtfNav | null;
   depth: MarketDepth | null;
@@ -140,7 +142,9 @@ export function evaluateGold({ candles, adjustmentsVerified, sources, isin, nav,
   }
   const parsed = sourceSchema.safeParse(sources);
   if (!parsed.success || parsed.data.isin !== isin) {
-    study.missing.push("Matched official NAV history and a sourced domestic Gold benchmark in INR are needed.");
+    study.missing.push(collectedNavHistory?.isin === isin
+      ? "NAV history is collected, but its publication times and adjustments are unverified. A matched domestic Gold benchmark in INR is still needed."
+      : "Matched official NAV history and a sourced domestic Gold benchmark in INR are needed.");
     return study;
   }
   const data = parsed.data;

@@ -24,8 +24,8 @@ Current live app evidence: the owner's refresh screenshot shows an exact-ISIN sa
 | Input | Required contract | Current position |
 | --- | --- | --- |
 | Adjusted ETF history | At least 252 completed OHLCV sessions, adjustment convention, splits/distributions coverage and dates | INDstocks prices connected, adjustment semantics unverified |
-| Official historical NAV | Exact ISIN, scheme identity, 252 session dates, values and actual publication/availability times | Latest AMFI NAV connected; historical adapter not connected |
-| Domestic Gold benchmark | Named series and provider, INR basis, consistent units, 252 matching dates, actual availability times and adjustment convention | No verified adapter connected |
+| Official historical NAV | Exact ISIN, scheme identity, 252 session dates, values and actual publication/availability times | Latest AMFI NAV connected; MFapi secondary history adapter integrated with latest-point reconciliation. Full-history audit, publication times and adjustments remain unverified |
+| Domestic Gold benchmark | Named series and provider, INR basis, consistent units, 252 matching dates, actual availability times and adjustment convention | Official NSE spot-history page identified, but no verified payload adapter or matching valuation-time mapping yet |
 | Timestamped depth | Matching exchange/security, active bid/ask and a documented book/publication timestamp | REST depth connected, timestamp contract missing |
 | ETF tracking | Aligned NAV and benchmark daily returns on the same valuation basis and sessions | Calculation implemented; verified input series missing |
 
@@ -54,3 +54,14 @@ Before a production recommendation release:
 3. Independently reconcile benchmark returns, NAV premiums, tracking metrics and sample decisions.
 4. Monitor live paper decisions through publication delays, holidays and source failures. Do not replace missing inputs with AI or inferred timestamps.
 5. Review the evidence before changing the model's paper-only release policy. Unit-test success or a synthetic candidate cannot enable production calls.
+
+
+## NAV history connection, 17 Nov 2026
+
+The app now attempts [MFapi historical NAV](https://www.mfapi.in/docs/) when an official same-session AMFI NAV is available. The documented endpoint is GET /mf/{scheme_code} with bounded startDate/endDate. Only the public official scheme code and dates are sent, with no broker token, user details or ISIN. Requests use a fixed HTTPS host, reject redirects, time out after 12 seconds and reject responses over 1 MB. Existing snapshot/cooldown behaviour limits repeat calls.
+
+The parser requires exact scheme code and ISIN metadata, positive decimal NAVs and valid dates, rejects duplicate sessions, excludes outside-window dates and reconciles the latest point with AMFI. Latest-point reconciliation is not independent verification of every historical value. Raw upstream errors are not returned to the client. Current prices, official NAV and depth are retained independently if history fails. Snapshots retain the secondary source, retrieval time, official anchor and observed NAV dates/values. Neither publication time nor adjustment verification is fabricated. This separate NavHistory contract does not populate the model's GoldSources contract.
+
+MFapi's documentation confirms the API contract and no-key access. Live API coverage has not been proven here: this workspace's outbound proxy returned HTTP 403 to the direct source request, and the web fetch tool could not retrieve that JSON endpoint. Adapter and pipeline tests use synthetic payloads. Do not report those tests or a Vercel build as proof that an owner's live NAV history was fetched. The user's next explicit Refresh research will exercise the deployed data path.
+
+The [NSE domestic spot-history page](https://www.nseindia.in/historical-spot-price) and [AMFI tracking disclosures](https://www.amfiindia.com/otherdata/tracking-error) are identifiable primary sources, but their downloadable payloads and valuation-time mapping remain unverified. Do not invent an API URL from the page's existence. The [SEBI February 2026 valuation circular](https://www.sebi.gov.in/sebi_data/attachdocs/feb-2026/1772102397057.pdf) changes physical Gold valuation from 1 April 2026 to exchange polled spot prices. A historical benchmark must account for that methodology change and match the scheme's valuation basis. An arbitrary intraday Gold spot price, converted international price or ETF price series cannot be substituted for that benchmark. No benchmark adapter or timestamped depth fix is claimed in this update.

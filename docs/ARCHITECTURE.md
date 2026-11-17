@@ -185,3 +185,8 @@ unit tests in `tests/unit/`.
 ## Gold paper research, 17 Nov 2026
 
 lib/radar/gold-model.ts validates dated NAV/INR Gold benchmark evidence and evaluates explicit paper guardrails. It never enables production recommendations. Optional GoldSources belong to immutable ETF evidence, with no new database table. No current adapter populates them. Research derives readiness from the saved snapshot; paper calculations use the existing candle payload. lib/radar/paper-replay.ts compares model, monthly, immediate and simple-dip policies using next-open execution and actual signal availability. See investment-radar/DATA_REQUIREMENTS.md for the unconnected sources and uncompleted validation work.
+
+
+## Secondary NAV history
+
+lib/radar/etf-evidence.ts fetches official NAV and INDstocks depth concurrently. Once official same-session NAV is available, lib/radar/nav-history.ts requests the matching public MFapi scheme code, validates identity and reconciles the latest NAV. Separate EtfEvidence.navHistory data records provenance, dates and explicit unverified publication/adjustment status. A failure preserves the other evidence and never silently fills gaps. components/radar-nav-history.tsx draws an optional, labelled NAV chart. GoldSources stays unpopulated until model-grade publication and benchmark evidence is available. No schema change or automatic user-record rewrite is required.

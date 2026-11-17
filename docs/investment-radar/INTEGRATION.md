@@ -149,3 +149,7 @@ Current automatic output is Insufficient data or an evidence-backed Wait risk. C
 ## Gold paper model implementation, 17 Nov 2026
 
 The first Gold-only assessment and point-in-time historical comparison harness are implemented. They are not a production recommendation release. Source contracts require adjusted history, exact-ISIN NAV history, an INR Gold benchmark and a timestamped bid/ask. No current adapter populates GoldSources. Verified same-session premium risks still produce Wait; source and model gaps produce Research not ready. Missing latest-session data remains Insufficient data. Details distinguish source work from development work. See DATA_REQUIREMENTS.md for verified provider documentation, exact missing payloads, proposed guardrails and release requirements.
+
+## Secondary historical NAV, 17 Nov 2026
+
+Refresh now calls collectEtfEvidence: official AMFI NAV and INDstocks depth run independently; matching official NAV enables a bounded MFapi history read. Exact scheme/ISIN identity and latest NAV reconciliation are required. Failures retain independent successes. No extra key or migration is needed. The dated, labelled history chart is separate from Gold model-grade sources, whose publication/benchmark evidence is still incomplete. See DATA_REQUIREMENTS.md for verified documentation, sandbox HTTP 403 limits and remaining benchmark/time-contract requirements.

@@ -17,8 +17,9 @@ export const HELP: HelpTopic[] = [
     section: "Investment Radar",
     q: "How does automatic research work?",
     a: [
-      "It runs from your latest saved data when you open Radar. There is no price-rule setup step. Refresh research fetches daily prices, official ETF NAV by ISIN and available market depth.",
+      "It runs from your latest saved data when you open Radar. There is no price-rule setup step. Refresh research fetches daily prices, official ETF NAV by ISIN and available market depth. When the official same-session NAV is available, it also fetches historical NAV from MFapi using the official scheme code. The ISIN and latest NAV must match before history is kept.",
       "A verified excessive same-session premium or a verified wide spread can show Wait automatically. A NAV discount alone cannot produce a Buy candidate. Price adjustments, underlying Gold/index context, validated models and other source checks are still required.",
+      "Published NAV history is a secondary-source chart, not adjusted total returns. The latest point is checked against AMFI; the rest of the history, publication times and adjustments are unverified. History alone cannot enable Buy or exit recommendations.",
       "Research not ready means additional sources or model work are still needed. The first Gold model and comparison harness are implemented for paper testing, but real historical validation and live monitoring are unfinished. Refresh updates data; it cannot finish that work. No settings need changing.",
       "Hold and Review selling need ownership and portfolio/exit context. Radar can recognise an exact ISIN match in your tracked holdings, but it does not infer your desired allocation or recommend an exit from a watchlist alone. Full Buy/Hold/Sell research remains unfinished where these prerequisites are missing.",
       "Legacy ETFs saved as stocks are reclassified for display and research using provider metadata or an exact AMFI Gold ETF ISIN match. These corrections do not add holdings or rewrite your saved data in the background. Unknown ETFs and fund-of-funds wrappers are flagged for review.",

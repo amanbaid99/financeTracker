@@ -3,6 +3,14 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 17 Nov 2026.
 
+## Historical NAV data path, 17 Nov 2026
+
+Refresh research now attempts a free secondary NAV-history read from MFapi after obtaining official same-session AMFI NAV. Exact scheme code and ISIN must match; the latest historical point is reconciled with the official value. The optional Published NAV history chart labels provenance, coverage and unverified publication/adjustment status. A failed history request preserves the independent current-price, official-NAV and depth results. No extra key, schema change or background write to an existing user record is required.
+
+This is an integrated source path, not proof of live retrieval or completed investment research. Direct source requests from this workspace returned proxy HTTP 403, so authenticated production/source coverage remains unverified. The secondary history has no publication times or adjustment assurance and never populates GoldSources. An official NSE spot-history page and the April 2026 valuation-method change were identified; the matching benchmark payload adapter, adjusted history and dated depth are still blocked. Buy/Hold/Sell and real-data model validation remain unfinished. See investment-radar/DATA_REQUIREMENTS.md.
+
+Validation: lint, TypeScript, 319 unit tests, 18 Python tests and the production build passed. Browser component fixtures passed 72 responsive cases including historical-NAV expansion. The full signed-in local e2e remains blocked by Supabase CLI telemetry writes on a read-only home. No fixture or build is reported as proof of live market-data coverage.
+
 ## Gold paper work, 17 Nov 2026
 
 Implemented a first deterministic Gold assessment model, source-contract validation and a point-in-time replay harness comparing model, monthly, immediate and simple-dip policies with equal cash availability and explicit costs. These are paper/testing tools, not production Buy/Hold/Sell recommendations. Real historical inputs, source adapters, out-of-sample evaluation and live paper monitoring remain incomplete. Hold and exit logic remain unfinished.

@@ -21,8 +21,9 @@ export default async function RadarSetupPage() {
         </p>
         <p className="text-sm text-muted-foreground">
           The adapter only reads market instruments, prices and depth. AMFI
-          supplies official NAV. No order, funds or broker portfolio endpoint is
-          called.
+          supplies official NAV. MFapi supplies historical NAV, checked against
+          the official scheme code, ISIN and latest NAV. No order, funds or broker
+          portfolio endpoint is called. The history source needs no extra API key.
         </p>
       </section>
       <section className="rounded-2xl border bg-card p-4 space-y-3">
@@ -42,7 +43,9 @@ export default async function RadarSetupPage() {
           </li>
           <li>
             Official NAV is compared only with a closing price from the same
-            session. A previous-day NAV is not a live fair value.
+            session. A previous-day NAV is not a live fair value. Historical NAV
+            has its own source label; matching the latest point does not audit
+            every historical value or establish its publication time.
           </li>
           <li>
             Missing or unverified market timestamps cannot pass spread freshness

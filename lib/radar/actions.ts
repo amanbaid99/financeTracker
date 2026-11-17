@@ -5,7 +5,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { todayIST } from "@/lib/dates";
 import type { Json } from "@/lib/supabase/database.types";
-import { fetchAmfiNav, type EtfEvidence } from "./etf-data";
+import type { EtfEvidence } from "./etf-data";
+import { collectEtfEvidence } from "./etf-evidence";
 import { previousCompletedSession } from "./calendar";
 import { ruleSettingsSchema } from "./rule-signal";
 import { assetTypes, watchSchema } from "./contracts";
@@ -182,19 +183,12 @@ export async function refreshRadar(id: string) {
     const candles = await provider.history(item, today);
     let etf: EtfEvidence | undefined;
     if (item.assetType !== "equity") {
-      etf = { nav: null, depth: null, errors: [] };
-      const [nav, depth] = await Promise.allSettled([
-        item.isin ? fetchAmfiNav(item.isin) : Promise.resolve(null),
-        provider.depth(item, now),
-      ]);
-      if (nav.status === "fulfilled") etf.nav = nav.value;
-      else
-        etf.errors.push("Official NAV could not be fetched. Refresh to retry.");
-      if (depth.status === "fulfilled") etf.depth = depth.value;
-      else
-        etf.errors.push(
-          "Market spread could not be verified. Refresh to retry.",
-        );
+      etf = await collectEtfEvidence({
+        isin: item.isin,
+        expectedSession: previousCompletedSession(today, item.exchange),
+        now,
+        readDepth: () => provider.depth(item, now),
+      });
     }
     const analysis = analyseRadar({
       candles,

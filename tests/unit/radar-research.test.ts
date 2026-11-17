@@ -106,6 +106,35 @@ describe("provider-derived instrument types", () => {
   });
 });
 describe("automatic evidence-based research", () => {
+  it("shows collected NAV history without promoting it to a tested Gold recommendation", () => {
+    const points = Array.from({ length: 252 }, (_, i) => ({
+      date: new Date(Date.parse("2026-11-16") - (251 - i) * 86400000).toISOString().slice(0, 10),
+      nav: 100,
+    }));
+    const result = automaticResearch({ ...input, analysis: {
+      ...analysis, etf: { ...analysis.etf!, navHistory: {
+        isin, schemeCode: nav.schemeCode, source: "https://api.mfapi.in/mf/123",
+        fetchedAt: now, publicationTimesVerified: false, adjustmentsVerified: false,
+        officialCheck: { source: nav.source, date: nav.date, nav: nav.nav }, points,
+      } },
+    } });
+    expect(result.checks.find((c) => c.id === "nav-history")?.state).toBe("ready");
+    expect(result.label).toBe("Research not ready");
+    expect(result.goldStudy?.paperDecision).toBeNull();
+    expect(result.goldStudy?.missing.join(" ")).toContain("publication times");
+  });
+  it("rejects history readiness when the saved history belongs to another ISIN", () => {
+    const result = automaticResearch({ ...input, analysis: { ...analysis,
+      etf: { ...analysis.etf!, navHistory: {
+        isin: "INF000000002", schemeCode: nav.schemeCode, source: "https://api.mfapi.in/mf/123",
+        fetchedAt: now, publicationTimesVerified: false, adjustmentsVerified: false,
+        officialCheck: { source: nav.source, date: nav.date, nav: nav.nav },
+        points: [{ date: nav.date, nav: nav.nav }],
+      } },
+    } });
+    expect(result.checks.find((c) => c.id === "nav-history")?.state).toBe("missing");
+    expect(result.label).toBe("Research not ready");
+  });
   it("runs with no manual rules or thresholds and reports actual completed checks", () => {
     const result = automaticResearch(input);
     expect(result.label).toBe("Research not ready");
