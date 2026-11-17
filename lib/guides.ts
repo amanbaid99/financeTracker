@@ -146,6 +146,14 @@ export interface Release {
 export const RELEASES: Release[] = [
   {
     date: "2026-11-17",
+    title: "Stock assessment enters paper testing",
+    items: [{
+      title: "Quality, valuation, growth and price checks",
+      text: "A first stock model is implemented for profitable non-financial businesses. Open Data checks and limitations for its missing inputs. It requires verified reports and comparable valuations. Paper results do not enable live Buy, Hold or Sell recommendations.",
+    }],
+  },
+  {
+    date: "2026-11-17",
     title: "Stricter stock identity mapping",
     items: [{
       title: "Check source IDs against exchange symbols",

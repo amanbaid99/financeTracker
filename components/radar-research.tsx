@@ -98,7 +98,7 @@ export function RadarResearch({
                     : c.state === "risk"
                       ? "Needs care"
                       : c.id === "model"
-                        ? (result.goldStudy ? "In testing" : "To build")
+                        ? (result.goldStudy || result.stockStudy ? "In testing" : "To build")
                         : "Needs data"}
                 </span>
               </div>
@@ -118,6 +118,20 @@ export function RadarResearch({
               {result.goldStudy.missing.map((message) => (
                 <li key={message}>{message}</li>
               ))}
+            </ul>
+          </div>
+        )}
+        {result.stockStudy && (
+          <div className="mt-4 border-t pt-3 space-y-2">
+            <p className="font-medium text-sm">Stock model: paper testing</p>
+            <p className="text-xs text-muted-foreground">
+              The calculation code is implemented for profitable non-financial businesses.
+              It has not passed historical validation or live monitoring. Financial
+              companies and loss-making businesses need separate models. No paper
+              score or decision is a live recommendation.
+            </p>
+            <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
+              {result.stockStudy.missing.map((message) => <li key={message}>{message}</li>)}
             </ul>
           </div>
         )}

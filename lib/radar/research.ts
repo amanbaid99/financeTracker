@@ -1,5 +1,6 @@
 import type { InstrumentClassification } from "./classification";
 import { evaluateGold, type GoldStudy } from "./gold-model";
+import { evaluateStock, type StockStudy } from "./stock-model";
 import type { Candle, RadarAnalysis, RadarAsset } from "./contracts";
 import { previousCompletedSession } from "./calendar";
 
@@ -26,12 +27,13 @@ export interface ResearchResult {
   version: string;
   score: null;
   goldStudy?: GoldStudy;
+  stockStudy?: StockStudy;
   blockers: {
     label: string;
     owner: "source" | "development" | "refresh" | "context";
   }[];
 }
-const VERSION = "automatic-research-0.7";
+const VERSION = "automatic-research-0.8";
 /** Automatic evidence review, independent of manual price rules. Never claim a validated valuation model exists. */
 export function automaticResearch({
   analysis,
@@ -56,6 +58,7 @@ export function automaticResearch({
 }): ResearchResult {
   const expected = previousCompletedSession(today, exchange);
   let goldStudy: GoldStudy | undefined;
+  let stockStudy: StockStudy | undefined;
   const checks: ResearchCheck[] = [];
   const reasons: string[] = [];
   const add = (
@@ -78,6 +81,7 @@ export function automaticResearch({
     version: VERSION,
     score: null,
     goldStudy,
+    stockStudy,
     blockers: checks.filter((c) => c.state === "missing").map((c) => ({
       label: c.label,
       owner: c.id === "model" ? "development" : c.id === "portfolio" ? "context" :
@@ -138,6 +142,8 @@ export function automaticResearch({
         : "Price history is available, but corporate-action adjustments are unverified. Momentum cannot establish a buying opportunity.",
   );
   if (asset === "equity") {
+    stockStudy = evaluateStock({ candles, adjustmentsVerified: analysis.inputs.adjustmentsVerified,
+      sources: analysis.stockSources, isin, expectedSession: expected, now });
     const reports = analysis.financials;
     if (!reports && analysis.financialsError) add("company-reports", "Company report collection", "missing", analysis.financialsError);
     if (reports) add("company-reports", "Company report collection",
@@ -155,7 +161,7 @@ export function automaticResearch({
       "model",
       "Stock research model",
       "missing",
-      "The stock model still needs implementation and testing. Refreshing prices cannot complete this work.",
+      "The first profitable non-financial stock model is implemented for paper testing. Verified source adapters, historical validation, supported-sector review and live monitoring are still required before releasing recommendations.",
     );
     if (owned)
       add(
@@ -169,7 +175,7 @@ export function automaticResearch({
       reports
         ? "Company reports are collected. Verified valuation data and a tested stock model are still needed."
         : analysis.financialsError ? "Company reports could not be verified. Stock valuation and the assessment model remain incomplete."
-        : "Stock research is not ready. Financial-data sources and the stock assessment model are still missing.",
+        : "Stock research needs verified financial data and validation of the stock assessment model.",
       reports
         ? "Open Company reports for coverage. Amount units, report basis and publication times remain unverified. No price-rule setup is needed."
         : analysis.financialsError ? "Open Company reports for the source error. Refreshing prices or setting price rules cannot resolve a source identity or model gap."

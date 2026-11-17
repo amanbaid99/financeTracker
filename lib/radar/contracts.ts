@@ -1,4 +1,5 @@
 import type { StockFinancials } from "./stock-financials";
+import type { StockSources } from "./stock-model";
 import type { InstrumentClassification } from "./classification";
 import type { EtfEvidence, MarketEvidence } from "./etf-data";
 import type { RuleSettings } from "./rule-signal";
@@ -63,7 +64,7 @@ export interface Technicals {
   low252: number | null;
   averageTradedValue20: number | null;
 }
-export const ENGINE_VERSION = "radar-stock-financials-0.7";
+export const ENGINE_VERSION = "radar-stock-paper-0.8";
 export interface RadarAnalysis {
   inputs: {
     asset: RadarAsset | "other_etf";
@@ -77,6 +78,7 @@ export interface RadarAnalysis {
   market?: MarketEvidence;
   financials?: StockFinancials;
   financialsError?: string;
+  stockSources?: StockSources;
   status: "INSUFFICIENT_DATA";
   score: null;
   version: string;

@@ -3,6 +3,14 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 17 Nov 2026.
 
+## First stock paper assessment, 17 Nov 2026
+
+Implemented lib/radar/stock-model.ts for a limited profitable non-financial model. Its strict canonical input contract requires matching ISIN, verified eligibility/units/currency/basis, normalized recurring diluted adjusted EPS, actual report/valuation availability times, ordered annual periods, current comparable peers and dated historical P/E. Corporate-action verification, session/date freshness and financial calculations fail closed. Raw IndianAPI tables cannot satisfy this contract and are never silently promoted to canonical sources.
+
+The paper screen implements the PRD 30/30/20/20 weights and transparent proposed risk gates for cash generation, leverage and relative valuation. All thresholds remain experimental. Financial/unsupported sectors and negative/nonpositive earnings need different models. The assessment is exposed only as missing-input/testing information in folded research details. A passing paper candidate cannot change the live Research not ready label or null score. Hold/exit assessment, validated source normalization, real historical evaluation including survivorship, and live monitoring remain unfinished.
+
+Read-only hosted verification found ETERNAL still on the previous 0.6 snapshot with no reports. The 0.7 source fix has not yet been verified by an explicit owner refresh. No hosted user record was changed. Validation: lint, TypeScript, 403 unit tests, 18 Python tests and production build passed. Chromium component fixtures passed 168 responsive theme/width/state cases plus 12 expanded stock-model views. The signed-in local e2e remains blocked by Supabase CLI telemetry writes to a read-only home. All source/model fixtures are synthetic, not live coverage or performance evidence. See investment-radar/STOCK_MODEL.md.
+
 ## Stock source identity correction, 17 Nov 2026
 
 The adapter now sends the documented symbol query rather than a fuzzy name search. Direct exact ticker IDs still pass; internal S-prefixed numeric IDs require a documented industry_search directory response with one exact exchangeCodeNsi mapping back to the same ID. Names, stale symbols, missing or conflicting mappings never authorize report reads. Industry shape changes are separated from identity checks. Evidence records the identity method and internal ID, not raw company profiles. New collections use at most five reads. Reports, source errors and unfinished valuation/model work are distinguished in the automatic research card. No schema migration, background collection or hosted record mutation is added.
