@@ -26,3 +26,12 @@ The primary documents establish an accounting-comparability issue. They do not a
 ## Remaining work
 
 Implement and verify canonical filing ingestion with actual source metadata and publication/restatement times, acquire comparable point-in-time valuations and verified price adjustments, then evaluate the paper model on real historical and live samples. Hold/exit assessment additionally needs confirmed ownership/allocation/thesis and costs. No live Buy/Hold/Sell output is enabled by this audit or by structural coverage.
+
+
+## Annual exchange filing located after the initial coverage release
+
+The [NSE consolidated FY26 filing](https://nsearchives.nseindia.com/corporate/ixbrl/INTEGRATED_FILING_INDAS_153832_28042026202149_iXBRL_WEB.html) is accessible as structured page text, unlike the large issuer PDF. Its identity, annual period, consolidated basis and INR-lakh scale can be inspected directly. The nearby [standalone filing](https://nsearchives.nseindia.com/corporate/ixbrl/INTEGRATED_FILING_INDAS_153847_28042026202410_iXBRL_WEB.html) must not be substituted just because its ticker and period match.
+
+The consolidated filing reports annual diluted EPS 0.39 INR/share; the saved provider row labelled EPS in Rs is 0.38. The provider's EPS definition and share-adjustment basis remain unresolved. This is not proof of an incorrect filing or a provider error. Numerical closeness cannot establish matching metric definitions. Rounding reconciliation now compares stated decimal rounding intervals exactly with integer arithmetic, never an extra percentage tolerance.
+
+The annual statement also exposes explicit cash-flow lines and cash balances, so primary-source augmentation is a viable next step. A discovered URL and human inspection are not a verified automatic filing adapter or a complete historical audit. Source publication/restatement availability still needs an explicit contract; the board date and URL timestamp are not automatically publication times.

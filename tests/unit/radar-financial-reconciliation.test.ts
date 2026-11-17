@@ -15,6 +15,17 @@ describe("explicit source/filing reconciliation", () => {
     expect(reconcileFinancialFact(eps, eps).state).toBe("consistent");
     expect(reconcileFinancialFact(eps, { ...eps, unit: "INR-crore" }).state).toBe("unverified");
   });
+  it("does not make a false mismatch from binary arithmetic at the declared rounding boundary", () => {
+    const eps = { ...base, metric: "diluted-eps", dimension: "per-share", value: 0.38, unit: "INR/share", roundingStep: 0.01 };
+    expect(reconcileFinancialFact(eps, { ...eps, value: 0.39 }).state).toBe("consistent");
+    expect(reconcileFinancialFact(eps, { ...eps, value: 0.3901 }).state).toBe("different");
+    const large = { ...base, value: 9_000_000_000_000_000, unit: "INR", roundingStep: 1 };
+    expect(reconcileFinancialFact(large, { ...large, value: large.value - 2 }).state).toBe("different");
+  });
+  it("never resolves an unspecified EPS definition merely because values are numerically close", () => {
+    const reported = { ...base, metric: "reported-eps", dimension: "per-share", value: 0.38, unit: "INR/share", roundingStep: 0.01 };
+    expect(reconcileFinancialFact(reported, { ...reported, metric: "diluted-eps", value: 0.39 }).state).toBe("unverified");
+  });
   it.each([
     { isin: "INE000000009" }, { periodEnd: "2026-09-30" }, { periodKind: "half-year" },
     { basis: "standalone" }, { metric: "net-profit" }, { dimension: "percentage" },

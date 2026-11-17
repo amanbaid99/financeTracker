@@ -3,6 +3,10 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 17 Nov 2026.
 
+## Annual filing definition review, 17 Nov 2026
+
+Located the selected stock's official consolidated FY26 exchange filing in readable page form. The nearby standalone filing is explicitly different and cannot be merged into consolidated data. Annual diluted EPS in the filing and the provider's reported EPS differ; their definitions/adjustment bases are unresolved, so no EPS comparison or valuation is promoted to verified. The monetary reconciliation helper now compares declared decimal rounding intervals with exact integer arithmetic while still rejecting different metric definitions and values beyond that boundary. No source flag or live recommendation is enabled. See investment-radar/STOCK_SOURCE_AUDIT.md. Verification: lint, TypeScript, 441 unit tests, 18 Python tests and production build passed. The focused reconciliation tests cover decimal boundaries, large amounts, incompatible EPS definitions and genuine mismatches. The prior full signed-in e2e attempt remains blocked by local Supabase tooling. No live research release is claimed.
+
 ## Live stock reports and comparability checks, 17 Nov 2026
 
 The owner refreshed successfully: ETERNAL engine 0.9 collected nine annual, ten balance and seven cash-flow periods with an exact source-profile ISIN match and no errors. Latest annual/cash-flow dates are March 2026; the latest balance is September 2026. Seven year ends overlap. No source key was retrieved. This closes the first live collection blocker for this stock only.

@@ -17,6 +17,12 @@ export type FinancialFact = z.infer<typeof fact>;
 const units = { INR: { dimension: "amount", factor: 1 }, "INR-lakh": { dimension: "amount", factor: 100000 },
   "INR-crore": { dimension: "amount", factor: 10000000 }, "INR/share": { dimension: "per-share", factor: 1 },
   "%": { dimension: "percentage", factor: 1 }, times: { dimension: "multiple", factor: 1 } } as const;
+/** Keep stated decimal observations exact while comparing their rounding intervals. */
+function decimal(value: number, factor: number) {
+  const [coefficient, exponent = "0"] = value.toString().split("e");
+  const [whole, fraction = ""] = coefficient.split(".");
+  return { coefficient: BigInt(whole + fraction), power: Number(exponent) - fraction.length + Math.log10(factor) };
+}
 /** Compare explicitly verified observations only. Consistency is not an investment-research release. */
 export function reconcileFinancialFact(reported: unknown, filing: unknown): {
   state: "consistent" | "different" | "unverified";
@@ -38,7 +44,15 @@ export function reconcileFinancialFact(reported: unknown, filing: unknown): {
   const tolerance = (a.data.roundingStep * left.factor + b.data.roundingStep * right.factor) / 2;
   if ([x, y, tolerance].some((v) => !Number.isFinite(v) || Math.abs(v) > Number.MAX_SAFE_INTEGER))
     return result("unverified", "The normalized amounts exceed reliable numeric limits.");
-  const difference = Math.abs(x - y);
-  return result(difference <= tolerance ? "consistent" : "different",
-    difference <= tolerance ? "Values are consistent within the stated source rounding." : "Values differ beyond the stated source rounding.", difference, tolerance);
+  const parts = [decimal(a.data.value, left.factor), decimal(b.data.value, right.factor),
+    decimal(a.data.roundingStep, left.factor), decimal(b.data.roundingStep, right.factor)];
+  const power = Math.min(...parts.map((p) => p.power));
+  const scaled = parts.map((p) => p.coefficient * BigInt(10) ** BigInt(p.power - power));
+  const delta = scaled[0] - scaled[1], absolute = delta < BigInt(0) ? -delta : delta;
+  const stepSum = scaled[2] + scaled[3];
+  const consistent = absolute * BigInt(2) <= stepSum;
+  const difference = Number(`${absolute}e${power}`);
+  const exactTolerance = Number(`${stepSum * BigInt(5)}e${power - 1}`);
+  return result(consistent ? "consistent" : "different",
+    consistent ? "Values are consistent within the stated source rounding." : "Values differ beyond the stated source rounding.", difference, exactTolerance);
 }
