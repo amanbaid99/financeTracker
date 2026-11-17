@@ -84,7 +84,9 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro: "What comes in, what's fixed, and what's free to invest each month.",
     steps: [
       "Add your take-home pay and your monthly costs. EMIs from your loan goals and SIPs from your investments are counted for you.",
-      "The number at the top is what's free to invest a month. Use it for your plan to split it across goals.",
+      "The top card shows what's left to invest a month, with a bar of where your take-home goes: costs, EMIs, SIPs and what's free.",
+      "Next step suggests one thing to do: add your pay, put what's free to work in your plan, or trim your biggest cost if more goes out than comes in.",
+      "Costs are listed biggest first, each with a bar for its share. Tap a line to change it.",
       "Between jobs? Covered till salary at the top shows whether your money lasts till your salary, with a weekly amount to spend. Tap it to set your salary dates.",
     ],
   },
