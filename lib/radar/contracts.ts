@@ -64,7 +64,7 @@ export interface Technicals {
   low252: number | null;
   averageTradedValue20: number | null;
 }
-export const ENGINE_VERSION = "radar-stock-identity-0.9";
+export const ENGINE_VERSION = "radar-stock-coverage-0.10";
 export interface RadarAnalysis {
   inputs: {
     asset: RadarAsset | "other_etf";

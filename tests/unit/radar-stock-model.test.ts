@@ -7,6 +7,7 @@ const isin = "INE000000001", session = "2026-11-16", now = "2026-11-17T04:30:00Z
 const sources = (): StockSources => ({
   isin, sector: "technology", modelEligibilityVerified: true,
   currency: "INR", units: "rupees", basis: "consolidated", epsBasis: "diluted-recurring-split-adjusted", metadataVerified: true,
+  annualComparabilityVerified: true, recurringEarningsVerified: true,
   annual: [2024, 2025, 2026].map((year, i) => ({ end: `${year}-03-31`, availableAt: `${year}-05-15T10:00:00Z`, source: "https://filings.example/annual",
     revenue: 1000 * 1.1 ** i, netProfit: 100 * 1.1 ** i, operatingCash: 140 * 1.1 ** i, capitalSpending: 10,
     debt: 50, cash: 20, ebitda: 150, eps: 10 * 1.1 ** i })),
@@ -42,6 +43,14 @@ describe("paper stock assessment", () => {
   });
   it("keeps issuer identity separate from valuation metadata", () => {
     expect(run({ ...sources(), isin: "INE000000009" }).paperScore).toBeNull();
+  });
+  it.each(["annualComparabilityVerified", "recurringEarningsVerified"])("never scores apparent growth without %s", (flag) => {
+    const data = sources(); data.annual[2].revenue *= 3;
+    for (const value of [false, undefined]) {
+      const result = run({ ...data, [flag]: value });
+      expect(result.paperScore).toBeNull();expect(result.paperDecision).toBeNull();
+      expect(result.metrics).toEqual({});expect(result.factors).toEqual([]);
+    }
   });
   it("does not use future publication or restatement values", () => {
     const data = sources(); data.annual[2].availableAt = "2026-11-18T10:00:00Z";

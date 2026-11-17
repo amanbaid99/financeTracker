@@ -3,6 +3,14 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 17 Nov 2026.
 
+## Live stock reports and comparability checks, 17 Nov 2026
+
+The owner refreshed successfully: ETERNAL engine 0.9 collected nine annual, ten balance and seven cash-flow periods with an exact source-profile ISIN match and no errors. Latest annual/cash-flow dates are March 2026; the latest balance is September 2026. Seven year ends overlap. No source key was retrieved. This closes the first live collection blocker for this stock only.
+
+Added generic structural coverage checks for shared annual periods and absent, incomplete or ambiguous financial rows. The UI explains those gaps inside Company reports. Cash balance, capital spending and explicitly defined EBITDA are absent from the current tables and are never inferred from other assets, investing cash flow, FCF or Operating Profit. Raw coverage never unlocks valuation.
+
+Primary issuer and exchange reporting documents a move to inventory-led revenue recognition. The paper model now requires independent positive accounting-comparability and recurring-earnings review before scoring; reported revenue expansion alone cannot pass. A new reconciliation helper handles explicitly verified same-security/period/basis facts, INR/lakh/crore scaling, unscaled EPS/percentages and declared rounding. No primary-filing adapter or independent full audit is claimed. See investment-radar/STOCK_SOURCE_AUDIT.md. Verification: lint, TypeScript, 439 unit tests, 18 Python tests and production build passed. Chromium fixtures passed 168 responsive cases plus 12 report-coverage views. Full signed-in e2e remains blocked by the Supabase CLI telemetry write to a read-only home. Public filing downloads were limited by workspace access and a large-PDF tool cap; the Vercel Sandbox attempt was interrupted and returned no filing files. No full automated primary-filing audit is claimed.
+
 ## Source-profile ISIN and identity diagnostics, 17 Nov 2026
 
 The owner's refreshed ETERNAL snapshot reached engine 0.8 but returned no usable tickerId, so reports were not requested. The adapter now accepts an optional valid profile ISIN only when it exactly matches the selected instrument's ISIN. Conflicting or malformed ISIN stops collection even if a ticker matches. Existing ticker and directory paths remain available without ISIN proof. Reused ISIN-matched evidence must retain the same expected ISIN. This establishes a cross-source match, not independent filing identity or verified financial metadata.

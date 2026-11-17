@@ -2,7 +2,7 @@
 
 ## Source decision
 
-The existing integration supplies INDstocks market data and AMFI/MFapi NAV. A separate financial-statement source is needed for stock research. The optional IndianAPI starter adapter is prepared; it has not been authenticated or sample-verified from this workspace. A configured key or successful Vercel build is not proof of company coverage.
+The existing integration supplies INDstocks market data and AMFI/MFapi NAV. A separate financial-statement source is needed for stock research. The optional IndianAPI starter adapter has now collected all three report tables for the selected stock, confirmed read-only from its saved engine 0.9 snapshot. The production key was not retrieved into this workspace. A configured key or successful Vercel build is not proof of company coverage.
 
 Provider documentation describes a free starter account with 500 initial API credits, the Free/Hobby host stock.indianapi.in, X-Api-Key authentication and GET /stock plus GET /historical_stats. Credit replenishment and plan eligibility must be checked in the current provider dashboard; no monthly quota or complete dataset coverage is assumed. No paid subscription is selected or purchased.
 
@@ -54,3 +54,12 @@ Next milestone: verify a real successful report collection, check its units/basi
 The owner refreshed ETERNAL on engine 0.8. A read-only snapshot check confirmed the response had no usable tickerId and no reports were requested. The earlier internal-ID fix therefore did not resolve this live response. The provider's public current guide does not guarantee tickerId in all payloads. Optional profile ISIN parsing is now supported: the value must be a valid exact match with the selected IND instrument's ISIN. This is a cross-source security match, not an independent official-filing identity audit; isinVerified and all financial-quality flags stay false. The optional field's actual presence and shape in this live response remain unconfirmed until an explicit refresh. No company-name or renamed-symbol guess is introduced.
 
 When identity fails, the error carries only a static allowlist of response-field types. The next explicitly confirmed snapshot can save that diagnostic in analysis.financialsIdentityShape and include it in the input hash. No raw values, profile/officer/peer information, upstream messages, secrets or arbitrary source field names enter the diagnostic. Existing records are not changed. Same-ISIN evidence reuse additionally requires the same expected ISIN. UI and research checks distinguish an ISIN match from an NSE ticker match.
+
+
+## First live collection verified
+
+A read-only snapshot check confirmed ETERNAL at 2026-11-17T18:28:20Z, engine 0.9: same-ISIN identity, no source errors, nine annual periods through March 2026, ten balance periods through September 2026 and seven cash-flow periods through March 2026. Seven exact annual ends overlap. This verifies one selected stock's collection, not every issuer or financial-quality flag. The source's reported industry is not evidence of model eligibility.
+
+The report-coverage helper now aligns exact period ends and flags absent, ambiguous and incomplete metric rows. It never turns Operating Profit into EBITDA, investing cash flow or free cash flow into capital spending, or investments/other assets into cash. A newer interim balance cannot be paired with an older annual cash-flow statement as if they were one period. Coverage never sets valuationReady.
+
+See STOCK_SOURCE_AUDIT.md for primary filing references and the accounting-comparability finding. The paper contract requires separate positive accounting-comparability and recurring-earnings review. The financial-reconciliation helper compares explicitly verified same-identity/period/basis observations with INR/lakh/crore conversion and stated rounding. EPS, percentages and multiples have separate dimensions and are never scaled by a statement's monetary unit. This is arithmetic for future filing adapters, not an automated filing-ingestion or source-audit claim.

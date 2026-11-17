@@ -33,7 +33,7 @@ export interface ResearchResult {
     owner: "source" | "development" | "refresh" | "context";
   }[];
 }
-const VERSION = "automatic-research-0.9";
+const VERSION = "automatic-research-0.10";
 /** Automatic evidence review, independent of manual price rules. Never claim a validated valuation model exists. */
 export function automaticResearch({
   analysis,

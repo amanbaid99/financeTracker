@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { StockFinancials } from "@/lib/radar/stock-financials";
+import { stockReportCoverage } from "@/lib/radar/report-coverage";
 import { todayIST } from "@/lib/dates";
 import { formatDate } from "@/lib/format";
 
@@ -9,6 +10,7 @@ export function StockFinancialsView({ evidence, error, configured }: {
   configured: boolean;
 }) {
   const count = evidence ? Object.keys(evidence.reports).length : 0;
+  const coverage = evidence ? stockReportCoverage(evidence) : null;
   return (
     <details className="rounded-2xl border bg-card p-4">
       <summary className="min-h-11 flex flex-wrap items-center justify-between gap-2 cursor-pointer">
@@ -34,6 +36,11 @@ export function StockFinancialsView({ evidence, error, configured }: {
               </div>;
             })}
           </dl>
+          {coverage && <div className="space-y-2 text-xs text-muted-foreground">
+            <p>{coverage.sharedPeriods.length} matching year ends across all three reports{coverage.sharedPeriods.length > 0 ? `, through ${formatDate(coverage.sharedPeriods.at(-1)!)}` : ""}.</p>
+            {coverage.fields.some((f) => f.state !== "collected") && <p>Still needed for valuation: {coverage.fields.filter((f) => f.state !== "collected").map((f) => f.label.toLowerCase()).join(", ")}. Missing or incomplete fields are never filled from unrelated totals.</p>}
+            <p>Accounting changes and recurring earnings need review before growth or valuation can be scored.</p>
+          </div>}
           <p className="text-xs text-muted-foreground break-words">Industry reported by the source: {evidence.industry}.</p>
           <p className="text-xs text-muted-foreground">
             Report periods are fiscal period ends, not publication dates. ISIN,

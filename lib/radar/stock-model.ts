@@ -4,7 +4,7 @@ import { technicals } from "./analysis";
 
 /** Experimental screening rules, not calibrated return estimates or live advice. */
 export const STOCK_MODEL = {
-  version: "stock-paper-1", release: "paper" as const,
+  version: "stock-paper-2", release: "paper" as const,
   weights: { quality: 30, valuation: 30, growth: 20, technical: 20 },
   candidateScore: 75, maxDebtEbitda: 2, minimumMarginPct: 5,
   minimumGrowthPct: 5, maxReportAgeDays: 550,
@@ -25,6 +25,8 @@ export const stockSourcesSchema = z.object({
   currency: z.literal("INR"), units: z.literal("rupees"), basis: z.literal("consolidated"),
   epsBasis: z.literal("diluted-recurring-split-adjusted"),
   metadataVerified: z.literal(true),
+  annualComparabilityVerified: z.literal(true),
+  recurringEarningsVerified: z.literal(true),
   annual: z.array(z.object({
     end: date, availableAt: time, source,
     revenue: amount.positive(), netProfit: amount, operatingCash: amount,
@@ -73,7 +75,7 @@ export function evaluateStock({ candles, adjustmentsVerified, sources, isin: exp
     missing("At least 252 ordered, valid price sessions ending on the assessment session are required.");
   const parsed = stockSourcesSchema.safeParse(sources);
   if (!parsed.success) {
-    missing("Verified annual financials, amount units, reporting basis, recurring EPS, publication times and comparable valuations are required.");
+    missing("Verified annual financials, amount units, comparable accounting, recurring earnings, publication times and comparable valuations are required.");
     return result;
   }
   const data = parsed.data;

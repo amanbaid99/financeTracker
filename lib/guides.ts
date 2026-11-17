@@ -146,6 +146,14 @@ export interface Release {
 export const RELEASES: Release[] = [
   {
     date: "2026-11-17",
+    title: "Company reports show remaining gaps",
+    items: [{
+      title: "Align report dates and check comparable accounting",
+      text: "Company reports now shows matching year ends and missing financial fields. Interim balances are kept separate from annual cash flows. Accounting changes and recurring earnings must be verified before the paper model can score growth or valuation.",
+    }],
+  },
+  {
+    date: "2026-11-17",
     title: "Stock identity checks use ISIN too",
     items: [{
       title: "Match the security when ticker IDs are absent",
