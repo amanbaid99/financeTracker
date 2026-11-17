@@ -22,6 +22,7 @@ export function StockFinancialsView({ evidence, error, configured }: {
           <p className="text-muted-foreground text-xs break-words">
             IndianAPI. Exact ticker match: {evidence.canonicalSymbol}. Retrieved {formatDate(todayIST(new Date(evidence.fetchedAt)))}.
           </p>
+          {evidence.identityMethod === "exchange-directory" && <p className="text-xs text-muted-foreground">The source exchange directory confirms the exact NSE symbol.</p>}
           <dl className="divide-y">
             {([ ["annual", "Annual results"], ["balance", "Balance sheet"], ["cashflow", "Cash flow"] ] as const).map(([kind, label]) => {
               const report = evidence.reports[kind];
@@ -45,7 +46,7 @@ export function StockFinancialsView({ evidence, error, configured }: {
         </p>}
         {error && <p className="text-xs text-muted-foreground">{error}</p>}
         <p className="text-xs text-muted-foreground">
-          New company checks can use up to four API requests. Successful and partial
+          New company checks can use up to five API requests. Successful and partial
           collections are reused for 24 hours with their original retrieval time.
           No financial model or recommendation is enabled by collecting reports.
         </p>

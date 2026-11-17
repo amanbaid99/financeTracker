@@ -31,7 +31,7 @@ export interface ResearchResult {
     owner: "source" | "development" | "refresh" | "context";
   }[];
 }
-const VERSION = "automatic-research-0.6";
+const VERSION = "automatic-research-0.7";
 /** Automatic evidence review, independent of manual price rules. Never claim a validated valuation model exists. */
 export function automaticResearch({
   analysis,
@@ -139,6 +139,7 @@ export function automaticResearch({
   );
   if (asset === "equity") {
     const reports = analysis.financials;
+    if (!reports && analysis.financialsError) add("company-reports", "Company report collection", "missing", analysis.financialsError);
     if (reports) add("company-reports", "Company report collection",
       Object.keys(reports.reports).length === 3 ? "ready" : "missing",
       `${Object.keys(reports.reports).length} report tables collected from IndianAPI with an exact NSE ticker match. Publication times, ISIN, units, currency and report basis remain unverified; this is not a completed financial assessment.`);
@@ -167,9 +168,11 @@ export function automaticResearch({
       "Research not ready",
       reports
         ? "Company reports are collected. Verified valuation data and a tested stock model are still needed."
+        : analysis.financialsError ? "Company reports could not be verified. Stock valuation and the assessment model remain incomplete."
         : "Stock research is not ready. Financial-data sources and the stock assessment model are still missing.",
       reports
         ? "Open Company reports for coverage. Amount units, report basis and publication times remain unverified. No price-rule setup is needed."
+        : analysis.financialsError ? "Open Company reports for the source error. Refreshing prices or setting price rules cannot resolve a source identity or model gap."
         : "Stock research needs a connected financial-data source and a supported sector model. You do not need to configure price rules.",
     );
   }

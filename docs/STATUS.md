@@ -3,6 +3,14 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 17 Nov 2026.
 
+## Stock source identity correction, 17 Nov 2026
+
+The adapter now sends the documented symbol query rather than a fuzzy name search. Direct exact ticker IDs still pass; internal S-prefixed numeric IDs require a documented industry_search directory response with one exact exchangeCodeNsi mapping back to the same ID. Names, stale symbols, missing or conflicting mappings never authorize report reads. Industry shape changes are separated from identity checks. Evidence records the identity method and internal ID, not raw company profiles. New collections use at most five reads. Reports, source errors and unfinished valuation/model work are distinguished in the automatic research card. No schema migration, background collection or hosted record mutation is added.
+
+This corrects a source-contract assumption, not a claim that ETERNAL has now passed a live check. The production key stays in Vercel; the next explicit owner refresh must verify the source path. Financial metadata, stock and index models, Gold benchmark inputs, historical validation and live paper monitoring still block Buy/Hold/Sell. See investment-radar/FINANCIAL_SOURCE.md.
+
+Verification: lint, TypeScript, 381 unit tests, 18 Python tests and production build passed. Chromium component fixtures passed 168 responsive theme/width/state cases, plus the internal-ID directory-match collection view. Full signed-in local e2e remains blocked by the Supabase CLI telemetry write to a read-only home. These tests use synthetic source responses, not a live financial-source success.
+
 ## Bottom navigation isolation, 17 Nov 2026
 
 The owner reported bottom controls covering expanded Radar company reports on an iPhone. AppTabs now portals its navigation and floating action to document.body after hydration, avoiding page-container fixed-position containing blocks. Its background is opaque and no longer uses a backdrop-filter layer. Existing safe-area spacing and content bottom padding are preserved. Failed company-report requests now distinguish a configured key from verified coverage rather than suggesting an immediate repeat refresh. No identity guard is relaxed.

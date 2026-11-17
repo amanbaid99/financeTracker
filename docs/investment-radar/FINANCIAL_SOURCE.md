@@ -16,12 +16,12 @@ References:
 
 1. The owner saves INDIANAPI_KEY directly as a Vercel Secret for Production and redeploys. No secret is retrieved or printed, and no key is sent to INDstocks or the browser.
 2. An explicit Refresh research on a verified stock resolves the current NSE symbol. For BSE, the instrument master must identify one NSE counterpart with the same ISIN. No fuzzy company-name match is allowed.
-3. GET /stock must return an exact tickerId match. Missing or different identity stops all report requests. Only industry metadata is retained from this large response; raw financial duplicates, names of peers/officers, analyst recommendations and news are discarded.
+3. GET /stock uses the documented symbol query. A direct exact tickerId match is accepted. An internal S-prefixed numeric ID instead requires GET /industry_search with the same public symbol; exchangeCodeNsi must match the exact NSE symbol and identify one unique ID equal to the stock response. Company names are ignored, stale aliases and ambiguous mappings fail, and no report is fetched without this proof. Identity method, provider ID and industry metadata are retained; raw financial duplicates, names of peers/officers, analyst recommendations and news are discarded.
 4. Up to three concurrent historical_stats reads request yoy_results, balancesheet and cashflow. Tables keep metric labels, valid completed month-end periods and finite numeric/null source figures. Future and undated/TTM periods are excluded and recorded. Unsupported numeric formats fail the affected report rather than inferring units.
 5. Successful tables survive independent report failures. Financial-data failures do not prevent current market evidence being saved. Exact source URLs, canonical ticker, retrieval time and report coverage remain in immutable snapshots. Reuse under 24 hours requires the same symbol and a valid nonfuture retrieval time; the old timestamp is never rewritten as new.
 6. The folded Company reports section shows coverage and retrieval information. Fiscal period ends are not publication dates, and no financial figures are shown as verified rupee amounts or fed into valuation scoring.
 
-Requests are fixed-host, GET-only, reject redirects, time out after 12 seconds and cap responses at 2 MB. Auth, plan, quota, malformed/HTTP-200 error-body and source failures use controlled messages, never upstream text or credential-bearing headers. At most four requests occur per collection; a failed collection may be retried by a later explicit refresh. There are no automatic paid upgrades or background ingestion jobs.
+Requests are fixed-host, GET-only, reject redirects, time out after 12 seconds and cap responses at 2 MB. Auth, plan, quota, malformed/HTTP-200 error-body and source failures use controlled messages, never upstream text or credential-bearing headers. At most five requests occur per collection; a failed collection may be retried by a later explicit refresh. There are no automatic paid upgrades or background ingestion jobs.
 
 ## What this source does not prove
 
@@ -40,3 +40,10 @@ No paid provider above was installed, contacted, subscribed or represented as a 
 ## Next verification
 
 After the key is configured and a selected stock is explicitly refreshed, inspect the stored source identity and one sample of each successful report. Confirm units, currency, consolidated/standalone basis and publication-date availability against company filings or provider documentation before building canonical valuation inputs. If those fields are not supplied, retain the blockers and obtain a suitable source rather than inventing them. Historical validation and live paper monitoring remain necessary before releasing Buy/Hold/Sell decisions.
+
+
+## Internal-ID correction, 17 Nov 2026
+
+The first live ETERNAL screenshot failed the original tickerId-equals-symbol assumption. The provider's public endpoint documentation separately exposes directory id and exchangeCodeNsi; the current first-call guide supports symbol queries. The adapter now uses those contracts for an exact cross-check, without treating internal IDs as exchange symbols or guessing renamed-company aliases. Optional industry metadata is parsed separately so a changed industry shape cannot masquerade as identity failure. This path has synthetic regression tests; live coverage, successful ETERNAL mapping and report availability still need the owner's explicit refresh. No production secret is retrieved and no user snapshot is written from the workspace.
+
+Next milestone: verify a real successful report collection, check its units/basis/publication metadata against filings, then implement canonical stock valuation inputs and a paper model. Provider analyst ratings are not copied into Buy/Hold/Sell.

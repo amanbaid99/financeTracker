@@ -27,9 +27,49 @@ describe("exact financial-source identity", () => {
   it("does not fetch any report for a mismatched or malformed identity response", async () => {
     for (const body of [{ tickerId: "OTHER", industry: "Industry" }, { companyName: "Synthetic company", industry: "Industry" }]) {
       const fetcher = vi.fn().mockResolvedValue(new Response(JSON.stringify(body)));
-      await expect(new IndianFinancialProvider("test-key", fetcher).financials(symbol, today, now)).rejects.toThrow(/exact NSE ticker/);
+      await expect(new IndianFinancialProvider("test-key", fetcher).financials(symbol, today, now)).rejects.toThrow(/exact NSE ticker|no usable stock identifier/);
       expect(fetcher).toHaveBeenCalledTimes(1);
     }
+  });
+  it("resolves an internal provider ID through an exact exchange symbol, never a name", async () => {
+    const fetcher = vi.fn().mockImplementation(async (url: URL) => new Response(JSON.stringify(
+      url.pathname === "/stock" ? { tickerId: "S0001234", industry: "Industry" } :
+      url.pathname === "/industry_search" ? [
+        { id: "S0009999", exchangeCodeNsi: "OTHER", commonName: "Synthetic company" },
+        { id: "S0001234", exchangeCodeNsi: symbol },
+      ] : reports,
+    )));
+    const evidence = await new IndianFinancialProvider("test-key", fetcher).financials(symbol, today, now);
+    expect(evidence.identityMethod).toBe("exchange-directory");
+    expect(evidence.providerId).toBe("S0001234");
+    expect(evidence.canonicalSymbol).toBe(symbol);
+    expect(evidence.isinVerified).toBe(false);
+    expect(evidence.researchReady).toBe(false);
+    expect(fetcher.mock.calls[0][0].searchParams.get("symbol")).toBe(symbol);
+    expect(fetcher.mock.calls[1][0].searchParams.get("query")).toBe(symbol);
+    expect(fetcher).toHaveBeenCalledTimes(5);
+  });
+  it.each([
+    [],
+    [{ id: "S0001234", exchangeCodeNsi: "OLD-SYMBOL", commonName: "Synthetic company" }],
+    [{ id: "S0009999", exchangeCodeNsi: symbol }],
+    [{ id: "S0001234", exchangeCodeNsi: symbol }, { id: "S0009999", exchangeCodeNsi: symbol }],
+    [{ id: "S0001234", exchangeCodeNsi: symbol }, { id: "S0001234", exchangeCodeNsi: "OTHER" }],
+    { id: "S0001234", exchangeCodeNsi: symbol },
+    [{ id: "S0001234", exchangeCodeNsi: 123 }],
+  ])("rejects missing, stale, conflicting or malformed directory proof: %j", async (directory) => {
+    const fetcher = vi.fn().mockImplementation(async (url: URL) => new Response(JSON.stringify(
+      url.pathname === "/stock" ? { tickerId: "S0001234" } : directory,
+    )));
+    await expect(new IndianFinancialProvider("test-key", fetcher).financials(symbol, today, now)).rejects.toThrow(/directory did not confirm/);
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect(fetcher.mock.calls.some(([url]) => url.pathname === "/historical_stats")).toBe(false);
+  });
+  it("does not mislabel malformed optional industry data as an identity failure", async () => {
+    const fetcher = vi.fn().mockImplementation(async (url: URL) => new Response(JSON.stringify(
+      url.pathname === "/stock" ? { tickerId: symbol, industry: { unexpected: true } } : reports,
+    )));
+    expect((await new IndianFinancialProvider("test-key", fetcher).financials(symbol, today, now)).industry).toBe("Not provided");
   });
   it("does not confuse missing industry metadata with a different stock identity", async () => {
     const fetcher = vi.fn().mockImplementation(async (url: URL) => new Response(JSON.stringify(
@@ -102,6 +142,16 @@ describe("report parsing without invented metadata", () => {
     expect(Object.keys(evidence.reports)).toHaveLength(2);
     expect(evidence.errors).toHaveLength(1);
     expect(JSON.stringify(evidence)).not.toContain("private");
+  });
+  it("shows failed source verification separately from missing model work", () => {
+    const analysis = analyseRadar({ candles: [{ date: "2026-11-16", open: 100, high: 100, low: 100, close: 100, volume: 100 }], asset: "equity", today, expectedSession: "2026-11-16", adjustmentsVerified: false, priceBelow: null, drawdownPct: null });
+    analysis.financialsError = "The source directory did not confirm this stock.";
+    const result = automaticResearch({ analysis, asset: "equity", classification: classifyInstrument(instrument), isin: instrument.isin, exchange: instrument.exchange, today, now });
+    expect(result.checks.find((c) => c.id === "company-reports")).toMatchObject({ state: "missing", detail: analysis.financialsError });
+    expect(result.summary).toContain("could not be verified");
+    expect(result.checks.find((c) => c.id === "model")?.state).toBe("missing");
+    expect(result.label).toBe("Research not ready");
+    expect(result.score).toBeNull();
   });
 });
 describe("safe errors and quota reuse", () => {
