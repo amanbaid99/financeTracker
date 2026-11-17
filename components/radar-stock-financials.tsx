@@ -41,7 +41,7 @@ export function StockFinancialsView({ evidence, error, configured }: {
           </p>
           {evidence.errors.map((message) => <p className="text-xs text-muted-foreground" key={message}>{message}</p>)}
         </> : <p className="text-muted-foreground">
-          {configured ? "Refresh research to check company reports. Access and coverage are verified during the request." : "Connect the optional financial-data source on the Radar connection page to retrieve company reports."}
+          {configured ? error ? "The financial-source key is configured, but this request could not verify company reports. Reports are not used in the assessment." : "Refresh research to check company reports. Access and coverage are verified during the request." : "Connect the optional financial-data source on the Radar connection page to retrieve company reports."}
         </p>}
         {error && <p className="text-xs text-muted-foreground">{error}</p>}
         <p className="text-xs text-muted-foreground">

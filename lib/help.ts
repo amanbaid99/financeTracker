@@ -19,7 +19,7 @@ export const HELP: HelpTopic[] = [
     a: [
       "The optional IndianAPI connection needs a separate starter API key. Save INDIANAPI_KEY as a Secret in Vercel for Production, then redeploy. Never paste it into chat or use a public environment variable. Connection details are on Radar connection.",
       "Refresh research on an individual stock checks the exact NSE ticker before fetching annual results, a balance sheet and cash flow. BSE instruments need a unique NSE counterpart matched by the same ISIN. No similar company name is substituted. Up to four requests are used for a new collection; successful and partial reports are reused for 24 hours with the old retrieval date preserved.",
-      "Company reports lists source coverage. Fiscal period ends are not publication dates. ISIN, currency, units and consolidated/standalone basis still need independent verification, so figures do not enter valuation scoring. Source access does not enable Buy, Hold or Sell. ETF benchmark and market-timestamp work remain separate.",
+      "Company reports lists source coverage. A configured key can still return an identity or access error; that error leaves reports out of the assessment. Fiscal period ends are not publication dates. ISIN, currency, units and consolidated/standalone basis still need independent verification, so figures do not enter valuation scoring. Source access does not enable Buy, Hold or Sell. ETF benchmark and market-timestamp work remain separate.",
     ],
     tags: "financials annual balance sheet cashflow API key IndianAPI company reports",
   },

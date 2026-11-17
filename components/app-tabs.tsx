@@ -3,12 +3,16 @@
 import { CreditCard, PieChart, Radar, Target, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Fragment } from "react";
+import { Fragment, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import { hasQuickActions, QuickAdd } from "@/components/quick-add";
 import { TabPending } from "@/components/nav-pending";
 import { cn } from "@/lib/utils";
 
 const BUDGET = ["/goals/budget", "/goals/salary"];
+const subscribe = () => () => {};
+const clientSnapshot = () => true;
+const serverSnapshot = () => false;
 
 const TABS = [
   {
@@ -27,6 +31,7 @@ const TABS = [
 /** The main sections, as a tab bar fixed to the bottom of the screen. */
 export function AppTabs({ radarEnabled = false }: { radarEnabled?: boolean }) {
   const path = usePathname();
+  const mounted = useSyncExternalStore(subscribe, clientSnapshot, serverSnapshot);
   const showAdd = hasQuickActions(path);
   const tabs = radarEnabled
     ? [
@@ -34,7 +39,10 @@ export function AppTabs({ radarEnabled = false }: { radarEnabled?: boolean }) {
         { href: "/radar", label: "Radar", icon: Radar, match: ["/radar"] },
       ]
     : TABS;
-  return (
+  // Keep viewport controls outside containers that can establish a fixed-position
+  // containing block during page animations. Match server hydration before portalling.
+  if (!mounted) return null;
+  return createPortal(
     <>
       {radarEnabled && showAdd && (
         <div className="fixed z-30 right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))]">
@@ -43,7 +51,7 @@ export function AppTabs({ radarEnabled = false }: { radarEnabled?: boolean }) {
       )}
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+        className="fixed inset-x-0 bottom-0 z-30 border-t bg-background pb-[env(safe-area-inset-bottom)]"
       >
         <ul
           className={cn(
@@ -91,6 +99,7 @@ export function AppTabs({ radarEnabled = false }: { radarEnabled?: boolean }) {
           })}
         </ul>
       </nav>
-    </>
+    </>,
+    document.body,
   );
 }

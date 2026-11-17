@@ -146,6 +146,14 @@ export interface Release {
 export const RELEASES: Release[] = [
   {
     date: "2026-11-17",
+    title: "Clearer Radar details",
+    items: [{
+      title: "Bottom navigation and report errors",
+      text: "Bottom controls now sit outside page containers on a solid background. Company reports explains when a configured source failed verification, instead of asking you to repeat the same refresh.",
+    }],
+  },
+  {
+    date: "2026-11-17",
     title: "Optional stock company reports",
     items: [{
       title: "A separate financial-data connection",
