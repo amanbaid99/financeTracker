@@ -13,6 +13,18 @@ export interface HelpTopic {
 
 export const HELP: HelpTopic[] = [
   {
+    id: "radar",
+    section: "Investment Radar",
+    q: "What does Investment Radar do?",
+    a: [
+      "Radar is a personal research watchlist for stocks, Gold ETFs and index ETFs you choose. It does not change holdings or net worth, and does not place trades. Only the account granted personal Radar access can use it.",
+      "Search INDmoney, confirm an instrument and its asset type, then open it to fetch daily history. Indicators are provisional until corporate-action adjustments and exchange-calendar freshness are verified. A score stays unavailable while required fundamentals or ETF checks are missing.",
+      "You can save price and drawdown thresholds. Scheduled monitoring, Telegram delivery, balanced opportunity scoring and backtesting are not enabled in this first release.",
+      "The INDmoney token stays in Vercel as INDSTOCKS_ACCESS_TOKEN. Expired tokens must be replaced and the app redeployed. Never paste a token into chat.",
+    ],
+    tags: "watchlist stock ETF price research token INDmoney",
+  },
+  {
     id: "updates-due",
     section: "Goals",
     q: "What appears in Updates due?",

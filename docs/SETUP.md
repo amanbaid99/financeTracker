@@ -50,3 +50,7 @@ its SQL in the dashboard's SQL Editor.
 `public/sw.js` caches only built app files and `public/offline.html`. Pages and data are never
 cached, so nothing personal sits on the device and numbers are never stale. Bump `VERSION` in
 `sw.js` to clear old caches.
+
+## Investment Radar
+
+Personal-only entitlement in radar_access. Apply 20261125000000_radar_foundation.sql before release. Configure INDSTOCKS_ACCESS_TOKEN directly in Vercel Production and Preview, never in chat. INDmoney tokens expire after 24 hours; update the secret and redeploy. The adapter only reads market instruments and daily candles. No service-role key, broker credentials, TOTP seed or Telegram token is needed for this first release. See investment-radar/INTEGRATION.md for the remaining live data checks and PRD work.

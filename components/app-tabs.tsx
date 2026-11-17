@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, PieChart, Target, Wallet } from "lucide-react";
+import { CreditCard, PieChart, Radar, Target, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
@@ -25,59 +25,72 @@ const TABS = [
 ];
 
 /** The main sections, as a tab bar fixed to the bottom of the screen. */
-export function AppTabs() {
+export function AppTabs({ radarEnabled = false }: { radarEnabled?: boolean }) {
   const path = usePathname();
   const showAdd = hasQuickActions(path);
+  const tabs = radarEnabled
+    ? [
+        ...TABS,
+        { href: "/radar", label: "Radar", icon: Radar, match: ["/radar"] },
+      ]
+    : TABS;
   return (
-    <nav
-      aria-label="Main"
-      className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur"
-    >
-      <ul
-        className={cn(
-          "mx-auto grid max-w-3xl",
-          showAdd ? "grid-cols-5" : "grid-cols-4",
-        )}
+    <>
+      {radarEnabled && showAdd && (
+        <div className="fixed z-30 right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))]">
+          <QuickAdd />
+        </div>
+      )}
+      <nav
+        aria-label="Main"
+        className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/90 pb-[env(safe-area-inset-bottom)] backdrop-blur"
       >
-        {TABS.map((t) => {
-          const under = (m: string) => path === m || path.startsWith(`${m}/`);
-          const active =
-            t.match.some(under) && !("not" in t && t.not?.some(under));
-          return (
-            <Fragment key={t.href}>
-              {showAdd && t.href === "/goals/budget" && (
-                <li className="flex items-center justify-center">
-                  <QuickAdd />
-                </li>
-              )}
-              <li>
-                <Link
-                  href={t.href}
-                  transitionTypes={["tab"]}
-                  aria-current={active ? "page" : undefined}
-                  className={cn(
-                    "press relative flex flex-col items-center gap-0.5 pb-2 pt-2 text-[11px] font-medium",
-                    active
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  <span
+        <ul
+          className={cn(
+            "mx-auto grid max-w-3xl",
+            radarEnabled || showAdd ? "grid-cols-5" : "grid-cols-4",
+          )}
+        >
+          {tabs.map((t) => {
+            const under = (m: string) => path === m || path.startsWith(`${m}/`);
+            const active =
+              t.match.some(under) && !("not" in t && t.not?.some(under));
+            return (
+              <Fragment key={t.href}>
+                {showAdd && !radarEnabled && t.href === "/goals/budget" && (
+                  <li className="flex items-center justify-center">
+                    <QuickAdd />
+                  </li>
+                )}
+                <li>
+                  <Link
+                    href={t.href}
+                    transitionTypes={["tab"]}
+                    aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex h-7 w-12 items-center justify-center rounded-full transition-colors",
-                      active && "bg-primary-soft",
+                      "press relative flex flex-col items-center gap-0.5 pb-2 pt-2 text-[11px] font-medium",
+                      active
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    <t.icon className="size-5" aria-hidden />
-                  </span>
-                  {t.label}
-                  <TabPending />
-                </Link>
-              </li>
-            </Fragment>
-          );
-        })}
-      </ul>
-    </nav>
+                    <span
+                      className={cn(
+                        "flex h-7 w-12 items-center justify-center rounded-full transition-colors",
+                        active && "bg-primary-soft",
+                      )}
+                    >
+                      <t.icon className="size-5" aria-hidden />
+                    </span>
+                    {t.label}
+                    <TabPending />
+                  </Link>
+                </li>
+              </Fragment>
+            );
+          })}
+        </ul>
+      </nav>
+    </>
   );
 }

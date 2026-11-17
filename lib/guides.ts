@@ -3,6 +3,7 @@
 // from server and client code.
 
 export type GuideId =
+  | "radar"
   | "goals"
   | "portfolio"
   | "cards"
@@ -18,6 +19,18 @@ export interface Guide {
 }
 
 export const GUIDES: Record<GuideId, Guide> = {
+  radar: {
+    title: "Your Investment Radar",
+    intro:
+      "A private research watchlist, separate from the investments you hold.",
+    steps: [
+      "Search INDmoney by name, symbol or ISIN. Choose an instrument and confirm its asset type before adding it.",
+      "Open an item and refresh daily history. Prices, chart and indicators show their session date and source limitations.",
+      "Insufficient data means the required checks are incomplete. A price dip is not a buying recommendation, and there is no opportunity score yet.",
+      "Save thresholds for future monitoring. Scheduled checks and Telegram delivery are not enabled in this first release.",
+      "Only your account can access Radar. The plus button sits above the bottom-right corner so all five tabs fit.",
+    ],
+  },
   "quick-add": {
     title: "Using the plus button",
     intro:
@@ -126,6 +139,16 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-11-17",
+    title: "Personal Investment Radar",
+    items: [
+      {
+        title: "Your private research watchlist",
+        text: "Radar starts with INDmoney search, a watchlist, daily price history and provisional indicators. It is separate from your holdings. Full buying signals and Telegram monitoring need more verified data and are not enabled yet.",
+      },
+    ],
+  },
   {
     date: "2026-11-16",
     title: "A gentle reminder to stay up to date",

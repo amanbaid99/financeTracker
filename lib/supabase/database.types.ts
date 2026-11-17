@@ -34,6 +34,102 @@ export type Database = {
   };
   public: {
     Tables: {
+      radar_access: {
+        Row: {
+          user_id: string;
+        };
+        Insert: {
+          user_id: string;
+        };
+        Update: {
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+
+      radar_watchlist: {
+        Row: {
+          id: string;
+          user_id: string;
+          exchange: string;
+          security_id: string;
+          symbol: string;
+          name: string;
+          isin: string | null;
+          asset_type: string;
+          price_below: number | null;
+          drawdown_pct: number | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          exchange: string;
+          security_id: string;
+          symbol: string;
+          name: string;
+          isin?: string | null;
+          asset_type: string;
+          price_below?: number | null;
+          drawdown_pct?: number | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          exchange?: string;
+          security_id?: string;
+          symbol?: string;
+          name?: string;
+          isin?: string | null;
+          asset_type?: string;
+          price_below?: number | null;
+          drawdown_pct?: number | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+
+      radar_snapshots: {
+        Row: {
+          id: string;
+          user_id: string;
+          watch_id: string;
+          source: string;
+          fetched_at: string;
+          session_date: string | null;
+          engine_version: string;
+          input_hash: string;
+          candles: Json;
+          analysis: Json;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          watch_id: string;
+          source: string;
+          fetched_at?: string;
+          session_date?: string | null;
+          engine_version: string;
+          input_hash: string;
+          candles: Json;
+          analysis: Json;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          watch_id?: string;
+          source?: string;
+          fetched_at?: string;
+          session_date?: string | null;
+          engine_version?: string;
+          input_hash?: string;
+          candles?: Json;
+          analysis?: Json;
+        };
+        Relationships: [];
+      };
+
       ai_requests: {
         Row: {
           created_at: string;
@@ -1110,6 +1206,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      radar_latest_snapshots: {
+        Args: Record<PropertyKey, never>;
+        Returns: Database["public"]["Tables"]["radar_snapshots"]["Row"][];
+      };
       snooze_update: {
         Args: { update_key: string; until_day: string };
         Returns: undefined;

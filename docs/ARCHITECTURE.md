@@ -176,3 +176,7 @@ unit tests in `tests/unit/`.
 - `components/ui/`: button, card, badge, input, progress (shadcn style).
 - Theme: CSS tokens in `app/globals.css`; 10 accents, light and dark (`lib/theme.ts`). Accent
   changes need the `profiles_accent_check` constraint updated by a migration.
+
+## Personal Investment Radar
+
+/radar, /radar/[id] and /radar/setup use lib/radar/data.ts and authenticated server actions. Dedicated radar_access entitlement plus RLS restrict the feature to the owner. lib/radar/indmoney.ts is a fixed-host read-only market adapter; analysis.ts computes deterministic provisional indicators. Watchlists do not feed holdings or net worth. Immutable snapshots retain inputs, source and engine hash. Full balanced scoring, schedules, Telegram and backtesting are pending verification and implementation; no buying score is fabricated from prices alone.

@@ -1,3 +1,4 @@
+import { radarAccess } from "@/lib/radar/data";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense, ViewTransition } from "react";
@@ -16,9 +17,10 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [needsConsent, { seenGuides, releases }] = await Promise.all([
+  const [needsConsent, { seenGuides, releases }, radar] = await Promise.all([
     needsPrivacyConsent(),
     loadOnboarding(),
+    radarAccess(),
   ]);
   if (needsConsent) redirect("/consent");
   return (
@@ -47,7 +49,7 @@ export default async function AppLayout({
             </ViewTransition>
             <DisclaimerFooter />
           </div>
-          <AppTabs />
+          <AppTabs radarEnabled={radar.enabled} />
           <Suspense fallback={null}>
             <NavHistory />
           </Suspense>
