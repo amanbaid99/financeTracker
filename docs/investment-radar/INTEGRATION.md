@@ -153,3 +153,13 @@ The first Gold-only assessment and point-in-time historical comparison harness a
 ## Secondary historical NAV, 17 Nov 2026
 
 Refresh now calls collectEtfEvidence: official AMFI NAV and INDstocks depth run independently; matching official NAV enables a bounded MFapi history read. Exact scheme/ISIN identity and latest NAV reconciliation are required. Failures retain independent successes. No extra key or migration is needed. The dated, labelled history chart is separate from Gold model-grade sources, whose publication/benchmark evidence is still incomplete. See DATA_REQUIREMENTS.md for verified documentation, sandbox HTTP 403 limits and remaining benchmark/time-contract requirements.
+
+## Live reconciliation, 17 Nov 2026
+
+The owner screenshot and read-only hosted snapshot query confirm historical NAV ingestion. Actual saved dates reconcile to 371 matches, three price-only and two NAV-only dates, one of which falls outside the shared price window. Pure alignment code now exposes these facts without mutating source records. New snapshots include typed depth diagnostics from the dedicated GET /market/quotes/mkt read. Old generic failures remain unknown; none are retrospectively labelled empty books.
+
+The published selected-fund policy identifies MCX polled spot prices as the designated Gold valuation source. A matching archive payload, daily valuation-session mapping, historical-methodology changes and broker adjustment/timestamp semantics remain unverified. No new benchmark adapter, Buy/Hold/Sell release or database migration is claimed. See DATA_REQUIREMENTS.md and PROVIDER_QUESTIONS.md.
+
+## Stocks and other ETFs
+
+Shared depth collection now serves stocks via analysis.market, without requiring NAV. Generic/unsupported ETFs are identified by derived kind, receive the available ETF source path and remain blocked from stock/Gold models. Analysis records other_etf rather than misleadingly applying equity blockers. UI labels and optional entry guards use verified classification. This is source-routing coverage, not a claim that fundamental, index or other-ETF models are finished. No new hosted mutation or schema change was needed.

@@ -3,6 +3,16 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 17 Nov 2026.
 
+## Multi-asset source diagnostics, 17 Nov 2026
+
+The live Gold snapshot was checked read-only: 374 price records and 373 NAV observations contain 371 matching dates, three price-only and two NAV-only dates. One NAV-only date precedes the price window. The expanded NAV history now exposes exact date reconciliation without changing existing records, filling gaps or pairing by row number. The screenshot plus hosted snapshot confirms this NAV-history data path, not every asset or source.
+
+Shared dedicated depth reads now apply to stocks and ETFs. New snapshots distinguish no active two-sided book, invalid/crossed data, access denial, request limits and source failure. Old generic failures remain unknown. REST market timestamps are still unverified. Stocks collect depth without requesting NAV. Other ETFs retain available ETF data and a model-unavailable label, use other_etf analysis inputs, and cannot fall into stock/Gold models or bypass optional entry checks using a legacy stock tag. No schema migration or background mutation of existing hosted user records is needed.
+
+The selected Gold ETF's published valuation policy identifies MCX polled spot prices as its designated source, rather than an automatically interchangeable NSE series. Matching archive payload/session metadata and historical methodology remain unverified. Stock fundamentals/sector models, index valuation/history, other ETF models, adjusted history, dated book coverage and validated Buy/Hold/Sell decisions remain unfinished. See investment-radar/ASSET_COVERAGE.md, DATA_REQUIREMENTS.md and the unsent provider question draft PROVIDER_QUESTIONS.md.
+
+Validation: lint, TypeScript, 347 unit tests, 18 Python tests and production build passed. Browser fixtures passed 120 responsive theme/width/state cases, including stocks, index/Gold/unsupported ETFs, unmatched dates, empty books and denied access. The full signed-in local e2e remains blocked by the Supabase CLI telemetry write to a read-only home. No synthetic source test is represented as live coverage or investment-performance evidence.
+
 ## Historical NAV data path, 17 Nov 2026
 
 Refresh research now attempts a free secondary NAV-history read from MFapi after obtaining official same-session AMFI NAV. Exact scheme code and ISIN must match; the latest historical point is reconciled with the official value. The optional Published NAV history chart labels provenance, coverage and unverified publication/adjustment status. A failed history request preserves the independent current-price, official-NAV and depth results. No extra key, schema change or background write to an existing user record is required.

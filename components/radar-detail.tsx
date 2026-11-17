@@ -17,7 +17,7 @@ import { refreshRadar, removeRadar, saveRadarRules } from "@/lib/radar/actions";
 import { NavHistoryView } from "@/components/radar-nav-history";
 import { RadarResearch } from "@/components/radar-research";
 import { automaticResearch } from "@/lib/radar/research";
-import { classifyInstrument } from "@/lib/radar/classification";
+import { classifyInstrument, needsEtfEvidence } from "@/lib/radar/classification";
 import { todayIST } from "@/lib/dates";
 import { RadarSignal } from "@/components/radar-signal";
 import { ruleSignal, savedRules, etfChecks } from "@/lib/radar/rule-signal";
@@ -94,6 +94,9 @@ export function RadarDetail({
   const [lower, setLower] = useState(item.rules?.sellBelow?.toString() ?? "");
   const router = useRouter();
   const a = snapshot?.analysis;
+  const classification = item.classification ?? classifyInstrument(item, a?.etf?.nav);
+  const isEtf = needsEtfEvidence(item.assetType, classification);
+  const market = a?.market ?? a?.etf;
   const expected = previousCompletedSession(today, item.exchange);
   const research = automaticResearch({
     analysis: a ?? null,
@@ -111,12 +114,13 @@ export function RadarDetail({
   const decision = ruleSignal({
     analysis: a ?? null,
     rules: savedRules(item),
+    classificationVerified: !classification.needsReview,
     asset: item.assetType,
     evidence: a?.etf,
     expectedSession: expected,
     now,
   });
-  const checks = a ? etfChecks(a, a.etf, expected, now) : null;
+  const checks = isEtf && a ? etfChecks(a, a.etf, expected, now) : null;
   function refresh() {
     start(async () => {
       setError("");
@@ -179,10 +183,10 @@ export function RadarDetail({
             : "Refresh to fetch daily prices. No price or buying signal is assumed."}
         </p>
       </section>
-      {item.assetType !== "equity" && (
-        <section className="rounded-2xl border bg-card p-4 space-y-3">
-          <h2 className="font-semibold">ETF value and trading checks</h2>
+      <section className="rounded-2xl border bg-card p-4 space-y-3">
+          <h2 className="font-semibold">{isEtf ? "ETF value and trading checks" : "Trading data"}</h2>
           <dl className="divide-y text-sm">
+            {isEtf && <>
             <div className="flex justify-between gap-3 py-2">
               <dt>Official NAV</dt>
               <dd className="tabular text-right">
@@ -199,34 +203,41 @@ export function RadarDetail({
                   : `${checks.premiumPct.toFixed(2)}%`}
               </dd>
             </div>
+            </>}
             <div className="flex justify-between gap-3 py-2">
               <dt>Fetched bid-ask spread</dt>
               <dd className="tabular">
-                {a?.etf?.depth
-                  ? `${a.etf.depth.spreadPct.toFixed(2)}%`
-                  : "Unavailable"}
+                {market?.depth
+                  ? `${market.depth.spreadPct.toFixed(2)}%`
+                  : market ? "Unavailable" : "Not checked in this snapshot"}
               </dd>
             </div>
           </dl>
-          {a?.etf?.navHistory ? (
-            <NavHistoryView history={a.etf.navHistory} />
+          {isEtf && (a?.etf?.navHistory ? (
+            <NavHistoryView history={a.etf.navHistory} candles={snapshot?.candles ?? []} />
           ) : (
             <p className="text-xs text-muted-foreground">
               Historical NAV is not saved for this snapshot. Refresh research to
               fetch it after the official latest NAV is available.
             </p>
-          )}
-          <p className="text-xs text-muted-foreground">
+          ))}
+          {isEtf ? <p className="text-xs text-muted-foreground">
             NAV is matched by ISIN from AMFI. A previous-day NAV is not used as
             a live fair value. Spread freshness is{" "}
             {checks?.spreadFresh ? "verified for this check" : "unverified"}.
-          </p>
-          {a?.etf?.errors.map((e) => (
+          </p> : <p className="text-xs text-muted-foreground">
+            Market depth is trading information, not a stock valuation. The REST
+            source does not establish a verified book timestamp.
+          </p>}
+          {market?.depthStatus && (
+            <p className="text-xs text-muted-foreground">{market.depthStatus.message}</p>
+          )}
+          {market?.errors.filter((e) => e !== market.depthStatus?.message).map((e) => (
             <p key={e} className="text-xs text-muted-foreground">
               {e}
             </p>
           ))}
-          {a?.etf?.nav && (
+          {isEtf && a?.etf?.nav && (
             <a
               className="inline-flex min-h-11 items-center text-sm text-primary"
               href="https://www.amfiindia.com/net-asset-value/nav-download"
@@ -237,7 +248,6 @@ export function RadarDetail({
             </a>
           )}
         </section>
-      )}
       {a && (
         <section className="rounded-2xl border bg-card p-4 space-y-2">
           <h2 className="font-semibold">Price indicators</h2>
@@ -311,7 +321,12 @@ export function RadarDetail({
             });
           }}
         >
-          <Field
+          {classification.kind === "etf" && !classification.asset ? (
+            <p className="text-sm text-muted-foreground">
+              This ETF needs its own underlying model. Stock and Gold model
+              settings cannot be used to bypass its entry data checks.
+            </p>
+          ) : <Field
             label="Investment type"
             htmlFor="radar-type"
             hint="Refresh data after changing the type to run its data checks."
@@ -327,7 +342,7 @@ export function RadarDetail({
                 </option>
               ))}
             </Select>
-          </Field>
+          </Field>}
           <label className="flex items-start gap-2 text-sm">
             <Checkbox
               checked={enabled}

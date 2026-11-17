@@ -31,7 +31,7 @@ export interface ResearchResult {
     owner: "source" | "development" | "refresh" | "context";
   }[];
 }
-const VERSION = "automatic-research-0.4";
+const VERSION = "automatic-research-0.5";
 /** Automatic evidence review, independent of manual price rules. Never claim a validated valuation model exists. */
 export function automaticResearch({
   analysis,
@@ -213,7 +213,7 @@ export function automaticResearch({
     "Timestamped bid-ask spread",
     !spreadVerified ? "missing" : spreadRisk ? "risk" : "ready",
     !spreadVerified
-      ? "The REST quote has no verified market-time contract. Fetch time and undocumented fields do not establish spread freshness."
+      ? `${analysis.etf?.depthStatus?.message ?? "A timestamped two-sided book is not available."} The REST quote has no verified market-time contract. Fetch time and undocumented fields do not establish spread freshness.`
       : `Verified spread: ${depth!.spreadPct.toFixed(2)}%.`,
   );
   const liquidity = analysis.technicals.averageTradedValue20;

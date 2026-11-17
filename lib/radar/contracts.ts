@@ -1,5 +1,5 @@
 import type { InstrumentClassification } from "./classification";
-import type { EtfEvidence } from "./etf-data";
+import type { EtfEvidence, MarketEvidence } from "./etf-data";
 import type { RuleSettings } from "./rule-signal";
 import { z } from "zod";
 
@@ -62,10 +62,10 @@ export interface Technicals {
   low252: number | null;
   averageTradedValue20: number | null;
 }
-export const ENGINE_VERSION = "radar-nav-history-0.4";
+export const ENGINE_VERSION = "radar-multi-asset-diagnostics-0.5";
 export interface RadarAnalysis {
   inputs: {
-    asset: RadarAsset;
+    asset: RadarAsset | "other_etf";
     today: string;
     expectedSession: string | null;
     adjustmentsVerified: boolean;
@@ -73,6 +73,7 @@ export interface RadarAnalysis {
     drawdownPct: number | null;
   };
   etf?: EtfEvidence;
+  market?: MarketEvidence;
   status: "INSUFFICIENT_DATA";
   score: null;
   version: string;

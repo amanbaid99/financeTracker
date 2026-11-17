@@ -28,6 +28,11 @@ export default async function RadarSetupPage() {
       </section>
       <section className="rounded-2xl border bg-card p-4 space-y-3">
         <h2 className="font-semibold">Automatic research</h2>
+        <p className="text-sm text-muted-foreground">
+          Price and depth checks apply to individual stocks and ETFs. Stocks do
+          not request NAV. Each ETF needs its own underlying benchmark and model;
+          unknown or unsupported ETFs are never treated as stocks or Gold ETFs.
+        </p>
         <p className="text-sm">
           Open a watchlist item to see the evidence review. No price rules need
           enabling. Refresh research updates the saved inputs.
@@ -49,7 +54,9 @@ export default async function RadarSetupPage() {
           </li>
           <li>
             Missing or unverified market timestamps cannot pass spread freshness
-            checks, even when a quote was fetched recently.
+            checks, even when a quote was fetched recently. The dedicated
+            market-depth read distinguishes an empty book from source/access
+            errors. No active two-sided book may be returned outside trading hours.
           </li>
         </ul>
       </section>

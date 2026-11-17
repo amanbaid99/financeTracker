@@ -26,6 +26,8 @@ export const GUIDES: Record<GuideId, Guide> = {
     steps: [
       "Search INDmoney by name, symbol or ISIN. The instrument metadata suggests whether it is a stock, Gold ETF or index ETF before you confirm.",
       "Open an item for Automatic research. It uses your latest saved prices, official NAV and data-quality checks without asking you to set price rules.",
+      "Stocks and ETFs share price and trading-depth checks. Stocks do not request NAV. Other ETFs keep an explicit model-unavailable label rather than falling into the stock or Gold model. Fundamental and underlying-index research still need their own verified sources.",
+      "Open Show unmatched dates within Published NAV history to compare actual price/NAV dates, including download-window differences. A spread failure now explains whether the source returned an empty book, rejected access or could not be read. None of these diagnostics fabricates missing values or confirms a market timestamp.",
       "Published NAV history shows a dated secondary-source chart when the scheme code, ISIN and latest NAV match AMFI. Unknown publication times and adjustments still block trading-model use.",
       "Refresh research fetches current source data. Wait can identify a verified entry risk, such as an excessive same-day NAV premium. Research not ready explains missing source connections or model work. Insufficient data flags an instrument or latest-session data that cannot be checked.",
       "Buy candidates, Hold and exit reviews need completed verified research and, for holding or selling, ownership and portfolio context. A watchlist alone is not enough. Missing inputs never force a conclusion.",
@@ -141,6 +143,14 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-11-17",
+    title: "See why market-data checks differ",
+    items: [{
+      title: "Compare dates and diagnose spread failures",
+      text: "Stocks and ETFs now share market-depth diagnostics. NAV history compares actual dates, not just counts. Unsupported ETFs stay out of stock and Gold models. These checks improve source clarity; they do not release unfinished stock, index or ETF recommendations.",
+    }],
+  },
   {
     date: "2026-11-17",
     title: "Historical NAV in Radar",

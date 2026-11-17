@@ -19,7 +19,7 @@ import {
   type WatchItem,
 } from "@/lib/radar/contracts";
 import { automaticResearch } from "@/lib/radar/research";
-import { classifyInstrument } from "@/lib/radar/classification";
+import { classifyInstrument, classificationLabel } from "@/lib/radar/classification";
 import { formatDate } from "@/lib/format";
 
 export function RadarWorkspace({
@@ -44,6 +44,8 @@ export function RadarWorkspace({
   const [asset, setAsset] = useState<RadarAsset>("equity");
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
+  const selectedClassification = selected ? classifyInstrument(selected) : null;
+  const unsupportedEtf = selectedClassification?.kind === "etf" && !selectedClassification.asset;
   function close() {
     setOpen(false);
     setSelected(null);
@@ -142,7 +144,7 @@ export function RadarWorkspace({
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-sm">
-                        {assetLabels[item.assetType]}
+                        {classificationLabel(item.assetType, item.classification)}
                       </span>
                       <span className="text-xs rounded-full bg-muted px-2 py-1 text-muted-foreground">
                         {research.label}
@@ -205,7 +207,13 @@ export function RadarWorkspace({
                   {selected.isin ? ` · ${selected.isin}` : ""}
                 </p>
               </div>
-              <Field
+              {unsupportedEtf ? (
+                <p className="text-sm text-muted-foreground">
+                  This is an ETF. You can track its available prices and NAV;
+                  a suitable underlying research model is not available yet.
+                  It will not be treated as a stock or Gold ETF.
+                </p>
+              ) : <Field
                 label="What kind of investment is it?"
                 htmlFor="radar-asset"
                 hint="The provider name suggests this type. Check it before confirming; research separately verifies the required underlying data."
@@ -221,7 +229,7 @@ export function RadarWorkspace({
                     </option>
                   ))}
                 </Select>
-              </Field>
+              </Field>}
               <p className="text-sm text-muted-foreground">
                 This adds a research watchlist item. It does not add an
                 investment or place a trade.

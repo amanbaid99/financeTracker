@@ -190,3 +190,13 @@ lib/radar/gold-model.ts validates dated NAV/INR Gold benchmark evidence and eval
 ## Secondary NAV history
 
 lib/radar/etf-evidence.ts fetches official NAV and INDstocks depth concurrently. Once official same-session NAV is available, lib/radar/nav-history.ts requests the matching public MFapi scheme code, validates identity and reconciles the latest NAV. Separate EtfEvidence.navHistory data records provenance, dates and explicit unverified publication/adjustment status. A failure preserves the other evidence and never silently fills gaps. components/radar-nav-history.tsx draws an optional, labelled NAV chart. GoldSources stays unpopulated until model-grade publication and benchmark evidence is available. No schema change or automatic user-record rewrite is required.
+
+
+## History alignment and depth diagnostics
+
+lib/radar/history-alignment.ts compares ordered source dates and retains separate price-only, NAV-only and outside-window differences. It is derived from snapshots without rewriting hosted user data or inferring missing values. The expanded NAV history shows the audit. INDstocks depth now uses GET /market/quotes/mkt. Typed errors map to safe source diagnostics stored in optional EtfEvidence.depthStatus; legacy snapshots remain valid. Actual market timestamps are still not verified by the REST contract.
+
+
+## Multi-asset source routing
+
+collectMarketEvidence is shared by stocks and ETFs; stock snapshots retain analysis.market without requesting NAV. needsEtfEvidence uses derived instrument kind, so unsupported ETFs still receive available ETF data instead of being treated as stock fundamentals. Their analysis asset is other_etf and classification stays blocked. classificationLabel keeps legacy storage tags out of UI model labels. Manual entry guards also require a verified classification; a legacy equity tag cannot bypass ETF checks. No schema migration or live recommendation model is added by these routing changes.

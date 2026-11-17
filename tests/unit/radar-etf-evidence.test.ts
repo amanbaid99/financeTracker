@@ -11,7 +11,8 @@ describe("independent ETF data pipeline", () => {
     expect(result.nav?.nav).toBe(100);
     expect(result.navHistory?.points).toHaveLength(1);
     expect(result.depth).toBeNull();
-    expect(result.errors).toEqual(["Market spread could not be verified. Refresh to retry."]);
+    expect(result.errors).toHaveLength(1);
+    expect(result.depthStatus?.reason).toBe("source-unavailable");
     expect(JSON.stringify(result)).not.toContain("private");
   });
   it("retains official NAV when history fails, without inventing history or publication times", async () => {

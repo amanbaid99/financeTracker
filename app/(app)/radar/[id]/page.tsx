@@ -2,7 +2,7 @@ import { todayIST } from "@/lib/dates";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/back-link";
 import { RadarDetail } from "@/components/radar-detail";
-import { assetLabels } from "@/lib/radar/contracts";
+import { classificationLabel } from "@/lib/radar/classification";
 import { loadRadar, radarProvider } from "@/lib/radar/data";
 export const metadata = { title: "Radar research" };
 export default async function RadarInstrumentPage({
@@ -19,7 +19,7 @@ export default async function RadarInstrumentPage({
       <div>
         <h1 className="text-2xl font-semibold break-words">{item.symbol}</h1>
         <p className="text-sm text-muted-foreground break-words">
-          {item.name} · {item.exchange} · {assetLabels[item.assetType]}
+          {item.name} · {item.exchange} · {classificationLabel(item.assetType, item.classification)}
         </p>
       </div>
       <RadarDetail

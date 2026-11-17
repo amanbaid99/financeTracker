@@ -3,7 +3,6 @@ import {
   ENGINE_VERSION,
   type Candle,
   type RadarAnalysis,
-  type RadarAsset,
   type Technicals,
 } from "./contracts";
 
@@ -70,7 +69,7 @@ export function technicals(candles: Candle[]): Technicals {
 /** Technical observations never substitute for the PRD's missing balanced model inputs. */
 export function analyseRadar(input: {
   candles: Candle[];
-  asset: RadarAsset;
+  asset: RadarAnalysis["inputs"]["asset"];
   today: string;
   expectedSession: string | null;
   adjustmentsVerified: boolean;
@@ -120,6 +119,8 @@ export function analyseRadar(input: {
     blockers.push(
       "Underlying index valuations, index history, ETF NAV and tracking checks are needed for index ETF scoring.",
     );
+  if (input.asset === "other_etf")
+    blockers.push("This ETF needs a verified underlying asset and a suitable model. Stock and Gold models do not apply by default.");
   const metrics = technicals(candles);
   const observations: string[] = [];
   if (metrics.drawdown90 !== null)

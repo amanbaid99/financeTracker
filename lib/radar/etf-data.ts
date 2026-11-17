@@ -21,13 +21,25 @@ export interface MarketDepth {
   timestampVerified?: boolean;
   fetchedAt: string;
 }
-export interface EtfEvidence {
+export type DepthFailure = "no-active-book" | "invalid-book" | "access-denied" | "rate-limited" | "source-unavailable";
+export class DepthUnavailableError extends Error {
+  constructor(public reason: "no-active-book" | "invalid-book", message: string) { super(message); }
+}
+export interface DepthStatus {
+  state: "available-untimestamped" | "available-timestamped" | "unavailable";
+  reason?: DepthFailure;
+  message: string;
+}
+export interface MarketEvidence {
+  depthStatus?: DepthStatus;
+  depth: MarketDepth | null;
+  errors: string[];
+}
+export interface EtfEvidence extends MarketEvidence {
   navHistory?: NavHistory;
   /** Only populated by a verified server-side source adapter, never manual rule settings. */
   goldSources?: GoldSources;
   nav: EtfNav | null;
-  depth: MarketDepth | null;
-  errors: string[];
 }
 const months = [
   "Jan",
@@ -168,8 +180,7 @@ export function parseDepth(
                 buy: z.object({ price: number, quantity: number }),
                 sell: z.object({ price: number, quantity: number }),
               }),
-            )
-            .min(1),
+            ),
         }),
         quote_time: z.union([z.string(), z.number()]).optional(),
       }),
@@ -178,8 +189,8 @@ export function parseDepth(
   const parsed = schema.safeParse(body);
   const row = parsed.success ? parsed.data.data[code] : null;
   if (!row)
-    throw new Error(
-      "A valid bid and ask were not returned for this instrument.",
+    throw new DepthUnavailableError(
+      "invalid-book", "A valid bid and ask were not returned for this instrument.",
     );
   const bids = row.market_depth.depth
     .filter((d) => d.buy.quantity > 0 && d.buy.price > 0)
@@ -188,15 +199,15 @@ export function parseDepth(
     .filter((d) => d.sell.quantity > 0 && d.sell.price > 0)
     .map((d) => d.sell.price);
   if (!bids.length || !asks.length)
-    throw new Error("An active bid and ask are needed to calculate spread.");
+    throw new DepthUnavailableError("no-active-book", "An active bid and ask are needed to calculate spread.");
   const bid = Math.max(...bids),
     ask = Math.min(...asks);
   if (ask < bid)
-    throw new Error(
-      "The returned bid and ask are crossed. Spread is unavailable.",
+    throw new DepthUnavailableError(
+      "invalid-book", "The returned bid and ask are crossed. Spread is unavailable.",
     );
   let marketTime: string | null = null;
-  // The documented full quote has no timestamp. Never use HTTP Date or fetch time as a market timestamp.
+  // The documented REST depth quote has no market timestamp. Never use HTTP Date or fetch time as a market timestamp.
   const raw = row.quote_time;
   if (
     typeof raw === "string" &&

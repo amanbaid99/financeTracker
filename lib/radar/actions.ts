@@ -5,12 +5,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { todayIST } from "@/lib/dates";
 import type { Json } from "@/lib/supabase/database.types";
-import type { EtfEvidence } from "./etf-data";
-import { collectEtfEvidence } from "./etf-evidence";
+import type { EtfEvidence, MarketEvidence } from "./etf-data";
+import { collectEtfEvidence, collectMarketEvidence } from "./etf-evidence";
 import { previousCompletedSession } from "./calendar";
 import { ruleSettingsSchema } from "./rule-signal";
 import { assetTypes, watchSchema } from "./contracts";
-import { classifyInstrument } from "./classification";
+import { classifyInstrument, needsEtfEvidence, analysisAsset } from "./classification";
 import { analyseRadar } from "./analysis";
 import {
   loadRadar,
@@ -182,7 +182,8 @@ export async function refreshRadar(id: string) {
     const now = new Date().toISOString();
     const candles = await provider.history(item, today);
     let etf: EtfEvidence | undefined;
-    if (item.assetType !== "equity") {
+    let market: MarketEvidence | undefined;
+    if (needsEtfEvidence(item.assetType, item.classification)) {
       etf = await collectEtfEvidence({
         isin: item.isin,
         expectedSession: previousCompletedSession(today, item.exchange),
@@ -190,9 +191,10 @@ export async function refreshRadar(id: string) {
         readDepth: () => provider.depth(item, now),
       });
     }
+    if (!etf) market = await collectMarketEvidence(() => provider.depth(item, now));
     const analysis = analyseRadar({
       candles,
-      asset: item.assetType,
+      asset: analysisAsset(item.assetType, item.classification),
       today,
       expectedSession: previousCompletedSession(today, item.exchange),
       adjustmentsVerified: false,
@@ -200,6 +202,7 @@ export async function refreshRadar(id: string) {
       drawdownPct: item.drawdownPct,
     });
     if (etf) analysis.etf = etf;
+    if (market) analysis.market = market;
     const { supabase, user } = await requireRadar();
     const { error } = await supabase.from("radar_snapshots").insert({
       user_id: user.id,
@@ -213,6 +216,7 @@ export async function refreshRadar(id: string) {
             candles,
             inputs: analysis.inputs,
             etf: analysis.etf ?? null,
+            market: analysis.market ?? null,
             version: analysis.version,
           }),
         )

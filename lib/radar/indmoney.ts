@@ -7,7 +7,11 @@ import {
 } from "./contracts";
 import { todayIST } from "../dates";
 
-export class RadarProviderError extends Error {}
+export class RadarProviderError extends Error {
+  constructor(message: string, public reason: "access-denied" | "rate-limited" | "source-unavailable" = "source-unavailable") {
+    super(message);
+  }
+}
 
 /** CSV parser handles quoted commas, escaped quotes and embedded newlines. No evaluation. */
 export function csvRows(text: string): string[][] {
@@ -127,7 +131,7 @@ export function parseHistory(body: unknown, code: string): Candle[] {
   });
 }
 
-/** Only two fixed read-only market endpoints are allowed. No broker account or order APIs. */
+/** Only fixed read-only market endpoints are allowed. No broker account or order APIs. */
 export class IndmoneyProvider {
   constructor(
     private token: string,
@@ -135,7 +139,7 @@ export class IndmoneyProvider {
   ) {}
   private async get(
     path:
-      "/market/instruments" | "/market/historical/1day" | "/market/quotes/full",
+      "/market/instruments" | "/market/historical/1day" | "/market/quotes/mkt",
     params: Record<string, string>,
   ) {
     const url = new URL(path, "https://api.indstocks.com");
@@ -163,10 +167,12 @@ export class IndmoneyProvider {
     if (response.status === 401 || response.status === 403)
       throw new RadarProviderError(
         "Your INDmoney token has expired or access was denied. Update it in Vercel.",
+        "access-denied",
       );
     if (response.status === 429)
       throw new RadarProviderError(
         "INDmoney's request limit was reached. Try again later.",
+        "rate-limited",
       );
     if (!response.ok)
       throw new RadarProviderError(
@@ -202,7 +208,7 @@ export class IndmoneyProvider {
     fetchedAt: string,
   ) {
     const code = `${instrument.exchange}_${instrument.securityId}`;
-    const text = await this.get("/market/quotes/full", { "scrip-codes": code });
+    const text = await this.get("/market/quotes/mkt", { "scrip-codes": code });
     let body: unknown;
     try {
       body = JSON.parse(text);

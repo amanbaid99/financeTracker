@@ -105,6 +105,7 @@ export function ruleSignal({
   evidence,
   expectedSession,
   now,
+  classificationVerified = true,
 }: {
   analysis: RadarAnalysis | null;
   rules: RuleSettings;
@@ -112,6 +113,7 @@ export function ruleSignal({
   evidence?: EtfEvidence;
   expectedSession: string | null;
   now: string;
+  classificationVerified?: boolean;
 }): RuleSignal {
   const result = (
     label: RuleSignal["label"],
@@ -151,6 +153,8 @@ export function ruleSignal({
     analysis.technicals.drawdown90 !== null &&
     analysis.technicals.drawdown90 <= -rules.drawdownPct;
   if (priceMet || dipMet) {
+    if (!classificationVerified)
+      return result("Wait", "The investment type needs review before an entry alert can pass its asset-specific data checks.");
     if (asset !== "equity") {
       const checks = etfChecks(analysis, evidence, expectedSession, now);
       if (asset === "gold_etf" && !evidence?.nav?.goldEtf)
