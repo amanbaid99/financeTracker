@@ -26,12 +26,9 @@ export function CreditOverview({
       <section
         id="credit-cards"
         data-guide="cards"
-        aria-labelledby="cards-h"
-        className="scroll-mt-16 space-y-3"
+        aria-label="Your cards"
+        className="scroll-mt-16"
       >
-        <h2 id="cards-h" className="text-lg font-semibold">
-          Cards
-        </h2>
         <CardList
           cards={cards}
           today={today}

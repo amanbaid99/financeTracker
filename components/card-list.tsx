@@ -70,6 +70,20 @@ const MONTHS = "Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(" ");
 const monthLabel = (iso: string) =>
   `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${iso.slice(0, 4)}`;
 
+const STATUS: Partial<
+  Record<MilestoneState["status"], { label: string; cls: string }>
+> = {
+  achieved: { label: "Reached", cls: "bg-success-soft text-success" },
+  on_pace: { label: "On pace", cls: "bg-success-soft text-success" },
+  behind: { label: "Needs more", cls: "bg-warning-soft text-warning" },
+  missed: { label: "Missed", cls: "bg-danger-soft text-danger" },
+};
+
+/**
+ * One milestone: its name and status, what's left with the monthly spend
+ * that reaches it in time, and a bar. Tap it to edit. When the card is
+ * open, a line says which statements counted.
+ */
 function MilestoneRow({
   s,
   noCardYear,
@@ -90,85 +104,70 @@ function MilestoneRow({
       : s.status === "missed"
         ? "danger"
         : "neutral";
-  const sources: string[] = [];
-  if (s.billCount > 0)
-    sources.push(s.billCount === 1 ? `1 bill` : `${s.billCount} bills`);
-
+  const pill = STATUS[s.status];
+  const pace =
+    s.neededPerMonth !== null && s.status !== "missed" && s.remaining > 0
+      ? ` · about ${formatINR(s.neededPerMonth)} a month`
+      : "";
   return (
-    <li className="space-y-1.5 py-3">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-sm font-medium">{milestoneLabel(s)}</p>
-          <p
-            className={cn(
-              "tabular mt-1 text-sm",
-              s.status === "achieved"
-                ? "text-success"
-                : "text-muted-foreground",
-            )}
-          >
-            {s.status === "achieved"
-              ? "Target reached"
-              : `${formatINR(s.remaining)} left of ${formatINR(s.target)}`}
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="size-11"
-          aria-label={`Edit milestone ${s.name}`}
-          onClick={onEdit}
-        >
-          <Pencil className="size-4" aria-hidden />
-        </Button>
-      </div>
-      <Progress
-        value={s.progress * 100}
-        className="h-1.5"
-        tone={tone}
-        label={`${s.name} progress`}
-      />
-      {s.end && (
-        <p
+    <li className="py-3">
+      <button
+        type="button"
+        onClick={onEdit}
+        aria-label={`Edit milestone ${s.name}`}
+        className="press block w-full space-y-1.5 text-left"
+      >
+        <span className="flex items-start justify-between gap-2">
+          <span className="min-w-0 text-sm font-medium">
+            {milestoneLabel(s)}
+          </span>
+          {pill && (
+            <span
+              className={cn(
+                "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
+                pill.cls,
+              )}
+            >
+              {pill.label}
+            </span>
+          )}
+        </span>
+        <Progress
+          value={s.progress * 100}
+          className="h-1.5"
+          tone={tone}
+          label={`${s.name} progress`}
+        />
+        <span
           className={cn(
-            "text-xs",
-            s.status === "missed" ? "text-danger" : "text-muted-foreground",
+            "tabular block text-xs",
+            s.status === "achieved"
+              ? "text-success"
+              : s.status === "missed"
+                ? "text-danger"
+                : "text-muted-foreground",
           )}
         >
-          {s.status === "missed" ? "Ended" : "By"} {formatDate(s.end)}
-        </p>
-      )}
+          {s.status === "achieved"
+            ? "Target reached"
+            : `${formatINR(s.remaining)} left of ${formatINR(s.target)}${pace}`}
+          {s.end && s.status !== "achieved"
+            ? `${s.status === "missed" ? " · ended" : " · by"} ${formatDate(s.end)}`
+            : ""}
+        </span>
+      </button>
       {showDetails && (
-        <details>
-          <summary className="flex min-h-11 cursor-pointer items-center text-xs font-medium text-primary">
-            How this is counted
-          </summary>
-          <div className="space-y-2 pb-2 text-xs text-muted-foreground">
-            <p className="tabular">
-              Eligible spend: {formatINR(s.spentNow)} of {formatINR(s.target)}.
-            </p>
-            {s.neededPerMonth !== null &&
-              s.status !== "missed" &&
-              s.remaining > 0 && (
-                <p>
-                  About {formatINR(s.neededPerMonth)} a month would be needed
-                  before the deadline. Use planned spending only.
-                </p>
-              )}
-            <p>
-              {sources.length
-                ? `Counted from ${sources.join(" + ")}`
-                : "No bills logged in this period yet"}
-              {emi > 0 && s.billCount > 0
-                ? `, leaving out ${formatINR(emi)} of loan EMI a bill`
-                : ""}
-              {s.period === "card_year" && noCardYear
-                ? ". Using Jan to Dec; set the card year in About this card."
-                : ""}
-            </p>
-          </div>
-        </details>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {s.billCount > 0
+            ? `Counted from ${s.billCount === 1 ? "1 bill" : `${s.billCount} bills`}`
+            : "No bills logged in this period yet"}
+          {emi > 0 && s.billCount > 0
+            ? `, leaving out ${formatINR(emi)} of loan EMI a bill`
+            : ""}
+          {s.period === "card_year" && noCardYear
+            ? ". Using Jan to Dec; set the card year in About this card."
+            : "."}
+        </p>
       )}
     </li>
   );
@@ -910,23 +909,6 @@ export function CardList({
 
   return (
     <div className="space-y-4">
-      {cards.length > 0 && (
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
-            {cards.length} {cards.length === 1 ? "card" : "cards"}. Log
-            statements to track milestones.
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="min-h-11"
-            onClick={() => setSheet({ kind: "card", card: null })}
-          >
-            <Plus /> Add a card
-          </Button>
-        </div>
-      )}
       {cards.length === 0 ? (
         <div className="space-y-2 rounded-2xl border bg-card p-6 text-center">
           <CreditCard className="mx-auto size-8 text-primary" aria-hidden />
@@ -997,25 +979,42 @@ export function CardList({
                       aria-hidden
                     />
                   </div>
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    {latest ? (
-                      <>
-                        {monthLabel(latest.month)} statement:{" "}
-                        <span className="tabular font-medium text-foreground">
-                          {formatINR(latest.amount)}
-                        </span>
-                      </>
-                    ) : (
-                      "No statements logged"
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <p className="min-w-0 text-sm text-muted-foreground">
+                      {latest ? (
+                        <>
+                          {monthLabel(latest.month)} statement:{" "}
+                          <span className="tabular font-medium text-foreground">
+                            {formatINR(latest.amount)}
+                          </span>
+                        </>
+                      ) : (
+                        "No statements logged"
+                      )}
+                    </p>
+                    {/* Open cards log from Statements below. */}
+                    {!isOpen && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="relative z-10 min-h-10 shrink-0"
+                        aria-label={`Log a ${c.label} bill`}
+                        onClick={() =>
+                          setSheet({ kind: "bill", card: c, bill: null })
+                        }
+                      >
+                        <Plus /> Log bill
+                      </Button>
                     )}
-                  </p>
+                  </div>
                 </div>
 
                 <section
                   aria-label={`${c.label} milestones`}
                   className="border-t px-4 pb-3"
                 >
-                  <div className="flex min-h-11 items-center justify-between gap-3">
+                  <div className="flex min-h-10 items-center justify-between gap-3 pt-1">
                     <h3 className="text-xs font-medium text-muted-foreground">
                       Milestones
                     </h3>
@@ -1099,6 +1098,17 @@ export function CardList({
             );
           })}
         </ul>
+      )}
+
+      {cards.length > 0 && (
+        <Button
+          type="button"
+          variant="outline"
+          className="min-h-11 w-full"
+          onClick={() => setSheet({ kind: "card", card: null })}
+        >
+          <Plus /> Add a card
+        </Button>
       )}
 
       {cards.length > 0 && <CardAdvisor cards={cards} today={today} />}

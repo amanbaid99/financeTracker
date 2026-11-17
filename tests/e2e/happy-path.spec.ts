@@ -830,7 +830,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     page.getByRole("button", { name: "Travel", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "Add card" }).click();
-  const cardRow = page.getByRole("button", { name: /Regalia Gold/ });
+  const cardRow = page.getByRole("button", { name: "Regalia Gold", exact: true });
   await expect(cardRow).toHaveAttribute("aria-expanded", "true");
   // Card details are tucked under "About this card".
   await page.getByRole("button", { name: "About this card" }).click();
@@ -851,7 +851,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(cardRow).toHaveAttribute("aria-expanded", "false");
   await expect(feeBar).toBeVisible();
   await cardRow.click();
-  await page.getByText("How this is counted", { exact: true }).click();
   await expect(
     page.getByText("No bills logged in this period yet"),
   ).toBeVisible();
