@@ -5,7 +5,10 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { todayIST } from "@/lib/dates";
 import type { Json } from "@/lib/supabase/database.types";
-import { watchSchema } from "./contracts";
+import { fetchAmfiNav, type EtfEvidence } from "./etf-data";
+import { previousNseSession } from "./calendar";
+import { ruleSettingsSchema } from "./rule-signal";
+import { assetTypes, watchSchema } from "./contracts";
 import { analyseRadar } from "./analysis";
 import {
   loadRadar,
@@ -88,17 +91,34 @@ export async function saveRadarRules(input: {
   id: string;
   priceBelow: number | null;
   drawdownPct: number | null;
+  assetType: (typeof assetTypes)[number];
+  rulesEnabled: boolean;
+  holdingConfirmed: boolean;
+  sellAbove: number | null;
+  sellBelow: number | null;
 }) {
   const { supabase, user } = await requireRadar();
-  const parsed = watchSchema
-    .pick({ priceBelow: true, drawdownPct: true })
-    .extend({ id: z.string().uuid() })
+  const parsed = ruleSettingsSchema
+    .safeExtend({ id: z.string().uuid(), assetType: z.enum(assetTypes) })
     .safeParse(input);
-  if (!parsed.success) return { ok: false, error: "Check the thresholds." };
+  if (!parsed.success)
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Check the thresholds.",
+    };
   const v = parsed.data;
   const { error } = await supabase
     .from("radar_watchlist")
-    .update({ price_below: v.priceBelow, drawdown_pct: v.drawdownPct })
+    .update({
+      asset_type: v.assetType,
+      price_below: v.priceBelow,
+      drawdown_pct: v.drawdownPct,
+      rules_enabled: v.rulesEnabled,
+      holding_confirmed: v.holdingConfirmed,
+      sell_above: v.sellAbove,
+      sell_below: v.sellBelow,
+      rules_updated_at: new Date().toISOString(),
+    })
     .eq("id", v.id)
     .eq("user_id", user.id)
     .select("id")
@@ -140,16 +160,34 @@ export async function refreshRadar(id: string) {
     return { ok: false, error: "Connect your INDmoney token in Vercel first." };
   try {
     const today = todayIST();
+    const now = new Date().toISOString();
     const candles = await provider.history(item, today);
+    let etf: EtfEvidence | undefined;
+    if (item.assetType !== "equity") {
+      etf = { nav: null, depth: null, errors: [] };
+      const [nav, depth] = await Promise.allSettled([
+        item.isin ? fetchAmfiNav(item.isin) : Promise.resolve(null),
+        provider.depth(item, now),
+      ]);
+      if (nav.status === "fulfilled") etf.nav = nav.value;
+      else
+        etf.errors.push("Official NAV could not be fetched. Refresh to retry.");
+      if (depth.status === "fulfilled") etf.depth = depth.value;
+      else
+        etf.errors.push(
+          "Market spread could not be verified. Refresh to retry.",
+        );
+    }
     const analysis = analyseRadar({
       candles,
       asset: item.assetType,
       today,
-      expectedSession: null,
+      expectedSession: previousNseSession(today, item.exchange),
       adjustmentsVerified: false,
       priceBelow: item.priceBelow,
       drawdownPct: item.drawdownPct,
     });
+    if (etf) analysis.etf = etf;
     const { supabase, user } = await requireRadar();
     const { error } = await supabase.from("radar_snapshots").insert({
       user_id: user.id,
@@ -162,6 +200,7 @@ export async function refreshRadar(id: string) {
           JSON.stringify({
             candles,
             inputs: analysis.inputs,
+            etf: analysis.etf ?? null,
             version: analysis.version,
           }),
         )

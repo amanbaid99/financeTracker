@@ -27,7 +27,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Search INDmoney by name, symbol or ISIN. Choose an instrument and confirm its asset type before adding it.",
       "Open an item and refresh daily history. Prices, chart and indicators show their session date and source limitations.",
       "Insufficient data means the required checks are incomplete. A price dip is not a buying recommendation, and there is no opportunity score yet.",
-      "Save thresholds for future monitoring. Scheduled checks and Telegram delivery are not enabled in this first release.",
+      "Enable your price-rule signals after setting entry prices or confirming ownership and setting exit prices. Hold and Sell only use your confirmed holding and saved exits. Scheduled checks and Telegram delivery are not enabled yet.",
       "Only your account can access Radar. The plus button sits above the bottom-right corner so all five tabs fit.",
     ],
   },
@@ -139,6 +139,20 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-11-17",
+    title: "Radar price-rule signals and ETF checks",
+    items: [
+      {
+        title: "Buy, Hold, Sell or Wait from your rules",
+        text: "Enable saved entry and exit rules to see a dated price-rule signal. Sell needs confirmed ownership. ETF entries also need same-session NAV and a fresh, narrow spread. Full research scores stay separate and unavailable while their inputs are incomplete.",
+      },
+      {
+        title: "Official ETF NAV",
+        text: "ETF refresh now looks up AMFI NAV by ISIN and fetches INDmoney bid-ask depth. Mismatched dates and unverified quote timestamps are shown, never passed off as fresh data.",
+      },
+    ],
+  },
   {
     date: "2026-11-17",
     title: "Personal Investment Radar",

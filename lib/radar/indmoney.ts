@@ -1,3 +1,4 @@
+import { parseDepth } from "./etf-data";
 import {
   candleSchema,
   instrumentSchema,
@@ -133,7 +134,8 @@ export class IndmoneyProvider {
     private request: typeof fetch = fetch,
   ) {}
   private async get(
-    path: "/market/instruments" | "/market/historical/1day",
+    path:
+      "/market/instruments" | "/market/historical/1day" | "/market/quotes/full",
     params: Record<string, string>,
   ) {
     const url = new URL(path, "https://api.indstocks.com");
@@ -194,6 +196,22 @@ export class IndmoneyProvider {
       offset += c.length;
     }
     return new TextDecoder().decode(bytes);
+  }
+  async depth(
+    instrument: Pick<RadarInstrument, "exchange" | "securityId">,
+    fetchedAt: string,
+  ) {
+    const code = `${instrument.exchange}_${instrument.securityId}`;
+    const text = await this.get("/market/quotes/full", { "scrip-codes": code });
+    let body: unknown;
+    try {
+      body = JSON.parse(text);
+    } catch {
+      throw new RadarProviderError(
+        "INDmoney returned an unreadable market quote.",
+      );
+    }
+    return parseDepth(body, code, fetchedAt);
   }
   async instruments() {
     return parseInstruments(

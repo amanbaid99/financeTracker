@@ -114,7 +114,7 @@ export function analyseRadar(input: {
     );
   if (input.asset === "gold_etf")
     blockers.push(
-      "Fresh ETF NAV, premium, spread and liquidity checks are needed for Gold ETF scoring.",
+      "Gold ETF research scoring needs verified spreads, adjusted history, liquidity checks and a validated model. Official NAV alone does not establish a buying opportunity.",
     );
   if (input.asset === "index_etf")
     blockers.push(

@@ -4,14 +4,20 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Checkbox, Input, Select } from "@/components/ui/input";
 import { Field } from "@/components/forms/field";
 import {
   marketPrice,
+  assetLabels,
+  assetTypes,
+  type RadarAsset,
   type RadarSnapshot,
   type WatchItem,
 } from "@/lib/radar/contracts";
 import { refreshRadar, removeRadar, saveRadarRules } from "@/lib/radar/actions";
+import { RadarSignal } from "@/components/radar-signal";
+import { ruleSignal, savedRules, etfChecks } from "@/lib/radar/rule-signal";
+import { previousNseSession } from "@/lib/radar/calendar";
 import { formatDate } from "@/lib/format";
 
 function PriceChart({ snapshot }: { snapshot: RadarSnapshot }) {
@@ -62,10 +68,14 @@ export function RadarDetail({
   item,
   snapshot,
   connected,
+  today,
+  now,
 }: {
   item: WatchItem;
   snapshot: RadarSnapshot | null;
   connected: boolean;
+  today: string;
+  now: string;
 }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState("");
@@ -73,8 +83,23 @@ export function RadarDetail({
   const [removing, setRemoving] = useState(false);
   const [price, setPrice] = useState(item.priceBelow?.toString() ?? "");
   const [dip, setDip] = useState(item.drawdownPct?.toString() ?? "");
+  const [asset, setAsset] = useState<RadarAsset>(item.assetType);
+  const [enabled, setEnabled] = useState(item.rules?.rulesEnabled ?? false);
+  const [owned, setOwned] = useState(item.rules?.holdingConfirmed ?? false);
+  const [upper, setUpper] = useState(item.rules?.sellAbove?.toString() ?? "");
+  const [lower, setLower] = useState(item.rules?.sellBelow?.toString() ?? "");
   const router = useRouter();
   const a = snapshot?.analysis;
+  const expected = previousNseSession(today, item.exchange);
+  const decision = ruleSignal({
+    analysis: a ?? null,
+    rules: savedRules(item),
+    asset: item.assetType,
+    evidence: a?.etf,
+    expectedSession: expected,
+    now,
+  });
+  const checks = a ? etfChecks(a, a.etf, expected, now) : null;
   function refresh() {
     start(async () => {
       setError("");
@@ -91,6 +116,7 @@ export function RadarDetail({
     v == null ? "Unavailable" : `${v.toFixed(1)}%`;
   return (
     <div className="space-y-5">
+      <RadarSignal signal={decision} />
       <section className="rounded-2xl border bg-card p-4 space-y-4">
         <div className="flex flex-wrap justify-between items-start gap-3">
           <div>
@@ -119,7 +145,7 @@ export function RadarDetail({
         {snapshot && <PriceChart snapshot={snapshot} />}
         <p className="text-xs text-muted-foreground">
           {snapshot
-            ? `Fetched ${formatDate(snapshot.fetchedAt.slice(0, 10))}. ${a?.sessions ?? 0} sessions. Price adjustments and exchange-calendar freshness are unverified.`
+            ? `Fetched ${formatDate(snapshot.fetchedAt.slice(0, 10))}. ${a?.sessions ?? 0} sessions. Price adjustments are unverified.`
             : "Refresh to fetch daily prices. No price or buying signal is assumed."}
         </p>
       </section>
@@ -135,6 +161,57 @@ export function RadarDetail({
         <p role="status" className="text-sm text-primary">
           {notice}
         </p>
+      )}
+      {item.assetType !== "equity" && (
+        <section className="rounded-2xl border bg-card p-4 space-y-3">
+          <h2 className="font-semibold">ETF value and trading checks</h2>
+          <dl className="divide-y text-sm">
+            <div className="flex justify-between gap-3 py-2">
+              <dt>Official NAV</dt>
+              <dd className="tabular text-right">
+                {a?.etf?.nav
+                  ? `${marketPrice(a.etf.nav.nav)} · ${formatDate(a.etf.nav.date)}`
+                  : "Unavailable"}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3 py-2">
+              <dt>Close vs same-day NAV</dt>
+              <dd className="tabular">
+                {checks?.premiumPct == null
+                  ? "Unavailable"
+                  : `${checks.premiumPct.toFixed(2)}%`}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3 py-2">
+              <dt>Fetched bid-ask spread</dt>
+              <dd className="tabular">
+                {a?.etf?.depth
+                  ? `${a.etf.depth.spreadPct.toFixed(2)}%`
+                  : "Unavailable"}
+              </dd>
+            </div>
+          </dl>
+          <p className="text-xs text-muted-foreground">
+            NAV is matched by ISIN from AMFI. A previous-day NAV is not used as
+            a live fair value. Spread freshness is{" "}
+            {checks?.spreadFresh ? "verified for this check" : "unverified"}.
+          </p>
+          {a?.etf?.errors.map((e) => (
+            <p key={e} className="text-xs text-muted-foreground">
+              {e}
+            </p>
+          ))}
+          {a?.etf?.nav && (
+            <a
+              className="inline-flex min-h-11 items-center text-sm text-primary"
+              href="https://www.amfiindia.com/net-asset-value/nav-download"
+              target="_blank"
+              rel="noreferrer"
+            >
+              View official NAV source
+            </a>
+          )}
+        </section>
       )}
       <section className="rounded-2xl border bg-card p-4 space-y-3">
         <div className="flex flex-wrap justify-between gap-2">
@@ -209,11 +286,15 @@ export function RadarDetail({
           </dl>
         </section>
       )}
-      <section className="rounded-2xl border bg-card p-4 space-y-3">
+      <section
+        id="radar-rules"
+        className="scroll-mt-16 rounded-2xl border bg-card p-4 space-y-3"
+      >
         <h2 className="font-semibold">My thresholds</h2>
         <p className="text-sm text-muted-foreground">
-          Save prices to watch for. Scheduled monitoring and Telegram delivery
-          are not enabled yet. These thresholds do not trigger a purchase.
+          Set the prices that matter to you. Signals follow these saved rules
+          and the latest available data checks. Scheduled monitoring and
+          Telegram delivery are not enabled yet.
         </p>
         <form
           className="space-y-3"
@@ -224,6 +305,11 @@ export function RadarDetail({
               setNotice("");
               const result = await saveRadarRules({
                 id: item.id,
+                assetType: asset,
+                rulesEnabled: enabled,
+                holdingConfirmed: owned,
+                sellAbove: owned && upper ? Number(upper) : null,
+                sellBelow: owned && lower ? Number(lower) : null,
                 priceBelow: price ? Number(price) : null,
                 drawdownPct: dip ? Number(dip) : null,
               });
@@ -237,7 +323,41 @@ export function RadarDetail({
             });
           }}
         >
-          <Field label="Price at or below (₹, optional)" htmlFor="radar-price">
+          <Field
+            label="Investment type"
+            htmlFor="radar-type"
+            hint="Refresh history after changing the type to run its data checks."
+          >
+            <Select
+              id="radar-type"
+              value={asset}
+              onChange={(e) => setAsset(e.target.value as RadarAsset)}
+            >
+              {assetTypes.map((t) => (
+                <option key={t} value={t}>
+                  {assetLabels[t]}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <label className="flex items-start gap-2 text-sm">
+            <Checkbox
+              checked={enabled}
+              onChange={(e) => setEnabled(e.target.checked)}
+            />
+            <span>Enable my Buy / Hold / Sell price-rule signals</span>
+          </label>
+          <label className="flex items-start gap-2 text-sm">
+            <Checkbox
+              checked={owned}
+              onChange={(e) => setOwned(e.target.checked)}
+            />
+            <span>I currently hold this investment</span>
+          </label>
+          <Field
+            label="Buy price at or below (₹, optional)"
+            htmlFor="radar-price"
+          >
             <Input
               id="radar-price"
               type="number"
@@ -264,6 +384,44 @@ export function RadarDetail({
               onChange={(e) => setDip(e.target.value)}
             />
           </Field>
+          {owned && (
+            <div className="space-y-3">
+              <Field
+                label="Sell price at or above (₹, optional)"
+                htmlFor="radar-upper"
+              >
+                <Input
+                  id="radar-upper"
+                  type="number"
+                  inputMode="decimal"
+                  min="0.0001"
+                  max="100000000"
+                  step="0.0001"
+                  value={upper}
+                  onChange={(e) => setUpper(e.target.value)}
+                />
+              </Field>
+              <Field
+                label="Exit price at or below (₹, optional)"
+                htmlFor="radar-lower"
+              >
+                <Input
+                  id="radar-lower"
+                  type="number"
+                  inputMode="decimal"
+                  min="0.0001"
+                  max="100000000"
+                  step="0.0001"
+                  value={lower}
+                  onChange={(e) => setLower(e.target.value)}
+                />
+              </Field>
+            </div>
+          )}
+          <p className="text-xs text-muted-foreground">
+            Changes take effect after you save. Review your absolute price
+            thresholds after any split or other corporate action.
+          </p>
           <Button type="submit" variant="outline" disabled={pending}>
             Save thresholds
           </Button>

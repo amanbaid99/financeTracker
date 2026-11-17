@@ -1,3 +1,5 @@
+import type { EtfEvidence } from "./etf-data";
+import type { RuleSettings } from "./rule-signal";
 import { z } from "zod";
 
 export const assetTypes = ["equity", "gold_etf", "index_etf"] as const;
@@ -59,7 +61,7 @@ export interface Technicals {
   low252: number | null;
   averageTradedValue20: number | null;
 }
-export const ENGINE_VERSION = "radar-technical-0.1";
+export const ENGINE_VERSION = "radar-etf-evidence-0.2";
 export interface RadarAnalysis {
   inputs: {
     asset: RadarAsset;
@@ -69,6 +71,7 @@ export interface RadarAnalysis {
     priceBelow: number | null;
     drawdownPct: number | null;
   };
+  etf?: EtfEvidence;
   status: "INSUFFICIENT_DATA";
   score: null;
   version: string;
@@ -86,6 +89,7 @@ export interface WatchItem extends RadarInstrument {
   assetType: RadarAsset;
   priceBelow: number | null;
   drawdownPct: number | null;
+  rules?: RuleSettings;
 }
 export interface RadarSnapshot {
   id: string;

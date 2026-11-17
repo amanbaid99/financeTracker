@@ -583,6 +583,33 @@ describe("personal Radar", () => {
     expect((await b.rpc("radar_latest_snapshots")).data).toEqual([]);
     expect((await a.rpc("radar_latest_snapshots")).data?.length).toBe(1);
   });
+  it("keeps rules opt-in and rejects invalid exit configurations", async () => {
+    const own = await a
+      .from("radar_watchlist")
+      .select("rules_enabled,holding_confirmed")
+      .eq("id", watchId)
+      .single();
+    expect(own.data).toEqual({
+      rules_enabled: false,
+      holding_confirmed: false,
+    });
+    expect(
+      (
+        await a
+          .from("radar_watchlist")
+          .update({ sell_above: 110 })
+          .eq("id", watchId)
+      ).error,
+    ).toBeTruthy();
+    expect(
+      (
+        await a
+          .from("radar_watchlist")
+          .update({ holding_confirmed: true, sell_above: 90, sell_below: 100 })
+          .eq("id", watchId)
+      ).error,
+    ).toBeTruthy();
+  });
   it("prevents ownership reassignment and cross-owner snapshot parents", async () => {
     await admin.from("radar_access").insert({ user_id: idB });
     try {

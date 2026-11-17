@@ -25,7 +25,7 @@ export default async function RadarSetupPage() {
         </p>
       </section>
       <section className="rounded-2xl border bg-card p-4 space-y-3">
-        <h2 className="font-semibold">Before buying signals</h2>
+        <h2 className="font-semibold">Before full research scores</h2>
         <ul className="list-disc pl-5 text-sm space-y-2 text-muted-foreground">
           <li>
             Confirm corporate-action adjustments and the exchange calendar,
@@ -49,7 +49,7 @@ export default async function RadarSetupPage() {
         </p>
       </section>
       <section className="rounded-2xl border bg-card p-4 space-y-2">
-        <h2 className="font-semibold">Notifications</h2>
+        <h2 className="font-semibold">Price-rule signals and notifications</h2>
         <p className="text-sm text-muted-foreground">
           You can save thresholds now. Scheduled monitoring, Telegram linking
           and delivery are a later step. No messages are sent by this release.

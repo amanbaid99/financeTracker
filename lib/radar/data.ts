@@ -69,6 +69,14 @@ export const loadRadar = cache(async () => {
     assetType: r.asset_type as RadarAsset,
     priceBelow: r.price_below,
     drawdownPct: r.drawdown_pct,
+    rules: {
+      rulesEnabled: r.rules_enabled,
+      holdingConfirmed: r.holding_confirmed,
+      sellAbove: r.sell_above,
+      sellBelow: r.sell_below,
+      priceBelow: r.price_below,
+      drawdownPct: r.drawdown_pct,
+    },
   }));
   const history: RadarSnapshot[] = snapshots.data.map((r) => ({
     id: r.id,

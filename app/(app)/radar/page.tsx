@@ -1,3 +1,4 @@
+import { todayIST } from "@/lib/dates";
 import { GuideButton } from "@/components/guides";
 import { RadarWorkspace } from "@/components/radar-workspace";
 import { loadRadar, radarInstruments } from "@/lib/radar/data";
@@ -21,8 +22,13 @@ export default async function RadarPage() {
         </p>
       </div>
       <RadarWorkspace
+        today={todayIST()}
+        now={new Date().toISOString()}
         items={data.items}
-        snapshots={data.history.map(s => ({ watchId: s.watchId, analysis: s.analysis }))}
+        snapshots={data.history.map((s) => ({
+          watchId: s.watchId,
+          analysis: s.analysis,
+        }))}
         connection={connection.ok ? { ok: true } : connection}
       />
     </main>

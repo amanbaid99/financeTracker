@@ -13,13 +13,24 @@ export interface HelpTopic {
 
 export const HELP: HelpTopic[] = [
   {
+    id: "radar-rules",
+    section: "Investment Radar",
+    q: "Why does Radar show Wait after my buy price was reached?",
+    a: [
+      "ETF entries also need official NAV matched by ISIN to the latest completed session, a timestamped spread no older than 15 minutes and at most 0.5%, and a closing premium no higher than 1%. A discount beyond 5% also pauses the entry for a source/units check. These are conservative data guardrails, not a validated valuation strategy.",
+      "A fetched quote without a provider market timestamp cannot pass the freshness check. INDmoney's documented response does not include that timestamp, so the spread may be visible while ETF entries remain on Wait. NAV and current intraday prices are never mixed to claim live fair value.",
+      "Daily price rules use the latest completed prior session. The verified calendar currently covers NSE from 9 Nov through 31 Dec 2026, including the special 8 Nov session. Other exchanges and dates pause signals until their calendars are verified. Scheduled monitoring, Telegram, balanced scoring and backtesting remain unavailable.",
+    ],
+    tags: "buy hold sell wait premium NAV AMFI spread timestamp ETF",
+  },
+  {
     id: "radar",
     section: "Investment Radar",
     q: "What does Investment Radar do?",
     a: [
       "Radar is a personal research watchlist for stocks, Gold ETFs and index ETFs you choose. It does not change holdings or net worth, and does not place trades. Only the account granted personal Radar access can use it.",
       "Search INDmoney, confirm an instrument and its asset type, then open it to fetch daily history. Indicators are provisional until corporate-action adjustments and exchange-calendar freshness are verified. A score stays unavailable while required fundamentals or ETF checks are missing.",
-      "You can save price and drawdown thresholds. Scheduled monitoring, Telegram delivery, balanced opportunity scoring and backtesting are not enabled in this first release.",
+      "You can enable a dated Buy, Hold, Sell or Wait signal from your saved price rules. This is separate from full research scoring. Sell requires you to confirm ownership and set an exit price. Hold means a configured exit has not been triggered; it does not assess fundamentals. Drawdown rules are paused while corporate-action adjustments are unverified.",
       "The INDmoney token stays in Vercel as INDSTOCKS_ACCESS_TOKEN. Expired tokens must be replaced and the app redeployed. Never paste a token into chat.",
     ],
     tags: "watchlist stock ETF price research token INDmoney",

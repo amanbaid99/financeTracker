@@ -101,3 +101,39 @@ coverage remain a post-deployment check; do not report them as verified from fix
 INDmoney documents a 24-hour token lifetime. The token must be replaced in Vercel and the app
 redeployed when expired. TOTP-based renewal is documented by the provider but is not implemented
 here; no TOTP seed is collected by this release.
+
+## Next release: dated price-rule signals and ETF evidence
+
+Rules can be explicitly enabled, with confirmed ownership and upper/lower sell thresholds.
+Current price-rule output is derived from the current saved rules and dated prior-session
+closing price; it is not a historical recommendation log or completed balanced model.
+Existing records are not opted in. The form also permits correcting the asset type.
+
+AMFI's complete official NAV file is fetched without sending a name, ISIN or credential to
+that source. The local parser matches the exact watchlist ISIN, supports current eight-column
+and legacy six-column headers, and rejects ambiguous/invalid records. Premium comparisons
+require NAV and close to match the same latest verified completed session. Intraday price and
+previous-day NAV are not treated as a live premium. INDmoney's fixed GET quote endpoint provides
+depth; its documented response has no market timestamp. Fetch time and HTTP Date are never
+used as a substitute. A missing quote timestamp blocks ETF entry even when a spread is shown.
+
+ETF entry guardrails are a 1% maximum closing premium, 0.5% maximum fresh spread, and source
+review for a discount beyond 5%. They are conservative checks, not validated score weights.
+Freshness currently uses NSE/CMTR/71775 for remaining-2026 NSE sessions, with Muhurat included.
+It does not extrapolate BSE or 2027. All caller dates/times are explicit inputs to pure functions.
+The current session is excluded from daily-price-rule evaluation. Raw drawdown rules remain
+paused until price adjustments are verified. Provider failure is recorded as missing evidence;
+old NAV is not silently substituted. Failures do not produce an accumulation recommendation.
+
+References: https://www.amfiindia.com/net-asset-value/nav-download,
+https://portal.amfiindia.com/spages/NAVAll.txt,
+https://api-docs.indstocks.com/MarketQuote/,
+https://nsearchives.nseindia.com/content/circulars/CMTR71775.pdf.
+
+This update adds 17 unit cases covering current/legacy AMFI formats, exact ISIN matching,
+invalid/ambiguous NAV, spread parsing, special-session calendar boundaries, opt-in, ownership,
+exit precedence, stale data and ETF entry blocks. The full 262-unit/18-Python checks and 60
+responsive signal fixtures passed. Database constraints were verified after migration. New
+local integration cases are saved; the repeated hosted synthetic test confirmation expired,
+and the local full suite remains blocked by CLI telemetry. No owner's existing rules were
+silently enabled.

@@ -10,6 +10,18 @@ values ('00000000-0000-4000-8000-00000000c001','00000000-0000-4000-8000-00000000
 insert into public.radar_snapshots(user_id,watch_id,source,engine_version,input_hash,candles,analysis)
 values ('00000000-0000-4000-8000-00000000a001','00000000-0000-4000-8000-00000000c001','INDstocks','test',repeat('0',64),'[]','{}');
 do $$ begin
+  if exists(select 1 from public.radar_watchlist where rules_enabled or holding_confirmed) then raise exception 'Rules were implicitly enabled'; end if;
+  begin
+    update public.radar_watchlist set sell_above=110;
+    raise exception 'Sell rule accepted without ownership';
+  exception when check_violation then null; end;
+  begin
+    update public.radar_watchlist set holding_confirmed=true,sell_above=90,sell_below=100;
+    raise exception 'Inverted exit rules accepted';
+  exception when check_violation then null; end;
+  update public.radar_watchlist set holding_confirmed=true,sell_above=110,sell_below=90,rules_enabled=true;
+end $$;
+do $$ begin
   if (select count(*) from public.radar_latest_snapshots()) <> 1 then raise exception 'Owner cannot read latest snapshot'; end if;
   begin
     update public.radar_watchlist set user_id='00000000-0000-4000-8000-00000000b001';

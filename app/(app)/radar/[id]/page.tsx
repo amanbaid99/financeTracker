@@ -1,3 +1,4 @@
+import { todayIST } from "@/lib/dates";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/back-link";
 import { RadarDetail } from "@/components/radar-detail";
@@ -26,6 +27,8 @@ export default async function RadarInstrumentPage({
         item={item}
         snapshot={data.history.find((s) => s.watchId === item.id) ?? null}
         connected={!!radarProvider()}
+        today={todayIST()}
+        now={new Date().toISOString()}
       />
     </main>
   );

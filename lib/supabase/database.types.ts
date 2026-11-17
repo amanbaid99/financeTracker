@@ -49,6 +49,12 @@ export type Database = {
 
       radar_watchlist: {
         Row: {
+          rules_enabled: boolean;
+          holding_confirmed: boolean;
+          sell_above: number | null;
+          sell_below: number | null;
+          rules_updated_at: string | null;
+
           id: string;
           user_id: string;
           exchange: string;
@@ -62,6 +68,12 @@ export type Database = {
           created_at: string;
         };
         Insert: {
+          rules_enabled?: boolean;
+          holding_confirmed?: boolean;
+          sell_above?: number | null;
+          sell_below?: number | null;
+          rules_updated_at?: string | null;
+
           id?: string;
           user_id: string;
           exchange: string;
@@ -75,6 +87,12 @@ export type Database = {
           created_at?: string;
         };
         Update: {
+          rules_enabled?: boolean;
+          holding_confirmed?: boolean;
+          sell_above?: number | null;
+          sell_below?: number | null;
+          rules_updated_at?: string | null;
+
           id?: string;
           user_id?: string;
           exchange?: string;

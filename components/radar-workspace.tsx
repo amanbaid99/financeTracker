@@ -18,14 +18,20 @@ import {
   type RadarSnapshot,
   type WatchItem,
 } from "@/lib/radar/contracts";
+import { ruleSignal, savedRules } from "@/lib/radar/rule-signal";
+import { previousNseSession } from "@/lib/radar/calendar";
 import { formatDate } from "@/lib/format";
 
 export function RadarWorkspace({
   items,
   snapshots,
   connection,
+  today,
+  now,
 }: {
   items: WatchItem[];
+  today: string;
+  now: string;
   snapshots: Pick<RadarSnapshot, "watchId" | "analysis">[];
   connection: { ok: boolean; error?: string };
 }) {
@@ -62,8 +68,8 @@ export function RadarWorkspace({
             : connection.error}
         </p>
         <p className="text-xs text-muted-foreground">
-          Research only. Live buying signals and Telegram delivery are not
-          enabled yet.
+          Price-rule signals follow settings you save. Full research scores and
+          Telegram delivery are not enabled yet.
         </p>
         <Link
           href="/radar/setup"
@@ -101,6 +107,14 @@ export function RadarWorkspace({
           <ul className="space-y-3">
             {items.map((item) => {
               const snapshot = snapshots.find((s) => s.watchId === item.id);
+              const decision = ruleSignal({
+                analysis: snapshot?.analysis ?? null,
+                rules: savedRules(item),
+                asset: item.assetType,
+                evidence: snapshot?.analysis.etf,
+                expectedSession: previousNseSession(today, item.exchange),
+                now,
+              });
               return (
                 <li key={item.id}>
                   <Link
@@ -125,7 +139,7 @@ export function RadarWorkspace({
                         {assetLabels[item.assetType]}
                       </span>
                       <span className="text-xs rounded-full bg-muted px-2 py-1 text-muted-foreground">
-                        {snapshot ? "Insufficient data" : "History not fetched"}
+                        {`Rule: ${decision.label}`}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-3">
@@ -142,7 +156,7 @@ export function RadarWorkspace({
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {snapshot
-                        ? "Completed-session price. Data quality checks are pending."
+                        ? "Research: insufficient data. Open for the rule trigger and ETF checks."
                         : "Open to fetch daily prices and review data checks."}
                     </p>
                   </Link>
