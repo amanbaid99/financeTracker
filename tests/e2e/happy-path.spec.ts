@@ -892,8 +892,10 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Bill amount").fill("300000");
   await page.getByRole("button", { name: "Log bill", exact: true }).last().click();
   await expect(feeBar).toHaveAttribute("aria-valuenow", "100");
-  await expect(page.getByText("Target reached", { exact: true })).toBeVisible();
+  await expect(page.getByText(/^✓ Target of ₹[\d,]+ reached$/)).toBeVisible();
   await expect(page.getByText("Counted from 2 bills")).toBeVisible();
+  // Every milestone reached: the card gets a tick and says so.
+  await expect(page.getByText("Milestone reached", { exact: true })).toBeVisible();
   // Read features: two readings, checked against the text; nothing saved
   // until chosen. Turning on AI is asked for right here. A card with every
   // milestone reached moves down the list, so its details may be closed.

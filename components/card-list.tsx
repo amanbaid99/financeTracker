@@ -1,6 +1,13 @@
 "use client";
 
-import { ChevronDown, CreditCard, FileText, Pencil, Plus } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  CreditCard,
+  FileText,
+  Pencil,
+  Plus,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import { CardAdvisor } from "@/components/card-advisor";
@@ -73,7 +80,6 @@ const monthLabel = (iso: string) =>
 const STATUS: Partial<
   Record<MilestoneState["status"], { label: string; cls: string }>
 > = {
-  achieved: { label: "Reached", cls: "bg-success-soft text-success" },
   on_pace: { label: "On pace", cls: "bg-success-soft text-success" },
   behind: { label: "Needs more", cls: "bg-warning-soft text-warning" },
   missed: { label: "Missed", cls: "bg-danger-soft text-danger" },
@@ -149,7 +155,7 @@ function MilestoneRow({
           )}
         >
           {s.status === "achieved"
-            ? "Target reached"
+            ? `✓ Target of ${formatINR(s.target)} reached`
             : `${formatINR(s.remaining)} left of ${formatINR(s.target)}${pace}`}
           {s.end && s.status !== "achieved"
             ? `${s.status === "missed" ? " · ended" : " · by"} ${formatDate(s.end)}`
@@ -958,19 +964,37 @@ export function CardList({
                 <div className="relative p-4">
                   <div className="flex items-start gap-3">
                     <span
-                      className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary"
+                      className={cn(
+                        "inline-flex size-10 shrink-0 items-center justify-center rounded-xl",
+                        allReached
+                          ? "bg-success-soft text-success"
+                          : "bg-primary-soft text-primary",
+                      )}
                       aria-hidden
                     >
-                      <CreditCard className="size-5" />
+                      {allReached ? (
+                        <Check className="size-5" strokeWidth={2.5} />
+                      ) : (
+                        <CreditCard className="size-5" />
+                      )}
                     </span>
-                    <button
-                      type="button"
-                      aria-expanded={isOpen}
-                      onClick={() => setOpen(isOpen ? null : c.id)}
-                      className="min-w-0 flex-1 break-words pt-1 text-left font-semibold leading-snug after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-primary"
-                    >
-                      {c.label}
-                    </button>
+                    <div className="min-w-0 flex-1 pt-1">
+                      <button
+                        type="button"
+                        aria-expanded={isOpen}
+                        onClick={() => setOpen(isOpen ? null : c.id)}
+                        className="block w-full break-words text-left font-semibold leading-snug after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-primary"
+                      >
+                        {c.label}
+                      </button>
+                      {allReached && (
+                        <p className="mt-0.5 text-xs font-medium text-success">
+                          {states.length === 1
+                            ? "Milestone reached"
+                            : `All ${states.length} milestones reached`}
+                        </p>
+                      )}
+                    </div>
                     <ChevronDown
                       className={cn(
                         "mt-1 size-4 shrink-0 text-muted-foreground transition-transform",
@@ -1010,69 +1034,67 @@ export function CardList({
                   </div>
                 </div>
 
-                <section
-                  aria-label={`${c.label} milestones`}
-                  className="border-t px-4 pb-3"
-                >
-                  <div className="flex min-h-10 items-center justify-between gap-3 pt-1">
-                    <h3 className="text-xs font-medium text-muted-foreground">
-                      Milestones
-                    </h3>
-                    {allReached && (
-                      <span className="rounded-full bg-success-soft px-2 py-1 text-xs font-medium text-success">
-                        All milestones reached
-                      </span>
+                {/* A card with every milestone reached stays short until opened. */}
+                {(!allReached || isOpen) && (
+                  <section
+                    aria-label={`${c.label} milestones`}
+                    className="border-t px-4 pb-3"
+                  >
+                    <div className="flex min-h-10 items-center justify-between gap-3 pt-1">
+                      <h3 className="text-xs font-medium text-muted-foreground">
+                        Milestones
+                      </h3>
+                    </div>
+                    {states.length > 0 ? (
+                      <ul className="divide-y">
+                        {[...states]
+                          .sort(
+                            (a, b) =>
+                              Number(a.status === "achieved") -
+                              Number(b.status === "achieved"),
+                          )
+                          .map((s) => (
+                            <MilestoneRow
+                              key={s.id}
+                              s={s}
+                              noCardYear={!c.yearStart}
+                              emi={c.emiPerBill}
+                              showDetails={isOpen}
+                              onEdit={() =>
+                                setSheet({
+                                  kind: "milestone",
+                                  cardId: c.id,
+                                  milestone: s,
+                                })
+                              }
+                            />
+                          ))}
+                      </ul>
+                    ) : (
+                      <p className="pb-2 text-sm text-muted-foreground">
+                        No milestones yet. Add one to track a reward.
+                      </p>
                     )}
-                  </div>
-                  {states.length > 0 ? (
-                    <ul className="divide-y">
-                      {[...states]
-                        .sort(
-                          (a, b) =>
-                            Number(a.status === "achieved") -
-                            Number(b.status === "achieved"),
-                        )
-                        .map((s) => (
-                          <MilestoneRow
-                            key={s.id}
-                            s={s}
-                            noCardYear={!c.yearStart}
-                            emi={c.emiPerBill}
-                            showDetails={isOpen}
-                            onEdit={() =>
-                              setSheet({
-                                kind: "milestone",
-                                cardId: c.id,
-                                milestone: s,
-                              })
-                            }
-                          />
-                        ))}
-                    </ul>
-                  ) : (
-                    <p className="pb-2 text-sm text-muted-foreground">
-                      No milestones yet. Add one to track a reward.
-                    </p>
-                  )}
-                  {(isOpen || states.length === 0) && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="min-h-11 w-full"
-                      onClick={() =>
-                        setSheet({
-                          kind: "milestone",
-                          cardId: c.id,
-                          milestone: null,
-                        })
-                      }
-                    >
-                      <Plus />
-                      Add milestone
-                    </Button>
-                  )}
-                </section>
+                    {(isOpen || states.length === 0) && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="min-h-11 w-full"
+                        onClick={() =>
+                          setSheet({
+                            kind: "milestone",
+                            cardId: c.id,
+                            milestone: null,
+                          })
+                        }
+                      >
+                        <Plus />
+                        Add milestone
+                      </Button>
+                    )}
+                  </section>
+                )}
 
                 {isOpen && (
                   <div className="expand-in space-y-4 border-t px-4 pb-4 pt-2">
