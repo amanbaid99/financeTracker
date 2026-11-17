@@ -22,12 +22,13 @@ export const GUIDES: Record<GuideId, Guide> = {
   radar: {
     title: "Your Investment Radar",
     intro:
-      "A private research watchlist, separate from the investments you hold.",
+      "Automatic research checks for the investments you choose, separate from your portfolio.",
     steps: [
-      "Search INDmoney by name, symbol or ISIN. Choose an instrument and confirm its asset type before adding it.",
-      "Open an item and refresh daily history. Prices, chart and indicators show their session date and source limitations.",
-      "Insufficient data means the required checks are incomplete. A price dip is not a buying recommendation, and there is no opportunity score yet.",
-      "Enable your price-rule signals after setting entry prices or confirming ownership and setting exit prices. Hold and Sell only use your confirmed holding and saved exits. Scheduled checks and Telegram delivery are not enabled yet.",
+      "Search INDmoney by name, symbol or ISIN. The instrument metadata suggests whether it is a stock, Gold ETF or index ETF before you confirm.",
+      "Open an item for Automatic research. It uses your latest saved prices, official NAV and data-quality checks without asking you to set price rules.",
+      "Refresh research fetches current source data. Wait can identify a verified entry risk, such as an excessive same-day NAV premium. Insufficient data lists the exact missing sources or model work.",
+      "Buy candidates, Hold and exit reviews need completed verified research and, for holding or selling, ownership and portfolio context. A watchlist alone is not enough. Missing inputs never force a conclusion.",
+      "Optional price alerts are folded below the research and charts. They compare levels you enter and are not automatic investment recommendations. Notifications are not enabled yet.",
       "Only your account can access Radar. The plus button sits above the bottom-right corner so all five tabs fit.",
     ],
   },
@@ -139,6 +140,20 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-11-17",
+    title: "Automatic research comes first",
+    items: [
+      {
+        title: "No price-rule setup needed",
+        text: "Radar now opens with automatic source and research checks. Verified entry risks can show Wait; missing data or unfinished models stay clearly labelled. Manual price alerts are optional and folded away.",
+      },
+      {
+        title: "ETF types and BSE dates",
+        text: "ETF names and exact AMFI ISIN matches correct legacy stock labels in research. NSE and BSE both have verified remaining-2026 session dates. Unverified quote timestamps never count as fresh market evidence.",
+      },
+    ],
+  },
   {
     date: "2026-11-17",
     title: "Radar price-rule signals and ETF checks",

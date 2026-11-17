@@ -1,4 +1,5 @@
 import "server-only";
+import { classifyInstrument } from "./classification";
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/data";
@@ -49,15 +50,19 @@ export const radarInstruments = cache(async () => {
 });
 export const loadRadar = cache(async () => {
   const { supabase, user } = await requireRadar();
-  const [watch, snapshots] = await Promise.all([
+  const [watch, snapshots, holdings] = await Promise.all([
     supabase
       .from("radar_watchlist")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
     supabase.rpc("radar_latest_snapshots"),
+    supabase
+      .from("holdings")
+      .select("isin,current_value")
+      .eq("user_id", user.id),
   ]);
-  if (watch.error || snapshots.error)
+  if (watch.error || snapshots.error || holdings.error)
     throw new Error("Your Radar could not be loaded. Try again.");
   const items: WatchItem[] = watch.data.map((r) => ({
     id: r.id,
@@ -86,5 +91,17 @@ export const loadRadar = cache(async () => {
     candles: r.candles as unknown as Candle[],
     analysis: r.analysis as unknown as RadarAnalysis,
   }));
-  return { items, history };
+  const resolved = items.map((item) => {
+    const latest = history.find((s) => s.watchId === item.id);
+    const classification = classifyInstrument(item, latest?.analysis.etf?.nav);
+    return {
+      ...item,
+      assetType: classification.asset ?? item.assetType,
+      classification,
+      ownedInTracker:
+        !!item.isin &&
+        holdings.data.some((h) => h.isin === item.isin && h.current_value > 0),
+    };
+  });
+  return { items: resolved, history };
 });

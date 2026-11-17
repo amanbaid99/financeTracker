@@ -6,9 +6,10 @@ import { z } from "zod";
 import { todayIST } from "@/lib/dates";
 import type { Json } from "@/lib/supabase/database.types";
 import { fetchAmfiNav, type EtfEvidence } from "./etf-data";
-import { previousNseSession } from "./calendar";
+import { previousCompletedSession } from "./calendar";
 import { ruleSettingsSchema } from "./rule-signal";
 import { assetTypes, watchSchema } from "./contracts";
+import { classifyInstrument } from "./classification";
 import { analyseRadar } from "./analysis";
 import {
   loadRadar,
@@ -64,6 +65,7 @@ export async function addRadar(input: z.input<typeof watchSchema>) {
       ok: false,
       error: "Keep up to 30 instruments in your personal watchlist.",
     };
+  const detected = classifyInstrument(instrument);
   const { error } = await supabase.from("radar_watchlist").insert({
     user_id: user.id,
     exchange: instrument.exchange,
@@ -71,7 +73,10 @@ export async function addRadar(input: z.input<typeof watchSchema>) {
     symbol: instrument.symbol,
     name: instrument.name,
     isin: instrument.isin,
-    asset_type: v.data.assetType,
+    asset_type:
+      !detected.needsReview && detected.asset && detected.asset !== "equity"
+        ? detected.asset
+        : v.data.assetType,
     price_below: v.data.priceBelow,
     drawdown_pct: v.data.drawdownPct,
   });
@@ -107,6 +112,19 @@ export async function saveRadarRules(input: {
       error: parsed.error.issues[0]?.message ?? "Check the thresholds.",
     };
   const v = parsed.data;
+  const current = (await loadRadar()).items.find((i) => i.id === v.id);
+  if (!current) return { ok: false, error: "Instrument not found." };
+  if (
+    current.classification &&
+    !current.classification.needsReview &&
+    current.classification.asset !== "equity" &&
+    v.assetType !== current.classification.asset
+  )
+    return {
+      ok: false,
+      error:
+        "The provider identifies this as an ETF. Keep its detected type and refresh research, or review the selected instrument.",
+    };
   const { error } = await supabase
     .from("radar_watchlist")
     .update({
@@ -182,7 +200,7 @@ export async function refreshRadar(id: string) {
       candles,
       asset: item.assetType,
       today,
-      expectedSession: previousNseSession(today, item.exchange),
+      expectedSession: previousCompletedSession(today, item.exchange),
       adjustmentsVerified: false,
       priceBelow: item.priceBelow,
       drawdownPct: item.drawdownPct,

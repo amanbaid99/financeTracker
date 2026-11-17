@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox, Input, Select } from "@/components/ui/input";
 import { Field } from "@/components/forms/field";
@@ -15,9 +14,13 @@ import {
   type WatchItem,
 } from "@/lib/radar/contracts";
 import { refreshRadar, removeRadar, saveRadarRules } from "@/lib/radar/actions";
+import { RadarResearch } from "@/components/radar-research";
+import { automaticResearch } from "@/lib/radar/research";
+import { classifyInstrument } from "@/lib/radar/classification";
+import { todayIST } from "@/lib/dates";
 import { RadarSignal } from "@/components/radar-signal";
 import { ruleSignal, savedRules, etfChecks } from "@/lib/radar/rule-signal";
-import { previousNseSession } from "@/lib/radar/calendar";
+import { previousCompletedSession } from "@/lib/radar/calendar";
 import { formatDate } from "@/lib/format";
 
 function PriceChart({ snapshot }: { snapshot: RadarSnapshot }) {
@@ -90,7 +93,19 @@ export function RadarDetail({
   const [lower, setLower] = useState(item.rules?.sellBelow?.toString() ?? "");
   const router = useRouter();
   const a = snapshot?.analysis;
-  const expected = previousNseSession(today, item.exchange);
+  const expected = previousCompletedSession(today, item.exchange);
+  const research = automaticResearch({
+    analysis: a ?? null,
+    asset: item.assetType,
+    classification:
+      item.classification ?? classifyInstrument(item, a?.etf?.nav),
+    isin: item.isin,
+    exchange: item.exchange,
+    today,
+    now,
+    owned:
+      item.ownedInTracker === true || item.rules?.holdingConfirmed === true,
+  });
   const decision = ruleSignal({
     analysis: a ?? null,
     rules: savedRules(item),
@@ -107,7 +122,9 @@ export function RadarDetail({
       const result = await refreshRadar(item.id);
       if (!result.ok) setError(result.error ?? "Try again.");
       else {
-        setNotice("Daily history updated. Review the data checks below.");
+        setNotice(
+          "Research data refreshed. The automatic assessment has been updated.",
+        );
         router.refresh();
       }
     });
@@ -116,7 +133,26 @@ export function RadarDetail({
     v == null ? "Unavailable" : `${v.toFixed(1)}%`;
   return (
     <div className="space-y-5">
-      <RadarSignal signal={decision} />
+      <RadarResearch
+        result={research}
+        onRefresh={refresh}
+        pending={pending}
+        connected={connected}
+      />
+      {error && (
+        <p
+          role="alert"
+          className="text-sm rounded-xl bg-danger-soft text-danger p-3"
+        >
+          {error}
+        </p>
+      )}
+      {notice && (
+        <p role="status" className="text-sm text-primary">
+          {notice}
+        </p>
+      )}
+
       <section className="rounded-2xl border bg-card p-4 space-y-4">
         <div className="flex flex-wrap justify-between items-start gap-3">
           <div>
@@ -132,36 +168,15 @@ export function RadarDetail({
               </p>
             )}
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={pending || !connected}
-            onClick={refresh}
-          >
-            <RefreshCw className="size-4" aria-hidden />
-            {pending ? "Working…" : "Refresh history"}
-          </Button>
+
         </div>
         {snapshot && <PriceChart snapshot={snapshot} />}
         <p className="text-xs text-muted-foreground">
           {snapshot
-            ? `Fetched ${formatDate(snapshot.fetchedAt.slice(0, 10))}. ${a?.sessions ?? 0} sessions. Price adjustments are unverified.`
+            ? `Fetched ${formatDate(todayIST(new Date(snapshot.fetchedAt)))}. ${a?.sessions ?? 0} sessions. Price adjustments are unverified.`
             : "Refresh to fetch daily prices. No price or buying signal is assumed."}
         </p>
       </section>
-      {error && (
-        <p
-          role="alert"
-          className="text-sm rounded-xl bg-danger-soft text-danger p-3"
-        >
-          {error}
-        </p>
-      )}
-      {notice && (
-        <p role="status" className="text-sm text-primary">
-          {notice}
-        </p>
-      )}
       {item.assetType !== "equity" && (
         <section className="rounded-2xl border bg-card p-4 space-y-3">
           <h2 className="font-semibold">ETF value and trading checks</h2>
@@ -213,45 +228,6 @@ export function RadarDetail({
           )}
         </section>
       )}
-      <section className="rounded-2xl border bg-card p-4 space-y-3">
-        <div className="flex flex-wrap justify-between gap-2">
-          <h2 className="font-semibold">Research status</h2>
-          <span className="text-xs rounded-full bg-muted px-2 py-1">
-            Insufficient data
-          </span>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          A price dip alone does not make an investment attractive. There is no
-          opportunity score until the required inputs and model are verified.
-        </p>
-        {a?.observations.length ? (
-          <ul className="list-disc pl-5 text-sm space-y-1">
-            {a.observations.map((o) => (
-              <li key={o}>{o}</li>
-            ))}
-          </ul>
-        ) : null}
-        <details>
-          <summary className="min-h-11 flex items-center cursor-pointer text-sm font-medium">
-            What is still needed?
-          </summary>
-          <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-2">
-            {(
-              a?.blockers ?? [
-                "Fetch price history, then verify source quality and the asset-specific data before scoring.",
-              ]
-            ).map((b) => (
-              <li key={b}>{b}</li>
-            ))}
-          </ul>
-        </details>
-        {a && (
-          <p className="text-xs text-muted-foreground">
-            Engine {a.version}. Indicators below are provisional research
-            calculations.
-          </p>
-        )}
-      </section>
       {a && (
         <section className="rounded-2xl border bg-card p-4 space-y-2">
           <h2 className="font-semibold">Price indicators</h2>
@@ -286,15 +262,17 @@ export function RadarDetail({
           </dl>
         </section>
       )}
-      <section
+      <details
         id="radar-rules"
         className="scroll-mt-16 rounded-2xl border bg-card p-4 space-y-3"
       >
-        <h2 className="font-semibold">My thresholds</h2>
+        <summary className="min-h-11 flex items-center cursor-pointer font-semibold">
+          Optional price alerts
+        </summary>
+        {enabled && <RadarSignal signal={decision} />}
         <p className="text-sm text-muted-foreground">
-          Set the prices that matter to you. Signals follow these saved rules
-          and the latest available data checks. Scheduled monitoring and
-          Telegram delivery are not enabled yet.
+          These optional alerts compare prices with levels you choose. They are
+          separate from automatic research. No notifications or trades are sent.
         </p>
         <form
           className="space-y-3"
@@ -326,7 +304,7 @@ export function RadarDetail({
           <Field
             label="Investment type"
             htmlFor="radar-type"
-            hint="Refresh history after changing the type to run its data checks."
+            hint="Refresh data after changing the type to run its data checks."
           >
             <Select
               id="radar-type"
@@ -345,7 +323,7 @@ export function RadarDetail({
               checked={enabled}
               onChange={(e) => setEnabled(e.target.checked)}
             />
-            <span>Enable my Buy / Hold / Sell price-rule signals</span>
+            <span>Enable manual price alerts</span>
           </label>
           <label className="flex items-start gap-2 text-sm">
             <Checkbox
@@ -426,7 +404,7 @@ export function RadarDetail({
             Save thresholds
           </Button>
         </form>
-      </section>
+      </details>
       <section className="space-y-2">
         {removing ? (
           <div className="rounded-xl border p-4 space-y-3">

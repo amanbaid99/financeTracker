@@ -15,6 +15,8 @@ export interface MarketDepth {
   ask: number;
   spreadPct: number;
   marketTime: string | null;
+  /** Only true once the provider contract explicitly identifies the book timestamp. */
+  timestampVerified?: boolean;
   fetchedAt: string;
 }
 export interface EtfEvidence {
@@ -202,6 +204,7 @@ export function parseDepth(
     ask,
     spreadPct: ((ask - bid) / ((ask + bid) / 2)) * 100,
     marketTime,
+    timestampVerified: false,
     fetchedAt,
   };
 }

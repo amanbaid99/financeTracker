@@ -78,7 +78,11 @@ export function etfChecks(
     ? Date.parse(now) - Date.parse(depth.marketTime)
     : Infinity;
   const spreadFresh =
-    !!depth && Number.isFinite(age) && age >= 0 && age <= 15 * 60000;
+    !!depth &&
+    depth.timestampVerified === true &&
+    Number.isFinite(age) &&
+    age >= 0 &&
+    age <= 15 * 60000;
   if (!spreadFresh)
     blockers.push(
       "A timestamped market spread from the last 15 minutes is missing. A recent fetch alone does not prove freshness.",

@@ -6,7 +6,7 @@ import {
   parseDepth,
   type EtfEvidence,
 } from "@/lib/radar/etf-data";
-import { previousNseSession } from "@/lib/radar/calendar";
+import { previousCompletedSession } from "@/lib/radar/calendar";
 import {
   ruleSettingsSchema,
   ruleSignal,
@@ -61,6 +61,7 @@ const evidence: EtfEvidence = {
     ask: 100.1,
     spreadPct: 0.2,
     marketTime: "2026-11-17T04:29:00Z",
+    timestampVerified: true,
     fetchedAt: now,
   },
   errors: [],
@@ -138,15 +139,15 @@ describe("official NAV and market depth", () => {
 });
 describe("completed NSE session calendar", () => {
   it("handles ordinary days, holidays, weekends and the special Muhurat session", () => {
-    expect(previousNseSession("2026-11-17", "NSE")).toBe("2026-11-16");
-    expect(previousNseSession("2026-11-16", "NSE")).toBe("2026-11-13");
-    expect(previousNseSession("2026-11-25", "NSE")).toBe("2026-11-23");
-    expect(previousNseSession("2026-12-28", "NSE")).toBe("2026-12-24");
-    expect(previousNseSession("2026-11-09", "NSE")).toBe("2026-11-08");
+    expect(previousCompletedSession("2026-11-17", "NSE")).toBe("2026-11-16");
+    expect(previousCompletedSession("2026-11-16", "NSE")).toBe("2026-11-13");
+    expect(previousCompletedSession("2026-11-25", "NSE")).toBe("2026-11-23");
+    expect(previousCompletedSession("2026-12-28", "NSE")).toBe("2026-12-24");
+    expect(previousCompletedSession("2026-11-09", "NSE")).toBe("2026-11-08");
   });
-  it("does not guess another exchange or an unverified year", () => {
-    expect(previousNseSession(today, "BSE")).toBeNull();
-    expect(previousNseSession("2027-01-04", "NSE")).toBeNull();
+  it("supports the verified BSE calendar and does not guess an unverified year", () => {
+    expect(previousCompletedSession(today, "BSE")).toBe("2026-11-16");
+    expect(previousCompletedSession("2027-01-04", "NSE")).toBeNull();
   });
 });
 describe("explicit price-rule signals", () => {

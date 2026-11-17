@@ -5,10 +5,10 @@ export function RadarSignal({ signal }: { signal: RuleSignal }) {
   return (
     <section
       className="rounded-2xl border bg-card p-4 space-y-3"
-      aria-label="Your price-rule signal"
+      aria-label="Manual price alert"
     >
       <div className="flex items-center justify-between gap-3">
-        <h2 className="font-semibold">Your price-rule signal</h2>
+        <h2 className="font-semibold">Manual price alert</h2>
         <span
           className={cn(
             "rounded-full px-3 py-1 text-sm font-semibold",
@@ -19,7 +19,15 @@ export function RadarSignal({ signal }: { signal: RuleSignal }) {
                 : "bg-muted text-muted-foreground",
           )}
         >
-          {signal.label}
+          {
+            {
+              Buy: "Entry reached",
+              Hold: "Exit not reached",
+              Sell: "Exit reached",
+              Wait: "Watching",
+              "No signal": "Off",
+            }[signal.label]
+          }
         </span>
       </div>
       <p className="text-sm">{signal.reason}</p>
@@ -43,7 +51,7 @@ export function RadarSignal({ signal }: { signal: RuleSignal }) {
         href="#radar-rules"
         className="inline-flex min-h-11 items-center text-sm font-medium text-primary"
       >
-        Set or edit my rules
+        Edit alert levels
       </a>
       <details>
         <summary className="cursor-pointer text-sm font-medium min-h-11 flex items-center">

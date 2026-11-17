@@ -18,8 +18,8 @@ import {
   type RadarSnapshot,
   type WatchItem,
 } from "@/lib/radar/contracts";
-import { ruleSignal, savedRules } from "@/lib/radar/rule-signal";
-import { previousNseSession } from "@/lib/radar/calendar";
+import { automaticResearch } from "@/lib/radar/research";
+import { classifyInstrument } from "@/lib/radar/classification";
 import { formatDate } from "@/lib/format";
 
 export function RadarWorkspace({
@@ -68,8 +68,8 @@ export function RadarWorkspace({
             : connection.error}
         </p>
         <p className="text-xs text-muted-foreground">
-          Price-rule signals follow settings you save. Full research scores and
-          Telegram delivery are not enabled yet.
+          Research checks run automatically from your latest data. No custom
+          price rules are needed. Missing data blocks investment conclusions.
         </p>
         <Link
           href="/radar/setup"
@@ -107,13 +107,19 @@ export function RadarWorkspace({
           <ul className="space-y-3">
             {items.map((item) => {
               const snapshot = snapshots.find((s) => s.watchId === item.id);
-              const decision = ruleSignal({
+              const research = automaticResearch({
                 analysis: snapshot?.analysis ?? null,
-                rules: savedRules(item),
                 asset: item.assetType,
-                evidence: snapshot?.analysis.etf,
-                expectedSession: previousNseSession(today, item.exchange),
+                classification:
+                  item.classification ??
+                  classifyInstrument(item, snapshot?.analysis.etf?.nav),
+                isin: item.isin,
+                exchange: item.exchange,
+                today,
                 now,
+                owned:
+                  item.ownedInTracker === true ||
+                  item.rules?.holdingConfirmed === true,
               });
               return (
                 <li key={item.id}>
@@ -139,7 +145,7 @@ export function RadarWorkspace({
                         {assetLabels[item.assetType]}
                       </span>
                       <span className="text-xs rounded-full bg-muted px-2 py-1 text-muted-foreground">
-                        {`Rule: ${decision.label}`}
+                        {research.label}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-3">
@@ -156,7 +162,7 @@ export function RadarWorkspace({
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {snapshot
-                        ? "Research: insufficient data. Open for the rule trigger and ETF checks."
+                        ? research.summary
                         : "Open to fetch daily prices and review data checks."}
                     </p>
                   </Link>
@@ -202,7 +208,7 @@ export function RadarWorkspace({
               <Field
                 label="What kind of investment is it?"
                 htmlFor="radar-asset"
-                hint="Choose its asset type. ETF names alone are not used to guess what it tracks."
+                hint="The provider name suggests this type. Check it before confirming; research separately verifies the required underlying data."
               >
                 <Select
                   id="radar-asset"
@@ -299,6 +305,8 @@ export function RadarWorkspace({
                       className="w-full min-h-14 py-3 text-left space-y-1"
                       onClick={() => {
                         setSelected(i);
+                        const detected = classifyInstrument(i);
+                        if (detected.asset) setAsset(detected.asset);
                         setError("");
                       }}
                     >

@@ -137,3 +137,11 @@ responsive signal fixtures passed. Database constraints were verified after migr
 local integration cases are saved; the repeated hosted synthetic test confirmation expired,
 and the local full suite remains blocked by CLI telemetry. No owner's existing rules were
 silently enabled.
+
+## Automatic research correction, 17 Nov 2026
+
+The primary UI now calls the pure automaticResearch assessment independently of optional manual rules. Classification is derived at read time from metadata and exact AMFI ISIN evidence; refresh uses the effective ETF type. Actual holdings are matched by ISIN for ownership context. Saved watchlists are not silently migrated. Manual entry/exit alerts remain explicit opt-in.
+
+BSE and NSE previous completed sessions are verified only for 9 November through 31 December 2026. Unsupported calendar ranges fail closed. The documented full quote contract does not supply a verified quote timestamp; timestampVerified remains false, even if an undocumented timestamp is present. Fetch time is not market time.
+
+Current automatic output is Insufficient data or an evidence-backed Wait risk. Complete Buy/Hold/Review selling models remain unimplemented pending adjusted history, underlying valuation/benchmark and tracking evidence, model validation and portfolio context. There is no automatic trading or new schema migration.

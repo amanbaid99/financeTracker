@@ -1,3 +1,4 @@
+import type { InstrumentClassification } from "./classification";
 import type { EtfEvidence } from "./etf-data";
 import type { RuleSettings } from "./rule-signal";
 import { z } from "zod";
@@ -90,6 +91,8 @@ export interface WatchItem extends RadarInstrument {
   priceBelow: number | null;
   drawdownPct: number | null;
   rules?: RuleSettings;
+  classification?: InstrumentClassification;
+  ownedInTracker?: boolean;
 }
 export interface RadarSnapshot {
   id: string;
