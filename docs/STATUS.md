@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 17 Nov 2026.
 
+## Public filing sample verification, 17 Nov 2026
+
+Added a bounded, credential-free public-source probe and a separate GitHub Actions workflow. It only reads an allowlisted NSE integrated-filing URL from a reviewed sample manifest, refuses redirects and unexpected document types, caps the response at 4 MB/15 seconds and checks for the expected public security identifier. The workflow has read-only repository permissions, does not persist checkout credentials and stores only its public sample/diagnostics for one day. It does not read environment variables, production keys, private portfolio records or Supabase data.
+
+This is a source-format inspection tool, not a filing parser or a verification flag. Metadata retains a byte hash and explicitly leaves publication/parser verification false. The initial CI source read is pending. Local verification: lint, TypeScript, 449 unit tests, 18 Python tests and production build passed. Focused probe tests cover permitted source reads, rejected hosts/credentials/query strings, HTML challenges, document types, size limits and safe upstream errors. The previous local signed-in e2e failure remains a tooling blocker, not a reported pass. See investment-radar/STOCK_SOURCE_AUDIT.md.
+
 ## Annual filing definition review, 17 Nov 2026
 
 Located the selected stock's official consolidated FY26 exchange filing in readable page form. The nearby standalone filing is explicitly different and cannot be merged into consolidated data. Annual diluted EPS in the filing and the provider's reported EPS differ; their definitions/adjustment bases are unresolved, so no EPS comparison or valuation is promoted to verified. The monetary reconciliation helper now compares declared decimal rounding intervals with exact integer arithmetic while still rejecting different metric definitions and values beyond that boundary. No source flag or live recommendation is enabled. See investment-radar/STOCK_SOURCE_AUDIT.md. Verification: lint, TypeScript, 441 unit tests, 18 Python tests and production build passed. The focused reconciliation tests cover decimal boundaries, large amounts, incompatible EPS definitions and genuine mismatches. The prior full signed-in e2e attempt remains blocked by local Supabase tooling. No live research release is claimed.

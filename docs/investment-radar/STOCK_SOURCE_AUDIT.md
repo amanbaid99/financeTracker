@@ -35,3 +35,10 @@ The [NSE consolidated FY26 filing](https://nsearchives.nseindia.com/corporate/ix
 The consolidated filing reports annual diluted EPS 0.39 INR/share; the saved provider row labelled EPS in Rs is 0.38. The provider's EPS definition and share-adjustment basis remain unresolved. This is not proof of an incorrect filing or a provider error. Numerical closeness cannot establish matching metric definitions. Rounding reconciliation now compares stated decimal rounding intervals exactly with integer arithmetic, never an extra percentage tolerance.
 
 The annual statement also exposes explicit cash-flow lines and cash balances, so primary-source augmentation is a viable next step. A discovered URL and human inspection are not a verified automatic filing adapter or a complete historical audit. Source publication/restatement availability still needs an explicit contract; the board date and URL timestamp are not automatically publication times.
+
+
+## Reproducible raw-source inspection
+
+scripts/radar/filing-probe.mjs and source-samples.json define a single reviewed public filing sample. The separate Public filing source sample workflow runs only on source-probe changes or explicit workflow dispatch. It uses no provider/application credentials or user records, permits only fixed-shape NSE archive HTML URLs, refuses redirects, requires HTML and the expected security marker, and bounds reads to 4 MB/15 seconds. An HTML sample, source URL, byte hash and safe failure diagnostics are kept as a one-day artifact. No returned HTML is executed. A security marker alone does not verify a parsed company field, financial fact or publication time. The probe metadata explicitly keeps parserVerified and publicationTimeVerified false.
+
+Inspect the artifact before implementing a source parser. CI network success is not proof of financial coverage or investment performance. The ordinary application checks remain a separate workflow; a source-access failure does not change existing financial records.
