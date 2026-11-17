@@ -4,7 +4,7 @@ Personal research watchlist for user-selected NSE/BSE instruments. No orders, no
 
 | Asset | Data path implemented | Research model status |
 | --- | --- | --- |
-| Individual stock | Instrument identity, daily OHLCV, provisional price metrics, completed-session check and dedicated depth diagnostics. No NAV request. | Fundamentals, point-in-time valuations and supported sector models remain unconnected/unimplemented. No live Buy/Hold/Sell model. |
+| Individual stock | Instrument identity, daily OHLCV, provisional price metrics, completed-session check and dedicated depth diagnostics. No NAV request. Optional IndianAPI company-report adapter prepared, activated by a separate server-only key. | Company-report metadata/units/publication times, point-in-time valuations and supported sector models remain unverified or unimplemented. No live Buy/Hold/Sell model. |
 | Gold ETF | Stock-market price/depth path plus exact-ISIN official AMFI NAV, checked secondary historical NAV and date reconciliation. | Gold paper calculations and replay harness implemented. Matching benchmark, adjusted history, dated book and real-data validation remain blocked. |
 | Index ETF | Price/depth, available exact-identity NAV/history and date reconciliation. | Requires actual underlying-index mapping, index history/valuation, tracking and model validation. Never uses Gold factors. |
 | Other ETF underlying | Recognised as an ETF from provider metadata; available price/depth and exact-identity NAV/history source reads. No silent stock fallback. | Underlying/model needs verification. A Silver, debt, sector or international-exposure ETF is not scored with a Gold or stock model by default. |

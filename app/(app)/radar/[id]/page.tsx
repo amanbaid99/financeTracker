@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { BackLink } from "@/components/back-link";
 import { RadarDetail } from "@/components/radar-detail";
 import { classificationLabel } from "@/lib/radar/classification";
-import { loadRadar, radarProvider } from "@/lib/radar/data";
+import { loadRadar, radarProvider, radarFinancialProvider } from "@/lib/radar/data";
 export const metadata = { title: "Radar research" };
 export default async function RadarInstrumentPage({
   params,
@@ -27,6 +27,7 @@ export default async function RadarInstrumentPage({
         item={item}
         snapshot={data.history.find((s) => s.watchId === item.id) ?? null}
         connected={!!radarProvider()}
+        financialsConfigured={!!radarFinancialProvider()}
         today={todayIST()}
         now={new Date().toISOString()}
       />

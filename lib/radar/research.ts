@@ -31,7 +31,7 @@ export interface ResearchResult {
     owner: "source" | "development" | "refresh" | "context";
   }[];
 }
-const VERSION = "automatic-research-0.5";
+const VERSION = "automatic-research-0.6";
 /** Automatic evidence review, independent of manual price rules. Never claim a validated valuation model exists. */
 export function automaticResearch({
   analysis,
@@ -81,7 +81,7 @@ export function automaticResearch({
     blockers: checks.filter((c) => c.state === "missing").map((c) => ({
       label: c.label,
       owner: c.id === "model" ? "development" : c.id === "portfolio" ? "context" :
-        ["prices", "nav", "nav-history", "classification"].includes(c.id) ? "refresh" : "source",
+        ["prices", "nav", "nav-history", "company-reports", "classification"].includes(c.id) ? "refresh" : "source",
     })),
   });
   add(
@@ -138,11 +138,17 @@ export function automaticResearch({
         : "Price history is available, but corporate-action adjustments are unverified. Momentum cannot establish a buying opportunity.",
   );
   if (asset === "equity") {
+    const reports = analysis.financials;
+    if (reports) add("company-reports", "Company report collection",
+      Object.keys(reports.reports).length === 3 ? "ready" : "missing",
+      `${Object.keys(reports.reports).length} report tables collected from IndianAPI with an exact NSE ticker match. Publication times, ISIN, units, currency and report basis remain unverified; this is not a completed financial assessment.`);
     add(
       "fundamentals",
       "Fundamentals and valuation",
       "missing",
-      "Verified financial statements, sector support and historical/peer valuations are not connected.",
+      reports
+        ? "Report collection is connected, but verified publication/restatement dates, amount units, currency, consolidation basis, sector checks and historical/peer valuations are still needed."
+        : "Verified financial statements, sector support and historical/peer valuations are not connected.",
     );
     add(
       "model",
@@ -159,8 +165,12 @@ export function automaticResearch({
       );
     return result(
       "Research not ready",
-      "Stock research is not ready. Financial-data sources and the stock assessment model are still missing.",
-      "Stock research needs a connected financial-data source and a supported sector model. You do not need to configure price rules.",
+      reports
+        ? "Company reports are collected. Verified valuation data and a tested stock model are still needed."
+        : "Stock research is not ready. Financial-data sources and the stock assessment model are still missing.",
+      reports
+        ? "Open Company reports for coverage. Amount units, report basis and publication times remain unverified. No price-rule setup is needed."
+        : "Stock research needs a connected financial-data source and a supported sector model. You do not need to configure price rules.",
     );
   }
   const nav = analysis.etf?.nav;

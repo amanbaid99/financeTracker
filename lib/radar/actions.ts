@@ -11,11 +11,13 @@ import { previousCompletedSession } from "./calendar";
 import { ruleSettingsSchema } from "./rule-signal";
 import { assetTypes, watchSchema } from "./contracts";
 import { classifyInstrument, needsEtfEvidence, analysisAsset } from "./classification";
+import { FinancialSourceError, financialSymbol, canReuseFinancials } from "./stock-financials";
 import { analyseRadar } from "./analysis";
 import {
   loadRadar,
   radarInstruments,
   radarProvider,
+  radarFinancialProvider,
   requireRadar,
 } from "./data";
 
@@ -191,7 +193,9 @@ export async function refreshRadar(id: string) {
         readDepth: () => provider.depth(item, now),
       });
     }
-    if (!etf) market = await collectMarketEvidence(() => provider.depth(item, now));
+    const marketRead = !etf
+      ? collectMarketEvidence(() => provider.depth(item, now)).then((result) => { market = result; })
+      : Promise.resolve();
     const analysis = analyseRadar({
       candles,
       asset: analysisAsset(item.assetType, item.classification),
@@ -202,6 +206,22 @@ export async function refreshRadar(id: string) {
       drawdownPct: item.drawdownPct,
     });
     if (etf) analysis.etf = etf;
+    const financialProvider = radarFinancialProvider();
+    if (financialProvider && item.classification?.kind === "stock" && !item.classification.needsReview) {
+      try {
+        let master: Awaited<ReturnType<typeof radarInstruments>> | undefined;
+        if (item.exchange === "BSE") master = await radarInstruments();
+        const canonical = financialSymbol(item, master?.ok ? master.instruments : []);
+        if (!canonical) throw new FinancialSourceError("This stock could not be mapped to one exact NSE ticker by ISIN. No company-name guess was used.");
+        const previous = last?.analysis.financials;
+        analysis.financials = canReuseFinancials(previous, canonical, now)
+          ? previous : await financialProvider.financials(canonical, today, now);
+      } catch (error) {
+        analysis.financialsError = error instanceof FinancialSourceError
+          ? error.message : "Company financial reports could not be read. Prices and trading checks are retained.";
+      }
+    }
+    await marketRead;
     if (market) analysis.market = market;
     const { supabase, user } = await requireRadar();
     const { error } = await supabase.from("radar_snapshots").insert({
@@ -217,6 +237,8 @@ export async function refreshRadar(id: string) {
             inputs: analysis.inputs,
             etf: analysis.etf ?? null,
             market: analysis.market ?? null,
+            financials: analysis.financials ?? null,
+            financialsError: analysis.financialsError ?? null,
             version: analysis.version,
           }),
         )

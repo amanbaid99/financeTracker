@@ -1,8 +1,9 @@
 import { BackLink } from "@/components/back-link";
-import { radarInstruments } from "@/lib/radar/data";
+import { radarInstruments, radarFinancialProvider } from "@/lib/radar/data";
 export const metadata = { title: "Radar connection" };
 export default async function RadarSetupPage() {
   const connection = await radarInstruments();
+  const financialsConfigured = !!radarFinancialProvider();
   return (
     <main className="space-y-5">
       <BackLink fallback="/radar" label="Radar" />
@@ -25,6 +26,31 @@ export default async function RadarSetupPage() {
           the official scheme code, ISIN and latest NAV. No order, funds or broker
           portfolio endpoint is called. The history source needs no extra API key.
         </p>
+      </section>
+      <section className="rounded-2xl border bg-card p-4 space-y-3">
+        <h2 className="font-semibold">Stock company reports</h2>
+        <p className="text-sm">
+          {financialsConfigured
+            ? "The financial-source key is configured. A stock refresh checks access, exact ticker identity and available reports. Configuration alone does not verify coverage."
+            : "Optional IndianAPI access can fetch annual results, balance sheets and cash-flow reports. A separate financial-source key is required."}
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Start with the free starter account. Save its key as INDIANAPI_KEY,
+          type Secret, in the Vercel project for Production, then redeploy. Never
+          paste the key into chat or use a NEXT_PUBLIC_ variable.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Each new company collection uses up to four requests and is reused for
+          24 hours. Source plan/credit errors are shown without upgrading or
+          purchasing anything. BSE stocks need an unambiguous NSE counterpart
+          matched by the same ISIN.
+        </p>
+        <p className="text-sm text-muted-foreground">
+          Reports do not enter valuation scoring until publication dates, units,
+          currency and report basis are verified. This source does not solve ETF
+          benchmarks, adjusted-price proof or quote timestamps.
+        </p>
+        <a href="https://indianapi.in/indian-stock-market" target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center text-sm text-primary">Financial-source account and plans</a>
       </section>
       <section className="rounded-2xl border bg-card p-4 space-y-3">
         <h2 className="font-semibold">Automatic research</h2>

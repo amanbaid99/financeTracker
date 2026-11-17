@@ -3,6 +3,7 @@ import { classifyInstrument } from "./classification";
 import { cache } from "react";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/data";
+import { IndianFinancialProvider } from "./stock-financials";
 import { IndmoneyProvider } from "./indmoney";
 import type {
   RadarAnalysis,
@@ -30,6 +31,10 @@ export async function requireRadar() {
 export function radarProvider() {
   const token = process.env.INDSTOCKS_ACCESS_TOKEN?.trim();
   return token ? new IndmoneyProvider(token) : null;
+}
+export function radarFinancialProvider() {
+  const key = process.env.INDIANAPI_KEY?.trim();
+  return key ? new IndianFinancialProvider(key) : null;
 }
 export const radarInstruments = cache(async () => {
   await requireRadar();

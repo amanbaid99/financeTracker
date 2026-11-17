@@ -200,3 +200,10 @@ lib/radar/history-alignment.ts compares ordered source dates and retains separat
 ## Multi-asset source routing
 
 collectMarketEvidence is shared by stocks and ETFs; stock snapshots retain analysis.market without requesting NAV. needsEtfEvidence uses derived instrument kind, so unsupported ETFs still receive available ETF data instead of being treated as stock fundamentals. Their analysis asset is other_etf and classification stays blocked. classificationLabel keeps legacy storage tags out of UI model labels. Manual entry guards also require a verified classification; a legacy equity tag cannot bypass ETF checks. No schema migration or live recommendation model is added by these routing changes.
+
+
+## Optional stock financial-source adapter
+
+lib/radar/stock-financials.ts supplies the fixed-host IndianFinancialProvider, strict ticker mapping, report parser and 24-hour reuse guard. The server-only data loader reads INDIANAPI_KEY without exporting it to clients. A verified stock refresh gathers depth and financials concurrently after price ingestion; errors remain independent. BSE mapping uses one same-ISIN NSE counterpart from the instrument master. Only the public canonical symbol is sent. Large raw profiles, analyst views, recommendations and news are discarded. Normalised annual/balance/cash-flow tables and source provenance live in optional analysis.financials; known errors live in analysis.financialsError. Both enter the snapshot input hash. Original retrieval times are retained on reuse.
+
+components/radar-stock-financials.tsx shows folded report coverage, not unverified-unit monetary figures. Fiscal period ends are never treated as filing/publication timestamps. All model-readiness, units, currency, consolidation and independent ISIN verification flags stay false. The adapter does not unlock stock scoring, change ETF models, read broker accounts or place orders.

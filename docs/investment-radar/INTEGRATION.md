@@ -163,3 +163,7 @@ The published selected-fund policy identifies MCX polled spot prices as the desi
 ## Stocks and other ETFs
 
 Shared depth collection now serves stocks via analysis.market, without requiring NAV. Generic/unsupported ETFs are identified by derived kind, receive the available ETF source path and remain blocked from stock/Gold models. Analysis records other_etf rather than misleadingly applying equity blockers. UI labels and optional entry guards use verified classification. This is source-routing coverage, not a claim that fundamental, index or other-ETF models are finished. No new hosted mutation or schema change was needed.
+
+## Optional company financial reports
+
+The IndianAPI stock adapter is prepared for explicit verified-stock refreshes when INDIANAPI_KEY is configured. It uses the documented stock.indianapi.in GET /stock and GET /historical_stats endpoints, requires an exact ticker match, and checks annual, balance-sheet and cash-flow report coverage. It sends no broker credential or account data. A cached collection under 24 hours retains its original retrieval time. Market evidence is retained when financial-source access fails; no background calls, plan upgrades or purchases occur. Source figures remain excluded from valuation scoring pending metadata verification. See FINANCIAL_SOURCE.md for the capability review, setup and exact remaining gaps.

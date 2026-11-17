@@ -3,6 +3,14 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 17 Nov 2026.
 
+## Optional stock financial-report source, 17 Nov 2026
+
+Prepared an IndianAPI starter-tier adapter for exact NSE ticker identity, annual results, balance sheets and cash flow. BSE instruments need one same-ISIN NSE counterpart. An explicit verified-stock refresh collects reports only when the separate INDIANAPI_KEY is configured server-side. It makes at most four source reads, retains partial report successes and reuses successful/partial collections under 24 hours with the original retrieval timestamp. Financial-source errors preserve the current market evidence. Raw profiles, peer/officer details, analyst recommendations and news are discarded. No paid plan is purchased, no secret is retrieved and no background collection or schema migration is added.
+
+The folded Company reports UI shows table/period coverage, not unverified-unit financial figures. Source configuration alone does not establish access or coverage. Stock publication times, units/currency, consolidation basis, independent ISIN checks, peer valuations and sector models remain incomplete; reports never unlock valuation scoring or Buy/Hold/Sell. ETF benchmarks, price adjustments and book timestamp coverage remain separate blockers. Activation/live verification is waiting for the owner's separate API key. See investment-radar/FINANCIAL_SOURCE.md and docs/SETUP.md.
+
+Verification: lint, TypeScript, 371 unit tests, 18 Python tests and production build passed. Browser component fixtures passed 168 responsive theme/width/state cases including collected, partial, rejected-key and unconfigured company reports. The full signed-in local e2e still fails on the Supabase CLI read-only telemetry path. No real IndianAPI response or paid-provider coverage is claimed from fixtures.
+
 ## Multi-asset source diagnostics, 17 Nov 2026
 
 The live Gold snapshot was checked read-only: 374 price records and 373 NAV observations contain 371 matching dates, three price-only and two NAV-only dates. One NAV-only date precedes the price window. The expanded NAV history now exposes exact date reconciliation without changing existing records, filling gaps or pairing by row number. The screenshot plus hosted snapshot confirms this NAV-history data path, not every asset or source.

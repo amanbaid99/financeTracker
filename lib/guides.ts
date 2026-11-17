@@ -26,6 +26,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     steps: [
       "Search INDmoney by name, symbol or ISIN. The instrument metadata suggests whether it is a stock, Gold ETF or index ETF before you confirm.",
       "Open an item for Automatic research. It uses your latest saved prices, official NAV and data-quality checks without asking you to set price rules.",
+      "Company reports is folded below stock trading data. It uses an optional separate financial-source key, exact ticker checks and a 24-hour reuse period. Retrieved reports do not become verified valuations or enable recommendations.",
       "Stocks and ETFs share price and trading-depth checks. Stocks do not request NAV. Other ETFs keep an explicit model-unavailable label rather than falling into the stock or Gold model. Fundamental and underlying-index research still need their own verified sources.",
       "Open Show unmatched dates within Published NAV history to compare actual price/NAV dates, including download-window differences. A spread failure now explains whether the source returned an empty book, rejected access or could not be read. None of these diagnostics fabricates missing values or confirms a market timestamp.",
       "Published NAV history shows a dated secondary-source chart when the scheme code, ISIN and latest NAV match AMFI. Unknown publication times and adjustments still block trading-model use.",
@@ -143,6 +144,14 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {
+    date: "2026-11-17",
+    title: "Optional stock company reports",
+    items: [{
+      title: "A separate financial-data connection",
+      text: "Stocks can collect annual results, balance sheets and cash flow through an optional IndianAPI key configured in Vercel. Exact ticker matching and report-source errors are checked; successful collections are reused for 24 hours. Company reports stay separate from unfinished valuation models and ETF research.",
+    }],
+  },
   {
     date: "2026-11-17",
     title: "See why market-data checks differ",

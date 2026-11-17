@@ -14,6 +14,7 @@ import {
   type WatchItem,
 } from "@/lib/radar/contracts";
 import { refreshRadar, removeRadar, saveRadarRules } from "@/lib/radar/actions";
+import { StockFinancialsView } from "@/components/radar-stock-financials";
 import { NavHistoryView } from "@/components/radar-nav-history";
 import { RadarResearch } from "@/components/radar-research";
 import { automaticResearch } from "@/lib/radar/research";
@@ -72,12 +73,14 @@ export function RadarDetail({
   item,
   snapshot,
   connected,
+  financialsConfigured = false,
   today,
   now,
 }: {
   item: WatchItem;
   snapshot: RadarSnapshot | null;
   connected: boolean;
+  financialsConfigured?: boolean;
   today: string;
   now: string;
 }) {
@@ -209,7 +212,7 @@ export function RadarDetail({
               <dd className="tabular">
                 {market?.depth
                   ? `${market.depth.spreadPct.toFixed(2)}%`
-                  : market ? "Unavailable" : "Not checked in this snapshot"}
+                  : market ? "Unavailable" : "Not fetched"}
               </dd>
             </div>
           </dl>
@@ -248,6 +251,9 @@ export function RadarDetail({
             </a>
           )}
         </section>
+      {classification.kind === "stock" && (
+        <StockFinancialsView evidence={a?.financials} error={a?.financialsError} configured={financialsConfigured} />
+      )}
       {a && (
         <section className="rounded-2xl border bg-card p-4 space-y-2">
           <h2 className="font-semibold">Price indicators</h2>

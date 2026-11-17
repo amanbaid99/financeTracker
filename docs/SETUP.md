@@ -54,3 +54,10 @@ cached, so nothing personal sits on the device and numbers are never stale. Bump
 ## Investment Radar
 
 Personal-only entitlement in radar_access. Apply 20261125000000_radar_foundation.sql before release. Configure INDSTOCKS_ACCESS_TOKEN directly in Vercel Production and Preview, never in chat. INDmoney tokens expire after 24 hours; update the secret and redeploy. The adapter only reads market instruments and daily candles. No service-role key, broker credentials, TOTP seed or Telegram token is needed for this first release. See investment-radar/INTEGRATION.md for the remaining live data checks and PRD work.
+
+
+## Optional stock company reports
+
+INDIANAPI_KEY is a server-only Vercel Secret for the optional IndianAPI Free/Hobby host, https://stock.indianapi.in. Start with the provider's free starter tier; no paid plan is selected by the app. Add the key directly to Production in the finance-tracker Vercel project and redeploy. Never prefix it NEXT_PUBLIC_, paste it into chat, retrieve it from Vercel or commit it. No Production secret is required locally for fixture tests. Preview is optional and should use a separate test credential if configured.
+
+Refresh research on a verified stock performs at most four source reads for identity and three reports, reusing successful/partial reports for 24 hours. This is not a background job. Source plan/credit failures do not trigger upgrades or purchases and do not prevent storing current market-price evidence. No schema migration is required; optional source data and provenance live in immutable JSON snapshots. Coverage, source units/basis, publication-time evidence and company identity beyond exact ticker matching still need live verification before valuation scoring.

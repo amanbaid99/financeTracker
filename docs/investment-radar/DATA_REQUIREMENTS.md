@@ -87,3 +87,8 @@ MCX publishes a [Spot Market Price page](https://www.mcxindia.com/market-data/sp
 The common source layer now fetches INDstocks depth for individual stocks as well as ETFs. Stock snapshots use analysis.market and never require an AMFI NAV. ETF snapshots retain analysis.etf and can fetch exact-identity AMFI/MFapi evidence even when the underlying model is unsupported. Derived classification.kind, source routing and display labels prevent a legacy equity storage tag from treating an unsupported ETF as a stock. Its analysis input is explicitly other_etf and its manual entry alert cannot bypass classification checks. No Gold factor or valuation model is applied to a different underlying.
 
 This establishes common data diagnostics, not complete investment models for every asset. Stock financial statements/publication dates/valuations and sector support, underlying-index valuation/history, other ETF benchmarks, holdings/exit context and model validation remain missing. See ASSET_COVERAGE.md for exact coverage and PROVIDER_QUESTIONS.md for provider requirements.
+
+
+## Optional stock report adapter, 17 Nov 2026
+
+A separate IndianAPI company-report path is prepared and requires INDIANAPI_KEY configured by the owner. It uses exact NSE ticker checks, same-ISIN BSE-to-NSE mapping, three historical report tables and 24-hour reuse. Actual source credentials and live report payloads were not available during fixture verification. Report dates, units, currency, consolidation and independent ISIN verification stay blocked. Reports do not become canonical model inputs merely because they were retrieved. No source solves MCX spot history, index benchmarks or dated books by implication. See FINANCIAL_SOURCE.md for source references, setup and reviewed alternatives.
