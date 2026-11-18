@@ -36,10 +36,18 @@ def review_samples(folder: Path) -> list[dict]:
                 facts = [f for f in review["facts"] if f["metric"] == metric]
                 if len(facts) != 1 or Decimal(facts[0]["reportedValue"]) != Decimal(value):
                     raise ValueError(f"The audited sample assertion failed for {metric}.")
+        references = json.loads((ROOT / "lib/radar/filing-references.json").read_text())
+        matched = [r for r in references if r["isin"] == target["expectedIsin"]]
+        if len(matched) != 1 or matched[0]["source"] != target["url"] or matched[0]["valuationReady"] is not False:
+            raise ValueError("One non-valuation reference must match the source sample.")
+        for fact in matched[0]["facts"]:
+            actual = [f for f in review["facts"] if f["metric"] == fact["metric"]]
+            if len(actual) != 1 or any(actual[0][k] != fact[k] for k in ("periodEnd", "periodKind", "basis", "dimension", "unit")) or any(Decimal(actual[0][k]) != Decimal(fact[k]) for k in ("reportedValue", "normalizedValue")):
+                raise ValueError("A reference fact differs from the downloaded public filing.")
         result = {**review, "source": source["source"], "requestStartedAt": source["observedAt"], "sampleAssertionsPassed": bool(expected)}
         (folder / f"{name}.review.json").write_text(json.dumps(result, indent=2))
         summaries.append({"name": name, "parser": review["version"], "factCount": len(review["facts"]),
-                          "issues": review["issues"], "sampleAssertionsPassed": bool(expected), "valuationReady": False})
+                          "issues": review["issues"], "sampleAssertionsPassed": bool(expected), "referenceAssertionsPassed": True, "valuationReady": False})
     return summaries
 
 

@@ -9,6 +9,7 @@ on:
       - "scripts/radar/review-filing-samples.py"
       - "api/_radarfiling.py"
       - "tests/python/test_radarfiling.py"
+      - "lib/radar/filing-references.json"
       - ".github/workflows/filing-source.yml"
 
 permissions:

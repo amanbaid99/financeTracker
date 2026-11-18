@@ -252,7 +252,7 @@ export function RadarDetail({
           )}
         </section>
       {classification.kind === "stock" && (
-        <StockFinancialsView evidence={a?.financials} error={a?.financialsError} configured={financialsConfigured} />
+        <StockFinancialsView evidence={a?.financials} error={a?.financialsError} configured={financialsConfigured} isin={item.isin} />
       )}
       {a && (
         <section className="rounded-2xl border bg-card p-4 space-y-2">

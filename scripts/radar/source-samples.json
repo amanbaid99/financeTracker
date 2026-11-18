@@ -9,10 +9,18 @@
       "reportedValues": {
         "revenue": "5436400.00",
         "net-profit": "36600.00",
+        "other-income": "139600.00",
+        "finance-costs": "39200.00",
+        "exceptional-items": "0.00",
+        "basic-eps": "0.4",
         "diluted-eps": "0.39",
         "cash-equivalents": "99600.00",
+        "total-assets": "4073600.00",
         "operating-cash": "63200.00",
-        "purchase-ppe": "175100.00"
+        "purchase-ppe": "175100.00",
+        "sale-ppe": "500.00",
+        "purchase-intangibles": "0.00",
+        "closing-cash": "99600.00"
       }
     }
   }

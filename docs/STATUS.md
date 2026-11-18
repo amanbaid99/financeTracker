@@ -3,13 +3,19 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 18 Nov 2026.
 
+## Reviewed filing comparison, 18 Nov 2026
+
+The real public source CI run 44230631531 passed: the HTML parser extracted 14 facts with no issues and passed the six initially audited sample assertions. The reviewed copy now supplies a small public reference catalog for the selected ISIN, with all 14 facts checked by CI before this stage is considered verified. This is limited explicit reference coverage, not automatic filing discovery for every stock.
+
+A generic source-comparison helper matches exact ISIN, fiscal date and statement rows. The Company reports detail now has a folded Annual filing comparison. Agreements remain conditional on an explicitly assumed crore scale; total assets need review and unspecified EPS is never equated with diluted EPS. Missing/duplicate dates or rows, conflicting dimensions and inconsistent normalized amounts cannot produce a match. All provider/model verification flags remain unchanged. The comparison uses existing collected reports and needs no new refresh, SQL migration or hosted record change. Local verification passed: lint, TypeScript, 458 unit tests, 37 Python tests and the production build. Chromium fixtures passed 180 responsive cases, including 12 filing-comparison views. Full signed-in local e2e remains blocked by the Supabase CLI telemetry write to a read-only home. Deployment and the expanded real-source CI assertions are being checked.
+
 ## Uploaded annual filing parser, 18 Nov 2026
 
 The owner supplied an approved local PDF copy of the selected official annual filing. This unblocks direct document review without changing the workspace network policy. The new deterministic _radarfiling.py parser extracted 14 facts from the real 23-page copy with no row issues. It verifies the selected ISIN, dates, currency/scale and reporting basis, chooses the audited full-year column by start/end dates, separates balance/cash-flow sections and normalizes monetary values with Decimal while leaving EPS unscaled. It does not use print/board dates as publication times, execute HTML, send data to AI, retain raw names or enable investment recommendations.
 
 Revenue, net profit and operating cash flow agree with the saved provider rows if the provider's monetary scale is crore. That does not verify its whole dataset or all periods. Reported EPS definitions remain unresolved, and total assets do not reconcile under that same scale assumption. The parser retains issues and accounting warnings; source authenticity, publication, recurring-earnings, accounting-comparability and valuation-readiness flags remain false. The original uploaded PDF/text is not committed. A synthetic fixture covers its logical structure.
 
-The same core has a bounded HTML reader. The public source CI workflow now runs it against the real source and checks selected facts against the reviewed PDF sample, retaining only parsed public evidence in its one-day artifact. Local verification: lint, TypeScript, 449 unit tests, 37 Python tests and production build passed. The real PDF produced 14 facts with no row issues; a new CI run will verify the HTML source path. No new HTTP endpoint, source key or hosted-data mutation is introduced. See investment-radar/STOCK_SOURCE_AUDIT.md.
+The same core has a bounded HTML reader. The public source CI workflow now runs it against the real source and checks selected facts against the reviewed PDF sample, retaining only parsed public evidence in its one-day artifact. Local verification: lint, TypeScript, 449 unit tests, 37 Python tests and production build passed. The real PDF produced 14 facts with no row issues; CI run 44230631531 also passed on the real HTML source, extracting 14 facts with no issues and passing the audited assertions. No new HTTP endpoint, source key or hosted-data mutation is introduced. See investment-radar/STOCK_SOURCE_AUDIT.md.
 
 ## Public filing sample verification, 17 Nov 2026
 

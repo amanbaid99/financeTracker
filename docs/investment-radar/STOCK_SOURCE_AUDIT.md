@@ -68,3 +68,10 @@ api/_radarfiling.py uses native PDF text extraction and deterministic section/co
 This does not verify every provider metric, historical period or rounding increment. The PDF copy alone does not authenticate its origin. Parser flags for authenticity, publication, recurring earnings, comparable accounting and valuation readiness remain false. No Buy/Hold/Sell result is released.
 
 The HTML adapter flattens document structure without executing scripts or fetching embedded resources. The CI review step checks the source hash, configured identity, period/basis and six facts corroborated by this copy. Successful sample assertions establish that source/template path only, not all NSE formats or investment-model validity. Future live ingestion must bind the parsed facts to the approved network fetch, preserve actual availability evidence and pass source/model validation. No new public parsing endpoint is added by this module.
+
+
+## Live source verification and app comparison
+
+[Source run 44230631531](https://github.com/amanbaid99/financeTracker/actions/runs/44230631531) passed on the real HTML document: 14 extracted facts, no row issues and the six initial PDF-derived assertions passed. The next source check asserts all 14 reference facts, their basis/period/dimension/unit and exact decimal normalization. No raw uploaded document or personal print metadata enters the public reference catalog.
+
+lib/radar/filing-references.json is a limited, reviewed public-fact reference keyed by exact ISIN and dated fiscal period, not automatic coverage of all issuers. The app uses it only inside the folded Company reports comparison. It is not supplied to StockSources or valuation scoring. Comparison requires an exact cross-source ISIN and matching period/row; repeated aliases, missing cells and inconsistent normalized values stay unavailable. Provider-scale matching remains an explicit crore hypothesis. EPS definitions remain unresolved even if two numbers happen to be close. Total assets require review. These results never set source-quality flags or release a recommendation.

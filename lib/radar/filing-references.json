@@ -1,0 +1,153 @@
+[
+  {
+    "isin": "INE758T01015",
+    "fiscalEnd": "2026-03-31",
+    "basis": "consolidated",
+    "source": "https://nsearchives.nseindia.com/corporate/ixbrl/INTEGRATED_FILING_INDAS_153832_28042026202149_iXBRL_WEB.html",
+    "reviewedOn": "2026-11-18",
+    "provenance": "reviewed-source-sample",
+    "valuationReady": false,
+    "facts": [
+      {
+        "metric": "revenue",
+        "periodEnd": "2026-03-31",
+        "periodKind": "annual",
+        "basis": "consolidated",
+        "dimension": "amount",
+        "unit": "INR-lakh",
+        "reportedValue": "5436400.00",
+        "normalizedValue": "543640000000.00"
+      },
+      {
+        "metric": "net-profit",
+        "periodEnd": "2026-03-31",
+        "periodKind": "annual",
+        "basis": "consolidated",
+        "dimension": "amount",
+        "unit": "INR-lakh",
+        "reportedValue": "36600.00",
+        "normalizedValue": "3660000000.00"
+      },
+      {
+        "metric": "other-income",
+        "periodEnd": "2026-03-31",
+        "periodKind": "annual",
+        "basis": "consolidated",
+        "dimension": "amount",
+        "unit": "INR-lakh",
+        "reportedValue": "139600.00",
+        "normalizedValue": "13960000000.00"
+      },
+      {
+        "metric": "finance-costs",
+        "periodEnd": "2026-03-31",
+        "periodKind": "annual",
+        "basis": "consolidated",
+        "dimension": "amount",
+        "unit": "INR-lakh",
+        "reportedValue": "39200.00",
+        "normalizedValue": "3920000000.00"
+      },
+      {
+        "metric": "exceptional-items",
+        "periodEnd": "2026-03-31",
+        "periodKind": "annual",
+        "basis": "consolidated",
+        "dimension": "amount",
+        "unit": "INR-lakh",
+        "reportedValue": "0.00",
+        "normalizedValue": "0.00"
+      },
+      {
+        "metric": "basic-eps",
+        "periodEnd": "2026-03-31",
+        "periodKind": "annual",
+        "basis": "consolidated",
+        "dimension": "per-share",
+        "unit": "INR/share",
+        "reportedValue": "0.4",
+        "normalizedValue": "0.4"
+      },
+      {
+        "metric": "diluted-eps",
+        "periodEnd": "2026-03-31",
+        "periodKind": "annual",
+        "basis": "consolidated",
+        "dimension": "per-share",
+        "unit": "INR/share",
+        "reportedValue": "0.39",
+        "normalizedValue": "0.39"
+      },
+      {
+        "metric": "cash-equivalents",
+        "periodEnd": "2026-03-31",
+        "periodKind": "point-in-time",
+        "basis": "consolidated",
+        "dimension": "amount",
+        "unit": "INR-lakh",
+        "reportedValue": "99600.00",
+        "normalizedValue": "9960000000.00"
+      },
+      {
+        "metric": "total-assets",
+        "periodEnd": "2026-03-31",
+        "periodKind": "point-in-time",
+        "basis": "consolidated",
+        "dimension": "amount",
+        "unit": "INR-lakh",
+        "reportedValue": "4073600.00",
+        "normalizedValue": "407360000000.00"
+      },
+      {
+        "metric": "operating-cash",
+        "periodEnd": "2026-03-31",
+        "periodKind": "annual",
+        "basis": "consolidated",
+        "dimension": "amount",
+        "unit": "INR-lakh",
+        "reportedValue": "63200.00",
+        "normalizedValue": "6320000000.00"
+      },
+      {
+        "metric": "purchase-ppe",
+        "periodEnd": "2026-03-31",
+        "periodKind": "annual",
+        "basis": "consolidated",
+        "dimension": "amount",
+        "unit": "INR-lakh",
+        "reportedValue": "175100.00",
+        "normalizedValue": "17510000000.00"
+      },
+      {
+        "metric": "sale-ppe",
+        "periodEnd": "2026-03-31",
+        "periodKind": "annual",
+        "basis": "consolidated",
+        "dimension": "amount",
+        "unit": "INR-lakh",
+        "reportedValue": "500.00",
+        "normalizedValue": "50000000.00"
+      },
+      {
+        "metric": "purchase-intangibles",
+        "periodEnd": "2026-03-31",
+        "periodKind": "annual",
+        "basis": "consolidated",
+        "dimension": "amount",
+        "unit": "INR-lakh",
+        "reportedValue": "0.00",
+        "normalizedValue": "0.00"
+      },
+      {
+        "metric": "closing-cash",
+        "periodEnd": "2026-03-31",
+        "periodKind": "annual",
+        "basis": "consolidated",
+        "dimension": "amount",
+        "unit": "INR-lakh",
+        "reportedValue": "99600.00",
+        "normalizedValue": "9960000000.00"
+      }
+    ]
+  }
+]

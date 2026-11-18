@@ -145,6 +145,14 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   {
+    date: "2026-11-18",
+    title: "Compare reports with a reviewed filing",
+    items: [{
+      title: "See agreements and unresolved definitions",
+      text: "Where a reviewed annual filing is available, Company reports now has a folded comparison. It uses the same reporting date and shows numeric agreements under an explicit scale assumption, differences and EPS definitions needing review. This does not enable investment recommendations.",
+    }],
+  },
+  {
     date: "2026-11-17",
     title: "Company reports show remaining gaps",
     items: [{
