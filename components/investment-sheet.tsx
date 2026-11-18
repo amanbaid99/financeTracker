@@ -352,6 +352,17 @@ export function InvestmentSheet({
                 <MoneyInput id="i-sip" value={sip} onChange={setSip} />
               </Field>
             </div>
+            <Field
+              label="Amount invested (optional)"
+              htmlFor="i-invested"
+              hint="What you've put in so far, from your statement or app. Shows your gain or loss. A CAS import fills it in."
+            >
+              <MoneyInput
+                id="i-invested"
+                value={invested}
+                onChange={setInvested}
+              />
+            </Field>
             {otherGoals > 0 && (
               <p className="text-xs text-muted-foreground">
                 {goalId
@@ -383,17 +394,6 @@ export function InvestmentSheet({
                     value={ret}
                     placeholder={String(dflt)}
                     onChange={(e) => setRet(e.target.value)}
-                  />
-                </Field>
-                <Field
-                  label="Amount invested (optional)"
-                  htmlFor="i-invested"
-                  hint="What you've put in so far. Shows how much it has grown."
-                >
-                  <MoneyInput
-                    id="i-invested"
-                    value={invested}
-                    onChange={setInvested}
                   />
                 </Field>
                 {shareField}

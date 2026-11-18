@@ -221,9 +221,10 @@ export const HELP: HelpTopic[] = [
   {
     id: "growth",
     section: "Net worth",
-    q: "What does the growth figure on a holding mean?",
+    q: "How do I see my gains and losses?",
     a: [
       "Today's value compared with what you put in, when you've entered or imported that. It's simple growth, not a yearly return.",
+      "The overview on Net worth adds it up: total invested, and your gain or loss in rupees and percent. A CAS import fills in the invested amount. For anything else, tap the holding and enter Amount invested. Holdings without it are left out of the total, and the overview says how many.",
     ],
     tags: "returns gain invested",
   },
