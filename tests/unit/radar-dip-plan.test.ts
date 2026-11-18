@@ -84,6 +84,29 @@ describe("dipPlan", () => {
     expect(row.sell?.price).toBe(378);
   });
 
+  it("splits the budget only across items with prices", () => {
+    const rows = dipPlan({
+      budget: 5000,
+      items: [
+        {
+          id: "e",
+          symbol: "E",
+          priceBelow: 329,
+          owned: false,
+          analysis: eternal,
+        },
+        {
+          id: "x",
+          symbol: "X",
+          priceBelow: null,
+          owned: false,
+          analysis: null,
+        },
+      ],
+    });
+    expect(rows.map((r) => r.budget)).toEqual([5000, 0]);
+  });
+
   it("asks for a refresh when there are no prices", () => {
     const [row] = dipPlan({
       budget: 1000,

@@ -45,7 +45,10 @@ export function dipPlan({
     analysis: RadarAnalysis | null;
   }[];
 }): PlanRow[] {
-  const share = items.length ? Math.floor(budget / items.length) : 0;
+  // Split across items that have prices, so nothing is set aside for one
+  // that can't be planned yet.
+  const priced = items.filter((i) => i.analysis?.close != null).length;
+  const share = priced ? Math.floor(budget / priced) : 0;
   return items.map((item) => {
     const a = item.analysis;
     const close = a?.close ?? null;
@@ -59,6 +62,7 @@ export function dipPlan({
       note: null,
     };
     if (close == null) {
+      row.budget = 0;
       row.note = "Refresh to get prices.";
       return row;
     }
