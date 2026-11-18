@@ -64,13 +64,15 @@ export interface Technicals {
   low252: number | null;
   averageTradedValue20: number | null;
 }
-export const ENGINE_VERSION = "radar-stock-coverage-0.10";
+export const ENGINE_VERSION = "radar-history-policy-0.11";
 export interface RadarAnalysis {
   inputs: {
     asset: RadarAsset | "other_etf";
     today: string;
     expectedSession: string | null;
     adjustmentsVerified: boolean;
+    historyPolicy?: import("./history-policy").HistoryPolicy;
+    turnoverBasisVerified?: boolean;
     priceBelow: number | null;
     drawdownPct: number | null;
   };

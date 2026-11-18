@@ -167,3 +167,7 @@ Shared depth collection now serves stocks via analysis.market, without requiring
 ## Optional company financial reports
 
 The IndianAPI stock adapter is prepared for explicit verified-stock refreshes when INDIANAPI_KEY is configured. It uses the documented stock.indianapi.in GET /stock and GET /historical_stats endpoints, requires an exact ticker match, and checks annual, balance-sheet and cash-flow report coverage. It sends no broker credential or account data. A cached collection under 24 hours retains its original retrieval time. Market evidence is retained when financial-source access fails; no background calls, plan upgrades or purchases occur. Source figures remain excluded from valuation scoring pending metadata verification. See FINANCIAL_SOURCE.md for the capability review, setup and exact remaining gaps.
+
+## Support-confirmed historical policy, 18 Nov 2026
+
+New refreshes record indstocks-history-policy-1 in snapshot inputs under engine radar-history-policy-0.11. Split/bonus OHLC handling is provider-confirmed; raw volume, unadjusted dividends and unsupported action types remain explicit. Collection does not adjust prices again or rewrite old snapshots. Live research withholds historical rupee turnover without a compatible basis, and gold-paper-2 adds the same explicit liquidity prerequisite. This is source-policy progress, not a recommendation release. See INDSTOCKS_HISTORY_POLICY.md.

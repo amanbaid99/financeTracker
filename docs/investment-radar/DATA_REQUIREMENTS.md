@@ -92,3 +92,7 @@ This establishes common data diagnostics, not complete investment models for eve
 ## Optional stock report adapter, 17 Nov 2026
 
 A separate IndianAPI company-report path is prepared and requires INDIANAPI_KEY configured by the owner. It uses exact NSE ticker checks, same-ISIN BSE-to-NSE mapping, three historical report tables and 24-hour reuse. Actual source credentials and live report payloads were not available during fixture verification. Report dates, units, currency, consolidation and independent ISIN verification stay blocked. Reports do not become canonical model inputs merely because they were retrieved. No source solves MCX spot history, index benchmarks or dated books by implication. See FINANCIAL_SOURCE.md for source references, setup and reviewed alternatives.
+
+## INDstocks history response received, 18 Nov 2026
+
+The owner supplied the missing written adjustment-policy response. OHLC is split/bonus-adjusted; volume is raw. Other action limitations, refetch rules and the distinction between price and total returns are recorded in INDSTOCKS_HISTORY_POLICY.md. This supersedes the earlier unknown-policy status for new explicit collections only. It does not resolve timestamped depth, MCX benchmark access, compatible turnover or model validation.

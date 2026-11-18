@@ -6,7 +6,7 @@ import type { EtfNav, MarketDepth } from "./etf-data";
 
 /** Paper-only engineering model. These explicit guardrails are not calibrated return forecasts. */
 export const GOLD_MODEL = {
-  version: "gold-paper-1",
+  version: "gold-paper-2",
   release: "paper" as const,
   minimumSessions: 252,
   maxPremiumPct: 1,
@@ -87,9 +87,10 @@ export function trackingMetrics(nav: number[], benchmark: number[]) {
 }
 
 /** Missing evidence stops paper decisions too. No caller-supplied flag can release this model. */
-export function evaluateGold({ candles, adjustmentsVerified, sources, isin, nav, depth, expectedSession, now, collectedNavHistory }: {
+export function evaluateGold({ candles, adjustmentsVerified, turnoverBasisVerified = false, sources, isin, nav, depth, expectedSession, now, collectedNavHistory }: {
   candles: Candle[];
   adjustmentsVerified: boolean;
+  turnoverBasisVerified?: boolean;
   sources?: GoldSources;
   collectedNavHistory?: NavHistory;
   isin: string | null;
@@ -114,6 +115,7 @@ export function evaluateGold({ candles, adjustmentsVerified, sources, isin, nav,
     ordered(candles.map((c) => c.date)) && !!expectedSession &&
     candles.at(-1)?.date === expectedSession;
   if (!validPrices) study.missing.push("252 ordered, valid sessions ending at the expected close are needed.");
+  if (!turnoverBasisVerified) study.missing.push("Compatible price/volume bases or independently verified traded value are needed for liquidity.");
   if (!adjustmentsVerified) study.missing.push("A source confirming corporate-action-adjusted history is needed.");
   const close = validPrices ? candles.at(-1)!.close : null;
   const validNav = !!nav && !!isin && nav.isin === isin && nav.goldEtf &&
@@ -135,8 +137,8 @@ export function evaluateGold({ candles, adjustmentsVerified, sources, isin, nav,
     addFactor("spread", "Current spread", spread, "%");
     if (spread > GOLD_MODEL.maxSpreadPct) study.risks.push("The current spread exceeds 0.5%.");
   }
-  if (validPrices) {
-    const liquidity = technicals(candles).averageTradedValue20!;
+  if (validPrices && turnoverBasisVerified) {
+    const liquidity = technicals(candles, true).averageTradedValue20!;
     addFactor("liquidity", "20-session daily traded value", liquidity, "INR");
     if (liquidity < GOLD_MODEL.minimumDailyTradedValue) study.risks.push("Daily traded value is below the paper model's ₹1 crore guardrail.");
   }

@@ -1,3 +1,4 @@
+import { readHistoryPolicy, type HistoryPolicy } from "./history-policy";
 import {
   candleSchema,
   ENGINE_VERSION,
@@ -24,7 +25,7 @@ export function wilderRsi(closes: number[], period = 14): number | null {
   return loss === 0 ? (gain === 0 ? 50 : 100) : 100 - 100 / (1 + gain / loss);
 }
 
-export function technicals(candles: Candle[]): Technicals {
+export function technicals(candles: Candle[], turnoverBasisVerified = false): Technicals {
   const closes = candles.map((c) => c.close);
   const last = closes.at(-1);
   const drawdown = (n: number) =>
@@ -60,7 +61,7 @@ export function technicals(candles: Candle[]): Technicals {
         ? null
         : Math.min(...candles.slice(-252).map((c) => c.low)),
     averageTradedValue20:
-      candles.length < 20
+      !turnoverBasisVerified || candles.length < 20
         ? null
         : average(candles.slice(-20).map((c) => c.close * c.volume)),
   };
@@ -73,10 +74,16 @@ export function analyseRadar(input: {
   today: string;
   expectedSession: string | null;
   adjustmentsVerified: boolean;
+  historyPolicy?: HistoryPolicy;
+  turnoverBasisVerified?: boolean;
   priceBelow: number | null;
   drawdownPct: number | null;
 }): RadarAnalysis {
   const blockers: string[] = [];
+  const policy = readHistoryPolicy(input.historyPolicy);
+  // This partial provider policy cannot become full action/EPS or turnover verification.
+  const adjustmentsVerified = input.historyPolicy === undefined && input.adjustmentsVerified;
+  const turnoverBasisVerified = input.historyPolicy === undefined && input.turnoverBasisVerified === true;
   let candles: Candle[] = [];
   const parsed = input.candles.map((c) => candleSchema.safeParse(c));
   const dates = input.candles.map((c) => c.date);
@@ -103,9 +110,10 @@ export function analyseRadar(input: {
     blockers.push(
       "The latest completed exchange session is missing or out of date.",
     );
-  if (!input.adjustmentsVerified)
+  if (!adjustmentsVerified)
     blockers.push(
-      "Corporate-action adjustments have not been verified. Indicators are provisional.",
+      policy ? "Split and bonus price adjustments are provider-confirmed. Unsupported actions still need review; indicators are price-only and provisional."
+        : "Corporate-action adjustments have not been verified. Indicators are provisional.",
     );
   if (input.asset === "equity")
     blockers.push(
@@ -121,7 +129,7 @@ export function analyseRadar(input: {
     );
   if (input.asset === "other_etf")
     blockers.push("This ETF needs a verified underlying asset and a suitable model. Stock and Gold models do not apply by default.");
-  const metrics = technicals(candles);
+  const metrics = technicals(candles, turnoverBasisVerified);
   const observations: string[] = [];
   if (metrics.drawdown90 !== null)
     observations.push(
@@ -136,13 +144,15 @@ export function analyseRadar(input: {
     !!last &&
     !!input.expectedSession &&
     last.date === input.expectedSession &&
-    input.adjustmentsVerified;
+    adjustmentsVerified;
   return {
     inputs: {
       asset: input.asset,
       today: input.today,
       expectedSession: input.expectedSession,
-      adjustmentsVerified: input.adjustmentsVerified,
+      adjustmentsVerified,
+      ...(policy ? { historyPolicy: policy } : {}),
+      turnoverBasisVerified,
       priceBelow: input.priceBelow,
       drawdownPct: input.drawdownPct,
     },

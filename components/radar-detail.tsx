@@ -1,5 +1,6 @@
 "use client";
 
+import { historyBasisText } from "@/lib/radar/history-policy";
 import { RadarHoldingReview } from "@/components/radar-holding-review";
 import { positionContext } from "@/lib/radar/holding-review";
 import { useState, useTransition } from "react";
@@ -51,7 +52,7 @@ function PriceChart({ snapshot }: { snapshot: RadarSnapshot }) {
       </div>
       <svg
         role="img"
-        aria-label={`Daily closing prices from ${candles[0].date} to ${candles.at(-1)!.date}. Latest ${marketPrice(candles.at(-1)!.close)}. Corporate-action adjustments are unverified.`}
+        aria-label={`Daily closing prices from ${candles[0].date} to ${candles.at(-1)!.date}. Latest ${marketPrice(candles.at(-1)!.close)}. ${historyBasisText(snapshot.analysis.inputs.historyPolicy)}`}
         viewBox="0 0 320 120"
         className="w-full h-36 text-primary"
       >
@@ -200,7 +201,7 @@ export function RadarDetail({
         {snapshot && <PriceChart snapshot={snapshot} />}
         <p className="text-xs text-muted-foreground">
           {snapshot
-            ? `Fetched ${formatDate(todayIST(new Date(snapshot.fetchedAt)))}. ${a?.sessions ?? 0} sessions. Price adjustments are unverified.`
+            ? `Fetched ${formatDate(todayIST(new Date(snapshot.fetchedAt)))}. ${a?.sessions ?? 0} sessions. ${historyBasisText(a?.inputs.historyPolicy)}`
             : "Refresh to fetch daily prices. No price or buying signal is assumed."}
         </p>
       </section>

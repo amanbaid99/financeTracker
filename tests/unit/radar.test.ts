@@ -42,7 +42,7 @@ describe("Radar technical calculations", () => {
   });
   it("uses exact session windows, high prices for drawdowns and 60 log-return sample variance", () => {
     const series = candles(252);
-    const metrics = technicals(series);
+    const metrics = technicals(series, true);
     expect(metrics.sma50).toBe(100);
     expect(metrics.sma200).toBe(100);
     expect(metrics.drawdown252).toBeCloseTo((100 / 110 - 1) * 100);

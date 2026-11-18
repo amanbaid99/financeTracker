@@ -8,6 +8,7 @@ import type { Json } from "@/lib/supabase/database.types";
 import type { EtfEvidence, MarketEvidence } from "./etf-data";
 import { collectEtfEvidence, collectMarketEvidence } from "./etf-evidence";
 import { previousCompletedSession } from "./calendar";
+import { indstocksHistoryPolicy } from "./history-policy";
 import { holdingReviewInputSchema } from "./holding-review";
 import { ruleSettingsSchema } from "./rule-signal";
 import { assetTypes, watchSchema } from "./contracts";
@@ -203,6 +204,7 @@ export async function refreshRadar(id: string) {
       today,
       expectedSession: previousCompletedSession(today, item.exchange),
       adjustmentsVerified: false,
+      historyPolicy: indstocksHistoryPolicy(now),
       priceBelow: item.priceBelow,
       drawdownPct: item.drawdownPct,
     });

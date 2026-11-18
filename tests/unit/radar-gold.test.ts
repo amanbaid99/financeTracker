@@ -18,7 +18,7 @@ const sources: GoldSources = {
   benchmark: { source: "https://source.invalid/gold", basis: "domestic-gold-INR", points: dates.map((date, i) => ({ date, value: values[i] * 1000, availableAt: `${date}T18:00:00+05:30` })) },
 };
 const input = {
-  candles, adjustmentsVerified: true, sources, isin,
+  candles, adjustmentsVerified: true, turnoverBasisVerified: true, sources, isin,
   nav: { isin, nav: last, goldEtf: true, date: "2026-11-16", schemeCode: "123", name: "Synthetic Gold ETF", source: "AMFI" },
   depth: { bid: last * 0.999, ask: last * 1.001, spreadPct: 0.2, marketTime: "2026-11-17T04:29:00Z", timestampVerified: true, fetchedAt: "2026-11-17T04:30:00Z" },
   expectedSession: "2026-11-16", now: "2026-11-17T04:30:00Z",
@@ -37,6 +37,7 @@ describe("Gold paper model", () => {
   it.each([
     ["missing sources", { sources: undefined }],
     ["unverified adjustments", { adjustmentsVerified: false }],
+    ["incompatible volume basis", { turnoverBasisVerified: false }],
     ["short history", { candles: candles.slice(1) }],
     ["stale close", { expectedSession: "2026-11-17" }],
     ["missing quote timestamp", { depth: { ...input.depth, timestampVerified: false } }],

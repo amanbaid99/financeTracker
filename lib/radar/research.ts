@@ -1,3 +1,4 @@
+import { readHistoryPolicy } from "./history-policy";
 import type { InstrumentClassification } from "./classification";
 import { evaluateGold, type GoldStudy } from "./gold-model";
 import { evaluateStockPosition, type StockPositionStudy } from "./stock-position";
@@ -35,7 +36,7 @@ export interface ResearchResult {
     owner: "source" | "development" | "refresh" | "context";
   }[];
 }
-const VERSION = "automatic-research-0.10";
+const VERSION = "automatic-research-0.11";
 /** Automatic evidence review, independent of manual price rules. Never claim a validated valuation model exists. */
 export function automaticResearch({
   analysis,
@@ -135,6 +136,10 @@ export function automaticResearch({
         ? "Refresh research to fetch daily prices and source checks."
         : "The exchange calendar needs updating before price freshness can be confirmed.",
     );
+  const historyPolicy = readHistoryPolicy(analysis.inputs.historyPolicy);
+  if (historyPolicy && Date.parse(historyPolicy.fetchedAt) <= Date.parse(now))
+    add("adjustment-policy", "Provider price adjustment policy", "ready",
+      "INDmoney confirms OHLC prices are split- and bonus-adjusted, rounded to two decimals. Volume is raw. Dividends, rights, mergers and demergers are not adjusted; consolidations are handled only when recorded as a split. This confirms the policy, not every instrument event.");
   add(
     "history",
     "History and adjustments",
@@ -145,6 +150,8 @@ export function automaticResearch({
       ? "At least 252 valid sessions are needed."
       : analysis.inputs.adjustmentsVerified
         ? "Corporate-action adjustments are verified."
+        : historyPolicy
+        ? "Split and bonus adjustments are provider-confirmed. Remaining corporate-action coverage and consistent price/EPS bases still need review; this is not total-return history."
         : "Price history is available, but corporate-action adjustments are unverified. Momentum cannot establish a buying opportunity.",
   );
   if (asset === "equity") {
@@ -245,14 +252,14 @@ export function automaticResearch({
       ? `${analysis.etf?.depthStatus?.message ?? "A timestamped two-sided book is not available."} The REST quote has no verified market-time contract. Fetch time and undocumented fields do not establish spread freshness.`
       : `Verified spread: ${depth!.spreadPct.toFixed(2)}%.`,
   );
-  const liquidity = analysis.technicals.averageTradedValue20;
+  const liquidity = analysis.inputs.turnoverBasisVerified === true ? analysis.technicals.averageTradedValue20 : null;
   add(
     "liquidity",
     "Trading liquidity",
     liquidity != null && liquidity > 0 ? "ready" : "missing",
     liquidity != null && liquidity > 0
       ? "20-session average traded value is available. This is not a guarantee of execution at your order size."
-      : "Enough volume history is needed to assess traded liquidity.",
+      : "Compatible prices and volume, or verified actual turnover, are needed. Split-adjusted prices multiplied by raw volume do not establish historical rupee turnover.",
   );
   if (asset === "index_etf") {
     add(
@@ -269,7 +276,7 @@ export function automaticResearch({
     );
   } else {
     goldStudy = evaluateGold({
-      candles, adjustmentsVerified: analysis.inputs.adjustmentsVerified,
+      candles, adjustmentsVerified: analysis.inputs.adjustmentsVerified, turnoverBasisVerified: analysis.inputs.turnoverBasisVerified === true,
       sources: analysis.etf?.goldSources, collectedNavHistory: analysis.etf?.navHistory,
       isin, nav: nav ?? null,
       depth: depth ?? null, expectedSession: expected, now,

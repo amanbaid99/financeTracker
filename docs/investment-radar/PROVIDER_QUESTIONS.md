@@ -2,6 +2,10 @@
 
 Prepared 17 Nov 2026. These are drafts for the owner to use if provider clarification is needed. Nothing has been sent to any provider. Never include an access token, TOTP seed, PAN or account information in a reply shared here.
 
+## Answer received, 18 Nov 2026
+
+The owner supplied a written support answer to history adjustments. Splits and bonus issues adjust OHLC, consolidations do so when recorded as splits, volume is raw, and dividends/rights/mergers/demergers are excluded. No action endpoint or per-candle flag exists. See INDSTOCKS_HISTORY_POLICY.md. Do not repeat the basic adjusted-field question. Remaining work is investment-specific unsupported-action review, compatible turnover and return-basis validation; book timestamps and benchmark questions below remain open.
+
 ## INDstocks support
 
 We use the market-data API for a personal end-of-day research tool. We do not place orders or read broker account data.
