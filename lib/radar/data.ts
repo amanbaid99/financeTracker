@@ -1,4 +1,5 @@
 import "server-only";
+import { holdingContext } from "./holding-context";
 import { classifyInstrument } from "./classification";
 import { cache } from "react";
 import { notFound } from "next/navigation";
@@ -99,13 +100,13 @@ export const loadRadar = cache(async () => {
   const resolved = items.map((item) => {
     const latest = history.find((s) => s.watchId === item.id);
     const classification = classifyInstrument(item, latest?.analysis.etf?.nav);
+    const context = holdingContext(item.isin, holdings.data);
     return {
       ...item,
       assetType: classification.asset ?? item.assetType,
       classification,
-      ownedInTracker:
-        !!item.isin &&
-        holdings.data.some((h) => h.isin === item.isin && h.current_value > 0),
+      ownedInTracker: context.matched,
+      holdingContext: context,
     };
   });
   return { items: resolved, history };

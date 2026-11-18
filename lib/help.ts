@@ -59,6 +59,7 @@ export const HELP: HelpTopic[] = [
       "Radar is a personal research watchlist for stocks, Gold ETFs and index ETFs you choose. It does not change holdings or net worth, and does not place trades. Only the account granted personal Radar access can use it.",
       "Search INDmoney, confirm an instrument and its asset type, then open it to fetch daily history. Indicators are provisional until corporate-action adjustments and exchange-calendar freshness are verified. A score stays unavailable while required fundamentals or ETF checks are missing.",
       "Automatic research is the main view and needs no manually configured price levels. Optional price alerts are folded below it; their entry/exit messages only compare your saved thresholds. They are not research recommendations. Drawdown alerts remain paused while price adjustments are unverified.",
+      "Your holding shows recorded value and share of tracked investments for an exact ISIN match. These are saved Tracker values, not live broker balances or target allocations. A manual ownership confirmation alone does not provide a holding value or unlock Hold/Sell research.",
       "The INDmoney token stays in Vercel as INDSTOCKS_ACCESS_TOKEN. Expired tokens must be replaced and the app redeployed. Never paste a token into chat.",
     ],
     tags: "watchlist stock ETF price research token INDmoney",

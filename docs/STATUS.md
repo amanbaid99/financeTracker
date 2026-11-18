@@ -3,6 +3,10 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 18 Nov 2026.
 
+## Holding context independent of adjusted prices, 18 Nov 2026
+
+Radar now carries read-only exact-ISIN holding context alongside the existing ownership flag. It combines matching recorded positions and shows recorded value plus share of all tracked investments in a folded Your holding panel. Holdings without ISIN remain in the denominator; no names or fuzzy matches establish ownership. These saved values are not a live broker balance, target allocation, confirmed thesis or a Hold/Sell release. Manual ownership without a matched value is explicitly distinct. Invalid/negative/fractional/nonfinite values and unsafe sums withhold affected amounts or percentages instead of producing misleading context. No schema, provider call, AI payload or hosted-record mutation is introduced. Verification passed: lint, TypeScript, 491 unit tests, 37 Python tests, production build and 24 responsive Chromium views across four widths and three themes. Signed-in e2e remains blocked by the previously verified local image-download Forbidden response; fixture checks are not a live signed-in test. Deployment is being checked.
+
 ## Source-contract review and test-runner recovery, 18 Nov 2026
 
 Rechecked current primary provider documentation. INDstocks' changelog mentions a new adjusted-price field, but its history contract still documents only ts/o/h/l/c/v without the adjusted field name or split/bonus/distribution rules. This is a clarification lead, not verified adjustment coverage. IndianAPI's public historical-stat examples still do not settle the reported EPS definition or provider total-assets discrepancy. The live research gate remains unchanged. No provider was contacted and no paid service or credential was acquired.

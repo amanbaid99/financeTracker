@@ -146,6 +146,11 @@ export interface Release {
 export const RELEASES: Release[] = [
   {
     date: "2026-11-18",
+    title: "See your holding alongside research",
+    items: [{ title: "Recorded value and portfolio share", text: "Open Your holding in Radar to see the saved value and share of tracked investments for an exact ISIN match. This is holding context, not a target allocation or a live broker balance. Automatic Hold/Sell assessments still need further context and validated research." }],
+  },
+  {
+    date: "2026-11-18",
     title: "Compare reports with a reviewed filing",
     items: [{
       title: "See agreements and unresolved definitions",

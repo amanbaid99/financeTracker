@@ -23,7 +23,7 @@ import { todayIST } from "@/lib/dates";
 import { RadarSignal } from "@/components/radar-signal";
 import { ruleSignal, savedRules, etfChecks } from "@/lib/radar/rule-signal";
 import { previousCompletedSession } from "@/lib/radar/calendar";
-import { formatDate } from "@/lib/format";
+import { formatINR, formatDate } from "@/lib/format";
 
 function PriceChart({ snapshot }: { snapshot: RadarSnapshot }) {
   const candles = snapshot.candles;
@@ -148,6 +148,20 @@ export function RadarDetail({
         pending={pending}
         connected={connected}
       />
+      {(item.holdingContext?.matched || item.rules?.holdingConfirmed) && (
+        <details className="rounded-2xl border bg-card px-4">
+          <summary className="min-h-11 flex cursor-pointer items-center font-medium">Your holding</summary>
+          <div className="pb-4 space-y-3 text-sm">
+            {item.holdingContext?.recordedValue != null ? (
+              <dl className="space-y-2">
+                <div className="flex flex-wrap justify-between gap-2"><dt>Recorded value</dt><dd className="tabular font-medium">{formatINR(item.holdingContext.recordedValue)}</dd></div>
+                {item.holdingContext.trackedSharePct != null && <div className="flex flex-wrap justify-between gap-2"><dt>Share of tracked investments</dt><dd className="tabular font-medium">{item.holdingContext.trackedSharePct.toFixed(1)}%</dd></div>}
+              </dl>
+            ) : <p>Ownership is confirmed. A matched holding value is unavailable.</p>}
+            <p className="text-muted-foreground">Values saved in Tracker, not a live broker balance. This share is not a target allocation. Hold and sell assessments still need your target, investment thesis and exit costs.</p>
+          </div>
+        </details>
+      )}
       {error && (
         <p
           role="alert"
