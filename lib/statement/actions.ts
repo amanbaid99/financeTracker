@@ -134,6 +134,7 @@ const choiceSchema = z
     category: z.string().max(40).nullable(),
     value: money,
     invested: money.nullable().optional(),
+    units: z.number().finite().nonnegative().max(1e12).nullable().optional(),
     sip: money.nullable(),
     goalId: z.string().uuid().nullable(),
     /** The value dropped and the person says they took money out. */
@@ -204,7 +205,9 @@ export async function applyImport(
           monthly_sip?: number | null;
           category?: string | null;
           invested?: number;
+          units?: number;
         } = { current_value: c.value, isin: c.isin, updated_at: now };
+        if (c.units != null) patch.units = c.units;
         if (c.invested != null) patch.invested = c.invested;
         else if (c.withdrew) {
           // No amount invested on the statement: lower ours by the share taken out.
@@ -243,6 +246,7 @@ export async function applyImport(
             current_value: c.value,
             monthly_sip: c.sip || null,
             invested: c.invested ?? null,
+            units: c.units ?? null,
             isin: c.isin,
             source: "cas",
           })

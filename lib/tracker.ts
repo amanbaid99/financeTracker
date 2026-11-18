@@ -25,6 +25,10 @@ export interface Investment {
   invested?: number | null;
   /** Last record edit in ISO time, not the market price date. */
   updatedAt?: string | null;
+  /** Fund or ETF identifier, when known (from a CAS or typed in). */
+  isin?: string | null;
+  /** Units held, for valuing at the latest price. */
+  units?: number | null;
 }
 
 export interface GoalInput {

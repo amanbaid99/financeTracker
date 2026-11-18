@@ -124,6 +124,11 @@ export async function fetchAmfiNav(
   isin: string,
   request: typeof fetch = fetch,
 ) {
+  return parseAmfiNav(await fetchAmfiText(request), isin);
+}
+
+/** AMFI's whole daily NAV file, size-capped. Parse it once for many ISINs. */
+export async function fetchAmfiText(request: typeof fetch = fetch) {
   let response: Response;
   try {
     response = await request(NAV_SOURCE, {
@@ -156,7 +161,7 @@ export async function fetchAmfiNav(
     bytes.set(chunk, offset);
     offset += chunk.length;
   }
-  return parseAmfiNav(new TextDecoder().decode(bytes), isin);
+  return new TextDecoder().decode(bytes);
 }
 
 const number = z.preprocess(

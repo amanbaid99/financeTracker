@@ -58,6 +58,8 @@ export interface ReviewRow {
   value: number;
   /** Amount put in, when the statement shows it. */
   invested: number | null;
+  /** Units held, from the statement. */
+  units: number | null;
   /** SIP to save; null keeps whatever the matched investment has. */
   sip: number | null;
   /** True when the SIP comes from the statement's transactions. */
@@ -180,6 +182,7 @@ export function buildReview(statement: ParsedStatement, existing: ExistingInvest
       categoryHow,
       value: h.value,
       invested: h.invested ?? null,
+      units: Number.isFinite(h.units) && h.units > 0 ? h.units : null,
       sip,
       sipFromStatement,
       issues: h.issues,

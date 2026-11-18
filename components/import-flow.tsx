@@ -219,6 +219,7 @@ export function ImportFlow({
         category: s.category,
         value: r.value,
         invested: r.invested,
+        units: r.units,
         sip: s.sip,
         goalId: s.goalId || null,
         withdrew: dropFor(ready, r, s) > 0 ? !!s.withdrew : undefined,

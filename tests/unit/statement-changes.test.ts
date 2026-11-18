@@ -31,6 +31,7 @@ const ready: Ready = {
       categoryHow: "yours",
       value: 10000,
       invested: 8000,
+      units: null,
       sip: null,
       sipFromStatement: false,
       issues: [],

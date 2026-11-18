@@ -1,5 +1,6 @@
 "use client";
 
+import { UpdatePrices } from "@/components/update-prices";
 import { useState } from "react";
 import { AllocationBar, CompactAllocation } from "@/components/allocation-bar";
 import { PortfolioHoldings } from "@/components/portfolio-holdings";
@@ -94,12 +95,15 @@ export function PortfolioOverview({
         className="surface-card rounded-2xl border border-border/70 bg-card p-4"
         aria-label="Portfolio overview"
       >
-        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
-          <p>Total value</p>
-          <p>
-            {p.holdings.length}{" "}
-            {p.holdings.length === 1 ? "holding" : "holdings"}
-          </p>
+        <div className="flex items-start justify-between gap-3">
+          <div className="text-xs text-muted-foreground">
+            <p>Total value</p>
+            <p>
+              {p.holdings.length}{" "}
+              {p.holdings.length === 1 ? "holding" : "holdings"}
+            </p>
+          </div>
+          <UpdatePrices />
         </div>
         <p className="tabular mt-1 text-3xl font-semibold tracking-tight">
           {formatINR(p.total)}

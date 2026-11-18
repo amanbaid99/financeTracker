@@ -229,6 +229,16 @@ export const HELP: HelpTopic[] = [
     tags: "returns gain invested",
   },
   {
+    id: "update-prices",
+    section: "Net worth",
+    q: "How do I update values from today's prices?",
+    a: [
+      "Tap Update prices on Net worth. For each mutual fund or ETF with units and an ISIN, the app takes units held × the latest official price (NAV from AMFI) and shows the old and new value. Untick anything you don't want, then Save. Nothing changes until you do.",
+      "A CAS import saves units and ISINs for your funds. For anything else, tap the holding and add Units held and ISIN. Stocks, EPF, NPS and savings aren't priced this way yet.",
+    ],
+    tags: "prices nav live market units isin refresh",
+  },
+  {
     id: "cas",
     section: "Net worth",
     q: "How do I import a CAS statement?",

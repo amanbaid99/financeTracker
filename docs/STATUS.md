@@ -3,6 +3,10 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 18 Nov 2026.
 
+## Invested, gains and Update prices, 18 Nov 2026
+
+Net worth shows Invested and Gain/Loss (₹ and %) over holdings with a known invested amount, and how many are left out. Amount invested sits next to value in the holding sheet. New `holdings.units` (migration `20261128000000_holding_units.sql`, snapshot now carries `isin` and `units`) is saved by CAS imports and editable (with ISIN) for funds, stocks and gold. Update prices fetches AMFI's NAV file once, values units × NAV by ISIN (funds and ETFs, including gold ETFs) and shows old vs new for review; only ticked rows are saved. Stocks aren't priced yet. Code: `lib/prices.ts`, `lib/price-actions.ts`, `components/update-prices.tsx`; tests: `tests/unit/prices.test.ts`.
+
 ## Today's dip plan and Refresh all, 18 Nov 2026
 
 The Radar page now opens with "Today's dip plan": one Refresh all button (refreshes each item in turn; "just refreshed" counts as up to date), a "Money for dips" budget (default ₹5,000, remembered on the device) split evenly across the watchlist, and for each item two buy orders (price, whole quantity, amount): the saved buy price or nearest suggested dip, then a deeper one (falling back to the one-year low). Held items also get a take-profit price. Reached steps are highlighted. The app never places orders. The watchlist is capped at 10 items. Code: `lib/radar/dip-plan.ts`, `components/radar-dip-plan.tsx`; tests: `tests/unit/radar-dip-plan.test.ts`.

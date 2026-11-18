@@ -276,6 +276,16 @@ const investmentSchema = z.object({
   returnPct: z.number().min(0).max(30).nullable(),
   /** Amount put in, if the user knows it. */
   invested: money.nullable().optional(),
+  /** Units held, so the value can follow the latest price. */
+  units: z.number().finite().nonnegative().max(1e12).nullable().optional(),
+  /** Fund or ETF identifier (12 characters, starting IN), for its price. */
+  isin: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .regex(/^IN[A-Z0-9]{10}$/, "enter a 12-character ISIN starting with IN")
+    .nullable()
+    .optional(),
   /** Share of this investment for the goal, 1 to 100. */
   percent: z.number().min(1, "use at least 1%").max(100),
   /** Recorded from a money plan suggestion: its value comes out of the plan's savings. */
@@ -317,6 +327,8 @@ export async function saveInvestment(
       monthly_sip: v.monthlySip || null,
       expected_return_pct: v.returnPct,
       ...(v.invested !== undefined ? { invested: v.invested } : {}),
+      ...(v.units !== undefined ? { units: v.units } : {}),
+      ...(v.isin !== undefined ? { isin: v.isin } : {}),
     };
     const res = v.investmentId
       ? await supabase

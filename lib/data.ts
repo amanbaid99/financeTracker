@@ -82,6 +82,8 @@ export interface Snapshot {
     | "expected_return_pct"
     | "invested"
     | "updated_at"
+    | "isin"
+    | "units"
   >[];
   allocations: Pick<
     Row<"goal_allocations">,
@@ -232,6 +234,9 @@ export async function readGoals(): Promise<GoalsData> {
       h.expected_return_pct === null ? null : Number(h.expected_return_pct),
     invested: h.invested,
     updatedAt: h.updated_at,
+    // Older snapshots (before the units migration) don't carry these.
+    isin: h.isin ?? null,
+    units: h.units == null ? null : Number(h.units),
   }));
   const links: Link[] = check(allocations).map((a) => ({
     goalId: a.goal_id,

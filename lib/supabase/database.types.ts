@@ -621,6 +621,7 @@ export type Database = {
           sip_step_up_pct: number | null;
           source: Database["public"]["Enums"]["holding_source"];
           transition_fund: boolean;
+          units: number | null;
           updated_at: string;
           user_id: string;
         };
@@ -639,6 +640,7 @@ export type Database = {
           sip_step_up_pct?: number | null;
           source?: Database["public"]["Enums"]["holding_source"];
           transition_fund?: boolean;
+          units?: number | null;
           updated_at?: string;
           user_id?: string;
         };
@@ -656,6 +658,7 @@ export type Database = {
           sip_step_up_pct?: number | null;
           source?: Database["public"]["Enums"]["holding_source"];
           transition_fund?: boolean;
+          units?: number | null;
           updated_at?: string;
           user_id?: string;
         };
