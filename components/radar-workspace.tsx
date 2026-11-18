@@ -1,5 +1,8 @@
 "use client";
 
+import { cn } from "@/lib/utils";
+import { leanClass } from "@/components/radar-insight";
+import { experimentalInsight } from "@/lib/radar/insight";
 import Link from "next/link";
 import { Plus, Radar, Search, ShieldCheck } from "lucide-react";
 import { useState, useTransition } from "react";
@@ -123,6 +126,13 @@ export function RadarWorkspace({
                   item.ownedInTracker === true ||
                   item.rules?.holdingConfirmed === true,
               });
+              const insight = experimentalInsight({
+                analysis: snapshot?.analysis ?? null,
+                owned:
+                  item.ownedInTracker === true ||
+                  item.rules?.holdingConfirmed === true,
+                stockStudy: research.stockStudy,
+              });
               return (
                 <li key={item.id}>
                   <Link
@@ -146,8 +156,13 @@ export function RadarWorkspace({
                       <span className="text-sm">
                         {classificationLabel(item.assetType, item.classification)}
                       </span>
-                      <span className="text-xs rounded-full bg-muted px-2 py-1 text-muted-foreground">
-                        {research.label}
+                      <span
+                        className={cn(
+                          "text-xs rounded-full px-2 py-1 font-medium",
+                          leanClass(insight.tone),
+                        )}
+                      >
+                        {insight.lean}
                       </span>
                     </div>
                     <div className="flex items-baseline justify-between gap-3">
@@ -164,7 +179,7 @@ export function RadarWorkspace({
                     </div>
                     <p className="text-xs text-muted-foreground">
                       {snapshot
-                        ? research.summary
+                        ? `${insight.summary} Experimental, not investment advice.`
                         : "Open to fetch daily prices and review data checks."}
                     </p>
                   </Link>

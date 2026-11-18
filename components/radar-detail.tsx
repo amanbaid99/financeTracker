@@ -1,5 +1,8 @@
 "use client";
 
+import { RadarInsight } from "@/components/radar-insight";
+import { LevelChips } from "@/components/radar-levels";
+import { experimentalInsight, suggestedLevels } from "@/lib/radar/insight";
 import { historyBasisText } from "@/lib/radar/history-policy";
 import { RadarHoldingReview } from "@/components/radar-holding-review";
 import { positionContext } from "@/lib/radar/holding-review";
@@ -118,6 +121,13 @@ export function RadarDetail({
     owned:
       item.ownedInTracker === true || item.rules?.holdingConfirmed === true,
   });
+  const insight = experimentalInsight({
+    analysis: a ?? null,
+    owned:
+      item.ownedInTracker === true || item.rules?.holdingConfirmed === true,
+    stockStudy: research.stockStudy,
+  });
+  const levels = suggestedLevels(a ?? null, snapshot?.candles ?? []);
   const decision = ruleSignal({
     analysis: a ?? null,
     rules: savedRules(item),
@@ -146,6 +156,7 @@ export function RadarDetail({
     v == null ? "Unavailable" : `${v.toFixed(1)}%`;
   return (
     <div className="space-y-5">
+      <RadarInsight insight={insight} />
       <RadarResearch
         result={research}
         onRefresh={refresh}
@@ -316,8 +327,11 @@ export function RadarDetail({
         </summary>
         {enabled && <RadarSignal signal={decision} />}
         <p className="text-sm text-muted-foreground">
-          These optional alerts compare prices with levels you choose. They are
-          separate from automatic research. No notifications or trades are sent.
+          Choose a price to buy at or below, and if you own it, a price to take
+          profit and a price to rethink holding. The suggestions come from this
+          stock&apos;s own year of prices: its long-term average, its usual
+          swing and its one-year high and low. Pick the one that matches how
+          patient you are, then save. No notifications or trades are sent.
         </p>
         <form
           className="space-y-3"
@@ -397,6 +411,10 @@ export function RadarDetail({
               onChange={(e) => setPrice(e.target.value)}
             />
           </Field>
+          <LevelChips
+            options={levels.buy}
+            onPick={(v) => setPrice(String(v))}
+          />
           <Field
             label="Drop from 90-session high (%, optional)"
             htmlFor="radar-dip"
@@ -429,6 +447,10 @@ export function RadarDetail({
                   onChange={(e) => setUpper(e.target.value)}
                 />
               </Field>
+              <LevelChips
+                options={levels.sell}
+                onPick={(v) => setUpper(String(v))}
+              />
               <Field
                 label="Exit price at or below (₹, optional)"
                 htmlFor="radar-lower"
@@ -444,6 +466,10 @@ export function RadarDetail({
                   onChange={(e) => setLower(e.target.value)}
                 />
               </Field>
+              <LevelChips
+                options={levels.exit}
+                onPick={(v) => setLower(String(v))}
+              />
             </div>
           )}
           <p className="text-xs text-muted-foreground">
