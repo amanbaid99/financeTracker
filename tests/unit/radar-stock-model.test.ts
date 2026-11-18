@@ -1,23 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { evaluateStock, STOCK_MODEL, type StockSources } from "@/lib/radar/stock-model";
+import { evaluateStock, STOCK_MODEL } from "@/lib/radar/stock-model";
 import { automaticResearch } from "@/lib/radar/research";
 import { analyseRadar } from "@/lib/radar/analysis";
 import { classifyInstrument } from "@/lib/radar/classification";
-const isin = "INE000000001", session = "2026-11-16", now = "2026-11-17T04:30:00Z";
-const sources = (): StockSources => ({
-  isin, sector: "technology", modelEligibilityVerified: true,
-  currency: "INR", units: "rupees", basis: "consolidated", epsBasis: "diluted-recurring-split-adjusted", metadataVerified: true,
-  annualComparabilityVerified: true, recurringEarningsVerified: true,
-  annual: [2024, 2025, 2026].map((year, i) => ({ end: `${year}-03-31`, availableAt: `${year}-05-15T10:00:00Z`, source: "https://filings.example/annual",
-    revenue: 1000 * 1.1 ** i, netProfit: 100 * 1.1 ** i, operatingCash: 140 * 1.1 ** i, capitalSpending: 10,
-    debt: 50, cash: 20, ebitda: 150, eps: 10 * 1.1 ** i })),
-  historicalPe: [2023, 2024, 2025].map((year) => ({ date: `${year}-11-15`, availableAt: `${year}-11-15T12:00:00Z`, pe: 20,
-    source: "https://valuations.example/history", earningsBasis: "last-published-annual-diluted-recurring" })),
-  peers: [2, 3, 4].map((i) => ({ isin: `INE00000000${i}`, date: session, availableAt: `${session}T12:00:00Z`, pe: 20,
-    source: "https://valuations.example/peers", earningsBasis: "last-published-annual-diluted-recurring" })),
-  peerComparabilityVerified: true,
-});
-const candles = Array.from({ length: 260 }, (_, i) => ({ date: new Date(Date.UTC(2026, 10, 16 - 259 + i)).toISOString().slice(0, 10), open: 100, high: 100, low: 100, close: 100, volume: 100000 }));
+import { isin, session, now, sources, candles } from "../fixtures/radar-stock";
 const run = (data: unknown = sources()) => evaluateStock({ candles, sources: data, adjustmentsVerified: true, isin, expectedSession: session, now });
 describe("paper stock assessment", () => {
   it("computes deterministic PRD-weighted factors, never a live release", () => {
@@ -81,6 +67,31 @@ describe("paper stock assessment", () => {
     data.historicalPe = [data.historicalPe[1], data.historicalPe[1], data.historicalPe[2]];
     expect(run(data).paperScore).toBeNull();
   });
+  it.each(["future-publication", "before-period", "stale", "future-period", "unadjusted", "missing-earnings", "overflow", "underflow"])("rejects unsupported historical valuation evidence: %s", (change) => {
+    const data = sources(), observation = data.historicalPe[0];
+    if (change === "future-publication") observation.earnings.availableAt = "2024-01-01T10:00:00Z";
+    if (change === "before-period") observation.earnings.availableAt = "2023-03-30T10:00:00Z";
+    if (change === "stale") { observation.earnings.end = "2020-03-31"; observation.earnings.availableAt = "2020-05-15T10:00:00Z"; }
+    if (change === "future-period") observation.earnings.end = "2024-03-31";
+    if (change === "unadjusted") Object.assign(observation, { adjustmentsVerified: false });
+    if (change === "missing-earnings") Object.assign(observation, { earnings: undefined });
+    if (change === "overflow") { observation.close = 1e308; observation.earnings.eps = 1e-308; }
+    if (change === "underflow") { observation.close = 1e-308; observation.earnings.eps = 1e308; }
+    expect(run(data).paperScore).toBeNull();
+    expect(run(data).paperDecision).toBeNull();
+  });
+  it("checks peer earnings publication against its own valuation session", () => {
+    const data = sources(); data.peers[0].earnings.availableAt = "2026-11-17T01:00:00Z";
+    expect(run(data).paperDecision).toBeNull();
+  });
+  it("derives peer and historical multiples from price and annual earnings", () => {
+    const data = sources();
+    data.historicalPe.forEach((p) => { p.close = 120; p.earnings.eps = 10; });
+    data.peers.forEach((p) => { p.close = 140; p.earnings.eps = 10; });
+    const result = run(data);
+    expect(result.metrics.historicalMedianPe).toBe(12);
+    expect(result.metrics.peerMedianPe).toBe(14);
+  });
   it("rejects negative earnings rather than calling a negative P/E cheap", () => {
     const data = sources(); data.annual[2].eps = -1;
     expect(run(data).paperScore).toBeNull();
@@ -89,7 +100,7 @@ describe("paper stock assessment", () => {
     const data = sources();
     if (risk === "cash") data.annual[2].operatingCash = -5;
     if (risk === "debt") data.annual[2].debt = 1000;
-    if (risk === "valuation") data.peers.forEach((p) => { p.pe = 5; });
+    if (risk === "valuation") data.peers.forEach((p) => { p.close = 50; });
     const result = run(data); expect(result.missing).toEqual([]); expect(result.risks.length).toBeGreaterThan(0); expect(result.paperDecision).toBe("Wait");
   });
   it("rejects unverified, stale, malformed and duplicate price history", () => {

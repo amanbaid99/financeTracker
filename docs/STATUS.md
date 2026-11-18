@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 18 Nov 2026.
 
+## Stock valuation provenance and replay, 18 Nov 2026
+
+The stock-paper-3 contract requires the price and underlying annual EPS behind every historical and peer valuation. It derives P/E itself, rejects earnings published after that valuation session, stale or impossible annual periods, missing adjustment verification and nonfinite ratios. Opaque provider multiples cannot unlock scoring. No adapter is promoted to verified and the live recommendation gate stays closed.
+
+Added an offline forward-outcome audit using dated source snapshots and price prefixes only. It labels a caller-declared holdout and measures eligible future adjusted-price outcomes from the next session close, with explicit two-sided costs. Missing evidence or future prices produce no fabricated outcome. This is not a portfolio backtester, performance claim or proof of survivorship-free coverage. Synthetic regression cases cover leakage, costs, timing, missing data and invalid inputs. The uploaded filing still leaves provider total assets and EPS definitions unresolved; no guessed reconciliation or model eligibility is introduced. Verification passed: lint, TypeScript, 479 unit tests, 37 Python tests and production build. The local signed-in e2e attempt failed before app testing because the Supabase CLI telemetry path is read-only. No schema or hosted-record mutation is needed. Deployment is being checked.
+
 ## Reviewed filing comparison, 18 Nov 2026
 
 The real public source CI run 44230631531 passed: the HTML parser extracted 14 facts with no issues and passed the six initially audited sample assertions. The reviewed copy now supplies a small public reference catalog for the selected ISIN, with all 14 facts checked by CI before this stage is considered verified. This is limited explicit reference coverage, not automatic filing discovery for every stock.

@@ -4,7 +4,7 @@ import { technicals } from "./analysis";
 
 /** Experimental screening rules, not calibrated return estimates or live advice. */
 export const STOCK_MODEL = {
-  version: "stock-paper-2", release: "paper" as const,
+  version: "stock-paper-3", release: "paper" as const,
   weights: { quality: 30, valuation: 30, growth: 20, technical: 20 },
   candidateScore: 75, maxDebtEbitda: 2, minimumMarginPct: 5,
   minimumGrowthPct: 5, maxReportAgeDays: 550,
@@ -17,7 +17,9 @@ const time = z.iso.datetime({ offset: true });
 const source = z.url().refine((v) => new URL(v).protocol === "https:");
 const amount = z.number().finite();
 const isin = z.string().regex(/^IN[A-Z0-9]{10}$/);
-const multiple = z.object({ date, availableAt: time, pe: amount.positive(), source,
+const multiple = z.object({ date, availableAt: time, close: amount.positive(), source,
+  earnings: z.object({ end: date, availableAt: time, eps: amount.positive(), source }),
+  adjustmentsVerified: z.literal(true),
   earningsBasis: z.literal("last-published-annual-diluted-recurring") });
 export const stockSourcesSchema = z.object({
   isin, sector: z.enum(["industrial", "consumer", "technology", "financial", "other"]),
@@ -99,6 +101,15 @@ export function evaluateStock({ candles, adjustmentsVerified, sources, isin: exp
     p.isin === expectedIsin || p.date !== expectedSession ||
     Date.parse(p.availableAt) < closeTime(p.date) || Date.parse(p.availableAt) > nowMs))
     missing("At least three distinct comparable peers need same-session, available valuation observations.");
+  // A dated multiple alone does not prove which earnings were known in that session.
+  // Compute ratios ourselves and reject earnings published after the historical close.
+  const valuations = [...history, ...data.peers];
+  if (valuations.some((p) => p.earnings.end >= p.date ||
+    Date.parse(p.earnings.availableAt) < Date.parse(`${p.earnings.end}T00:00:00Z`) ||
+    Date.parse(p.earnings.availableAt) > closeTime(p.date) ||
+    Date.parse(`${p.date}T00:00:00Z`) - Date.parse(p.earnings.end) > STOCK_MODEL.maxReportAgeDays * day ||
+    (!Number.isFinite(p.close / p.earnings.eps) || p.close / p.earnings.eps <= 0)))
+    missing("Each valuation needs valid, timely annual earnings published by its own price session and a verified share-adjustment basis.");
   if (annual.slice(-3).some((a) => a.eps <= 0 || a.netProfit <= 0 || a.ebitda <= 0))
     missing("Loss-making, turnaround and nonpositive-earnings businesses need a different valuation model.");
   if (result.missing.length) return result;
@@ -110,7 +121,7 @@ export function evaluateStock({ candles, adjustmentsVerified, sources, isin: exp
   const debtEbitda = latest.debt / latest.ebitda;
   const cashConversion = recent.reduce((s, a) => s + a.operatingCash, 0) / recent.reduce((s, a) => s + a.netProfit, 0);
   const pe = close / latest.eps;
-  const historicalMedianPe = median(history.map((p) => p.pe)), peerMedianPe = median(data.peers.map((p) => p.pe));
+  const historicalMedianPe = median(history.map((p) => p.close / p.earnings.eps)), peerMedianPe = median(data.peers.map((p) => p.close / p.earnings.eps));
   const technical = technicals(candles);
   if ([technical.sma200, technical.rsi14].some((v) => v === null || !Number.isFinite(v))) {
     missing("Price indicators could not be calculated reliably."); return result;
