@@ -1,5 +1,7 @@
 "use client";
 
+import { useISTDay } from "@/lib/use-ist-day";
+
 import { RadarInsight } from "@/components/radar-insight";
 import { LevelChips } from "@/components/radar-levels";
 import { experimentalInsight, suggestedLevels } from "@/lib/radar/insight";
@@ -80,7 +82,7 @@ export function RadarDetail({
   snapshot,
   connected,
   financialsConfigured = false,
-  today,
+  today: serverDay,
   now,
 }: {
   item: WatchItem;
@@ -90,6 +92,7 @@ export function RadarDetail({
   today: string;
   now: string;
 }) {
+  const today = useISTDay(serverDay);
   const [pending, start] = useTransition();
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -122,12 +125,13 @@ export function RadarDetail({
       item.ownedInTracker === true || item.rules?.holdingConfirmed === true,
   });
   const insight = experimentalInsight({
+    today, exchange: item.exchange,
     analysis: a ?? null,
     owned:
       item.ownedInTracker === true || item.rules?.holdingConfirmed === true,
     stockStudy: research.stockStudy,
   });
-  const levels = suggestedLevels(a ?? null, snapshot?.candles ?? []);
+  const levels = suggestedLevels(a ?? null, { today, exchange: item.exchange }, snapshot?.candles ?? []);
   const decision = ruleSignal({
     analysis: a ?? null,
     rules: savedRules(item),

@@ -36,11 +36,13 @@ describe("dipPlan", () => {
 
   it("splits the budget, starts at your buy price, then the next dip below it", () => {
     const [e, g] = dipPlan({
+      today: "2026-11-18",
       budget: 5000,
       items: [
         {
           id: "e",
           symbol: "ETERNAL",
+          exchange: "NSE",
           priceBelow: 329,
           owned: false,
           analysis: eternal,
@@ -48,6 +50,7 @@ describe("dipPlan", () => {
         {
           id: "g",
           symbol: "HDFCGOLD",
+          exchange: "NSE",
           priceBelow: 106,
           owned: false,
           analysis: gold,
@@ -69,11 +72,13 @@ describe("dipPlan", () => {
 
   it("marks a step reached and gives a take-profit price for holdings", () => {
     const [row] = dipPlan({
+      today: "2026-11-18",
       budget: 2000,
       items: [
         {
           id: "e",
           symbol: "E",
+          exchange: "NSE",
           priceBelow: 400,
           owned: true,
           analysis: eternal,
@@ -86,11 +91,13 @@ describe("dipPlan", () => {
 
   it("splits the budget only across items with prices", () => {
     const rows = dipPlan({
+      today: "2026-11-18",
       budget: 5000,
       items: [
         {
           id: "e",
           symbol: "E",
+          exchange: "NSE",
           priceBelow: 329,
           owned: false,
           analysis: eternal,
@@ -98,6 +105,7 @@ describe("dipPlan", () => {
         {
           id: "x",
           symbol: "X",
+          exchange: "NSE",
           priceBelow: null,
           owned: false,
           analysis: null,
@@ -109,11 +117,13 @@ describe("dipPlan", () => {
 
   it("asks for a refresh when there are no prices", () => {
     const [row] = dipPlan({
+      today: "2026-11-18",
       budget: 1000,
       items: [
         {
           id: "x",
           symbol: "X",
+          exchange: "NSE",
           priceBelow: null,
           owned: false,
           analysis: null,

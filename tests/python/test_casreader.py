@@ -62,7 +62,7 @@ def folio(num, schemes, amc="Some AMC"):
 
 
 class TestMutualFundStatement:
-    def test_combines_folios_skips_closed_and_finds_sips(self):
+    def test_combines_folios_retains_closed_for_review_and_finds_sips(self):
         sip_txs = [
             tx(date(2026, 8, 5), "PURCHASE_SIP", "5000"),
             tx(date(2026, 9, 5), "PURCHASE_SIP", "5000"),
@@ -80,7 +80,9 @@ class TestMutualFundStatement:
         assert out["source"] == "CAMS"
         assert out["detailed"] is True
         assert out["statementDate"] == "2026-09-30"
-        assert len(out["holdings"]) == 1
+        assert len(out["holdings"]) == 2
+        assert out["holdings"][1]["units"] == 0
+        assert out["holdings"][1]["value"] == 0
         h = out["holdings"][0]
         assert h["units"] == 150 and h["value"] == 22500 and h["count"] == 2
         assert h["sipMonthly"] == 7000  # two SIPs in September
@@ -88,6 +90,23 @@ class TestMutualFundStatement:
         assert h["invested"] == 18000
         assert h["issues"] == []
         assert any("no units left" in w for w in out["warnings"])
+
+
+    def test_closed_folio_never_clears_an_active_folio_of_the_same_fund(self):
+        out = r.normalise(mf_cas([
+            folio("1", [scheme("Synthetic fund", "INF000000001", 0, 100, 0)]),
+            folio("2", [scheme("Synthetic fund", "INF000000001", 5, 100, 500)]),
+        ]))
+        assert len(out["holdings"]) == 1
+        assert out["holdings"][0]["units"] == 5
+        assert out["holdings"][0]["value"] == 500
+
+    def test_unknown_units_are_not_emitted_as_an_explicit_redemption(self):
+        row = scheme("Synthetic fund", "INF000000001", 0, 100, 0)
+        row.close = None
+        assert r.normalise(mf_cas([folio("1", [row])]))["holdings"] == []
+        row.close = "unreadable"
+        assert r.normalise(mf_cas([folio("1", [row])]))["holdings"] == []
 
     def test_invested_is_unknown_if_any_folio_lacks_cost(self):
         cas = mf_cas(
@@ -249,3 +268,14 @@ class TestHandler:
             assert status == 200 and body["ok"] is True and body["holdings"][0]["key"] == "A"
         finally:
             srv.shutdown()
+
+
+def test_closed_demat_fund_is_retained_only_when_no_active_account_position_exists():
+    closed = NS(name="Synthetic fund", isin="INF000000001", balance=D("0"), nav=D("100"), value=D("0"), type="EQUITY", total_cost=None)
+    account = lambda funds: NS(equities=[], bonds=[], mutual_funds=funds, balance=D("0"))
+    cas = NS(accounts=[account([closed])], statement_period=PERIOD, file_type="CDSL", nps=None)
+    assert r.normalise(cas)["holdings"][0]["units"] == 0
+    active = NS(name="Synthetic fund", isin="INF000000001", balance=D("5"), nav=D("100"), value=D("500"), type="EQUITY", total_cost=None)
+    cas.accounts.append(account([active]))
+    rows = r.normalise(cas)["holdings"]
+    assert len(rows) == 1 and rows[0]["units"] == 5

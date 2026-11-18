@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
-import { formatINR } from "@/lib/format";
+import { formatDate, formatINR } from "@/lib/format";
 import { refreshRadar } from "@/lib/radar/actions";
 import { marketPrice, type RadarAnalysis } from "@/lib/radar/contracts";
 import { dipPlan } from "@/lib/radar/dip-plan";
@@ -21,10 +21,13 @@ const KEY = "radar-dip-budget";
  */
 export function RadarDipPlan({
   items,
+  today,
 }: {
+  today: string;
   items: {
     id: string;
     symbol: string;
+    exchange: string;
     priceBelow: number | null;
     owned: boolean;
     analysis: RadarAnalysis | null;
@@ -57,18 +60,18 @@ export function RadarDipPlan({
       for (const [n, item] of items.entries()) {
         setProgress(`Refreshing ${n + 1} of ${items.length}…`);
         const res = await refreshRadar(item.id);
-        // "Just refreshed" is fine: that item is already up to date.
+        // Cooldown skips a new request; each row still checks the actual session.
         if (!res.ok && !/just refreshed/i.test(res.error ?? ""))
           failed.push(item.symbol);
       }
       setProgress(
         failed.length
           ? `Updated, except ${failed.join(", ")}. Try those again later.`
-          : "All prices are up to date.",
+          : "Refresh complete. Items with outdated prices stay paused.",
       );
       router.refresh();
     });
-  const rows = dipPlan({ budget: budget ?? 0, items });
+  const rows = dipPlan({ budget: budget ?? 0, items, today });
   const toBuy = rows.flatMap((r) =>
     r.buys.filter((b) => b.reached && b.quantity > 0).map(() => r.symbol),
   );
@@ -130,7 +133,7 @@ export function RadarDipPlan({
                 {r.symbol}
               </Link>
               <span className="tabular text-sm text-muted-foreground">
-                {r.close != null ? `Now ${marketPrice(r.close)}` : ""} ·{" "}
+                {r.close != null ? `Close ${marketPrice(r.close)}${r.asOf ? ` · ${formatDate(r.asOf)}` : ""}` : ""} ·{" "}
                 {formatINR(r.budget)} set aside
               </span>
             </div>
@@ -194,9 +197,10 @@ export function RadarDipPlan({
         ))}
       </ul>
       <p className="text-xs text-muted-foreground">
-        Prices use the last daily close. Use limit orders at these prices. Once
-        a step fills, set your next buy price on that item. The app never places
-        orders. Not investment advice.
+        {rows.some((r) => r.buys.length > 0)
+          ? "Prices use the last daily close. Use limit orders at these prices. Once a step fills, set your next buy price on that item."
+          : "Refresh outdated items to see available steps. Review each item's note before planning a trade."}{" "}
+        The app never places orders. Not investment advice.
       </p>
     </section>
   );

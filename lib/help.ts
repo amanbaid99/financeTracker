@@ -60,6 +60,7 @@ export const HELP: HelpTopic[] = [
       "Search INDmoney, confirm an instrument and its asset type, then open it to fetch daily history. On a fresh refresh, Radar records INDmoney's confirmation that OHLC prices are adjusted for splits and bonus issues, while volume is raw. Prices exclude dividend adjustment and some other corporate actions. Price-only indicators remain provisional until relevant event coverage and freshness are checked. A score stays unavailable while required fundamentals or ETF checks are missing.",
       "Automatic research is the main view and needs no manually configured price levels. Optional price alerts are folded below it; their entry/exit messages only compare your saved thresholds. They are not research recommendations. Drawdown alerts remain paused while full relevant action coverage is unverified. Historical rupee turnover is withheld when adjusted prices and raw volume cannot be combined reliably.",
       "Your holding shows recorded value and share of tracked investments for an exact ISIN match. These are saved Tracker values, not live broker balances or target allocations. A manual ownership confirmation alone does not provide a holding value or unlock Hold/Sell research. For a confirmed stock holding, Review holding details lets you save or remove your target share, allowance, thesis status and estimated exit cost. Nothing is preset or saved until you confirm and press Save. A saved review does not enable live recommendations.",
+      "Experimental insights, suggested levels and the dip plan require prices from the latest completed session for that exchange. Outdated rows show the saved close and date, but no actionable lean, quantities or reached prompts. The budget is shared only across current rows, and returning to an open app rechecks the date in India.",
       "The INDmoney token stays in Vercel as INDSTOCKS_ACCESS_TOKEN. Expired tokens must be replaced and the app redeployed. Never paste a token into chat.",
     ],
     tags: "watchlist stock ETF price research token INDmoney",
@@ -234,7 +235,7 @@ export const HELP: HelpTopic[] = [
     q: "How do I update values from today's prices?",
     a: [
       "Tap Update prices on Net worth. For each mutual fund or ETF with units and an ISIN, the app takes units held × the latest official price (NAV from AMFI) and shows the old and new value. Untick anything you don't want, then Save. Nothing changes until you do.",
-      "A CAS import saves units and ISINs for your funds. For anything else, tap the holding and add Units held and ISIN. Stocks, EPF, NPS and savings aren't priced this way yet.",
+      "A CAS import saves units and ISINs for your funds, including an explicit zero-unit balance after redemption. Unknown units remain separate from zero. For anything else, tap the holding and add Units held and ISIN. Stocks, EPF, NPS and savings aren't priced this way yet.",
     ],
     tags: "prices nav live market units isin refresh",
   },

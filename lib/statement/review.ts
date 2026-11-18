@@ -106,7 +106,10 @@ export function buildReview(statement: ParsedStatement, existing: ExistingInvest
 
   // Exact matches first so a name match never takes an investment an ISIN owns.
   const byIsin = new Map(existing.filter((e) => e.isin).map((e) => [e.isin!.toUpperCase(), e]));
-  const order = [...statement.holdings].sort(
+  // A zero-balance fund can clear a matched holding, never create a new one.
+  const candidates = statement.holdings.filter((h) => h.kind !== "mutual_fund" || h.units !== 0 || h.value !== 0 ||
+    byIsin.has(h.key.toUpperCase()) || (!!h.isin && byIsin.has(h.isin.toUpperCase())));
+  const order = [...candidates].sort(
     (a, b) => Number(!byIsin.has(a.key.toUpperCase())) - Number(!byIsin.has(b.key.toUpperCase())),
   );
 
@@ -182,7 +185,7 @@ export function buildReview(statement: ParsedStatement, existing: ExistingInvest
       categoryHow,
       value: h.value,
       invested: h.invested ?? null,
-      units: Number.isFinite(h.units) && h.units > 0 ? h.units : null,
+      units: Number.isFinite(h.units) && (h.units > 0 || (h.units === 0 && h.value === 0 && !!h.isin)) ? h.units : null,
       sip,
       sipFromStatement,
       issues: h.issues,

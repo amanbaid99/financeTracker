@@ -84,6 +84,7 @@ export async function prepareImport(
   }));
 
   let rows = buildReview(statement, existing);
+  if (!rows.length) return { ok: false, error: "No active holdings or matching redeemed holdings were found in this statement." };
   const unplaced = rows.filter((r) => !r.category);
   const settings = aiSettings();
   const verdicts = await aiCategories(

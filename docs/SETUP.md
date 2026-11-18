@@ -67,3 +67,7 @@ Refresh research on a verified stock performs at most four source reads for iden
 The runner sets SUPABASE_TELEMETRY_DISABLED=1 to avoid the CLI telemetry write in read-only homes. It verifies API_URL, PUBLISHABLE_KEY and SECRET_KEY are present before continuing, because some CLI versions return exit 0 with a JSON error. These are local stack variables; do not substitute hosted production keys. A missing local stack still requires Docker image access. An image-download Forbidden response means signed-in tests have not run.
 
 Reference: [Supabase CLI analytics overrides](https://github.com/supabase/cli/blob/develop/apps/cli/docs/analytics.md).
+
+## Fresh Radar migration replay
+
+The already-recorded holding-review version sorts before Radar foundation. It now safely skips an absent table; foundation creates the same nullable column and object/size constraint. Existing databases keep their migration versions and schema. Do not rename deployed versions or require a manual out-of-order replay for a fresh setup. tests/unit/radar-migrations.test.ts exercises both paths in a disposable embedded PostgreSQL database, including actual owner-role update restrictions. This is not a substitute for the full local Supabase RLS/auth test suite.

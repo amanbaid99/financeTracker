@@ -12,7 +12,7 @@ import json
 import os
 import urllib.request
 from datetime import date, datetime, timedelta
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Any, Optional
 
 MAX_PDF_BYTES = 4_300_000  # Vercel caps request bodies at 4.5 MB.
@@ -46,6 +46,15 @@ def _num(v: Any) -> float:
         return float(str(v).replace(",", ""))
     except ValueError:
         return 0.0
+
+
+def _explicit_zero(v: Any) -> bool:
+    if v is None:
+        return False
+    try:
+        return Decimal(str(v).replace(",", "").strip()).is_zero()
+    except (InvalidOperation, ValueError, TypeError):
+        return False
 
 
 def _date(v: Any) -> Optional[date]:
@@ -142,6 +151,7 @@ def normalise_mf_statement(cas: Any) -> dict:
     end = _date(getattr(cas.statement_period, "to", None))
     detailed = _name(getattr(cas, "cas_type", "")) == "DETAILED"
     rows: dict[str, dict] = {}
+    closed_rows: dict[str, dict] = {}
     closed = 0
     warnings: list[str] = []
 
@@ -154,6 +164,13 @@ def normalise_mf_statement(cas: Any) -> dict:
             value = _num(val.value)
             if units <= 0.0005 and value <= 0:
                 closed += 1
+                # Keep an explicit zero only by ISIN. Review offers it only for
+                # an existing holding, and an active folio wins below.
+                if _explicit_zero(s.close) and _explicit_zero(val.value) and s.isin:
+                    key = s.isin.strip().upper()
+                    closed_rows[key] = _holding(key=key, name=(s.scheme or "").strip(), isin=s.isin,
+                        amc=amc, fundType=_name(s.type) or None, units=0.0, nav=nav, value=0,
+                        navDate=_iso(_date(val.date)), issues=["No units remain on the statement. Confirm the redemption before updating."])
                 continue
             issues = []
             if not value_matches(units, nav, value):
@@ -195,14 +212,14 @@ def normalise_mf_statement(cas: Any) -> dict:
                 if last_sip and (not row["lastSipDate"] or last_sip > row["lastSipDate"]):
                     row["lastSipDate"] = last_sip
 
-    holdings = list(rows.values())
+    holdings = list(rows.values()) + [row for key, row in closed_rows.items() if key not in rows]
     for h in holdings:
         h["value"] = int(round(h["value"]))
         h["units"] = round(h["units"], 4)
         if h["invested"] is not None:
             h["invested"] = int(round(h["invested"]))
     if closed:
-        warnings.append(f"{closed} fund{'s' if closed != 1 else ''} with no units left were skipped.")
+        warnings.append(f"{closed} fund{'s' if closed != 1 else ''} have no units left. Only matching tracked holdings are offered for review.")
     warnings += [str(w) for w in getattr(cas, "parse_warnings", []) or []]
     return {
         "source": _name(cas.file_type) or "CAMS",
@@ -217,6 +234,7 @@ def normalise_demat_statement(cas: Any) -> dict:
     """NSDL / CDSL CAS -> stocks and bonds as one row each, funds per scheme."""
     end = _date(getattr(cas.statement_period, "to", None))
     funds: dict[str, dict] = {}
+    closed_funds: dict[str, dict] = {}
     stock_value = 0.0
     stock_count = 0
     stock_issues: list[str] = []
@@ -242,6 +260,11 @@ def normalise_demat_statement(cas: Any) -> dict:
             units, nav, v = _num(m.balance), _num(m.nav), _num(m.value)
             parts += v
             if units <= 0.0005 and v <= 0:
+                if _explicit_zero(m.balance) and _explicit_zero(m.value) and m.isin:
+                    key = m.isin.strip().upper()
+                    closed_funds[key] = _holding(key=key, name=(m.name or m.isin).strip(), isin=m.isin,
+                        units=0.0, nav=nav, value=0, navDate=_iso(end),
+                        issues=["No units remain on the statement. Confirm the redemption before updating."])
                 continue
             key = (m.isin or m.name or "").strip().upper()
             issues = [] if value_matches(units, nav, v) else ["Value doesn't equal units × NAV on the statement."]
@@ -272,7 +295,7 @@ def normalise_demat_statement(cas: Any) -> dict:
         if balance and abs(parts - balance) > max(10.0, balance * 0.01):
             warnings.append("An account's holdings don't add up to its total on the statement.")
 
-    holdings = list(funds.values())
+    holdings = list(funds.values()) + [row for key, row in closed_funds.items() if key not in funds]
     if stock_count:
         holdings.append(
             _holding(

@@ -1,5 +1,7 @@
 "use client";
 
+import { useISTDay } from "@/lib/use-ist-day";
+
 import { RadarDipPlan } from "@/components/radar-dip-plan";
 import { cn } from "@/lib/utils";
 import { leanClass } from "@/components/radar-insight";
@@ -30,7 +32,7 @@ export function RadarWorkspace({
   items,
   snapshots,
   connection,
-  today,
+  today: serverDay,
   now,
 }: {
   items: WatchItem[];
@@ -39,6 +41,7 @@ export function RadarWorkspace({
   snapshots: Pick<RadarSnapshot, "watchId" | "analysis">[];
   connection: { ok: boolean; error?: string };
 }) {
+  const today = useISTDay(serverDay);
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -86,9 +89,11 @@ export function RadarWorkspace({
       </section>
       {items.length > 0 && (
         <RadarDipPlan
+          today={today}
           items={items.map((item) => ({
             id: item.id,
             symbol: item.symbol,
+            exchange: item.exchange,
             priceBelow: item.priceBelow,
             owned:
               item.ownedInTracker === true ||
@@ -142,6 +147,7 @@ export function RadarWorkspace({
                   item.rules?.holdingConfirmed === true,
               });
               const insight = experimentalInsight({
+                today, exchange: item.exchange,
                 analysis: snapshot?.analysis ?? null,
                 owned:
                   item.ownedInTracker === true ||

@@ -25,9 +25,14 @@ create table public.radar_watchlist (
   price_below numeric(18,4) check (price_below > 0 and price_below <= 100000000),
   drawdown_pct numeric(6,2) check (drawdown_pct between 1 and 80),
   created_at timestamptz not null default now(),
+  -- The earlier dated review migration skips an absent table on fresh replay.
+  holding_review jsonb check (holding_review is null or
+    (jsonb_typeof(holding_review) = 'object' and octet_length(holding_review::text) <= 4096)),
   unique(user_id,exchange,security_id),
   unique(id,user_id)
 );
+comment on column public.radar_watchlist.holding_review is
+  'Owner-reviewed holding context, validated by the application. Never establishes source verification or a live recommendation.';
 alter table public.radar_watchlist enable row level security;
 create policy "Own personal Radar watchlist" on public.radar_watchlist for all to authenticated
   using (user_id = (select auth.uid()) and exists(select 1 from public.radar_access where user_id=(select auth.uid())))

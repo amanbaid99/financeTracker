@@ -5,6 +5,7 @@
 // owner acts on in their broker app; nothing is placed or saved.
 
 import type { RadarAnalysis } from "./contracts";
+import { priceFreshness } from "./price-freshness";
 import { suggestedLevels } from "./insight";
 
 export interface PlanOrder {
@@ -22,6 +23,7 @@ export interface PlanRow {
   id: string;
   symbol: string;
   close: number | null;
+  asOf: string | null;
   /** Rupees set aside for this item. */
   budget: number;
   buys: PlanOrder[];
@@ -35,38 +37,42 @@ const wholeUnits = (amount: number, price: number) =>
 export function dipPlan({
   budget,
   items,
+  today,
 }: {
   budget: number;
+  today: string;
   items: {
     id: string;
     symbol: string;
+    exchange: string;
     priceBelow: number | null;
     owned: boolean;
     analysis: RadarAnalysis | null;
   }[];
 }): PlanRow[] {
-  // Split across items that have prices, so nothing is set aside for one
-  // that can't be planned yet.
-  const priced = items.filter((i) => i.analysis?.close != null).length;
+  // Outdated and unavailable items receive no budget or actionable steps.
+  const priced = items.filter((i) => priceFreshness(i.analysis, today, i.exchange).current).length;
   const share = priced ? Math.floor(budget / priced) : 0;
   return items.map((item) => {
     const a = item.analysis;
-    const close = a?.close ?? null;
+    const freshness = priceFreshness(a, today, item.exchange);
+    const close = freshness.close;
     const row: PlanRow = {
       id: item.id,
       symbol: item.symbol,
       close,
+      asOf: freshness.asOf,
       budget: share,
       buys: [],
       sell: null,
       note: null,
     };
-    if (close == null) {
+    if (!freshness.current || close == null) {
       row.budget = 0;
-      row.note = "Refresh to get prices.";
+      row.note = freshness.reason;
       return row;
     }
-    const levels = suggestedLevels(a);
+    const levels = suggestedLevels(a, { today, exchange: item.exchange });
     // Your saved buy price first, then the app's suggestions below it.
     const prices: { price: number; basis: string }[] = [];
     if (item.priceBelow != null)

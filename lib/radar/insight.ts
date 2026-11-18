@@ -5,6 +5,7 @@
 // labelled experimental and "not investment advice", and it never replaces
 // the gated automatic research result.
 
+import { priceFreshness } from "./price-freshness";
 import type { Candle, RadarAnalysis } from "./contracts";
 import type { StockStudy } from "./stock-model";
 
@@ -40,10 +41,14 @@ export function experimentalInsight({
   analysis,
   owned,
   stockStudy,
+  today,
+  exchange,
 }: {
   analysis: RadarAnalysis | null;
   owned: boolean;
   stockStudy?: StockStudy;
+  today: string;
+  exchange: string;
 }): Insight {
   const empty = (summary: string): Insight => ({
     lean: "Not enough data",
@@ -53,8 +58,8 @@ export function experimentalInsight({
     score: 0,
     asOf: analysis?.asOf ?? null,
   });
-  if (!analysis || analysis.close == null)
-    return empty("Refresh to fetch prices first.");
+  const freshness = priceFreshness(analysis, today, exchange);
+  if (!analysis || analysis.close == null || !freshness.current) return empty(freshness.reason ?? "Refresh to get prices.");
   const t = analysis.technicals;
   const close = analysis.close;
   if (t.sma200 == null || t.rsi14 == null)
@@ -212,6 +217,7 @@ const tidy = (n: number) =>
  */
 export function suggestedLevels(
   analysis: RadarAnalysis | null,
+  context: { today: string; exchange: string },
   candles: Candle[] = [],
 ): {
   buy: LevelSuggestion[];
@@ -219,7 +225,7 @@ export function suggestedLevels(
   exit: LevelSuggestion[];
 } {
   const none = { buy: [], sell: [], exit: [] };
-  if (!analysis || analysis.close == null) return none;
+  if (!analysis || analysis.close == null || !priceFreshness(analysis, context.today, context.exchange).current) return none;
   const t = analysis.technicals;
   const close = analysis.close;
   // A typical three-month move, from recent volatility (one standard deviation).
