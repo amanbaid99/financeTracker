@@ -41,3 +41,9 @@ The common data path must support individual NSE/BSE stocks and ETFs, not only G
 ## What this unlocks
 
 Once documented, sample-verified data access is available, connect the fixed-host adapter, reconcile overlapping source dates/values and retain provenance. Then run the unchanged Gold paper model on real point-in-time data and compare it with the existing monthly, immediate and simple-dip baselines. Unit tests and source-count agreement alone do not release investment recommendations.
+
+## Documentation recheck, 18 Nov 2026
+
+The [INDstocks changelog](https://api-docs.indstocks.com/changelog/) migration note says history gained an adjusted-price field. The [current historical contract](https://api-docs.indstocks.com/historicalData/) documents ts/o/h/l/c/v, but does not identify that field or its adjustment rules. Ask for the exact field, split/bonus/consolidation/distribution semantics and a public sample. Do not infer adjustments from this changelog sentence or silently reinterpret c as adjusted close.
+
+The [IndianAPI report examples](https://indianapi.in/documentation/indian-stock-market) do not resolve the selected source's EPS definition, period-specific consolidation/restatement basis or the asset discrepancy against the reviewed filing. These questions remain open. No support message has been sent.

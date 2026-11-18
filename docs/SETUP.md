@@ -61,3 +61,9 @@ Personal-only entitlement in radar_access. Apply 20261125000000_radar_foundation
 INDIANAPI_KEY is a server-only Vercel Secret for the optional IndianAPI Free/Hobby host, https://stock.indianapi.in. Start with the provider's free starter tier; no paid plan is selected by the app. Add the key directly to Production in the finance-tracker Vercel project and redeploy. Never prefix it NEXT_PUBLIC_, paste it into chat, retrieve it from Vercel or commit it. No Production secret is required locally for fixture tests. Preview is optional and should use a separate test credential if configured.
 
 Refresh research on a verified stock performs at most four source reads for identity and three reports, reusing successful/partial reports for 24 hours. This is not a background job. Source plan/credit failures do not trigger upgrades or purchases and do not prevent storing current market-price evidence. No schema migration is required; optional source data and provenance live in immutable JSON snapshots. Coverage, source units/basis, publication-time evidence and company identity beyond exact ticker matching still need live verification before valuation scoring.
+
+## Local e2e in restricted environments
+
+The runner sets SUPABASE_TELEMETRY_DISABLED=1 to avoid the CLI telemetry write in read-only homes. It verifies API_URL, PUBLISHABLE_KEY and SECRET_KEY are present before continuing, because some CLI versions return exit 0 with a JSON error. These are local stack variables; do not substitute hosted production keys. A missing local stack still requires Docker image access. An image-download Forbidden response means signed-in tests have not run.
+
+Reference: [Supabase CLI analytics overrides](https://github.com/supabase/cli/blob/develop/apps/cli/docs/analytics.md).

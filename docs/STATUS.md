@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 18 Nov 2026.
 
+## Source-contract review and test-runner recovery, 18 Nov 2026
+
+Rechecked current primary provider documentation. INDstocks' changelog mentions a new adjusted-price field, but its history contract still documents only ts/o/h/l/c/v without the adjusted field name or split/bonus/distribution rules. This is a clarification lead, not verified adjustment coverage. IndianAPI's public historical-stat examples still do not settle the reported EPS definition or provider total-assets discrepancy. The live research gate remains unchanged. No provider was contacted and no paid service or credential was acquired.
+
+Recovered the Supabase CLI telemetry failure using its documented SUPABASE_TELEMETRY_DISABLED=1 override. The local stack is absent; starting it reaches an image-download Forbidden response, so signed-in e2e remains unrun. Stopped that task's retrying start process. scripts/e2e.sh now opts out of telemetry and checks actual status variables because this CLI can return exit 0 with a JSON error. Missing/incompatible variables fail with a clear message before building or running Playwright. Bash syntax and controlled success/error-response shell checks passed. No app, schema, production key or hosted data changed.
+
 ## Stock valuation provenance and replay, 18 Nov 2026
 
 The stock-paper-3 contract requires the price and underlying annual EPS behind every historical and peer valuation. It derives P/E itself, rejects earnings published after that valuation session, stale or impossible annual periods, missing adjustment verification and nonfinite ratios. Opaque provider multiples cannot unlock scoring. No adapter is promoted to verified and the live recommendation gate stays closed.
