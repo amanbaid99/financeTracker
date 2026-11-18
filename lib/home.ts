@@ -8,7 +8,7 @@ export function focusGoals(goals: TrackedGoal[], today: string) {
   return orderGoals(goals, today).filter((g) => g.status !== "reached").slice(0, 3);
 }
 
-/** The next unfinished milestone by deadline, using eligible statement spending. */
+/** The unfinished milestone with the least eligible spending left, using eligible statement spending. */
 export function nextMilestone(cards: Card[], loans: Loan[], today: string) {
   return cards.flatMap((card) => card.milestones
     .filter((m) => m.target > 0)
@@ -16,5 +16,5 @@ export function nextMilestone(cards: Card[], loans: Loan[], today: string) {
       ...card, emiPerBill: cardEmis(loans, card.id, today),
     }) })))
     .filter(({ state }) => state.status !== "achieved" && state.status !== "missed")
-    .sort((a, b) => (a.state.end ?? "9999").localeCompare(b.state.end ?? "9999") || b.state.progress - a.state.progress)[0] ?? null;
+    .sort((a, b) => a.state.remaining - b.state.remaining || b.state.progress - a.state.progress || (a.state.end ?? "9999").localeCompare(b.state.end ?? "9999"))[0] ?? null;
 }

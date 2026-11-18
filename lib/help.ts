@@ -12,7 +12,7 @@ export interface HelpTopic {
 }
 
 export const HELP: HelpTopic[] = [
-  { id: "home", section: "Getting started", q: "What is on Home?", a: ["Your current net worth, first three unfinished goals in your Goals order, next unfinished card milestone and updates due. Tap a section to open its details. The sticky + button adds or updates information."], tags: "overview focus dashboard" },
+  { id: "home", section: "Getting started", q: "What is on Home?", a: ["Your current net worth, first three unfinished goals in your Goals order, card milestone with the smallest amount left and updates due. Tap a section to open its details. The sticky + button adds or updates information."], tags: "overview focus dashboard" },
   { id: "current-balances", section: "Net worth", q: "How do I keep my balances up to date?", a: ["Upload CAS for funds and ETFs, review the amounts and confirm before saving. Use Update amounts for other balances such as savings, EPF and US stocks. The app shows recorded balances, without gains, losses or live market-price tracking."], tags: "manual CAS amounts portfolio" },
   {
     id: "updates-due",

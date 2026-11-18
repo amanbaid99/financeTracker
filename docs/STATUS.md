@@ -3,6 +3,10 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 18 Nov 2026.
 
+## Home milestone priority, 18 Nov 2026
+
+Home now chooses the unfinished milestone with the smallest rupee amount left, across all cards. Deadline is only a tie-breaker after equal remaining amounts and progress. Completed, expired and invalid targets stay excluded; card-loan EMIs still do not count. This replaces deadline-first selection at the owner's request. Verified: lint, TypeScript, 19 Home/card unit tests and production build passed. No schema or stored data changes.
+
 ## Home and simpler portfolio, 18 Nov 2026
 
 Home (`/today`) replaces Radar and is the default after sign-in and in the PWA manifest. It shows recorded net worth, three focus goals, the next unfinished card milestone and updates due. Goals use the same priority order as the detail page; reached goals are excluded. Milestones exclude completed/expired targets and loan EMI spending. Empty states link to the relevant section. The sticky plus remains above five navigation tabs.

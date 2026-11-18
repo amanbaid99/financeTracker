@@ -25,7 +25,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     steps: [
       "Net worth is your recorded holdings minus loan balances. It is not a live market value.",
       "Focus goals shows the first three unfinished goals in your Goals order.",
-      "Next card milestone shows the soonest unfinished target, based on eligible spending you have logged.",
+      "Next card milestone shows the unfinished target with the smallest amount left, based on eligible spending you have logged.",
       "Updates due reminds you about missing statements, monthly loan balances and a recent CAS. No payment is assumed missed.",
       "Tap the sticky + button to add a goal, upload CAS or update amounts. Add new cards in Cards.",
     ],
@@ -139,7 +139,7 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   { date: "2026-11-18", title: "A simpler home for your money", items: [
-    { title: "Home brings the essentials together", text: "See current net worth, three focus goals, your next unfinished card milestone and updates due. Open each section for details." },
+    { title: "Home brings the essentials together", text: "See current net worth, three focus goals, your card milestone with the smallest amount left and updates due. Open each section for details." },
     { title: "Simple portfolio updates", text: "Upload CAS for funds and ETFs. Update other balances manually. Performance comparisons, market-price controls and Radar have been removed. Your existing records are retained." },
   ] },
   {
