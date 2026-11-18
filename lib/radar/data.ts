@@ -1,4 +1,5 @@
 import "server-only";
+import { holdingReviewSchema } from "./holding-review";
 import { holdingContext } from "./holding-context";
 import { classifyInstrument } from "./classification";
 import { cache } from "react";
@@ -80,6 +81,7 @@ export const loadRadar = cache(async () => {
     assetType: r.asset_type as RadarAsset,
     priceBelow: r.price_below,
     drawdownPct: r.drawdown_pct,
+    holdingReview: holdingReviewSchema.safeParse(r.holding_review).data,
     rules: {
       rulesEnabled: r.rules_enabled,
       holdingConfirmed: r.holding_confirmed,

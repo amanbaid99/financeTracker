@@ -144,6 +144,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-18", title: "Prepare your holding review", items: [{ title: "Save your own review inputs", text: "For a confirmed stock holding, open Your holding, then Review holding details. Set your target share, allowance, reason for owning it and estimated exit cost. Confirm and Save, or remove the review later. This prepares context while the investment assessment remains pending." }] },
   {
     date: "2026-11-18",
     title: "See your holding alongside research",

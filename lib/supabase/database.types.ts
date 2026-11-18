@@ -49,6 +49,7 @@ export type Database = {
 
       radar_watchlist: {
         Row: {
+          holding_review: Json | null;
           rules_enabled: boolean;
           holding_confirmed: boolean;
           sell_above: number | null;
@@ -68,6 +69,7 @@ export type Database = {
           created_at: string;
         };
         Insert: {
+          holding_review?: Json | null;
           rules_enabled?: boolean;
           holding_confirmed?: boolean;
           sell_above?: number | null;
@@ -87,6 +89,7 @@ export type Database = {
           created_at?: string;
         };
         Update: {
+          holding_review?: Json | null;
           rules_enabled?: boolean;
           holding_confirmed?: boolean;
           sell_above?: number | null;

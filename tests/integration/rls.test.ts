@@ -580,6 +580,7 @@ describe("personal Radar", () => {
     }
     expect((await b.from("radar_watchlist").insert({ user_id: idB, exchange: "NSE", security_id: "321", symbol: "SYNTHETIC", name: "Synthetic", asset_type: "equity" })).error).toBeTruthy();
     expect((await b.from("radar_watchlist").update({ name: "Changed" }).eq("id", watchId).select("id")).data).toEqual([]);
+    expect((await b.from("radar_watchlist").update({ holding_review: { targetSharePct: 100 } }).eq("id", watchId).select("id")).data).toEqual([]);
     expect((await b.rpc("radar_latest_snapshots")).data).toEqual([]);
     expect((await a.rpc("radar_latest_snapshots")).data?.length).toBe(1);
   });

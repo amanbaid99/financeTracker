@@ -1,5 +1,7 @@
 "use client";
 
+import { RadarHoldingReview } from "@/components/radar-holding-review";
+import { positionContext } from "@/lib/radar/holding-review";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -111,6 +113,7 @@ export function RadarDetail({
     exchange: item.exchange,
     today,
     now,
+    positionContext: positionContext(item.holdingReview, item.isin, item.holdingContext),
     owned:
       item.ownedInTracker === true || item.rules?.holdingConfirmed === true,
   });
@@ -148,7 +151,7 @@ export function RadarDetail({
         pending={pending}
         connected={connected}
       />
-      {(item.holdingContext?.matched || item.rules?.holdingConfirmed) && (
+      {(item.holdingContext?.matched || item.rules?.holdingConfirmed || item.holdingReview) && (
         <details className="rounded-2xl border bg-card px-4">
           <summary className="min-h-11 flex cursor-pointer items-center font-medium">Your holding</summary>
           <div className="pb-4 space-y-3 text-sm">
@@ -157,8 +160,9 @@ export function RadarDetail({
                 <div className="flex flex-wrap justify-between gap-2"><dt>Recorded value</dt><dd className="tabular font-medium">{formatINR(item.holdingContext.recordedValue)}</dd></div>
                 {item.holdingContext.trackedSharePct != null && <div className="flex flex-wrap justify-between gap-2"><dt>Share of tracked investments</dt><dd className="tabular font-medium">{item.holdingContext.trackedSharePct.toFixed(1)}%</dd></div>}
               </dl>
-            ) : <p>Ownership is confirmed. A matched holding value is unavailable.</p>}
-            <p className="text-muted-foreground">Values saved in Tracker, not a live broker balance. This share is not a target allocation. Hold and sell assessments still need your target, investment thesis and exit costs.</p>
+            ) : <p>A current matched holding value is unavailable.</p>}
+            {((classification.kind === "stock" && !classification.needsReview && item.isin) || item.holdingReview) && <RadarHoldingReview id={item.id} review={item.holdingReview} canSave={classification.kind === "stock" && !classification.needsReview && !!item.isin && (item.ownedInTracker === true || item.rules?.holdingConfirmed === true)} />}
+            <p className="text-muted-foreground">Values saved in Tracker, not a live broker balance. This share is not a target allocation. Holding details do not establish a buy, hold or sell recommendation.</p>
           </div>
         </details>
       )}

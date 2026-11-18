@@ -8,6 +8,7 @@ import type { Json } from "@/lib/supabase/database.types";
 import type { EtfEvidence, MarketEvidence } from "./etf-data";
 import { collectEtfEvidence, collectMarketEvidence } from "./etf-evidence";
 import { previousCompletedSession } from "./calendar";
+import { holdingReviewInputSchema } from "./holding-review";
 import { ruleSettingsSchema } from "./rule-signal";
 import { assetTypes, watchSchema } from "./contracts";
 import { classifyInstrument, needsEtfEvidence, analysisAsset } from "./classification";
@@ -264,4 +265,29 @@ export async function refreshRadar(id: string) {
           : "Price history could not be refreshed.",
     };
   }
+}
+
+export async function saveRadarHoldingReview(id: string, input: unknown) {
+  const { supabase, user } = await requireRadar();
+  if (!z.string().uuid().safeParse(id).success) return { ok: false, error: "Invalid watchlist item." };
+  if (input === null) {
+    const { error } = await supabase.from("radar_watchlist").update({ holding_review: null })
+      .eq("id", id).eq("user_id", user.id).select("id").single();
+    if (error) return { ok: false, error: "Couldn't remove the holding review." };
+    revalidatePath("/radar", "layout");
+    return { ok: true };
+  }
+  const parsed = holdingReviewInputSchema.safeParse(input);
+  if (!parsed.success)
+    return { ok: false, error: "Complete the review and confirm the details. Percentages must be between 0 and 100." };
+  const item = (await loadRadar()).items.find((i) => i.id === id);
+  if (!item?.isin || item.classification?.kind !== "stock" || item.classification.needsReview ||
+      (!item.ownedInTracker && !item.rules?.holdingConfirmed))
+    return { ok: false, error: "A confirmed stock holding with an exact ISIN is needed. Update your holdings first." };
+  const { error } = await supabase.from("radar_watchlist")
+    .update({ holding_review: { ...parsed.data, isin: item.isin, reviewedAt: new Date().toISOString() } })
+    .eq("id", id).eq("user_id", user.id).select("id").single();
+  if (error) return { ok: false, error: "Couldn't save the holding review. Try again." };
+  revalidatePath("/radar", "layout");
+  return { ok: true };
 }

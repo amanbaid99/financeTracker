@@ -100,6 +100,7 @@ export interface WatchItem extends RadarInstrument {
   rules?: RuleSettings;
   classification?: InstrumentClassification;
   ownedInTracker?: boolean;
+  holdingReview?: import("./holding-review").HoldingReview;
   holdingContext?: import("./holding-context").HoldingContext;
 }
 export interface RadarSnapshot {
