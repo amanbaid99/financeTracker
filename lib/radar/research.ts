@@ -1,5 +1,6 @@
 import type { InstrumentClassification } from "./classification";
 import { evaluateGold, type GoldStudy } from "./gold-model";
+import { evaluateStockPosition, type StockPositionStudy } from "./stock-position";
 import { evaluateStock, type StockStudy } from "./stock-model";
 import type { Candle, RadarAnalysis, RadarAsset } from "./contracts";
 import { previousCompletedSession } from "./calendar";
@@ -28,6 +29,7 @@ export interface ResearchResult {
   score: null;
   goldStudy?: GoldStudy;
   stockStudy?: StockStudy;
+  stockPositionStudy?: StockPositionStudy;
   blockers: {
     label: string;
     owner: "source" | "development" | "refresh" | "context";
@@ -44,6 +46,7 @@ export function automaticResearch({
   today,
   now,
   owned = false,
+  positionContext,
   candles = [],
 }: {
   analysis: RadarAnalysis | null;
@@ -54,11 +57,13 @@ export function automaticResearch({
   today: string;
   now: string;
   owned?: boolean;
+  positionContext?: unknown;
   candles?: Candle[];
 }): ResearchResult {
   const expected = previousCompletedSession(today, exchange);
   let goldStudy: GoldStudy | undefined;
   let stockStudy: StockStudy | undefined;
+  let stockPositionStudy: StockPositionStudy | undefined;
   const checks: ResearchCheck[] = [];
   const reasons: string[] = [];
   const add = (
@@ -82,6 +87,7 @@ export function automaticResearch({
     score: null,
     goldStudy,
     stockStudy,
+    stockPositionStudy,
     blockers: checks.filter((c) => c.state === "missing").map((c) => ({
       label: c.label,
       owner: c.id === "model" ? "development" : c.id === "portfolio" ? "context" :
@@ -142,8 +148,12 @@ export function automaticResearch({
         : "Price history is available, but corporate-action adjustments are unverified. Momentum cannot establish a buying opportunity.",
   );
   if (asset === "equity") {
-    stockStudy = evaluateStock({ candles, adjustmentsVerified: analysis.inputs.adjustmentsVerified,
-      sources: analysis.stockSources, isin, expectedSession: expected, now });
+    const stockInput = { candles, adjustmentsVerified: analysis.inputs.adjustmentsVerified,
+      sources: analysis.stockSources, isin, expectedSession: expected, now };
+    if (owned) {
+      stockPositionStudy = evaluateStockPosition(stockInput, positionContext);
+      stockStudy = stockPositionStudy.entryStudy;
+    } else stockStudy = evaluateStock(stockInput);
     const reports = analysis.financials;
     if (!reports && analysis.financialsError) add("company-reports", "Company report collection", "missing", analysis.financialsError);
     if (reports) add("company-reports", "Company report collection",
