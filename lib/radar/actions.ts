@@ -65,10 +65,10 @@ export async function addRadar(input: z.input<typeof watchSchema>) {
     .from("radar_watchlist")
     .select("id", { count: "exact", head: true })
     .eq("user_id", user.id);
-  if ((count ?? 0) >= 30)
+  if ((count ?? 0) >= 10)
     return {
       ok: false,
-      error: "Keep up to 30 instruments in your personal watchlist.",
+      error: "Keep up to 10 instruments in your watchlist. Remove one to add another.",
     };
   const detected = classifyInstrument(instrument);
   const { error } = await supabase.from("radar_watchlist").insert({

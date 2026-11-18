@@ -1,5 +1,6 @@
 "use client";
 
+import { RadarDipPlan } from "@/components/radar-dip-plan";
 import { cn } from "@/lib/utils";
 import { leanClass } from "@/components/radar-insight";
 import { experimentalInsight } from "@/lib/radar/insight";
@@ -83,17 +84,31 @@ export function RadarWorkspace({
           Connection and data checks
         </Link>
       </section>
+      {items.length > 0 && (
+        <RadarDipPlan
+          items={items.map((item) => ({
+            id: item.id,
+            symbol: item.symbol,
+            priceBelow: item.priceBelow,
+            owned:
+              item.ownedInTracker === true ||
+              item.rules?.holdingConfirmed === true,
+            analysis:
+              snapshots.find((s) => s.watchId === item.id)?.analysis ?? null,
+          }))}
+        />
+      )}
       <section className="space-y-3" data-guide="radar-watchlist">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold">
             My watchlist{" "}
             <span className="text-sm font-normal text-muted-foreground">
-              {items.length}/30
+              {items.length}/10
             </span>
           </h2>
           <Button
             size="sm"
-            disabled={!connection.ok || items.length >= 30}
+            disabled={!connection.ok || items.length >= 10}
             onClick={() => setOpen(true)}
           >
             <Plus className="size-4" aria-hidden /> Add

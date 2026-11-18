@@ -3,6 +3,10 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 18 Nov 2026.
 
+## Today's dip plan and Refresh all, 18 Nov 2026
+
+The Radar page now opens with "Today's dip plan": one Refresh all button (refreshes each item in turn; "just refreshed" counts as up to date), a "Money for dips" budget (default ₹5,000, remembered on the device) split evenly across the watchlist, and for each item two buy orders (price, whole quantity, amount): the saved buy price or nearest suggested dip, then a deeper one (falling back to the one-year low). Held items also get a take-profit price. Reached steps are highlighted. The app never places orders. The watchlist is capped at 10 items. Code: `lib/radar/dip-plan.ts`, `components/radar-dip-plan.tsx`; tests: `tests/unit/radar-dip-plan.test.ts`.
+
 ## Experimental Radar insight and level suggestions, 18 Nov 2026
 
 The owner chose the faster route to Buy/Hold/Sell insight. Radar items now show an "Experimental insight" lean with every reason listed (trend, 50/200-day averages, RSI, one-year range, NAV premium for funds, and the paper stock score once complete), on the list and at the top of each item. The automatic research result stays gated beneath it. The price-alert form explains how to choose levels and offers suggestions from the item's own year of prices (200-day average, typical three-month swing, one-year high and low); tapping fills the field, Save stores it. NIFTYIETF's type was corrected to index ETF in the hosted watchlist at the owner's request; its next refresh uses the ETF checks. Unit tests: `tests/unit/radar-insight.test.ts`.
