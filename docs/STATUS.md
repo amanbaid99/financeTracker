@@ -3,6 +3,14 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 18 Nov 2026.
 
+## Ratio budget planner prepared, 18 Nov 2026
+
+Implemented Plan my budget in the Budget tab: salary, editable main percentage buckets, nested parent-share ratios, goal links, custom labels, suggested main/detail splits and explicit Save budget. Recorded income and commitments remain available below. Warnings disclose underfunded costs, EMIs and SIPs. The planner does not execute payments or change recorded income, SIPs, expenses or goals.
+
+New migration `20261118173158_budget_ratio_plan.sql` creates one owner-scoped document per user with RLS and account-deletion cascade. No hosted DDL or user-data writes have been applied. Two Supabase metadata calls never returned and were aborted; the CLI fallback reports AccessTokenRequiredError. Release is pending this migration, so the feature has not been pushed to the production branch.
+
+Verification: lint, TypeScript, 585 unit tests including actual embedded PostgreSQL owner CRUD/anonymous/cascade checks, 40 Python CAS tests and production build passed. Twelve Chromium cases cover four widths and three themes; manual scenarios cover custom main buckets, main and child totals, salary-to-child amounts, save/reload, cancel and failed saves. Full local signed-in/RLS API tests remain blocked by the previously confirmed Supabase Docker image-download restriction. The new integration regression is prepared. No external AI calls or production secret retrieval occurred.
+
 ## Home milestone priority, 18 Nov 2026
 
 Home now chooses the unfinished milestone with the smallest rupee amount left, across all cards. Deadline is only a tie-breaker after equal remaining amounts and progress. Completed, expired and invalid targets stay excluded; card-loan EMIs still do not count. This replaces deadline-first selection at the owner's request. Verified: lint, TypeScript, 19 Home/card unit tests and production build passed. No schema or stored data changes.

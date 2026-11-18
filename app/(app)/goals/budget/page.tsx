@@ -6,19 +6,23 @@ import {
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { BudgetRatioPlanner } from "@/components/budget-ratio-planner";
+import { loadRatioPlan } from "@/lib/budget-ratio-data";
 import { BudgetPlanner } from "@/components/budget-planner";
 import { GuideButton } from "@/components/guides";
 import { runwayHeadline } from "@/components/runway-card";
 import { formatINR } from "@/lib/format";
-import { loadBudget, loadRunway } from "@/lib/data";
+import { loadBudget, loadRunway, loadGoals } from "@/lib/data";
 
 export const metadata: Metadata = { title: "Budget" };
 
 /** The Budget tab: money in and out each month, and, between jobs, whether you're covered till salary. */
 export default async function BudgetPage() {
-  const [{ incomes, costs, loanEmis, sips, plan }, r] = await Promise.all([
+  const [{ incomes, costs, loanEmis, sips, plan, budget }, r, ratio, g] = await Promise.all([
     loadBudget(),
     loadRunway(),
+    loadRatioPlan(),
+    loadGoals(),
   ]);
   const head = r.active && r.runway ? runwayHeadline(r.runway) : null;
   const runwayRow = (
@@ -62,11 +66,14 @@ export default async function BudgetPage() {
           <GuideButton id="budget" />
         </div>
         <p className="text-sm text-muted-foreground">
-          What comes in, what goes out, and what&apos;s left to invest each
-          month.
+          Choose how your salary supports everyday life and your goals.
         </p>
       </div>
       {head && runwayRow}
+      <BudgetRatioPlanner initial={ratio.plan} salary={budget.income} context={{ costs, loanEmis, sips, goals: g.goals, today: g.today }} loadError={ratio.error} />
+      <details className="rounded-2xl border bg-card p-4">
+      <summary className="cursor-pointer font-medium">Recorded income and commitments</summary>
+      <p className="my-3 text-sm text-muted-foreground">These are the current amounts used by your goal and SIP plan. Update them here when they change.</p>
       <BudgetPlanner
         incomes={incomes}
         costs={costs}
@@ -75,6 +82,7 @@ export default async function BudgetPage() {
         planMonthly={plan?.monthly ?? null}
         between={r.active}
       />
+      </details>
       {/* Not between jobs: a quiet link at the end. */}
       {!head && runwayRow}
     </main>

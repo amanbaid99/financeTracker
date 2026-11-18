@@ -147,6 +147,26 @@ describe("personal Radar", () => {
   });
 });
 
+describe("personal ratio budget", () => {
+  it("keeps each saved plan private and prevents changing its owner", async () => {
+    const plan = { version: 1, salary: 100000, buckets: [] };
+    const inserted = await a.from("budget_ratio_plans").upsert({ user_id: idA, plan });
+    expect(inserted.error).toBeNull();
+    const own = await a.from("budget_ratio_plans").select("plan").eq("user_id", idA).single();
+    expect(own.error).toBeNull();
+    expect(own.data?.plan).toEqual(plan);
+    const other = await b.from("budget_ratio_plans").select("user_id").eq("user_id", idA);
+    expect(other.error).toBeNull(); expect(other.data).toEqual([]);
+    expect((await b.from("budget_ratio_plans").insert({ user_id: idA, plan })).error).toBeTruthy();
+    const update = await b.from("budget_ratio_plans").update({ plan: {} }).eq("user_id", idA).select("user_id");
+    expect(update.error).toBeNull(); expect(update.data).toEqual([]);
+    expect((await a.from("budget_ratio_plans").update({ user_id: idB }).eq("user_id", idA)).error).toBeTruthy();
+    const deletion = await b.from("budget_ratio_plans").delete().eq("user_id", idA).select("user_id");
+    expect(deletion.error).toBeNull(); expect(deletion.data).toEqual([]);
+    expect((await a.from("budget_ratio_plans").delete().eq("user_id", idA)).error).toBeNull();
+  });
+});
+
 describe("row level security", () => {
   let streamA = "";
   let goalA = "";

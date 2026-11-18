@@ -34,6 +34,13 @@ export type Database = {
   };
   public: {
     Tables: {
+      budget_ratio_plans: {
+        Row: { user_id: string; plan: Json; updated_at: string };
+        Insert: { user_id?: string; plan: Json; updated_at?: string };
+        Update: { user_id?: string; plan?: Json; updated_at?: string };
+        Relationships: [];
+      };
+
       radar_access: {
         Row: {
           user_id: string;

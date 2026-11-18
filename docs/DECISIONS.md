@@ -3,6 +3,14 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Ratio budget planner, 18 Nov 2026
+
+The owner requested one saved monthly budget with salary, custom percentage buckets and smaller allocations within each bucket. Main ratios total 100%; child ratios share their parent and may total less than 100%, leaving visible unassigned money. Amounts use integer rupees with deterministic rounding. Defaults and suggestions are editable before Save budget.
+
+Suggestions use recorded costs, scheduled EMIs and existing SIPs once, then split remaining money between savings and investing. Unfinished emergency savings receive more of the remainder. Goal details follow the existing goal order and monthly needs; completed goals are excluded. This uses local calculations, not external AI. Saving the ratio plan does not change income, expense, SIP, loan-payment or goal records. The existing tools remain under Recorded income and commitments.
+
+One owner-scoped `budget_ratio_plans` row stores the document. RLS protects all CRUD operations and account deletion cascades to it. The server validates ratios, IDs and ownership of goal links. The schema migration must be applied before publishing the UI.
+
 ## Current direction, 18 Nov 2026
 
 The owner replaced Investment Radar with a compact Home page at `/today`. Home is the start page and shows current net worth, the first three unfinished goals in the shared goal order, the unfinished card milestone with the smallest eligible spending amount left and existing updates due. Five tabs are Home, Goals, Net worth, Budget and Cards. The plus button remains sticky at bottom right. This overrides older no-Home and Radar decisions below.

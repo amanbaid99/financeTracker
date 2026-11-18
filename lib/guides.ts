@@ -93,13 +93,15 @@ export const GUIDES: Record<GuideId, Guide> = {
   },
   budget: {
     title: "Your budget",
-    intro: "What comes in, what's fixed, and what's free to invest each month.",
+    intro: "Plan your salary with editable buckets and smaller goal allocations.",
     steps: [
-      "Add your take-home pay and your monthly costs. EMIs from your loan goals and SIPs from your investments are counted for you.",
-      "The top card shows what's left to invest a month, with a bar of where your take-home goes: costs, EMIs, SIPs and what's free.",
-      "Next step suggests one thing to do: add your pay, put what's free to work in your plan, or trim your biggest cost if more goes out than comes in.",
-      "Costs are listed biggest first, each with a bar for its share. Tap a line to change it.",
-      "Between jobs? Covered till salary at the top shows whether your money lasts till your salary, with a weekly amount to spend. Tap it to set your salary dates.",
+      "Enter your monthly take-home salary. Main bucket percentages must add to 100%.",
+      "Start with the editable split, create custom buckets, or tap Suggest a split to use your recorded costs, EMIs, SIPs and goals.",
+      "Open Add details for smaller buckets. Their percentages are shares of that main bucket, not shares of salary. Savings of ₹15,000 with 60% for an emergency fund means ₹9,000 for that fund.",
+      "Link smaller buckets to your goals or enter your own labels. Suggest details uses current commitments or unfinished goals in your order. Money left within a bucket stays unassigned.",
+      "Review warnings for costs, EMIs or SIPs that the split cannot cover. Suggestions are starting points, not investment advice.",
+      "Tap Save budget to keep one plan across devices. Nothing is saved by suggesting or editing. Saving does not change income, expenses, SIPs or loan payments.",
+      "Recorded income and commitments below keeps the existing income, cost and goal-plan tools. Between jobs, Covered till salary remains available.",
     ],
   },
   ask: {
@@ -138,6 +140,9 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-18", title: "Plan your salary your way", items: [
+    { title: "A budget with your own buckets", text: "Set your salary and percentages for fixed costs, investing, debt, savings or custom buckets. Add smaller allocations inside each. Suggest a split uses your commitments and goals, then you edit and save one monthly plan.", show: { path: "/goals/budget", target: "ratio-budget" } },
+  ] },
   { date: "2026-11-18", title: "A simpler home for your money", items: [
     { title: "Home brings the essentials together", text: "See current net worth, three focus goals, your card milestone with the smallest amount left and updates due. Open each section for details." },
     { title: "Simple portfolio updates", text: "Upload CAS for funds and ETFs. Update other balances manually. Performance comparisons, market-price controls and Radar have been removed. Your existing records are retained." },

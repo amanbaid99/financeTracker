@@ -1023,6 +1023,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Budget: take-home and costs give what's free, which can feed the plan.
   await tab("Budget").click();
   await expect(page.getByRole("heading", { name: "Budget", exact: true })).toBeVisible();
+  await page.getByText("Recorded income and commitments", { exact: true }).click();
   await page.getByLabel("Salary a month").fill("200000");
   await page.getByRole("button", { name: "Save Salary" }).click();
   await expect(page.getByRole("button", { name: "Save Salary" })).toHaveCount(0);

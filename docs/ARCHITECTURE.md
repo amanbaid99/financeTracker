@@ -7,6 +7,10 @@ decisions are in [DECISIONS.md](DECISIONS.md).
 
 The signed-in entry is `/today` (Home). It reads cached owner-scoped goals, cards, loans and recorded balances. `lib/home.ts` selects three unfinished goals and the next unfinished milestone without side effects. Portfolio accepts CAS imports and manual current-balance updates. Radar UI and price-refresh actions are removed; stored data and pure research libraries remain archived. No active route depends on broker tokens.
 
+## Ratio budget planner
+
+`lib/budget-ratios.ts` validates and calculates one monthly ratio plan. Main shares total 100%; child shares are of their parent and may leave money unassigned. `BudgetRatioPlanner` keeps edits local until an explicit `saveRatioPlan` action validates ownership and upserts the signed-in user's `budget_ratio_plans` row. This is independent from the existing goal/SIP money plan and recorded income/expenses. `loadRatioPlan` uses an owner-filtered read; a failed load disables saving rather than overwriting an unseen plan.
+
 ## Stack
 
 - **Next.js 16 App Router** with React 19.3, TypeScript, Tailwind CSS v4. Server components load
@@ -48,7 +52,7 @@ The signed-in entry is `/today` (Home). It reads cached owner-scoped goals, card
 | `/goals/plan` | Your plan: where the money goes and why, and this month's SIP steps, with Edit order |
 | `/goals/salary` | Covered till salary: salary dates, money you can reach, EMIs, living costs and bills till salary |
 | `/goals/order` | Your order for the plan (`goals.plan_rank`), from Edit order on Your plan |
-| `/goals/budget` | Budget tab (own tab, though under /goals): Covered till salary card between jobs, take-home, monthly costs, EMIs and SIPs from the app, free to invest |
+| `/goals/budget` | Budget tab (own tab, though under /goals): Plan my budget ratio buckets and nested allocations; recorded income/commitments and Covered till salary remain available |
 | `/goals/new`, `/goals/[id]` | New goal; one goal with its plan, investments and suggestions          |
 | `/assets`                   | Net worth tab: net worth today, what you owe (loans), what you own (total, allocation, holdings) |
 | `/assets/net-worth`         | Net worth, what you own and what you owe over time, by asset class and by loan |
