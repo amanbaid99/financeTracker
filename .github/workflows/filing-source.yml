@@ -6,6 +6,9 @@ on:
     paths:
       - "scripts/radar/filing-probe.mjs"
       - "scripts/radar/source-samples.json"
+      - "scripts/radar/review-filing-samples.py"
+      - "api/_radarfiling.py"
+      - "tests/python/test_radarfiling.py"
       - ".github/workflows/filing-source.yml"
 
 permissions:
@@ -24,6 +27,11 @@ jobs:
           node-version: 22
       - name: Fetch bounded public filing sample
         run: node scripts/radar/filing-probe.mjs artifacts/filings
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Verify parser against audited public sample
+        run: python scripts/radar/review-filing-samples.py artifacts/filings
       - name: Save public sample and source diagnostics
         if: always()
         uses: actions/upload-artifact@v4

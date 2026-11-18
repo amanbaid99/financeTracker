@@ -2,6 +2,18 @@
   {
     "name": "selected-consolidated-annual",
     "url": "https://nsearchives.nseindia.com/corporate/ixbrl/INTEGRATED_FILING_INDAS_153832_28042026202149_iXBRL_WEB.html",
-    "expectedIsin": "INE758T01015"
+    "expectedIsin": "INE758T01015",
+    "expectedReview": {
+      "fiscalEnd": "2026-03-31",
+      "basis": "consolidated",
+      "reportedValues": {
+        "revenue": "5436400.00",
+        "net-profit": "36600.00",
+        "diluted-eps": "0.39",
+        "cash-equivalents": "99600.00",
+        "operating-cash": "63200.00",
+        "purchase-ppe": "175100.00"
+      }
+    }
   }
 ]

@@ -1,7 +1,15 @@
 # Status
 
 What's live, what's open and the known gaps. Update this at the end of every task.
-Last updated: 17 Nov 2026.
+Last updated: 18 Nov 2026.
+
+## Uploaded annual filing parser, 18 Nov 2026
+
+The owner supplied an approved local PDF copy of the selected official annual filing. This unblocks direct document review without changing the workspace network policy. The new deterministic _radarfiling.py parser extracted 14 facts from the real 23-page copy with no row issues. It verifies the selected ISIN, dates, currency/scale and reporting basis, chooses the audited full-year column by start/end dates, separates balance/cash-flow sections and normalizes monetary values with Decimal while leaving EPS unscaled. It does not use print/board dates as publication times, execute HTML, send data to AI, retain raw names or enable investment recommendations.
+
+Revenue, net profit and operating cash flow agree with the saved provider rows if the provider's monetary scale is crore. That does not verify its whole dataset or all periods. Reported EPS definitions remain unresolved, and total assets do not reconcile under that same scale assumption. The parser retains issues and accounting warnings; source authenticity, publication, recurring-earnings, accounting-comparability and valuation-readiness flags remain false. The original uploaded PDF/text is not committed. A synthetic fixture covers its logical structure.
+
+The same core has a bounded HTML reader. The public source CI workflow now runs it against the real source and checks selected facts against the reviewed PDF sample, retaining only parsed public evidence in its one-day artifact. Local verification: lint, TypeScript, 449 unit tests, 37 Python tests and production build passed. The real PDF produced 14 facts with no row issues; a new CI run will verify the HTML source path. No new HTTP endpoint, source key or hosted-data mutation is introduced. See investment-radar/STOCK_SOURCE_AUDIT.md.
 
 ## Public filing sample verification, 17 Nov 2026
 

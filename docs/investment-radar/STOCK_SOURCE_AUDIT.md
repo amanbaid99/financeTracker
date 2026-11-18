@@ -49,3 +49,22 @@ Inspect the artifact before implementing a source parser. CI network success is 
 [Public source probe run 44157374922](https://github.com/amanbaid99/financeTracker/actions/runs/44157374922) completed successfully for commit c044e26. It created artifact 14362820070, public-filing-source-sample, with one-day retention. This verifies that the runner fetched and bounded a real public source response, not that the financial parser is implemented.
 
 The downloaded file reference could not be retrieved into the workspace: its enforced revision-5 network policy excludes the NSE archive and the file-download host. The request to enable network access was interrupted, and a read-only status check confirmed that it had not taken effect. No alternative data-transfer route should be used to bypass that policy. The source sample must be obtained through approved network access or supplied as an approved local file before implementing and verifying a parser against its real format. The existing app, report coverage and paper gate remain deployed. No credentials were retrieved and no hosted portfolio/snapshot records were modified.
+
+
+## Approved uploaded copy and deterministic parsing, 18 Nov 2026
+
+The owner uploaded a 23-page browser-printed copy of the referenced consolidated annual filing. Its PDF SHA-256 is 04f1f7b7bece597cec5bf28e23920452d279d26f272b42f62b42319afa559d8a. The copy unblocks local review while network access remains restricted. The uploaded file and full extracted text are not committed.
+
+api/_radarfiling.py uses native PDF text extraction and deterministic section/column matching. It extracted 14 facts with no issues from this copy. It selects the audited annual column from explicit start/end dates; a fourth-quarter reporting header is not mistaken for the annual duration. It confines results to their main statement, excluding notes/segment revenue, and keeps balance and cash-flow scopes distinct. Currency and per-section scales must match; monetary values use exact decimal normalization. Basic and diluted EPS remain separate per-share facts. Printing time, board date and retrieval time do not establish publication time. Gross PPE purchases are not renamed total capex, and no cash/debt/EBITDA assumptions are silently filled.
+
+| Metric | Saved provider value | Filing value | Comparison |
+| --- | --- | --- | --- |
+| Revenue | 54,364 | 54,36,400 lakh | Numerically equal if provider scale is crore |
+| Net profit | 366 | 36,600 lakh | Same conditional equality |
+| Operating cash | 632 | 63,200 lakh | Same conditional equality |
+| Total assets | 40,722 | 40,73,600 lakh | Does not reconcile under that assumption |
+| EPS | 0.38, definition unspecified | Basic 0.40; diluted 0.39 | Definitions/adjustments need review |
+
+This does not verify every provider metric, historical period or rounding increment. The PDF copy alone does not authenticate its origin. Parser flags for authenticity, publication, recurring earnings, comparable accounting and valuation readiness remain false. No Buy/Hold/Sell result is released.
+
+The HTML adapter flattens document structure without executing scripts or fetching embedded resources. The CI review step checks the source hash, configured identity, period/basis and six facts corroborated by this copy. Successful sample assertions establish that source/template path only, not all NSE formats or investment-model validity. Future live ingestion must bind the parsed facts to the approved network fetch, preserve actual availability evidence and pass source/model validation. No new public parsing endpoint is added by this module.
