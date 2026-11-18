@@ -26,9 +26,6 @@ import {
 } from "@/lib/instruments";
 import { freePercent, type Investment, type Link } from "@/lib/tracker";
 
-
-/** Types with a market price, so units × latest price gives the value. */
-const MARKET_KINDS = new Set<string>(["mutual_fund", "stock", "gold"]);
 export function investmentTitle(i: Investment): string {
   return (
     i.name?.trim() ||
@@ -118,13 +115,6 @@ export function InvestmentSheet({
       : prefill?.monthlySip || null,
   );
   const [ret, setRet] = useState(investment?.returnPct?.toString() ?? "");
-  const [invested, setInvested] = useState<number | null>(
-    investment?.invested ?? null,
-  );
-  const [units, setUnits] = useState(
-    investment?.units != null ? String(investment.units) : "",
-  );
-  const [isin, setIsin] = useState(investment?.isin ?? "");
   const [percent, setPercent] = useState(
     String(
       initialPercent ??
@@ -188,13 +178,6 @@ export function InvestmentSheet({
         value: value ?? 0,
         monthlySip: sip ?? 0,
         returnPct: ret.trim() === "" ? null : Number(ret),
-        invested,
-        ...(MARKET_KINDS.has(kind)
-          ? {
-              units: units.trim() === "" ? null : Number(units),
-              isin: isin.trim() === "" ? null : isin.trim(),
-            }
-          : {}),
         percent: pct,
         fromPlan,
         // Money added to one of your funds from the plan's savings.
@@ -365,50 +348,6 @@ export function InvestmentSheet({
                 <MoneyInput id="i-sip" value={sip} onChange={setSip} />
               </Field>
             </div>
-            <Field
-              label="Amount invested (optional)"
-              htmlFor="i-invested"
-              hint="What you've put in so far, from your statement or app. Shows your gain or loss. A CAS import fills it in."
-            >
-              <MoneyInput
-                id="i-invested"
-                value={invested}
-                onChange={setInvested}
-              />
-            </Field>
-            {MARKET_KINDS.has(kind) && (
-              <div className="grid grid-cols-2 gap-3">
-                <Field
-                  label="Units held (optional)"
-                  htmlFor="i-units"
-                  hint="For Update prices."
-                >
-                  <Input
-                    id="i-units"
-                    type="number"
-                    inputMode="decimal"
-                    min="0"
-                    step="any"
-                    value={units}
-                    onChange={(e) => setUnits(e.target.value)}
-                  />
-                </Field>
-                <Field
-                  label="ISIN (optional)"
-                  htmlFor="i-isin"
-                  hint="12 characters, from your statement."
-                >
-                  <Input
-                    id="i-isin"
-                    value={isin}
-                    maxLength={12}
-                    autoCapitalize="characters"
-                    placeholder="INF…"
-                    onChange={(e) => setIsin(e.target.value.toUpperCase())}
-                  />
-                </Field>
-              </div>
-            )}
             {otherGoals > 0 && (
               <p className="text-xs text-muted-foreground">
                 {goalId

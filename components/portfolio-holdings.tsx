@@ -23,7 +23,6 @@ import type { Investment, Link } from "@/lib/tracker";
 import { cn } from "@/lib/utils";
 
 const pct = (n: number) => `${(n * 100).toFixed(Math.abs(n) < 0.1 ? 1 : 0)}%`;
-const signed = (n: number) => `${n >= 0 ? "+" : "−"}${formatINR(Math.abs(n))}`;
 const slotOf = (key: string) =>
   ASSET_CLASSES.find((c) => c.key === key)?.slot ?? 7;
 
@@ -118,15 +117,8 @@ export function PortfolioHoldings({
               >
                 <option value="value">Largest value</option>
                 <option value="name">Name A to Z</option>
-                <option value="growth">Highest growth %</option>
               </Select>
             </div>
-            {sort === "growth" && (
-              <p className="text-xs text-muted-foreground">
-                Simple growth, where the amount invested is known. Not an annual
-                return.
-              </p>
-            )}
           </>
         )}
       </div>
@@ -182,17 +174,6 @@ export function PortfolioHoldings({
                   <span className="tabular block text-sm">
                     {formatINR(h.value)}
                   </span>
-                  {h.gain !== null && h.gainPct !== null && (
-                    <span
-                      className={cn(
-                        "tabular block text-xs",
-                        h.gain >= 0 ? "text-success" : "text-danger",
-                      )}
-                    >
-                      {signed(h.gain)} ({h.gain >= 0 ? "+" : "−"}
-                      {pct(Math.abs(h.gainPct))})
-                    </span>
-                  )}
                 </span>
                 {editedDate(inv?.updatedAt) && (
                   <span className="col-span-2 ml-4 text-[11px] text-muted-foreground">

@@ -3,6 +3,10 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+## Current overview
+
+The signed-in entry is `/today` (Home). It reads cached owner-scoped goals, cards, loans and recorded balances. `lib/home.ts` selects three unfinished goals and the next unfinished milestone without side effects. Portfolio accepts CAS imports and manual current-balance updates. Radar UI and price-refresh actions are removed; stored data and pure research libraries remain archived. No active route depends on broker tokens.
+
 ## Stack
 
 - **Next.js 16 App Router** with React 19.3, TypeScript, Tailwind CSS v4. Server components load
@@ -113,7 +117,7 @@ unit tests in `tests/unit/`.
   `undoPlanStep` in `lib/actions.ts` record a ticked step and put it back.
 - **`lib/budget.ts`**: free to invest = income − costs − EMIs − SIPs, and the savings rate.
 - **Net worth**: `net_worth_history` (one row per day) is filled by database triggers on
-  `holdings` and `loans`. `loadNetWorth` in `lib/data.ts` reads it and adds a live point for today;
+  `holdings` and `loans`. The retained archive loader `loadNetWorth` reads it and adds a point for today; active Home and Portfolio use `loadCurrentNetWorth` without reading history;
   `components/net-worth-card.tsx` draws it as a small SVG chart (no chart library).
 - **`lib/ask/amount.ts`**: finds "where should ₹X go?" questions, splits the amount with
   `planMoney`/`planSteps` (codes only), and checks the reply's figures against the facts.

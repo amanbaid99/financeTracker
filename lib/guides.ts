@@ -3,7 +3,7 @@
 // from server and client code.
 
 export type GuideId =
-  | "radar"
+  | "home"
   | "goals"
   | "portfolio"
   | "cards"
@@ -19,21 +19,15 @@ export interface Guide {
 }
 
 export const GUIDES: Record<GuideId, Guide> = {
-  radar: {
-    title: "Your Investment Radar",
-    intro:
-      "Automatic research checks for the investments you choose, separate from your portfolio.",
+  home: {
+    title: "Your money at a glance",
+    intro: "Start here for the essentials, then open a section for details.",
     steps: [
-      "Search INDmoney by name, symbol or ISIN. The instrument metadata suggests whether it is a stock, Gold ETF or index ETF before you confirm.",
-      "Open an item for Automatic research. It uses your latest saved prices, official NAV and data-quality checks without asking you to set price rules.",
-      "Company reports is folded below stock trading data. It uses an optional separate financial-source key, exact ticker checks, exchange-directory matching for internal source IDs and a 24-hour reuse period. Retrieved reports do not become verified valuations or enable recommendations.",
-      "Stocks and ETFs share price and trading-depth checks. Stocks do not request NAV. Other ETFs keep an explicit model-unavailable label rather than falling into the stock or Gold model. Fundamental and underlying-index research still need their own verified sources.",
-      "Open Show unmatched dates within Published NAV history to compare actual price/NAV dates, including download-window differences. A spread failure now explains whether the source returned an empty book, rejected access or could not be read. None of these diagnostics fabricates missing values or confirms a market timestamp.",
-      "Published NAV history shows a dated secondary-source chart when the scheme code, ISIN and latest NAV match AMFI. Unknown publication times and adjustments still block trading-model use.",
-      "Refresh research fetches current source data. Wait can identify a verified entry risk, such as an excessive same-day NAV premium. Research not ready explains missing source connections or model work. Insufficient data flags an instrument or latest-session data that cannot be checked.",
-      "Buy candidates, Hold and exit reviews need completed verified research and, for holding or selling, ownership and portfolio context. A watchlist alone is not enough. Missing inputs never force a conclusion.",
-      "Optional price alerts are folded below the research and charts. They compare levels you enter and are not automatic investment recommendations. Notifications are not enabled yet.",
-      "Only your account can access Radar. The plus button sits above the bottom-right corner so all five tabs fit.",
+      "Net worth is your recorded holdings minus loan balances. It is not a live market value.",
+      "Focus goals shows the first three unfinished goals in your Goals order.",
+      "Next card milestone shows the soonest unfinished target, based on eligible spending you have logged.",
+      "Updates due reminds you about missing statements, monthly loan balances and a recent CAS. No payment is assumed missed.",
+      "Tap the sticky + button to add a goal, upload CAS or update amounts. Add new cards in Cards.",
     ],
   },
   "quick-add": {
@@ -42,7 +36,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap + above the bottom-right corner of the navigation for your everyday actions.",
     steps: [
       "New goal adds something you want to save for.",
-      "Update values lets you enter the latest amounts for your investments.",
+      "Update amounts lets you enter the latest amounts for your investments.",
       "Import statement reads a CAS. You review the results before saving.",
       "Plan my money helps split what you can invest across goals.",
       "Log a card bill records a statement for an existing card. Add a new card in the Cards tab.",
@@ -59,7 +53,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
       "Every goal shows in one list, in your order. The first three are under Focus on these first, the rest under Everything else. A goal on hold keeps its place. Change order to move any goal, loans included.",
       "Loans are goals too. Each shows what's left, the EMI and when it ends. Confirm the outstanding amount from your lender each month. Once confirmed, it stays until your next update. Older schedule-based balances and future payoff figures are estimates.",
-      "Tap +, then Update values to enter new amounts, or Import statement to update funds from a CAS.",
+      "Tap +, then Update amounts to enter new amounts, or Import statement to update funds from a CAS.",
       "Between jobs? Your savings goals wait, On hold till salary. The Budget tab shows whether your money lasts till then.",
       "Your plan (top right) shows how your monthly money is split, top of your order first. Edit order there to choose which goals come first.",
       "A Next step card shows when there's something to do: set your budget, start a SIP plan or set up this month's SIPs. Tap Not now to hide it. ",
@@ -75,9 +69,9 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro: "What you own and what you owe, in one place.",
     steps: [
       "What you owe lists each loan with its balance and how much is repaid. Tap one to open its goal and update it.",
-      "Net worth at the top is what you own minus what you owe on loans. Tap See progress over time for charts of net worth, what you own and what you owe, plus each loan's progress.",
+      "Net worth at the top is what you own minus what you owe on loans. Current balances stay visible without performance charts.",
       "The overview shows your total, monthly investments and asset split. One bar and small chips with each share. Tap a chip to filter the holdings below, and again to clear it. Switch to Instrument to see it by kind of investment, like mutual funds, stocks or EPF.",
-      "Search holdings by name or category. Sort by value, name or simple growth. Unknown growth comes last. Growth compares today's value with what you put in, not an annual return.",
+      "Search holdings by name or category. Sort by value or name. Upload CAS for funds and ETFs, and update other balances manually.",
       "Last edited is when a holding record changed, not a market price date. CAS import dates are recorded for new successful imports; older dates may be unknown.",
       "Tap + to add an investment or saving, update values or import a CAS statement. Tap a holding to edit it.",
     ],
@@ -144,132 +138,10 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
-  { date: "2026-11-18", title: "Radar waits for current prices", items: [{ title: "Outdated prices pause action prompts", text: "Experimental insights and the dip plan now check the latest completed exchange session. Saved closes stay visible with dates, but outdated rows receive no budget, suggested levels or reached prompts. CAS imports also preserve zero units after a full redemption." }] },
-  { date: "2026-11-18", title: "Price history now records the confirmed adjustment policy", items: [{ title: "Refresh to see the price basis", text: "New Radar refreshes record INDmoney's split and bonus adjustment policy. Volume remains raw, dividends and some other actions are excluded, and these are price-only charts. Existing snapshots keep their original labels. Liquidity and Buy/Hold/Sell still need their own verification." }] },
-  { date: "2026-11-18", title: "Prepare your holding review", items: [{ title: "Save your own review inputs", text: "For a confirmed stock holding, open Your holding, then Review holding details. Set your target share, allowance, reason for owning it and estimated exit cost. Confirm and Save, or remove the review later. This prepares context while the investment assessment remains pending." }] },
-  {
-    date: "2026-11-18",
-    title: "See your holding alongside research",
-    items: [{ title: "Recorded value and portfolio share", text: "Open Your holding in Radar to see the saved value and share of tracked investments for an exact ISIN match. This is holding context, not a target allocation or a live broker balance. Automatic Hold/Sell assessments still need further context and validated research." }],
-  },
-  {
-    date: "2026-11-18",
-    title: "Compare reports with a reviewed filing",
-    items: [{
-      title: "See agreements and unresolved definitions",
-      text: "Where a reviewed annual filing is available, Company reports now has a folded comparison. It uses the same reporting date and shows numeric agreements under an explicit scale assumption, differences and EPS definitions needing review. This does not enable investment recommendations.",
-    }],
-  },
-  {
-    date: "2026-11-17",
-    title: "Company reports show remaining gaps",
-    items: [{
-      title: "Align report dates and check comparable accounting",
-      text: "Company reports now shows matching year ends and missing financial fields. Interim balances are kept separate from annual cash flows. Accounting changes and recurring earnings must be verified before the paper model can score growth or valuation.",
-    }],
-  },
-  {
-    date: "2026-11-17",
-    title: "Stock identity checks use ISIN too",
-    items: [{
-      title: "Match the security when ticker IDs are absent",
-      text: "Company reports can match a source-profile ISIN against the selected instrument. Conflicting identifiers stop collection. Missing identifiers now retain safe field-type diagnostics for investigation. This does not enable Buy, Hold or Sell.",
-    }],
-  },
-  {
-    date: "2026-11-17",
-    title: "Stock assessment enters paper testing",
-    items: [{
-      title: "Quality, valuation, growth and price checks",
-      text: "A first stock model is implemented for profitable non-financial businesses. Open Data checks and limitations for its missing inputs. It requires verified reports and comparable valuations. Paper results do not enable live Buy, Hold or Sell recommendations.",
-    }],
-  },
-  {
-    date: "2026-11-17",
-    title: "Stricter stock identity mapping",
-    items: [{
-      title: "Check source IDs against exchange symbols",
-      text: "Company reports can now match internal provider IDs through the source exchange directory. Missing, ambiguous and old-symbol matches still stop collection. Source failures also appear in the research checks. This does not enable investment recommendations.",
-    }],
-  },
-  {
-    date: "2026-11-17",
-    title: "Clearer Radar details",
-    items: [{
-      title: "Bottom navigation and report errors",
-      text: "Bottom controls now sit outside page containers on a solid background. Company reports explains when a configured source failed verification, instead of asking you to repeat the same refresh.",
-    }],
-  },
-  {
-    date: "2026-11-17",
-    title: "Optional stock company reports",
-    items: [{
-      title: "A separate financial-data connection",
-      text: "Stocks can collect annual results, balance sheets and cash flow through an optional IndianAPI key configured in Vercel. Exact ticker matching and report-source errors are checked; successful collections are reused for 24 hours. Company reports stay separate from unfinished valuation models and ETF research.",
-    }],
-  },
-  {
-    date: "2026-11-17",
-    title: "See why market-data checks differ",
-    items: [{
-      title: "Compare dates and diagnose spread failures",
-      text: "Stocks and ETFs now share market-depth diagnostics. NAV history compares actual dates, not just counts. Unsupported ETFs stay out of stock and Gold models. These checks improve source clarity; they do not release unfinished stock, index or ETF recommendations.",
-    }],
-  },
-  {
-    date: "2026-11-17",
-    title: "Historical NAV in Radar",
-    items: [{
-      title: "A dated history with source checks",
-      text: "Refresh research now attempts historical ETF NAV from MFapi after checking the official AMFI scheme identity and latest NAV. Open Published NAV history for the chart. A failed history request leaves current prices and official NAV intact. Publication times and adjustments remain unverified, so history does not enable investment calls.",
-    }],
-  },
-  {
-    date: "2026-11-17",
-    title: "Clearer research readiness",
-    items: [{
-      title: "See what is actually blocked",
-      text: "Radar separates missing source connections from model work. Gold calculations and historical comparison tools are in paper testing, not released recommendations. Refresh updates market data but cannot finish model validation.",
-    }],
-  },
-  {
-    date: "2026-11-17",
-    title: "Automatic research comes first",
-    items: [
-      {
-        title: "No price-rule setup needed",
-        text: "Radar now opens with automatic source and research checks. Verified entry risks can show Wait; missing data or unfinished models stay clearly labelled. Manual price alerts are optional and folded away.",
-      },
-      {
-        title: "ETF types and BSE dates",
-        text: "ETF names and exact AMFI ISIN matches correct legacy stock labels in research. NSE and BSE both have verified remaining-2026 session dates. Unverified quote timestamps never count as fresh market evidence.",
-      },
-    ],
-  },
-  {
-    date: "2026-11-17",
-    title: "Radar price-rule signals and ETF checks",
-    items: [
-      {
-        title: "Buy, Hold, Sell or Wait from your rules",
-        text: "Enable saved entry and exit rules to see a dated price-rule signal. Sell needs confirmed ownership. ETF entries also need same-session NAV and a fresh, narrow spread. Full research scores stay separate and unavailable while their inputs are incomplete.",
-      },
-      {
-        title: "Official ETF NAV",
-        text: "ETF refresh now looks up AMFI NAV by ISIN and fetches INDmoney bid-ask depth. Mismatched dates and unverified quote timestamps are shown, never passed off as fresh data.",
-      },
-    ],
-  },
-  {
-    date: "2026-11-17",
-    title: "Personal Investment Radar",
-    items: [
-      {
-        title: "Your private research watchlist",
-        text: "Radar starts with INDmoney search, a watchlist, daily price history and provisional indicators. It is separate from your holdings. Full buying signals and Telegram monitoring need more verified data and are not enabled yet.",
-      },
-    ],
-  },
+  { date: "2026-11-18", title: "A simpler home for your money", items: [
+    { title: "Home brings the essentials together", text: "See current net worth, three focus goals, your next unfinished card milestone and updates due. Open each section for details." },
+    { title: "Simple portfolio updates", text: "Upload CAS for funds and ETFs. Update other balances manually. Performance comparisons, market-price controls and Radar have been removed. Your existing records are retained." },
+  ] },
   {
     date: "2026-11-16",
     title: "A gentle reminder to stay up to date",
@@ -285,7 +157,7 @@ export const RELEASES: Release[] = [
       },
       {
         title: "CAS amounts clearly reviewed",
-        text: "The confirmation step shows invested amount changes as well as current values. A CAS without cost information preserves the amount already recorded.",
+        text: "Review current balances from the CAS before saving. Existing statement metadata stays recorded internally.",
       },
     ],
   },
@@ -390,7 +262,7 @@ export const RELEASES: Release[] = [
       },
       {
         title: "Net worth on Portfolio",
-        text: "Net worth, what you own minus loans, sits at the top of Portfolio. Tap See progress over time for charts of net worth, what you own and what you owe, and each loan's progress.",
+        text: "Net worth, what you own minus loans, sits at the top of Portfolio. Use current balances to see what you own and owe.",
       },
       {
         title: "+ is back in the middle",
@@ -504,7 +376,7 @@ export const RELEASES: Release[] = [
       },
       {
         title: "Imports that check with you",
-        text: "After reading a CAS, you confirm the values. If one fell a lot, you're asked whether you took money out. Then you see what changed: growth, withdrawals, biggest moves and new funds.",
+        text: "After reading a CAS, review your current balances and confirm before saving. Goal progress uses the amounts you saved.",
       },
     ],
   },
@@ -594,7 +466,7 @@ export const RELEASES: Release[] = [
     items: [
       {
         title: "A clearer plus menu",
-        text: "Update values and import statements from +. A first-use hint shows where to find them, with a guide in the menu. Add cards from the Cards tab.",
+        text: "Update amounts and import statements from +. A first-use hint shows where to find them, with a guide in the menu. Add cards from the Cards tab.",
       },
     ],
   },
@@ -622,7 +494,7 @@ export const RELEASES: Release[] = [
       },
       {
         title: "Clearer actions",
-        text: "Update values says what it does. Plan my money is easy to find even before you have a plan.",
+        text: "Update amounts says what it does. Plan my money is easy to find even before you have a plan.",
       },
       {
         title: "Know what changes",

@@ -503,6 +503,15 @@ export const loadMoneyPlan = cache(async () => {
   };
 });
 
+/** Current balances only. No performance history or market-price fetch. */
+export const loadCurrentNetWorth = cache(async () => {
+  const [g, loans] = await Promise.all([loadGoals(), loadLoans()]);
+  return {
+    assets: Math.round(g.investments.reduce((sum, i) => sum + i.value, 0)),
+    liabilities: Math.round(loans.reduce((sum, l) => sum + Math.max(0, loanView(l, g.today).state.balance), 0)),
+  };
+});
+
 /**
  * Net worth over time: holdings minus loans. Card statements are logged for
  * milestones only, so they don't count. The database keeps a row per day whenever a holding

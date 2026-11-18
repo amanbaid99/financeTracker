@@ -52,6 +52,13 @@ const state: Record<string, RowState> = {
   },
 };
 describe("CAS changes before confirmation", () => {
+  it("shows current balances without cost comparisons in the simplified import", () => {
+    const original = JSON.stringify(ready);
+    const [change] = describeChanges(ready, state, { includeInvested: false });
+    expect(change.lines).toEqual(["Current amount ₹10,000 (unchanged)"]);
+    expect(JSON.stringify(ready)).toBe(original);
+    expect(describeChanges(ready, state)[0].lines.join(" ")).toContain("Invested amount");
+  });
   it("recognises invested-only changes and missing previous cost", () => {
     const [change] = describeChanges(ready, state);
     expect(change.unchanged).toBe(false);

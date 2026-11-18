@@ -15,16 +15,8 @@ import type {
   Candle,
 } from "./contracts";
 
-export const radarAccess = cache(async () => {
-  const { supabase, user } = await requireUser();
-  const { data, error } = await supabase
-    .from("radar_access")
-    .select("user_id")
-    .eq("user_id", user.id)
-    .maybeSingle();
-  // A new feature must not break the existing shell while its migration is being deployed.
-  return { enabled: !error && !!data, unavailable: !!error };
-});
+// Radar was removed at the owner's request. Retain data but deny archived actions.
+export const radarAccess = cache(async () => ({ enabled: false, unavailable: false }));
 export async function requireRadar() {
   const access = await radarAccess();
   if (!access.enabled) notFound();

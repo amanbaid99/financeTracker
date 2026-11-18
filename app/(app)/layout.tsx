@@ -1,4 +1,3 @@
-import { radarAccess } from "@/lib/radar/data";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense, ViewTransition } from "react";
@@ -17,10 +16,9 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [needsConsent, { seenGuides, releases }, radar] = await Promise.all([
+  const [needsConsent, { seenGuides, releases }] = await Promise.all([
     needsPrivacyConsent(),
     loadOnboarding(),
-    radarAccess(),
   ]);
   if (needsConsent) redirect("/consent");
   return (
@@ -29,7 +27,7 @@ export default async function AppLayout({
         <ToastProvider>
           <header className="sticky top-0 z-30 bg-background/90 pt-[env(safe-area-inset-top)] backdrop-blur">
             <div className="mx-auto flex h-12 w-full max-w-3xl items-center justify-between gap-2 px-4">
-              <Link href="/goals" aria-label="Tracker home">
+              <Link href="/today" aria-label="Tracker home">
                 <Logo />
               </Link>
               <div className="flex items-center gap-1">
@@ -49,7 +47,7 @@ export default async function AppLayout({
             </ViewTransition>
             <DisclaimerFooter />
           </div>
-          <AppTabs radarEnabled={radar.enabled} />
+          <AppTabs />
           <Suspense fallback={null}>
             <NavHistory />
           </Suspense>

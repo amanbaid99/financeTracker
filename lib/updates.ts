@@ -67,7 +67,7 @@ export function updatesDue({
       key: `cas:${refreshMonth}`,
       title: "Refresh your investments",
       detail:
-        "Upload a recent CAS. Review invested and current amounts before saving.",
+        "Upload a recent CAS. Review current balances before saving.",
       href: "/import",
     });
   return items.filter(

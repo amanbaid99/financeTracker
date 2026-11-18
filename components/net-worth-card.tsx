@@ -1,6 +1,4 @@
-import { ChevronRight } from "lucide-react";
-import Link from "next/link";
-import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
+import { formatINR } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export interface NetWorthPoint {
@@ -14,13 +12,11 @@ export interface NetWorthPoint {
 export const signedINR = (n: number) =>
   `${n < 0 ? "−" : ""}${formatINR(Math.abs(n))}`;
 
-/** Today's net worth at a glance; the history lives on its own page. */
+/** Current recorded holdings minus loan balances, without performance comparisons. */
 export function NetWorthCard({ history }: { history: NetWorthPoint[] }) {
   if (!history.length) return null;
   const now = history[history.length - 1];
   const net = now.assets - now.liabilities;
-  const first = history[0];
-  const change = net - (first.assets - first.liabilities);
   const total = now.assets + now.liabilities || 1;
   return (
     <section
@@ -32,17 +28,6 @@ export function NetWorthCard({ history }: { history: NetWorthPoint[] }) {
         <h2 id="nw-h" className="text-xs text-muted-foreground">
           Net worth
         </h2>
-        {history.length > 1 && change !== 0 && (
-          <span
-            className={cn(
-              "tabular text-xs font-medium",
-              change > 0 ? "text-success" : "text-danger",
-            )}
-          >
-            {change > 0 ? "+" : "−"}
-            {formatINRCompact(Math.abs(change))} since {formatDate(first.day)}
-          </span>
-        )}
       </div>
       <p className="tabular -mt-2 text-3xl font-semibold tracking-tight">
         {signedINR(net)}
@@ -83,13 +68,7 @@ export function NetWorthCard({ history }: { history: NetWorthPoint[] }) {
           </div>
         ))}
       </dl>
-      <Link
-        href="/assets/net-worth"
-        className="-mb-1 flex min-h-11 items-center justify-between border-t pt-1 text-sm font-medium text-primary"
-      >
-        See progress over time
-        <ChevronRight className="size-4" aria-hidden />
-      </Link>
+
     </section>
   );
 }

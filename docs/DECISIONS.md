@@ -3,6 +3,12 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Current direction, 18 Nov 2026
+
+The owner replaced Investment Radar with a compact Home page at `/today`. Home is the start page and shows current net worth, the first three unfinished goals in the shared goal order, the next unfinished card milestone and existing updates due. Five tabs are Home, Goals, Net worth, Budget and Cards. The plus button remains sticky at bottom right. This overrides older no-Home and Radar decisions below.
+
+Portfolio uses current recorded balances only. Upload CAS for funds and ETFs; manually update other balances. No invested-versus-current, gain/loss, price refresh or performance chart controls. CAS identity and units safeguards remain internal, and every import still requires review and confirmation. Goal progress remains. Archived Radar libraries and stored financial records are retained, but Radar pages and actions are unavailable. No broker token is needed for the active app.
+
 ## What changed from SPEC.md
 
 SPEC.md was the first build plan (Oct 24, 2026). The app has since moved away from parts of it:

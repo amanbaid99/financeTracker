@@ -30,7 +30,7 @@ const ACTIONS = [
   },
   {
     href: "/goals?do=update",
-    label: "Update values",
+    label: "Update amounts",
     hint: "New amounts for your investments",
     icon: RefreshCw,
   },
@@ -50,7 +50,7 @@ const ACTIONS = [
 
 /** Where an action goes from this page: updates stay on Portfolio, and Import comes back to it. */
 function hrefFor(href: string, path: string): string {
-  if (path !== "/assets") return href;
+  if (path !== "/assets" && path !== "/today") return href;
   if (href === "/goals?do=update") return "/assets?do=update";
   if (href === "/import") return "/import?from=portfolio";
   return href;

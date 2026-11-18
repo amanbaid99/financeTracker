@@ -62,7 +62,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   expect(manifest.ok()).toBe(true);
   const manifestData = await manifest.json();
   expect(manifestData.icons.length).toBeGreaterThan(0);
-  expect(manifestData.start_url).toBe("/goals");
+  expect(manifestData.start_url).toBe("/today");
   expect((await page.request.get("/icon-192.png")).ok()).toBe(true);
 
   // Not invited: friendly error.
@@ -89,8 +89,12 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText("wrong or has expired")).toBeVisible();
   await page.getByLabel("Code from the email", { exact: true }).fill(code);
   await page.getByRole("button", { name: "Sign in", exact: true }).click();
-  await expect(page).toHaveURL(/\/goals$/);
-  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link")).toHaveCount(4);
+  await expect(page).toHaveURL(/\/today$/);
+  const homeGuide = page.getByRole("dialog", { name: "Your money at a glance" });
+  await expect(homeGuide).toBeVisible();
+  await homeGuide.getByRole("button", { name: "Got it" }).click();
+  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Goals", exact: true }).click();
+  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link")).toHaveCount(5);
   // First visit: the Goals guide pops up once, and (i) brings it back.
   // A new user gets no "What's new".
   const goalsGuide = page.getByRole("dialog", { name: "How goals work" });
@@ -124,8 +128,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
       await d.getByRole("button", { name: "Got it" }).click();
     });
   await closeGuides();
-  // Old pages a Home Screen app may still open go to Goals, including the
-  // removed Home page.
+  // Old Home aliases open Home; other legacy pages still open Goals.
   for (const old of [
     "/dashboard",
     "/month",
@@ -135,7 +138,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     "/overview",
   ]) {
     await page.goto(old);
-    await expect(page).toHaveURL(/\/goals$/);
+    await expect(page).toHaveURL(["/dashboard", "/overview"].includes(old) ? /\/today$/ : /\/goals$/);
   }
   // The session is stored in long-lived, server-set cookies (not capped at 7 days).
   const authCookies = (await page.context().cookies()).filter((c) =>
@@ -328,7 +331,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Update amounts for everything in one go.
   await page.evaluate(() => window.scrollTo(0, 0)); // + hides while scrolling down
   await page.getByRole("button", { name: "Add or update", exact: true }).click();
-  await page.getByRole("link", { name: /^Update values/ }).click();
+  await page.getByRole("link", { name: /^Update amounts/ }).click();
   await expect(
     page.getByText("Type in what each investment is worth today."),
   ).toBeVisible();
@@ -626,11 +629,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(
     page.getByText("Updated 2 and added 1 investment."),
   ).toBeVisible();
-  // Insights from the confirmed values.
-  await expect(page.getByRole("heading", { name: "What changed" })).toBeVisible();
-  await expect(page.getByText(/^Up ₹[\d,]+ since your last update$/)).toBeVisible();
-  await expect(page.getByText(/^1 new investment$/)).toBeVisible();
-  await page.screenshot({ path: "test-results/import-insights-375.png", fullPage: true });
+  // Current balances are confirmed without performance commentary.
+  await expect(page.getByText("Your goals now use the values from this statement.")).toBeVisible();
+  await expect(page.getByText(/^Up ₹[\d,]+ since your last update$/)).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "What changed" })).toHaveCount(0);
+  await page.screenshot({ path: "test-results/import-confirmed-375.png", fullPage: true });
   await page.getByRole("button", { name: "Back to your goals" }).click();
   // A covered bills fund is in the list with every other goal.
   await page.getByRole("button", { name: /^Bills fund/ }).click();
@@ -701,7 +704,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await page.evaluate(() => window.scrollTo(0, 0)); // + hides while scrolling down
   await page.getByRole("button", { name: "Add or update", exact: true }).click();
-  await page.getByRole("link", { name: /^Update values/ }).click();
+  await page.getByRole("link", { name: /^Update amounts/ }).click();
   await expect(page.getByText("Type in what each investment is worth today.")).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
   await expect(page.getByRole("button", { name: "Add an investment or saving" })).toBeVisible();
@@ -986,13 +989,13 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("link", { name: "Settings", exact: true }).first().click();
   // The tour points at real things, moving between tabs, and can be skipped.
   await page.getByRole("button", { name: "Take the tour" }).click();
-  const tourCard = page.getByRole("dialog", { name: "Your goals, in your order" });
+  const tourCard = page.getByRole("dialog", { name: "Your focus goals" });
   await expect(tourCard).toBeVisible();
-  await expect(page).toHaveURL(/\/goals$/);
+  await expect(page).toHaveURL(/\/today$/);
   await tourCard.getByRole("button", { name: "Next" }).click();
-  await expect(page.getByRole("dialog").filter({ hasText: /of 9/ })).toBeVisible();
+  await expect(page.getByRole("dialog").filter({ hasText: /of 10/ })).toBeVisible();
   await page.getByRole("button", { name: "Skip" }).click();
-  await expect(page.getByRole("dialog").filter({ hasText: /of 9/ })).toHaveCount(0);
+  await expect(page.getByRole("dialog").filter({ hasText: /of 10/ })).toHaveCount(0);
   await page.getByRole("link", { name: "Settings" }).click();
   await page.getByRole("button", { name: "Show guides again" }).click();
   await expect(
@@ -1090,7 +1093,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Portfolio starts with net worth: holdings minus loans.
   await tab("Net worth").click();
   await expect(page.getByText("You owe on loans", { exact: true })).toBeVisible();
-  await page.getByRole("link", { name: /See progress over time/ }).click();
+  await expect(page.getByRole("link", { name: /See progress over time/ })).toHaveCount(0);
+  await page.goto("/assets/net-worth");
+  await expect(page).toHaveURL(/\/assets$/);
   await expect(page.getByRole("heading", { level: 1, name: "Net worth" })).toBeVisible();
   await expect(page.getByRole("region", { name: "What you owe on loans" })).toBeVisible();
 

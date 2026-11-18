@@ -18,6 +18,7 @@ export async function snoozeUpdate(key: string) {
   if (error)
     return { ok: false, error: "Couldn't postpone this update. Try again." };
   revalidatePath("/goals");
+  revalidatePath("/today");
   return { ok: true };
 }
 

@@ -9,7 +9,7 @@ import { PortfolioOverview } from "@/components/portfolio-overview";
 import { PortfolioHoldings } from "@/components/portfolio-holdings";
 import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
-import { loadGoals, loadLoans, loadNetWorth, loadSnapshot } from "@/lib/data";
+import { loadGoals, loadLoans, loadCurrentNetWorth, loadSnapshot } from "@/lib/data";
 import { OweList } from "@/components/owe-list";
 import { NetWorthCard } from "@/components/net-worth-card";
 // import { AI_CONSENT_VERSION } from "@/lib/legal";
@@ -28,7 +28,7 @@ export default async function PortfolioPage({
     await Promise.all([
       loadGoals(),
       loadSnapshot(),
-      loadNetWorth(),
+      loadCurrentNetWorth(),
       loadLoans(),
     ]);
   const importHistory = { data: snap.settings, error: null };
@@ -69,8 +69,7 @@ export default async function PortfolioPage({
           <UpdateButton
             items={updatable}
             autoOpen={action === "update"}
-            showButton={false}
-          />
+            />
         )}
         <div className="flex items-center gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">Net worth</h1>
@@ -110,11 +109,12 @@ export default async function PortfolioPage({
         <UpdateButton
           items={updatable}
           autoOpen={action === "update"}
-          showButton={false}
         />
       )}
 
-      <NetWorthCard history={worth.history} />
+      <Link href="/import?from=portfolio" className={buttonVariants({ variant: "outline", className: "w-full" })}><FileUp /> Upload CAS</Link>
+      <p className="text-sm text-muted-foreground">Upload CAS for funds and ETFs. Update other balances manually.</p>
+      <NetWorthCard history={[{ day: today, ...worth }]} />
       <OweList loans={loans} today={today} />
       <h2 className="-mb-2 px-0.5 text-lg font-semibold">What you own</h2>
       <PortfolioOverview

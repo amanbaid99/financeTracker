@@ -12,6 +12,7 @@ export interface TourStep {
 }
 
 export const INTRO_TOUR: TourStep[] = [
+  { path: "/today", target: "home-focus", title: "Your focus goals", text: "The first three unfinished goals in your order. Tap one for its details." },
   {
     path: "/goals",
     target: "goal-list",
@@ -34,7 +35,7 @@ export const INTRO_TOUR: TourStep[] = [
     path: "/assets",
     target: "net-worth",
     title: "Your net worth",
-    text: "What you own minus loans. Tap See progress over time for the charts.",
+    text: "Your recorded holdings minus loan balances. Upload CAS or update amounts to keep it current.",
   },
   {
     path: "/assets",

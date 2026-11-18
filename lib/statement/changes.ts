@@ -25,8 +25,9 @@ export interface Change {
 export function describeChanges(
   ready: Ready,
   state: Record<string, RowState>,
+  { includeInvested = true }: { includeInvested?: boolean } = {},
 ): Change[] {
-  return ready.rows.map((r) => {
+  const changes: Change[] = ready.rows.map((r) => {
     const s = state[r.key];
     if (s.target === "skip")
       return {
@@ -98,4 +99,5 @@ export function describeChanges(
       unchanged,
     };
   });
+  return includeInvested ? changes : changes.map((c) => ({ ...c, lines: c.lines.filter((line) => !line.startsWith("Invested amount")) }));
 }

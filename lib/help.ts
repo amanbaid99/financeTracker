@@ -12,59 +12,8 @@ export interface HelpTopic {
 }
 
 export const HELP: HelpTopic[] = [
-  {
-    id: "radar-company-reports",
-    section: "Investment Radar",
-    q: "How do I connect stock financial reports?",
-    a: [
-      "The optional IndianAPI connection needs a separate starter API key. Save INDIANAPI_KEY as a Secret in Vercel for Production, then redeploy. Never paste it into chat or use a public environment variable. Connection details are on Radar connection.",
-      "Refresh research on an individual stock checks an exact NSE ticker or matching source-profile ISIN before fetching annual results, a balance sheet and cash flow. BSE instruments need a unique NSE counterpart matched by the same ISIN. Internal source IDs must map to the exact NSE symbol in the source exchange directory. A source-profile ISIN must exactly match the selected instrument. A conflicting or malformed ISIN stops collection. No similar company name or old-symbol guess is substituted. Up to five requests are used for a new collection; successful and partial reports are reused for 24 hours with the old retrieval date preserved.",
-      "Company reports lists source coverage and shared year ends across the three tables. It points out missing cash balances, capital spending or EBITDA rather than inferring them from other totals. Accounting changes and recurring earnings must be reviewed before growth or valuation scoring. Where a reviewed filing reference is available, open Annual filing comparison for exact-period checks. Matching figures under an assumed crore scale do not verify the provider's whole dataset; missing definitions and differences still need review. A configured key can still return an identity or access error; that error leaves reports out of the assessment. Fiscal period ends are not publication dates. ISIN, currency, units and consolidated/standalone basis still need independent verification, so figures do not enter valuation scoring. A first model for profitable non-financial businesses is implemented for paper testing. It checks financial quality, valuation against comparable peers and history, growth and price conditions. Verified source inputs, historical validation and live monitoring are still needed. Source access does not enable Buy, Hold or Sell. ETF benchmark and market-timestamp work remain separate.",
-    ],
-    tags: "financials annual balance sheet cashflow API key IndianAPI company reports",
-  },
-  {
-    id: "radar-automatic",
-    section: "Investment Radar",
-    q: "How does automatic research work?",
-    a: [
-      "It runs from your latest saved data when you open Radar. There is no price-rule setup step. Refresh research fetches daily prices, official ETF NAV by ISIN and available market depth. When the official same-session NAV is available, it also fetches historical NAV from MFapi using the official scheme code. The ISIN and latest NAV must match before history is kept.",
-      "A verified excessive same-session premium or a verified wide spread can show Wait automatically. A NAV discount alone cannot produce a Buy candidate. Price adjustments, underlying Gold/index context, validated models and other source checks are still required.",
-      "Published NAV history shows how many dates match the price history. Open Show unmatched dates to see prices-only dates, NAV-only dates and download-window differences. Equal row counts do not prove matching dates, and unmatched values are never filled in. A count difference alone does not prove bad data.",
-      "The shared price, calendar and trading-depth checks cover individual stocks and ETFs on NSE/BSE. Stocks do not need NAV and never use the Gold model. ETFs with other underlying assets can collect available NAV and prices, but stay labelled model unavailable until the correct underlying and model are verified. Stock fundamentals and index valuations still need separate sources; data checks do not imply complete recommendations.",
-      "Spread diagnostics distinguish no active bid/ask, an invalid response, expired or denied access, rate limits and an unavailable source. No active book can occur outside trading hours; another refresh may not help. A returned book still needs a verified source timestamp before it can pass freshness checks.",
-      "Published NAV history is a secondary-source chart, not adjusted total returns. The latest point is checked against AMFI; the rest of the history, publication times and adjustments are unverified. History alone cannot enable Buy or exit recommendations.",
-      "Research not ready means additional sources or model work are still needed. The first Gold model and comparison harness are implemented for paper testing, but real historical validation and live monitoring are unfinished. Refresh updates data; it cannot finish that work. No settings need changing.",
-      "Hold and Review selling need ownership and portfolio/exit context. Radar can recognise an exact ISIN match in your tracked holdings, but it does not infer your desired allocation or recommend an exit from a watchlist alone. Full Buy/Hold/Sell research remains unfinished where these prerequisites are missing.",
-      "Legacy ETFs saved as stocks are reclassified for display and research using provider metadata or an exact AMFI Gold ETF ISIN match. These corrections do not add holdings or rewrite your saved data in the background. Unknown ETFs and fund-of-funds wrappers are flagged for review.",
-    ],
-    tags: "automatic buy hold sell research ETF type classification",
-  },
-  {
-    id: "radar-rules",
-    section: "Investment Radar",
-    q: "Why does Radar show Wait after my buy price was reached?",
-    a: [
-      "ETF entries also need official NAV matched by ISIN to the latest completed session, a timestamped spread no older than 15 minutes and at most 0.5%, and a closing premium no higher than 1%. A discount beyond 5% also pauses the entry for a source/units check. These are conservative data guardrails, not a validated valuation strategy.",
-      "A fetched quote without a provider market timestamp cannot pass the freshness check. INDmoney's documented response does not include that timestamp, so the spread may be visible while ETF entries remain on Wait. NAV and current intraday prices are never mixed to claim live fair value.",
-      "Daily price rules use the latest completed prior session. The verified calendar covers NSE and BSE from 9 Nov through 31 Dec 2026, including the special 8 Nov session. Other dates pause freshness-dependent conclusions until the calendar is verified. Scheduled monitoring, Telegram, balanced scoring and backtesting remain unavailable.",
-    ],
-    tags: "buy hold sell wait premium NAV AMFI spread timestamp ETF",
-  },
-  {
-    id: "radar",
-    section: "Investment Radar",
-    q: "What does Investment Radar do?",
-    a: [
-      "Radar is a personal research watchlist for stocks, Gold ETFs and index ETFs you choose. It does not change holdings or net worth, and does not place trades. Only the account granted personal Radar access can use it.",
-      "Search INDmoney, confirm an instrument and its asset type, then open it to fetch daily history. On a fresh refresh, Radar records INDmoney's confirmation that OHLC prices are adjusted for splits and bonus issues, while volume is raw. Prices exclude dividend adjustment and some other corporate actions. Price-only indicators remain provisional until relevant event coverage and freshness are checked. A score stays unavailable while required fundamentals or ETF checks are missing.",
-      "Automatic research is the main view and needs no manually configured price levels. Optional price alerts are folded below it; their entry/exit messages only compare your saved thresholds. They are not research recommendations. Drawdown alerts remain paused while full relevant action coverage is unverified. Historical rupee turnover is withheld when adjusted prices and raw volume cannot be combined reliably.",
-      "Your holding shows recorded value and share of tracked investments for an exact ISIN match. These are saved Tracker values, not live broker balances or target allocations. A manual ownership confirmation alone does not provide a holding value or unlock Hold/Sell research. For a confirmed stock holding, Review holding details lets you save or remove your target share, allowance, thesis status and estimated exit cost. Nothing is preset or saved until you confirm and press Save. A saved review does not enable live recommendations.",
-      "Experimental insights, suggested levels and the dip plan require prices from the latest completed session for that exchange. Outdated rows show the saved close and date, but no actionable lean, quantities or reached prompts. The budget is shared only across current rows, and returning to an open app rechecks the date in India.",
-      "The INDmoney token stays in Vercel as INDSTOCKS_ACCESS_TOKEN. Expired tokens must be replaced and the app redeployed. Never paste a token into chat.",
-    ],
-    tags: "watchlist stock ETF price research token INDmoney",
-  },
+  { id: "home", section: "Getting started", q: "What is on Home?", a: ["Your current net worth, first three unfinished goals in your Goals order, next unfinished card milestone and updates due. Tap a section to open its details. The sticky + button adds or updates information."], tags: "overview focus dashboard" },
+  { id: "current-balances", section: "Net worth", q: "How do I keep my balances up to date?", a: ["Upload CAS for funds and ETFs, review the amounts and confirm before saving. Use Update amounts for other balances such as savings, EPF and US stocks. The app shows recorded balances, without gains, losses or live market-price tracking."], tags: "manual CAS amounts portfolio" },
   {
     id: "updates-due",
     section: "Goals",
@@ -196,7 +145,7 @@ export const HELP: HelpTopic[] = [
     a: [
       "What you own (every investment and saving you track) minus what you owe on loans. Loan balances follow their EMI schedule, so they go down each month even before you update them.",
       "Card statements aren't counted. They're logged only for milestones, and the bank balance that pays them isn't tracked.",
-      "A point is saved each day something changes. Open See progress over time on Net worth for the charts.",
+      "Net worth uses recorded holdings and loan balances. It does not show a performance chart.",
     ],
     tags: "assets loans owe history chart",
   },
@@ -218,26 +167,6 @@ export const HELP: HelpTopic[] = [
       "Switch to Instrument to see the same money by kind of investment.",
     ],
     tags: "allocation asset type instrument",
-  },
-  {
-    id: "growth",
-    section: "Net worth",
-    q: "How do I see my gains and losses?",
-    a: [
-      "Today's value compared with what you put in, when you've entered or imported that. It's simple growth, not a yearly return.",
-      "The overview on Net worth adds it up: total invested, and your gain or loss in rupees and percent. A CAS import fills in the invested amount. For anything else, tap the holding and enter Amount invested. Holdings without it are left out of the total, and the overview says how many.",
-    ],
-    tags: "returns gain invested",
-  },
-  {
-    id: "update-prices",
-    section: "Net worth",
-    q: "How do I update values from today's prices?",
-    a: [
-      "Tap Update prices on Net worth. For each mutual fund or ETF with units and an ISIN, the app takes units held × the latest official price (NAV from AMFI) and shows the old and new value. Untick anything you don't want, then Save. Nothing changes until you do.",
-      "A CAS import saves units and ISINs for your funds, including an explicit zero-unit balance after redemption. Unknown units remain separate from zero. For anything else, tap the holding and add Units held and ISIN. Stocks, EPF, NPS and savings aren't priced this way yet.",
-    ],
-    tags: "prices nav live market units isin refresh",
   },
   {
     id: "cas",

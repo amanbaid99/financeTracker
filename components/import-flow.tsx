@@ -29,9 +29,6 @@ import type {
   ReviewRow,
 } from "@/lib/statement/review";
 import { createClient } from "@/lib/supabase/client";
-import { importInsights, type Insight } from "@/lib/statement/insights";
-import { isBigDrop } from "@/lib/withdrawal";
-import { WithdrawQuestion } from "@/components/withdraw-question";
 import {
   describeChanges,
   type Change,
@@ -54,37 +51,6 @@ const HOW: Record<ReviewRow["categoryHow"], string> = {
 };
 
 type Ready = Extract<PrepareResult, { ok: true }>;
-
-/** Updates whose value fell a lot: worth asking whether money was taken out. */
-function dropFor(ready: Ready, r: Ready["rows"][number], s: RowState): number {
-  if (s.target === "new" || s.target === "skip") return 0;
-  const inv = ready.investments.find((i) => i.id === s.target);
-  return inv && isBigDrop(inv.value, r.value) ? inv.value - r.value : 0;
-}
-
-/** Insights from what was saved, compared with the values before. */
-function insightsFor(ready: Ready, state: Record<string, RowState>): Insight[] {
-  return importInsights(
-    ready.rows
-      .filter((r) => state[r.key].target !== "skip")
-      .map((r) => {
-        const s = state[r.key];
-        const inv =
-          s.target === "new"
-            ? null
-            : (ready.investments.find((i) => i.id === s.target) ?? null);
-        return {
-          name: inv?.name ?? r.name,
-          before: inv ? inv.value : null,
-          after: r.value,
-          sipBefore: inv ? inv.sip : null,
-          sipAfter: inv && s.sip !== null ? s.sip : null,
-          withdrew: !!s.withdrew,
-          unlinked: !inv && !s.goalId,
-        };
-      }),
-  );
-}
 
 /** Questions still waiting for an answer. */
 function openQuestions(r: ReviewRow, s: RowState): Question[] {
@@ -153,7 +119,6 @@ export function ImportFlow({
   const [state, setState] = useState<Record<string, RowState>>({});
   const [confirming, setConfirming] = useState(false);
   const [done, setDone] = useState<string | null>(null);
-  const [insights, setInsights] = useState<Insight[]>([]);
   const [pending, start] = useTransition();
   const [stage, setStage] = useState("");
 
@@ -222,14 +187,12 @@ export function ImportFlow({
         units: r.units,
         sip: s.sip,
         goalId: s.goalId || null,
-        withdrew: dropFor(ready, r, s) > 0 ? !!s.withdrew : undefined,
       };
     });
     setError("");
     start(async () => {
       const res = await applyImport(choices);
       if (!res.ok) return setError(res.error);
-      setInsights(insightsFor(ready, state));
       setDone(
         `Updated ${res.updated} and added ${res.added} investment${res.added === 1 ? "" : "s"}.`,
       );
@@ -247,40 +210,6 @@ export function ImportFlow({
             Your goals now use the values from this statement.
           </p>
         </div>
-        {insights.length > 0 && (
-          <section aria-labelledby="ins-h" className="space-y-2">
-            <h2 id="ins-h" className="flex items-center gap-1.5 font-semibold">
-              <Sparkles className="size-4 text-primary" aria-hidden /> What
-              changed
-            </h2>
-            <ul className="space-y-2">
-              {insights.map((i) => (
-                <li key={i.title} className="rounded-xl border bg-card p-3">
-                  <p
-                    className={cn(
-                      "text-sm font-semibold",
-                      i.tone === "good"
-                        ? "text-success"
-                        : i.tone === "bad"
-                          ? "text-danger"
-                          : "",
-                    )}
-                  >
-                    {i.title}
-                  </p>
-                  <p className="tabular text-sm text-muted-foreground">
-                    {i.text}
-                  </p>
-                </li>
-              ))}
-            </ul>
-            <p className="text-xs text-muted-foreground">
-              Worked out from the values you confirmed. If portfolio reviews are
-              on, a fuller review shows in Net worth shortly. Not investment
-              advice.
-            </p>
-          </section>
-        )}
         <div className="grid grid-cols-2 gap-2">
           <Button
             type="button"
@@ -388,19 +317,13 @@ export function ImportFlow({
     setState((s) => ({ ...s, [key]: { ...s[key], ...patch } }));
 
   if (confirming) {
-    const changes = describeChanges(ready, state);
+    const changes = describeChanges(ready, state, { includeInvested: false });
     const updates = changes.filter(
       (c) => c.action === "update" && !c.unchanged,
     );
     const adds = changes.filter((c) => c.action === "add");
     const same = changes.filter((c) => c.action === "update" && c.unchanged);
     const skips = changes.filter((c) => c.action === "skip");
-    const asking = ready.rows.filter(
-      (r) => dropFor(ready, r, state[r.key]) > 0,
-    );
-    const unanswered = asking.filter(
-      (r) => state[r.key].withdrew === undefined,
-    ).length;
     const group = (title: string, list: Change[], tone = "") =>
       list.length > 0 && (
         <section className="space-y-2" aria-label={title}>
@@ -414,20 +337,6 @@ export function ImportFlow({
                     {l}
                   </p>
                 ))}
-                {(() => {
-                  const r = ready.rows.find((x) => x.key === c.key)!;
-                  const drop = dropFor(ready, r, state[c.key]);
-                  return drop > 0 ? (
-                    <div className="pt-1.5">
-                      <WithdrawQuestion
-                        name={c.title}
-                        drop={drop}
-                        answer={state[c.key].withdrew}
-                        onAnswer={(w) => set(c.key, { withdrew: w })}
-                      />
-                    </div>
-                  ) : null;
-                })()}
               </li>
             ))}
           </ul>
@@ -444,9 +353,6 @@ export function ImportFlow({
             {skips.length ? `, ${skips.length} skipped` : ""}. Check them
             against your statement; nothing changes until you confirm. Saving
             also records this month’s CAS refresh.
-            {asking.length
-              ? ` ${asking.length} fell by 10% or more: tell us if you took money out.`
-              : ""}
           </p>
         </div>
         {group("Will update", updates)}
@@ -474,15 +380,12 @@ export function ImportFlow({
                 onClick={save}
                 disabled={
                   pending ||
-                  updates.length + adds.length + same.length === 0 ||
-                  unanswered > 0
+                  updates.length + adds.length + same.length === 0
                 }
               >
                 {pending
                   ? "Saving…"
-                  : unanswered
-                    ? `Answer ${unanswered} question${unanswered === 1 ? "" : "s"}`
-                    : "Yes, save"}
+                  : "Yes, save"}
               </Button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { CreditCard, PieChart, Radar, Target, Wallet } from "lucide-react";
+import { CreditCard, House, PieChart, Target, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment, useSyncExternalStore } from "react";
@@ -15,6 +15,7 @@ const clientSnapshot = () => true;
 const serverSnapshot = () => false;
 
 const TABS = [
+  { href: "/today", label: "Home", icon: House, match: ["/today"] },
   {
     href: "/goals",
     label: "Goals",
@@ -29,22 +30,16 @@ const TABS = [
 ];
 
 /** The main sections, as a tab bar fixed to the bottom of the screen. */
-export function AppTabs({ radarEnabled = false }: { radarEnabled?: boolean }) {
+export function AppTabs() {
   const path = usePathname();
   const mounted = useSyncExternalStore(subscribe, clientSnapshot, serverSnapshot);
   const showAdd = hasQuickActions(path);
-  const tabs = radarEnabled
-    ? [
-        ...TABS,
-        { href: "/radar", label: "Radar", icon: Radar, match: ["/radar"] },
-      ]
-    : TABS;
   // Keep viewport controls outside containers that can establish a fixed-position
   // containing block during page animations. Match server hydration before portalling.
   if (!mounted) return null;
   return createPortal(
     <>
-      {radarEnabled && showAdd && (
+      {showAdd && (
         <div className="fixed z-30 right-4 bottom-[calc(4.5rem+env(safe-area-inset-bottom))]">
           <QuickAdd />
         </div>
@@ -56,20 +51,15 @@ export function AppTabs({ radarEnabled = false }: { radarEnabled?: boolean }) {
         <ul
           className={cn(
             "mx-auto grid max-w-3xl",
-            radarEnabled || showAdd ? "grid-cols-5" : "grid-cols-4",
+            "grid-cols-5",
           )}
         >
-          {tabs.map((t) => {
+          {TABS.map((t) => {
             const under = (m: string) => path === m || path.startsWith(`${m}/`);
             const active =
               t.match.some(under) && !("not" in t && t.not?.some(under));
             return (
               <Fragment key={t.href}>
-                {showAdd && !radarEnabled && t.href === "/goals/budget" && (
-                  <li className="flex items-center justify-center">
-                    <QuickAdd />
-                  </li>
-                )}
                 <li>
                   <Link
                     href={t.href}

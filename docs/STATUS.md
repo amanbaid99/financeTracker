@@ -3,6 +3,14 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 18 Nov 2026.
 
+## Home and simpler portfolio, 18 Nov 2026
+
+Home (`/today`) replaces Radar and is the default after sign-in and in the PWA manifest. It shows recorded net worth, three focus goals, the next unfinished card milestone and updates due. Goals use the same priority order as the detail page; reached goals are excluded. Milestones exclude completed/expired targets and loan EMI spending. Empty states link to the relevant section. The sticky plus remains above five navigation tabs.
+
+Portfolio now offers Upload CAS and Update amounts. Invested/gain-loss summaries, manual units/ISIN fields, price-refresh controls, performance charts and post-import performance commentary are removed. CAS review-before-save and stored metadata remain. Radar routes redirect to Portfolio and archived server actions deny access. No tables or financial records were deleted. Earlier Radar work below is historical and is no longer an active goal.
+
+Validation: lint, TypeScript, 572 unit tests, 40 Python CAS-reader tests and production build passed. Chromium fixtures passed 24 Home checks across four widths and three themes with populated/empty states; four responsive Portfolio edit/update form checks, six production-build legacy redirects and the PWA start URL passed. Full signed-in end-to-end checks remain unrun because local Supabase image downloads are blocked by Forbidden responses. No hosted financial data was changed.
+
 ## Experimental Radar reliability and migration replay, 18 Nov 2026
 
 Experimental insights, suggested levels and dip orders now use the caller's current IST date and verified exchange calendar. Outdated, future, malformed, missing and nonpositive prices cannot produce an actionable lean or levels, receive no dip budget and cannot trigger reached prompts or take-profit suggestions. Saved close/date remains visible. Weekends, holidays and the verified special session use the completed-session calendar rather than a 24-hour age rule. A client day subscription rechecks on focus/foreground and while left open; it does not change the pure finance functions. Refresh all no longer declares every price current merely because requests succeeded or cooldown skipped a read. The owner's experimental approach is preserved.
