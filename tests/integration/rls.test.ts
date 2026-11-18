@@ -85,6 +85,68 @@ describe("invite list", () => {
   });
 });
 
+// Runs before "row level security", whose last test deletes user A.
+describe("personal Radar", () => {
+  let watchId = "";
+  beforeAll(async () => {
+    const access = await admin.from("radar_access").insert({ user_id: idA });
+    if (access.error) throw access.error;
+    const watch = await a.from("radar_watchlist").insert({ user_id: idA, exchange: "NSE", security_id: "123", symbol: "SYNTHETIC", name: "Synthetic research instrument", asset_type: "equity" }).select("id").single();
+    if (watch.error) throw watch.error;
+    watchId = watch.data.id;
+    const snapshot = await a.from("radar_snapshots").insert({ user_id: idA, watch_id: watchId, source: "INDstocks", engine_version: "test", input_hash: "0".repeat(64), candles: [], analysis: {} });
+    if (snapshot.error) throw snapshot.error;
+  });
+  it("only the entitled owner can read or manage the personal watchlist", async () => {
+    expect((await a.from("radar_access").select("user_id")).data).toEqual([{ user_id: idA }]);
+    expect((await b.from("radar_access").select("user_id")).data).toEqual([]);
+    expect((await b.from("radar_access").insert({ user_id: idB })).error).toBeTruthy();
+    for (const table of ["radar_watchlist", "radar_snapshots"] as const) {
+      expect((await b.from(table).select("id")).data).toEqual([]);
+      expect((await a.from(table).select("id")).data?.length).toBeGreaterThan(0);
+    }
+    expect((await b.from("radar_watchlist").insert({ user_id: idB, exchange: "NSE", security_id: "321", symbol: "SYNTHETIC", name: "Synthetic", asset_type: "equity" })).error).toBeTruthy();
+    expect((await b.from("radar_watchlist").update({ name: "Changed" }).eq("id", watchId).select("id")).data).toEqual([]);
+    expect((await b.from("radar_watchlist").update({ holding_review: { targetSharePct: 100 } }).eq("id", watchId).select("id")).data).toEqual([]);
+    expect((await b.rpc("radar_latest_snapshots")).data).toEqual([]);
+    expect((await a.rpc("radar_latest_snapshots")).data?.length).toBe(1);
+  });
+  it("keeps rules opt-in and rejects invalid exit configurations", async () => {
+    const own = await a
+      .from("radar_watchlist")
+      .select("rules_enabled,holding_confirmed")
+      .eq("id", watchId)
+      .single();
+    expect(own.data).toEqual({
+      rules_enabled: false,
+      holding_confirmed: false,
+    });
+    expect(
+      (
+        await a
+          .from("radar_watchlist")
+          .update({ sell_above: 110 })
+          .eq("id", watchId)
+      ).error,
+    ).toBeTruthy();
+    expect(
+      (
+        await a
+          .from("radar_watchlist")
+          .update({ holding_confirmed: true, sell_above: 90, sell_below: 100 })
+          .eq("id", watchId)
+      ).error,
+    ).toBeTruthy();
+  });
+  it("prevents ownership reassignment and cross-owner snapshot parents", async () => {
+    await admin.from("radar_access").insert({ user_id: idB });
+    try {
+      expect((await a.from("radar_watchlist").update({ user_id: idB }).eq("id", watchId)).error).toBeTruthy();
+      expect((await b.from("radar_snapshots").insert({ user_id: idB, watch_id: watchId, source: "INDstocks", engine_version: "test", input_hash: "0".repeat(64), candles: [], analysis: {} })).error).toBeTruthy();
+    } finally { await admin.from("radar_access").delete().eq("user_id", idB); }
+  });
+});
+
 describe("row level security", () => {
   let streamA = "";
   let goalA = "";
@@ -556,66 +618,5 @@ describe("monthly update snoozes", () => {
     expect(own?.update_snoozes).toMatchObject({ "cas:2099-01": until, "loan:test:2099-01": until });
     const { data: after } = await a.from("settings").select("update_snoozes").single();
     expect(after).toEqual(before);
-  });
-});
-
-describe("personal Radar", () => {
-  let watchId = "";
-  beforeAll(async () => {
-    const access = await admin.from("radar_access").insert({ user_id: idA });
-    if (access.error) throw access.error;
-    const watch = await a.from("radar_watchlist").insert({ user_id: idA, exchange: "NSE", security_id: "123", symbol: "SYNTHETIC", name: "Synthetic research instrument", asset_type: "equity" }).select("id").single();
-    if (watch.error) throw watch.error;
-    watchId = watch.data.id;
-    const snapshot = await a.from("radar_snapshots").insert({ user_id: idA, watch_id: watchId, source: "INDstocks", engine_version: "test", input_hash: "0".repeat(64), candles: [], analysis: {} });
-    if (snapshot.error) throw snapshot.error;
-  });
-  it("only the entitled owner can read or manage the personal watchlist", async () => {
-    expect((await a.from("radar_access").select("user_id")).data).toEqual([{ user_id: idA }]);
-    expect((await b.from("radar_access").select("user_id")).data).toEqual([]);
-    expect((await b.from("radar_access").insert({ user_id: idB })).error).toBeTruthy();
-    for (const table of ["radar_watchlist", "radar_snapshots"] as const) {
-      expect((await b.from(table).select("id")).data).toEqual([]);
-      expect((await a.from(table).select("id")).data?.length).toBeGreaterThan(0);
-    }
-    expect((await b.from("radar_watchlist").insert({ user_id: idB, exchange: "NSE", security_id: "321", symbol: "SYNTHETIC", name: "Synthetic", asset_type: "equity" })).error).toBeTruthy();
-    expect((await b.from("radar_watchlist").update({ name: "Changed" }).eq("id", watchId).select("id")).data).toEqual([]);
-    expect((await b.from("radar_watchlist").update({ holding_review: { targetSharePct: 100 } }).eq("id", watchId).select("id")).data).toEqual([]);
-    expect((await b.rpc("radar_latest_snapshots")).data).toEqual([]);
-    expect((await a.rpc("radar_latest_snapshots")).data?.length).toBe(1);
-  });
-  it("keeps rules opt-in and rejects invalid exit configurations", async () => {
-    const own = await a
-      .from("radar_watchlist")
-      .select("rules_enabled,holding_confirmed")
-      .eq("id", watchId)
-      .single();
-    expect(own.data).toEqual({
-      rules_enabled: false,
-      holding_confirmed: false,
-    });
-    expect(
-      (
-        await a
-          .from("radar_watchlist")
-          .update({ sell_above: 110 })
-          .eq("id", watchId)
-      ).error,
-    ).toBeTruthy();
-    expect(
-      (
-        await a
-          .from("radar_watchlist")
-          .update({ holding_confirmed: true, sell_above: 90, sell_below: 100 })
-          .eq("id", watchId)
-      ).error,
-    ).toBeTruthy();
-  });
-  it("prevents ownership reassignment and cross-owner snapshot parents", async () => {
-    await admin.from("radar_access").insert({ user_id: idB });
-    try {
-      expect((await a.from("radar_watchlist").update({ user_id: idB }).eq("id", watchId)).error).toBeTruthy();
-      expect((await b.from("radar_snapshots").insert({ user_id: idB, watch_id: watchId, source: "INDstocks", engine_version: "test", input_hash: "0".repeat(64), candles: [], analysis: {} })).error).toBeTruthy();
-    } finally { await admin.from("radar_access").delete().eq("user_id", idB); }
   });
 });

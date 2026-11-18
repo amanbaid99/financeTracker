@@ -3,6 +3,10 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 18 Nov 2026.
 
+## Local Radar checks run, 18 Nov 2026
+
+The local stack started (Docker restarted, `SUPABASE_TELEMETRY_DISABLED=1`). The three Radar migrations apply locally; `20261118063622_radar_holding_review.sql` sorts before the table it alters, so a fresh local `migration up` needs `--include-all` (the file name matches hosted history, so it was not renamed). The Radar RLS block ran after the account-deletion test, which removes user A; it now runs before "row level security". Verified: lint, TypeScript, 534 unit tests, 37 Python tests, 68 RLS tests (including Radar) and the Playwright happy path.
+
 ## INDstocks support-confirmed partial history policy, 18 Nov 2026
 
 The owner supplied a written support confirmation: OHLC is split/bonus-adjusted with two-decimal rounding, volume is raw, consolidations depend on split classification, and dividends/rights/mergers/demergers are not adjusted. The public API has no action endpoint or per-candle adjustment flag. This resolves the provider-policy question for split/bonus handling, not an independent event audit or full model readiness. The raw correspondence and personal identifiers are not committed. See investment-radar/INDSTOCKS_HISTORY_POLICY.md.
