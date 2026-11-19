@@ -3,6 +3,10 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Commitments first, paired questions later, 19 Nov 2026
+
+The owner does not want groceries, day-to-day costs or transport prefilled in the first list. Defer them rather than removing records: ask groceries among later monthly Essentials, and transport/everyday personal use in Personal spending. Present up to two missing cost questions per screen, with blank amounts allowed and no automatic defaults. Keep tracked loan commitments in the confirmation list. Existing saved budgets remain intact until the owner saves a replacement.
+
 ## Personal spending includes transport and daily costs, 19 Nov 2026
 
 The owner wants Personal spending rather than a purely discretionary guilt-free bucket. Combine personal transport, everyday personal use and fun. Offer a transparent routine-based calculator rather than a fixed required percentage: monthly transport plus daily personal spending times chosen days plus monthly fun. Leave household Essentials out to avoid double counting. Include existing named personal costs within the envelope and disclose when they set a minimum. Accepting an estimate updates the proposal, not saved data; Save & invest adjusts and the user confirms Save. Old recurring transport labels can be grouped in the view, but loan EMIs and general travel goals are never reclassified.

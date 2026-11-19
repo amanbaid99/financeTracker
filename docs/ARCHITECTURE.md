@@ -3,6 +3,10 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+## Paired guided expense inputs
+
+guideCosts filters deferred everyday categories from candidate costs while preserving loan-linked commitments. BudgetGuide groups remaining known-missing essential prompts into pairs and stores answers as stable-ID draft rows as they are typed. The later custom-cost and Personal calculator steps remain separate. Navigating backward retains paired amounts; clearing an answer removes only its own draft row. No database or action changes are needed.
+
 ## Personal spending estimation
 
 lib/personal-budget.ts validates integer routine estimates, recognises recurring personal transport excluding loan rows, derives named personal minima and groups view rows without writing. PersonalBudgetCalculator is shared by BudgetGuide and BudgetExperience quick edits. Its callback updates the preferred personal total or combined future target respectively, before explicit Save. recommendBudget treats confirmed personal rows as included within the envelope and composes the remainder through existing budget rules. The guide no longer asks for transport as a separate Essential. Optional personalGrouping metadata in the existing JSON document preserves explicit bucket choices after the initial grouping. No external AI or database schema change is needed.

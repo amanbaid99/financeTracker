@@ -95,7 +95,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "A simpler plan for your money",
     intro: "A few questions first, a compact monthly plan after.",
     steps: [
-      "Tap Plan my budget. Confirm take-home income and which recorded costs belong in the plan, then add any missing monthly essentials. Annual contributions stay in Goals.",
+      "Tap Plan my budget. Confirm income and recorded commitments first. Groceries and everyday costs are asked later, with up to two expense questions per screen. Personal transport stays in the Personal spending step. Annual contributions stay in Goals.",
       "Enter a preferred Personal spending amount or let the guide suggest one. There is no savings-versus-investing split to choose.",
       "Review one Save & invest amount and Personal spending in rupees. Change anything before Save this budget. No percentages are required.",
       "Your saved view has three collapsed rows. Tap one for details or use Edit monthly amounts for quick changes.",
@@ -138,6 +138,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-19", title: "Fewer budget setup screens", items: [{ title: "Answer two costs together", text: "The initial list contains recorded commitments. Groceries, everyday costs and personal transport are handled later. Missing expense questions now appear in pairs, with no default amounts." }] },
   { date: "2026-11-19", title: "Your Personal spending bucket", items: [{ title: "Transport, everyday spending and fun", text: "Personal spending brings them together. Use the calculator in guided setup or Edit monthly amounts to estimate a total from your routine, then review and save." }] },
   { date: "2026-11-19", title: "Just three budget buckets", items: [{ title: "Save & invest together", text: "One combined monthly amount for saving and investing. Annual contributions stay in Goals, so the guide skips yearly bills and buffer questions. Essentials, Save & invest and Personal spending keep the overview simple." }] },
   { date: "2026-11-19", title: "Build your budget together", items: [{ title: "Questions, then a plan", text: "Confirm income and costs, add missing essentials and let the guide recommend monthly savings, investing and spending room. Review before saving. The saved view is three compact rows with details tucked away." }] },

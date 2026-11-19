@@ -1024,8 +1024,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Monthly take-home income", { exact: true }).fill("200000");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "Use selected costs", exact: true }).click();
-  while (await page.getByRole("button", { name: "Not applicable / already covered", exact: true }).count()) {
-    await page.getByRole("button", { name: "Not applicable / already covered", exact: true }).click();
+  while (await page.getByRole("heading", { name: "A couple of monthly costs", exact: true }).count()) {
+    await page.getByRole("button", { name: "Continue", exact: true }).click();
   }
   await page.getByRole("button", { name: "That is everything", exact: true }).click();
   await page.getByRole("button", { name: "Show my recommended plan", exact: true }).click();

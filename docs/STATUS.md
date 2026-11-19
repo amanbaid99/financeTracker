@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 19 Nov 2026.
 
+## Paired questions and fewer prefilled costs, 19 Nov 2026
+
+The initial known-cost list now excludes groceries, day-to-day expenses and transport; loan-linked rows remain available even when their names mention transport. Grocery amounts are entered later without a default, and personal transport/day-to-day spending stay in the Personal step/calculator. Missing essential questions appear in pairs with one Continue action; blank/zero means not applicable. Back navigation preserves entered amounts and stable row identities avoid duplicates. Other custom commitments have their own short add step. No saved budget or financial record is rewritten until explicit Save.
+
+Verification: lint, TypeScript, 641 unit tests, 40 Python CAS tests and production build passed. Twelve responsive browser flows cover four widths and three themes, deferred initial costs, two labelled questions, empty defaults, Back preservation, no duplicate rows and explicit save. A separate empty-record flow verifies two pairs, blank/zero omission and stable totals. The signed-in local Supabase check remains blocked by the previously confirmed database-image extraction limit.
+
 ## Personal bucket and routine calculator, 19 Nov 2026
 
 Renamed the active guilt-free bucket to Personal spending, covering personal transport, day-to-day spending and fun. Added an optional calculator in guided setup and quick edits, with monthly transport, daily spending, days per month and fun money. The transparent estimated total is checked against income left after Essentials and includes named personal costs as a minimum, not an extra charge. Applying an estimate changes only the proposal and visibly changes Save & invest; explicit Save remains required. Recognisable non-loan commute/transport expenses are grouped into Personal in the client view without a hosted write, and stay within the combined envelope when a guided plan is created. No annual contribution or goal linkage is added. Quick edits also allow moving non-loan costs between Essentials and Personal. An optional JSON marker makes the initial grouping one-time and preserves subsequent manual choices.

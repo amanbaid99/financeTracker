@@ -149,7 +149,7 @@ export const HELP: HelpTopic[] = [
     section: "Budget",
     q: "How does the budget work?",
     a: [
-      "Tap Plan my budget for a guided setup: take-home income, recorded costs you confirm, missing essentials and an optional personal-spending preference. No percentages, annual contributions or savings-versus-investing split are required.",
+      "Tap Plan my budget for a guided setup: take-home income, recorded commitments you confirm, paired questions about missing essentials and an optional personal-spending preference. No percentages, annual contributions or savings-versus-investing split are required.",
       "The guide recommends one monthly Save & invest amount. Adjust it before Save this budget. Personal spending gets what is left after Essentials and Save & invest. Annual contributions remain in Goals and are not imported or added here.",
       "Without a spending preference, the starting amount is 25% of income, capped at half the money left after essentials. The remainder goes to Save & invest. This is an editable starting point, not an ideal ratio or investment advice.",
       "Personal spending includes your transport, day-to-day personal purchases and guilt-free money. Help me estimate Personal spending uses monthly transport, daily spending multiplied by days per month, and fun money. Existing named personal costs count within the estimate, not on top. Use this estimate changes the proposal; review Save & invest and save to confirm.",

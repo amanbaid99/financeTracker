@@ -49,3 +49,9 @@ it("counts named transport within Personal spending instead of adding it twice",
  expect(plan.rows.find(r=>r.id==="rule-personal")?.value).toBe(15000);
  expect(recommendBudget(100000,costs,1000).personal).toBe(5000);
 });
+
+it("defers groceries, everyday costs and transport until later questions, keeping loan commitments",()=>{
+ const plan={...emptyBudgetSheet(100000),rows:[]};
+ const items=guideCosts(plan,[{id:"rent",name:"Rent",amount:30000},{id:"groceries",name:"Groceries",amount:8000},{id:"daily",name:"Day-to-day expenses",amount:5000},{id:"transport",name:"Transport",amount:4000}], [{id:"00000000-0000-4000-8000-000000000090",name:"Transport loan",emi:5000}]);
+ expect(items.map(i=>i.row.name)).toEqual(["Rent","Transport loan EMI"]);
+});

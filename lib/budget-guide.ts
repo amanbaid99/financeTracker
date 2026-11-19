@@ -9,12 +9,13 @@ export const COST_QUESTIONS = [
   { id: "insurance", name: "Monthly insurance", question: "Any monthly insurance payments?", hint: "Only payments you make monthly. Annual contributions stay in Goals.", match: /insuran|premium/i },
   { id: "other", name: "Other essentials", question: "Any other regular essentials?", hint: "Family support, subscriptions, school fees or another commitment. Add separate items if helpful.", match: /$^/ },
 ] as const;
+export const isDeferredGuideCost = (row: BudgetSheetRow) => !row.loanId && (row.category === "personal" || /grocer|day[ -]*to[ -]*day|everyday|daily (spend|expense)|transport|commut|fuel|petrol|personal spend|guilt[ -]*free/i.test(row.name));
 export type GuideCost = { row: BudgetSheetRow; included: boolean; source: string };
 export function guideCosts(plan: BudgetSheet, costs: KnownBudgetCost[], loans: SheetLoan[]): GuideCost[] {
   // Savings, investments and discretionary envelopes are not imported into this independent setup.
   const rows = plan.rows.filter(r => !isRuleRow(r) && (r.category === "fixed" || r.category === "variable" || r.category === "debt" || (r.category === "personal" && /commut|transport|fuel/i.test(r.name))));
   const seed = { ...emptyBudgetSheet(plan.salary), rows, excludedLoanIds: plan.excludedLoanIds };
-  return knownBudgetItems(seed, costs, loans).map(item => ({ ...item, source: item.row.loanId ? (plan.excludedLoanIds.includes(item.row.loanId) ? "Loan EMI, previously excluded" : "Recorded loan EMI") : item.source, row: { ...item.row, category: isPersonalTransport(item.row) ? "personal" : item.row.category } }));
+  return knownBudgetItems(seed, costs, loans).filter(item=>!isDeferredGuideCost(item.row)).map(item => ({ ...item, source: item.row.loanId ? (plan.excludedLoanIds.includes(item.row.loanId) ? "Loan EMI, previously excluded" : "Recorded loan EMI") : item.source, row: { ...item.row, category: isPersonalTransport(item.row) ? "personal" : item.row.category } }));
 }
 export const expenseTotal = (rows: BudgetSheetRow[], salary: number) => rows.filter(r => r.category !== "savings" && r.category !== "investing" && r.category !== "personal").reduce((s,r) => s+rowAmount(r,salary),0);
 

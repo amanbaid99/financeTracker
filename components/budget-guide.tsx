@@ -26,29 +26,31 @@ export function BudgetGuide({ initial, costs, loans, replacing, onCancel, onSave
   const [pending,start]=useTransition();
   const heading=useRef<HTMLHeadingElement>(null);
   useEffect(()=>{heading.current?.focus({preventScroll:true});heading.current?.scrollIntoView({block:"nearest"});},[step]);
-  const questions=COST_QUESTIONS.filter(q=>!known.some(item=>item.included&&q.match.test(item.row.name)));
-  const spendingStep=2+questions.length, reviewStep=spendingStep+1;
+  const questions=COST_QUESTIONS.filter(q=>q.id!=="other"&&!known.some(item=>item.included&&q.match.test(item.row.name)));
+  const pairs=Array.from({length:Math.ceil(questions.length/2)},(_,index)=>questions.slice(index*2,index*2+2));
+  const otherStep=2+pairs.length, spendingStep=otherStep+1, reviewStep=spendingStep+1;
+  const currentQuestions=step>=2&&step<otherStep?pairs[step-2]:null;
   const confirmed=known.filter(i=>i.included).map(i=>({...i.row,mode:"amount" as const,value:rowAmount(i.row,salary)}));
   const rows=[...confirmed,...extra];
   const recommendation=recommendBudget(salary,rows,spending);
   const split=customSplit??recommendation;
   const plan=composeGuidedBudget(salary,rows,loans,split.future);
   const valid=budgetSheetSchema.safeParse(plan).success && sheetTotals(plan).remaining>=0;
-  const question=step>=2&&step<spendingStep?questions[step-2]:null;
+
   useEffect(()=>{
     const warn=(e:BeforeUnloadEvent)=>e.preventDefault();window.addEventListener("beforeunload",warn);return()=>window.removeEventListener("beforeunload",warn);
   },[]);
-  function navigate(next:number){setStep(next);const q=questions[next-2];setAnswer(extra.find(r=>r.id===`guide-cost-${q?.id}`)?.value??0);setOtherName("");setError("");}
+  function navigate(next:number){setStep(next);setAnswer(0);setOtherName("");setError("");}
   function advance(){navigate(step+1);setCustomSplit(null);}
   function addCost(){
-    if(!question||answer<=0||answer>1e9||rows.length>=95)return;
-    const id=question.id==="other"?crypto.randomUUID():`guide-cost-${question.id}`;
-    setExtra(r=>[...r.filter(item=>item.id!==id),{id,name:question.id==="other"?otherName.trim()||"Other essentials":question.name,category:"fixed",mode:"amount",value:answer,loanId:null}]);
+    if(step!==otherStep||answer<=0||answer>1e9||rows.length>=95)return;
+    const id=crypto.randomUUID();
+    setExtra(r=>[...r.filter(item=>item.id!==id),{id,name:otherName.trim()||"Other essentials",category:"fixed",mode:"amount",value:answer,loanId:null}]);
     setAnswer(0);setOtherName("");setCustomSplit(null);
   }
   function save(){if(!valid)return;setError("");start(async()=>{try{const result=await saveBudgetSheet(plan);if(!result.ok){setError(result.error);return;}onSaved(plan);}catch{setError("Could not save. Your answers are still here. Try again.");}});}
   const personal=plan.rows.filter(r=>r.category==="personal").reduce((s,r)=>s+rowAmount(r,salary),0);
-  const title=step===0?"What lands in your account each month?":step===1?"We found these costs. Keep any of them?":question?question.question:step===spendingStep?"How much spending room would feel comfortable?":"Here is your starting plan";
+  const title=step===0?"What lands in your account each month?":step===1?"We found these costs. Keep any of them?":currentQuestions?"A couple of monthly costs":step===otherStep?"Any other regular essentials?":step===spendingStep?"How much spending room would feel comfortable?":"Here is your starting plan";
   return <section aria-label="Budget setup" data-guide="budget-sheet" className="space-y-4">
     <div className="flex items-center justify-between gap-2"><p className="text-xs text-muted-foreground">Step {step+1} of {reviewStep+1}</p><Button variant="ghost" size="sm" disabled={pending} onClick={onCancel}>Close setup <X className="size-4" aria-hidden /></Button></div>
     <progress aria-label="Budget setup progress" max={reviewStep+1} value={step+1} className="h-1.5 w-full accent-primary" />
@@ -56,10 +58,25 @@ export function BudgetGuide({ initial, costs, loans, replacing, onCancel, onSave
       <h2 ref={heading} tabIndex={-1} className="text-xl font-semibold" aria-live="polite">{title}</h2>
       <fieldset disabled={pending} className="min-w-0 space-y-4">
       {step===0&&<><p className="text-sm text-muted-foreground">Your take-home income after tax. A normal month is enough.</p><Field label="Monthly take-home income" htmlFor="guide-income"><MoneyInput id="guide-income" value={salary||null} onChange={v=>{setSalary(v??0);setCustomSplit(null);}} /></Field><Button className="w-full" disabled={salary<=0||salary>1e9} onClick={advance}>Continue</Button></>}
-      {step===1&&<><p className="text-sm text-muted-foreground">Include only what belongs in this budget. Amounts are monthly. Nothing is added to a saved plan yet.</p>{known.length===0?<p className="text-sm">No recorded costs to confirm. We will build the list together.</p>:<div className="divide-y">{known.map((item,index)=><div key={item.row.id} className="space-y-2 py-3"><label className="flex items-start gap-3 text-sm"><input type="checkbox" className="mt-1 size-4 accent-primary" checked={item.included} onChange={e=>{setKnown(items=>items.map((i,j)=>j===index?{...i,included:e.target.checked}:i));setCustomSplit(null);}} /><span className="min-w-0 break-words">{item.row.name}<span className="block text-xs text-muted-foreground">{item.source}</span></span></label>{item.included&&<MoneyInput aria-label={`${item.row.name} monthly amount`} value={rowAmount(item.row,salary)} onChange={v=>{setKnown(items=>items.map((i,j)=>j===index?{...i,row:{...i.row,mode:"amount",value:v??0}}:i));setCustomSplit(null);}} />}</div>)}</div>}<p className="text-xs text-muted-foreground">Check any possible overlap between recorded costs and loan EMIs. Save & invest and personal amounts will be rebuilt at the end. Existing investments and SIPs are not imported.</p><Button className="w-full" onClick={advance}>Use selected costs</Button></>}
-      {question&&<><p className="text-sm text-muted-foreground">{question.hint}</p>{question.id==="other"&&<Field label="Expense name" htmlFor="guide-other-name"><Input id="guide-other-name" maxLength={80} value={otherName} onChange={e=>setOtherName(e.target.value)} placeholder="e.g. Family support" /></Field>}<Field label="Monthly amount" htmlFor="guide-cost"><MoneyInput id="guide-cost" value={answer||null} onChange={v=>setAnswer(v??0)} /></Field>
+      {step===1&&<><p className="text-sm text-muted-foreground">Confirm your recorded commitments first. Groceries, everyday costs and personal transport are left out here; we will ask about them later. Nothing is saved yet.</p>{known.length===0?<p className="text-sm">No recorded costs to confirm. We will build the list together.</p>:<div className="divide-y">{known.map((item,index)=><div key={item.row.id} className="space-y-2 py-3"><label className="flex items-start gap-3 text-sm"><input type="checkbox" className="mt-1 size-4 accent-primary" checked={item.included} onChange={e=>{setKnown(items=>items.map((i,j)=>j===index?{...i,included:e.target.checked}:i));setCustomSplit(null);}} /><span className="min-w-0 break-words">{item.row.name}<span className="block text-xs text-muted-foreground">{item.source}</span></span></label>{item.included&&<MoneyInput aria-label={`${item.row.name} monthly amount`} value={rowAmount(item.row,salary)} onChange={v=>{setKnown(items=>items.map((i,j)=>j===index?{...i,row:{...i.row,mode:"amount",value:v??0}}:i));setCustomSplit(null);}} />}</div>)}</div>}<p className="text-xs text-muted-foreground">Check any possible overlap between recorded costs and loan EMIs. Save & invest and personal amounts will be rebuilt at the end. Existing investments and SIPs are not imported.</p><Button className="w-full" onClick={advance}>Use selected costs</Button></>}
+      {currentQuestions&&<>
+        <p className="text-sm text-muted-foreground">Add only costs you pay. Leave an amount blank or zero if it does not apply or is already covered.</p>
+        {currentQuestions.map(question=>{
+          const id=`guide-cost-${question.id}`;
+          const row=extra.find(r=>r.id===id);
+          return <Field key={id} label={question.question} htmlFor={id} hint={question.hint}><MoneyInput id={id} value={row?.value||null} onChange={v=>{
+            setExtra(items=>[...items.filter(r=>r.id!==id),...(v?[{id,name:question.name,category:"fixed" as const,mode:"amount" as const,value:v,loanId:null}]:[])]);setCustomSplit(null);
+          }} /></Field>;
+        })}
+        <Button className="w-full" disabled={currentQuestions.some(q=>(extra.find(r=>r.id===`guide-cost-${q.id}`)?.value??0)>1e9)||rows.length>95} onClick={advance}>Continue</Button>
+      </>}
+      {step===otherStep&&<>
+        <p className="text-sm text-muted-foreground">Family support, subscriptions or another monthly commitment. Personal transport and everyday personal spending come next.</p>
+        <Field label="Expense name" htmlFor="guide-other-name"><Input id="guide-other-name" maxLength={80} value={otherName} onChange={e=>setOtherName(e.target.value)} placeholder="e.g. Family support" /></Field>
+        <Field label="Monthly amount" htmlFor="guide-cost"><MoneyInput id="guide-cost" value={answer||null} onChange={v=>setAnswer(v??0)} /></Field>
         {extra.length>0&&<details className="text-sm"><summary className="min-h-10 cursor-pointer text-primary">Costs added in this setup ({extra.length})</summary><ul className="divide-y">{extra.map(r=><li key={r.id} className="flex items-center justify-between gap-2 py-2"><span className="min-w-0 break-words">{r.name} · {formatINR(r.value)}</span><Button variant="ghost" size="sm" aria-label={`Remove ${r.name}`} onClick={()=>{setExtra(items=>items.filter(i=>i.id!==r.id));setCustomSplit(null);}}>Remove</Button></li>)}</ul></details>}
-        {question.id==="other"?<><Button className="w-full" variant="outline" disabled={answer<=0||answer>1e9||!otherName.trim()||rows.length>=95} onClick={addCost}><Plus className="size-4" />Add this expense</Button><Button className="w-full" disabled={answer>1e9||(answer>0&&(!otherName.trim()||rows.length>=95))} onClick={()=>{if(answer>0){if(!otherName.trim()||answer>1e9)return;addCost();}advance();}}>That is everything</Button></>:<><Button className="w-full" disabled={answer<=0||answer>1e9||rows.length>=95} onClick={()=>{addCost();advance();}}>Add and continue</Button><Button variant="ghost" className="w-full" onClick={()=>{setExtra(items=>items.filter(r=>r.id!==`guide-cost-${question.id}`));advance();}}>Not applicable / already covered</Button></>}
+        <Button className="w-full" variant="outline" disabled={answer<=0||answer>1e9||!otherName.trim()||rows.length>=95} onClick={addCost}><Plus className="size-4" />Add this expense</Button>
+        <Button className="w-full" disabled={answer>1e9||(answer>0&&(!otherName.trim()||rows.length>=95))} onClick={()=>{if(answer>0)addCost();advance();}}>That is everything</Button>
       </>}
       {step===spendingStep&&<><p className="text-sm text-muted-foreground">One total for your personal transport, day-to-day purchases and guilt-free money. Leave it blank for a starting suggestion, or build an estimate below.</p><Field label="Preferred monthly Personal spending (optional)" htmlFor="guide-spending"><MoneyInput id="guide-spending" value={spending} onChange={v=>{setSpending(v);setCustomSplit(null);}} /></Field><PersonalBudgetCalculator transport={rows.filter(r=>r.category==="personal" && isPersonalTransport(r)).reduce((sum,r)=>sum+rowAmount(r,salary),0)} minimum={personalMinimum(rows,salary)} available={Math.max(0,salary-expenseTotal(rows,salary))} onUse={amount=>{setSpending(amount);setCustomSplit(null);}} /><Button className="w-full" disabled={spending!==null&&spending>1e9} onClick={advance}>Show my recommended plan</Button></>}
       {step===reviewStep&&<>
