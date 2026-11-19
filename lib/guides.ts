@@ -96,8 +96,8 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro: "A few questions first, a compact monthly plan after.",
     steps: [
       "Tap Plan my budget. Confirm take-home income and which recorded costs belong in the plan, then add any missing monthly essentials. Annual contributions stay in Goals.",
-      "Enter a preferred guilt-free amount or let the guide suggest one. There is no savings-versus-investing split to choose.",
-      "Review one Save & invest amount and guilt-free spending in rupees. Change anything before Save this budget. No percentages are required.",
+      "Enter a preferred Personal spending amount or let the guide suggest one. There is no savings-versus-investing split to choose.",
+      "Review one Save & invest amount and Personal spending in rupees. Change anything before Save this budget. No percentages are required.",
       "Your saved view has three collapsed rows. Tap one for details or use Edit monthly amounts for quick changes.",
       "Rebuild with guide leaves the current budget intact until you save its replacement. Goals, SIPs and investment records are not linked or changed.",
     ],
@@ -138,7 +138,8 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
-  { date: "2026-11-19", title: "Just three budget buckets", items: [{ title: "Save & invest together", text: "One combined monthly amount for saving and investing. Annual contributions stay in Goals, so the guide skips yearly bills and buffer questions. Essentials, Save & invest and Guilt-free spending keep the overview simple." }] },
+  { date: "2026-11-19", title: "Your Personal spending bucket", items: [{ title: "Transport, everyday spending and fun", text: "Personal spending brings them together. Use the calculator in guided setup or Edit monthly amounts to estimate a total from your routine, then review and save." }] },
+  { date: "2026-11-19", title: "Just three budget buckets", items: [{ title: "Save & invest together", text: "One combined monthly amount for saving and investing. Annual contributions stay in Goals, so the guide skips yearly bills and buffer questions. Essentials, Save & invest and Personal spending keep the overview simple." }] },
   { date: "2026-11-19", title: "Build your budget together", items: [{ title: "Questions, then a plan", text: "Confirm income and costs, add missing essentials and let the guide recommend monthly savings, investing and spending room. Review before saving. The saved view is three compact rows with details tucked away." }] },
   { date: "2026-11-19", title: "Your budget, your rules", items: [{ title: "Set targets once", text: "Choose savings and investing percentages or fixed amounts. After commitments, the rest goes to Personal spending. Add commute and personal costs there to see what is free to spend. Confirm targets, then Save." }] },
   { date: "2026-11-19", title: "A suggested home for spare money", items: [{ title: "Review the money left", text: "After removing or reducing an item, review an editable split across savings, investing and guilt-free spending. Use this split, then Save when you are happy with it." }] },

@@ -3,6 +3,10 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+## Personal spending estimation
+
+lib/personal-budget.ts validates integer routine estimates, recognises recurring personal transport excluding loan rows, derives named personal minima and groups view rows without writing. PersonalBudgetCalculator is shared by BudgetGuide and BudgetExperience quick edits. Its callback updates the preferred personal total or combined future target respectively, before explicit Save. recommendBudget treats confirmed personal rows as included within the envelope and composes the remainder through existing budget rules. The guide no longer asks for transport as a separate Essential. Optional personalGrouping metadata in the existing JSON document preserves explicit bucket choices after the initial grouping. No external AI or database schema change is needed.
+
 ## Combined budget target
 
 budgetRulesSchema optionally accepts future, an aggregate target taking precedence over legacy savings/investing targets. applyBudgetRules counts existing rows in both categories once and creates only the missing combined allocation; budgetRuleGaps compares their combined named amounts. Legacy documents remain valid. BudgetExperience maps both categories to one visible future bucket and edits only the aggregate target. BudgetGuide has income, known costs, missing monthly essentials, optional spending preference and review; annual/buffer state and questions are removed. composeGuidedBudget stores one fixed aggregate rule in the existing standalone JSON document, without a schema migration or goal linkage.

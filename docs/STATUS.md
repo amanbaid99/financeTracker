@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 19 Nov 2026.
 
+## Personal bucket and routine calculator, 19 Nov 2026
+
+Renamed the active guilt-free bucket to Personal spending, covering personal transport, day-to-day spending and fun. Added an optional calculator in guided setup and quick edits, with monthly transport, daily spending, days per month and fun money. The transparent estimated total is checked against income left after Essentials and includes named personal costs as a minimum, not an extra charge. Applying an estimate changes only the proposal and visibly changes Save & invest; explicit Save remains required. Recognisable non-loan commute/transport expenses are grouped into Personal in the client view without a hosted write, and stay within the combined envelope when a guided plan is created. No annual contribution or goal linkage is added. Quick edits also allow moving non-loan costs between Essentials and Personal. An optional JSON marker makes the initial grouping one-time and preserves subsequent manual choices.
+
+Verification: lint, TypeScript, full unit suite, targeted personal-calculator regressions, 40 Python tests and production build passed. Twelve responsive browser flows cover four widths and three themes, daily/day-count validation, guide estimates, explicit save, quick edits and combined-target adjustment. The local signed-in Supabase check remains blocked by the previously confirmed database image extraction limit.
+
 ## Three-bucket budget, 19 Nov 2026
 
 Combined Savings and Investing into Save & invest throughout guided setup, recommendations, overview and quick edits. Removed annual-contribution and emergency-buffer questions. Recommendations reserve optional/default spending room and allocate the remainder to one future-money target; no internal savings/investing ratio is chosen. Existing rows are grouped without a write; optional rules.future supports an aggregate target while older separate targets remain readable. Combined target gaps count existing named saving/investment items once. Annual goal contributions are not imported or created. Existing annual provision rows are preserved until explicit edit or replacement. No SQL migration.

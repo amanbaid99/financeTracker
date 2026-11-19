@@ -35,6 +35,7 @@ export const budgetSheetSchema = z.object({
   rows: z.array(budgetRowSchema).max(100), excludedLoanIds: z.array(z.string().uuid()).max(100).default([]),
   rules: budgetRulesSchema.optional(),
   standalone: z.boolean().optional(),
+  personalGrouping: z.boolean().optional(),
 }).superRefine((plan, ctx) => {
   if (new TextEncoder().encode(JSON.stringify(plan)).byteLength > 50000) ctx.addIssue({ code: "custom", message: "This budget is too large. Shorten item names or remove some rows." });
   const ids = new Set<string>(), loans = new Set<string>();

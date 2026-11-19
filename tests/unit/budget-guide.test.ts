@@ -40,3 +40,12 @@ describe("three-bucket guided budget",()=>{
   expect(readBudgetSheet(p,100000,[{id,name:"Loan",emi:5000}])).toEqual(p);
  });
 });
+
+it("counts named transport within Personal spending instead of adding it twice",()=>{
+ const costs=[row("Rent","fixed",50000),row("Daily commute","personal",5000)];
+ const r=recommendBudget(100000,costs,20000);expect(r.future).toBe(30000);
+ const plan=composeGuidedBudget(100000,costs,[],r.future);
+ expect(plan.rows.filter(r=>r.category==="personal").reduce((s,r)=>s+rowAmount(r,100000),0)).toBe(20000);
+ expect(plan.rows.find(r=>r.id==="rule-personal")?.value).toBe(15000);
+ expect(recommendBudget(100000,costs,1000).personal).toBe(5000);
+});

@@ -3,6 +3,10 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Personal spending includes transport and daily costs, 19 Nov 2026
+
+The owner wants Personal spending rather than a purely discretionary guilt-free bucket. Combine personal transport, everyday personal use and fun. Offer a transparent routine-based calculator rather than a fixed required percentage: monthly transport plus daily personal spending times chosen days plus monthly fun. Leave household Essentials out to avoid double counting. Include existing named personal costs within the envelope and disclose when they set a minimum. Accepting an estimate updates the proposal, not saved data; Save & invest adjusts and the user confirms Save. Old recurring transport labels can be grouped in the view, but loan EMIs and general travel goals are never reclassified.
+
 ## One Save & invest bucket, 19 Nov 2026
 
 The owner wants Save & invest as one budget bucket and annual contributions left in Goals. Use exactly three visible buckets: Essentials, Save & invest and Guilt-free spending. Remove annual and buffer questions because the budget no longer chooses a cash-versus-investing split. Recommend a combined monthly rupee target and keep it fixed unless edited; expense changes affect spending room. Existing separate allocations are grouped without rewriting data; editing/rebuilding requires explicit Save. Rebuilding excludes old annual provisions rather than creating another contribution beside Goals.
