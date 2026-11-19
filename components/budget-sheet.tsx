@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight, PiggyBank, Plus, RefreshCw, TrendingUp, Wallet } from "lucide-react";
 import { Sheet } from "@/components/sheet";
-import { BudgetRemainder } from "@/components/budget-remainder";
+import { BudgetTargets } from "@/components/budget-targets";
 import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
@@ -15,15 +15,16 @@ import { Field } from "@/components/forms/field";
 import { formatINR } from "@/lib/format";
 import { resetBudgetSheet, saveBudgetSheet, applySheetToPlan } from "@/lib/budget-ratio-actions";
 import { cn } from "@/lib/utils";
-import { BUDGET_CATEGORIES, EXPENSE_PRESETS, addScheduledEmis, emptyBudgetSheet, rowAmount, rowPercent, sheetTotals, budgetSheetSchema, budgetRowSchema, type BudgetSheet as Plan, type BudgetSheetRow, type SheetLoan } from "@/lib/budget-sheet";
+import { applyBudgetRules, budgetRuleGaps, isRuleRow, targetAmount, BUDGET_CATEGORIES, EXPENSE_PRESETS, addScheduledEmis, emptyBudgetSheet, rowAmount, rowPercent, sheetTotals, budgetSheetSchema, budgetRowSchema, type BudgetSheet as Plan, type BudgetSheetRow, type SheetLoan } from "@/lib/budget-sheet";
 
 const SECTIONS = [
-  { id: "expenses", title: "Expenses", category: "fixed", icon: Wallet, empty: "Rent, bills and everyday spending.", add: "Add expense" },
+  { id: "expenses", title: "Commitments", category: "fixed", icon: Wallet, empty: "Rent, bills, EMIs and essential household costs.", add: "Add expense" },
   { id: "savings", title: "Savings", category: "savings", icon: PiggyBank, empty: "Emergency funds and money for upcoming plans.", add: "Add savings" },
   { id: "investments", title: "Investments", category: "investing", icon: TrendingUp, empty: "Money you plan to invest each month.", add: "Add investment" },
+  { id: "personal", title: "Personal spending", category: "personal", icon: Wallet, empty: "Commute, everyday personal costs and free-to-spend money.", add: "Add personal cost" },
 ] as const;
 type SectionId = typeof SECTIONS[number]["id"];
-const sectionFor = (row: BudgetSheetRow): SectionId => row.category === "savings" ? "savings" : row.category === "investing" ? "investments" : "expenses";
+const sectionFor = (row: BudgetSheetRow): SectionId => row.category === "savings" ? "savings" : row.category === "investing" ? "investments" : row.category === "personal" ? "personal" : "expenses";
 
 function ShareInput({ row, salary, onChange }: { row: BudgetSheetRow; salary: number; onChange: (value: number) => void }) {
   return <div className="relative"><Input aria-label={`${row.name || "Item"} percentage`} type="number" min="0" max="10000" step="0.01" inputMode="decimal" disabled={salary <= 0} value={rowPercent(row, salary)} onChange={(e) => onChange(e.target.value === "" ? 0 : Number(e.target.value))} className="tabular min-w-0 pr-7 text-right" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span></div>;
@@ -39,7 +40,7 @@ function ItemEditor({ initial, isNew, section, salary, hasAutomaticEmis, onClose
   const valid = budgetRowSchema.safeParse(row).success && rowAmount(row, salary) <= 1e9 && (!isNew || section !== "expenses" || preset !== "");
   const categories = Object.entries(BUDGET_CATEGORIES).filter(([value]) => {
     if (!isNew) return true;
-    if (section === "expenses") return value !== "savings" && value !== "investing";
+    if (section === "expenses") return value !== "savings" && value !== "investing" && value !== "personal";
     return value === heading.category;
   });
   return <Sheet title={isNew ? heading.add : `Edit ${initial.name}`} onClose={onClose}>
@@ -49,7 +50,7 @@ function ItemEditor({ initial, isNew, section, salary, hasAutomaticEmis, onClose
         setPreset(e.target.value);
         setRow((r) => ({ ...r, name: selected?.name ?? "", category: selected?.category ?? "fixed" }));
       }}><option value="" disabled>Choose an expense</option>{EXPENSE_PRESETS.map((p) => <option key={p.value} value={p.value} disabled={p.value === "emi" && hasAutomaticEmis}>{p.name}{p.value === "emi" && hasAutomaticEmis ? " (already included)" : ""}</option>)}<option value="custom">Custom</option></Select></Field>}
-      {(!isNew || section !== "expenses" || preset === "custom") && <Field label="Name" htmlFor="budget-item-name"><Input id="budget-item-name" maxLength={80} placeholder={section === "expenses" ? "e.g. Rent" : section === "savings" ? "e.g. Emergency fund" : "e.g. Monthly investment"} value={row.name} onChange={(e) => setRow((r) => ({ ...r, name: e.target.value }))} /></Field>}
+      {(!isNew || section !== "expenses" || preset === "custom") && <Field label="Name" htmlFor="budget-item-name"><Input id="budget-item-name" maxLength={80} placeholder={section === "expenses" ? "e.g. Rent" : section === "savings" ? "e.g. Emergency fund" : section === "personal" ? "e.g. Daily commute" : "e.g. Monthly investment"} value={row.name} onChange={(e) => setRow((r) => ({ ...r, name: e.target.value }))} /></Field>}
       {(!isNew || (section === "expenses" && preset === "custom")) && <Field label="Type" htmlFor="budget-item-type"><Select id="budget-item-type" value={row.category} onChange={(e) => setRow((r) => ({ ...r, category: e.target.value as BudgetSheetRow["category"] }))}>{categories.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</Select></Field>}
       {isNew && section === "expenses" && preset && preset !== "custom" && <p className="text-xs text-muted-foreground">{row.category === "fixed" ? "Added under Fixed costs." : "Added under Variable & other expenses."}</p>}
       <div className="grid grid-cols-[minmax(0,1fr)_7rem] gap-3"><Field label="Monthly amount" htmlFor="budget-item-amount"><MoneyInput id="budget-item-amount" value={rowAmount(row, salary)} onChange={(value) => setRow((r) => ({ ...r, mode: "amount", value: value ?? 0 }))} /></Field><div className="space-y-1.5"><p className="text-sm font-medium">% of income</p><ShareInput row={row} salary={salary} onChange={(value) => setRow((r) => ({ ...r, mode: "percent", value }))} /></div></div>
@@ -77,7 +78,11 @@ export function BudgetSheet({ initial, saved: hasSaved = true, salary, loans, go
   const start0 = initial ?? addScheduledEmis(emptyBudgetSheet(salary), loans);
   const [saved, setSaved] = useState(start0);
   // A new budget starts from what the app already knows, as a draft to review.
-  const [draft, setDraft] = useState(() => hasSaved ? start0 : fillFromRecords(start0, knownCosts, loans, recordedSips));
+  const [rawDraft, setRawDraft] = useState(() => hasSaved ? start0 : fillFromRecords(start0, knownCosts, loans, recordedSips));
+  const draft = applyBudgetRules(rawDraft);
+  const setDraft = (next: Plan | ((previous: Plan) => Plan)) => setRawDraft((previous) => applyBudgetRules(typeof next === "function" ? next(applyBudgetRules(previous)) : next));
+  const [showTargets, setShowTargets] = useState(false);
+  const ruleGaps = budgetRuleGaps(draft);
   const [editor, setEditor] = useState<{ row: BudgetSheetRow; isNew: boolean; section: SectionId } | null>(null);
   const [showReset, setShowReset] = useState(false);
   const [resetError, setResetError] = useState("");
@@ -100,7 +105,7 @@ export function BudgetSheet({ initial, saved: hasSaved = true, salary, loans, go
     setEditor(null); setMessage(""); setError("");
   };
   function save() {
-    if (!validation.success) return;
+    if (!validation.success || ruleGaps.length > 0) return;
     setError("");
     start(async () => {
       try {
@@ -145,7 +150,12 @@ export function BudgetSheet({ initial, saved: hasSaved = true, salary, loans, go
   const expenses = draft.rows.filter((r) => sectionFor(r) === "expenses");
   const biggest = [...expenses].sort((a, b) => rowAmount(b, draft.salary) - rowAmount(a, draft.salary))[0];
 
-  const renderRow = (row: BudgetSheetRow) => (
+  const renderRow = (row: BudgetSheetRow) => isRuleRow(row) ? (
+    <li key={row.id} className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+      <span className="min-w-0">{row.name}<span className="block text-xs text-muted-foreground">{row.category === "personal" ? "Updates automatically after costs and targets" : "Part of your target, add named items below"}</span></span>
+      <span className="tabular shrink-0 font-medium">{formatINR(rowAmount(row, draft.salary))}</span>
+    </li>
+  ) : (
     <li key={row.id}>
       <button type="button" aria-label={`Edit ${row.name}`} onClick={() => setEditor({ row, isNew: false, section: sectionFor(row) })} className="press flex min-h-12 w-full items-center justify-between gap-3 px-4 py-2.5 text-left hover:bg-muted/40">
         <span className="min-w-0">
@@ -169,15 +179,18 @@ export function BudgetSheet({ initial, saved: hasSaved = true, salary, loans, go
           <div aria-hidden className="flex h-3 gap-0.5 overflow-hidden rounded-full bg-muted">{review.slices.map((sl) => <span key={sl.key} className={cn("h-full", COLORS[sl.key])} style={{ width: `${sl.width}%` }} />)}</div>
           <ul className="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">{review.slices.map((sl) => <li key={sl.key} className="flex items-center gap-1"><span className={cn("size-2 rounded-full", COLORS[sl.key])} aria-hidden />{sl.label} <span className="tabular font-medium text-foreground">{formatINR(sl.amount)}</span></li>)}</ul>
         </>}
-        <div className="border-t pt-3">
+        <div className="space-y-2 border-t pt-3">
+          {draft.rules && <p className="text-sm">Targets: <b>{draft.rules.savings.mode === "percent" ? `${draft.rules.savings.value}%` : formatINR(targetAmount(draft.rules.savings, draft.salary))}</b> savings · <b>{draft.rules.investing.mode === "percent" ? `${draft.rules.investing.value}%` : formatINR(targetAmount(draft.rules.investing, draft.salary))}</b> investing. The rest goes to Personal spending.</p>}
+          <Button type="button" variant="outline" size="sm" className="min-h-10" disabled={draft.salary <= 0} onClick={() => setShowTargets(true)}>{draft.rules ? "Change targets" : "Set savings & investing targets"}</Button>
+          {ruleGaps.map((gap) => <p key={gap.category} role="alert" className="text-xs text-danger">Named {gap.category} items exceed the target by {formatINR(gap.excess)}. Change the target or those items before saving.</p>)}
           {draft.salary <= 0 ? <p className="text-sm text-muted-foreground">Add your take-home income to start.</p>
           : totals.remaining > 0 ? <>
             <p className="font-semibold"><span className="tabular">{formatINR(totals.remaining)}</span> not assigned yet</p>
-            <BudgetRemainder key={JSON.stringify(draft)} plan={draft} onApply={(plan) => { setDraft(plan); setMessage(""); setError(""); }} />
+            <p className="mt-1 text-xs text-muted-foreground">Set savings and investing targets, then the rest goes to Personal spending.</p>
           </> : totals.remaining < 0 ? <>
             <p className="font-semibold text-danger"><span className="tabular">{formatINR(-totals.remaining)}</span> more than you earn</p>
             {biggest && <p className="text-xs text-muted-foreground">Biggest cost: {biggest.name}, {formatINR(rowAmount(biggest, draft.salary))}. <button type="button" className="font-medium text-primary underline" onClick={() => setEditor({ row: biggest, isNew: false, section: "expenses" })}>Change it</button></p>}
-          </> : <p className="font-semibold text-success">Every rupee has a place.</p>}
+          </> : <p className="font-semibold text-success">{draft.rules ? (ruleGaps.length ? "Review your targets before saving." : "Your targets are covered. The rest is yours to spend.") : "Every rupee has a place."}</p>}
         </div>
         {(need > 0 || future > 0) && <div className="space-y-2 rounded-xl bg-muted/50 p-3 text-sm">
           <p>{need > 0 ? <>Your goals need about <b className="tabular">{formatINR(need)}</b> a month. </> : null}This budget sets aside <b className="tabular">{formatINR(future)}</b> for savings and investing.</p>
@@ -198,6 +211,7 @@ export function BudgetSheet({ initial, saved: hasSaved = true, salary, loans, go
             <h3 id={`budget-${section.id}`} className="min-w-0 flex-1 font-semibold">{section.title}</h3>
             <span className="tabular text-right text-sm font-semibold">{formatINR(amount)}{draft.salary > 0 && <span className="block text-[11px] font-normal text-muted-foreground">{pct(amount, draft.salary)} of income</span>}</span>
           </header>
+          {section.id === "personal" && <p className="px-4 pb-3 text-xs text-muted-foreground">Daily commute, personal costs and free-to-spend money in one place.{draft.rules ? " Adding a personal cost reduces Free to spend, not your savings or investing targets." : " Set your targets above to make this the remaining balance."}</p>}
           {rows.length ? <ul className="divide-y border-t">{rows.map(renderRow)}</ul> : <p className="border-t px-4 py-3 text-sm text-muted-foreground">{section.empty}</p>}
           <Button type="button" variant="ghost" className="min-h-11 w-full rounded-none border-t text-primary" disabled={draft.rows.length >= 100} onClick={() => openNew(section.id)}><Plus className="size-4" /> {section.add}</Button>
         </section>;
@@ -217,10 +231,11 @@ export function BudgetSheet({ initial, saved: hasSaved = true, salary, loans, go
       <div className="mx-auto flex max-w-3xl items-center gap-2 rounded-2xl border bg-card p-2 pl-4 pr-2 shadow-lg sm:pr-2">
         <p className="min-w-0 flex-1 text-sm font-medium">{hasSaved ? "Unsaved changes" : "Review, then save"}</p>
         {hasSaved && <Button type="button" variant="ghost" size="sm" disabled={pending} onClick={() => { setDraft(saved); setError(""); setMessage(""); }}>Undo</Button>}
-        <Button type="button" size="sm" className="min-h-10" disabled={pending || !validation.success} onClick={save}>{pending ? "Saving…" : "Save"}</Button>
+        <Button type="button" size="sm" className="min-h-10" disabled={pending || !validation.success || ruleGaps.length > 0} onClick={save}>{pending ? "Saving…" : "Save"}</Button>
       </div>
     </div>}
 
+    {showTargets && <BudgetTargets plan={draft} onClose={() => setShowTargets(false)} onApply={(rules) => { setDraft((p) => ({ ...p, rules })); setShowTargets(false); setError(""); setMessage(""); }} />}
     {showReset && <Sheet title="Reset budget?" onClose={() => { if (!pending) { setShowReset(false); setResetError(""); } }}>
       <div className="space-y-4">
         <p className="text-sm">This removes your saved budget and unsaved edits. It cannot be undone.</p>

@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 19 Nov 2026.
 
+## Stable budget targets and Personal spending, 19 Nov 2026
+
+Budget now offers explicitly confirmed savings and investing targets, defaulted from current category amounts, with percentage or fixed-rupee basis. Existing budgets keep manual allocations until opt-in. Targets include existing SIPs and named rows; derived rows fill only target gaps. After commitments and targets, all remaining money goes to Personal spending. Named personal costs use this balance and Free to spend updates automatically. Deleting a commitment no longer redistributes money into future targets. Named allocations above targets block saving until reconciled; income shortfalls remain visible without silently cutting targets or costs. Rules are optional fields in the existing owner-scoped JSON document, normalised on server save and downstream reads. No SQL migration or hosted financial-data rewrite.
+
+Verification: lint, TypeScript, 628 unit tests, 40 Python CAS tests and production build passed. Twelve responsive component fixtures cover four widths and three themes, including explicit target adoption, delete-to-personal allocation, earmarking personal costs, Save/reload, income-linked percentages, cancellation and Undo. Extra browser checks cover fixed rupees, below-item target conflicts and failed-save preservation. The signed-in e2e flow is updated; a full local Supabase-backed run remains unavailable in this environment.
+
 ## Suggested remainder split, 19 Nov 2026
 
 Reviewed and retained the latest single-source Budget simplification (ed6cc5f). Unassigned money now shows an editable savings, investing and guilt-free proposal using the current category proportions, or a disclosed 40/40/20 starter mix if none exist. Integer rounding accounts for every rupee. Use this split changes only the draft, followed by explicit Save. Existing commitments and loan exclusions are preserved. No database change.

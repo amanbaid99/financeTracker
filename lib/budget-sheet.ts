@@ -3,7 +3,7 @@ import { ratioPlanSchema, splitRupees } from "./budget-ratios";
 
 export const BUDGET_CATEGORIES = {
   fixed: "Fixed expense", variable: "Variable expense", investing: "Investing",
-  savings: "Savings", debt: "Debt repayment", personal: "Personal / guilt-free",
+  savings: "Savings", debt: "Debt repayment", personal: "Personal spending",
 } as const;
 export const EXPENSE_PRESETS = [
   { value: "rent", name: "Rent", category: "fixed" },
@@ -12,7 +12,7 @@ export const EXPENSE_PRESETS = [
   { value: "insurance", name: "Insurance", category: "fixed" },
   { value: "subscriptions", name: "Subscriptions", category: "fixed" },
   { value: "groceries", name: "Groceries", category: "variable" },
-  { value: "transport", name: "Transport", category: "variable" },
+  { value: "transport", name: "Daily commute", category: "personal" },
   { value: "personal", name: "Personal spending", category: "personal" },
 ] as const;
 export type SheetLoan = { id?: string; name: string; emi: number };
@@ -25,9 +25,15 @@ export const budgetRowSchema = z.object({
   if (row.mode === "amount" && !Number.isInteger(row.value)) ctx.addIssue({ code: "custom", message: "Enter whole rupees." });
   if (row.mode === "percent" && (row.value > 10000 || Math.abs(row.value * 100 - Math.round(row.value * 100)) > 0.00001)) ctx.addIssue({ code: "custom", message: "Use a percentage with up to two decimal places." });
 });
+const targetSchema = z.object({ mode: z.enum(["amount", "percent"]), value: z.number().finite().min(0).max(1e9) }).superRefine((target, ctx) => {
+  if (target.mode === "amount" && !Number.isInteger(target.value)) ctx.addIssue({ code: "custom", message: "Enter whole rupees." });
+  if (target.mode === "percent" && (target.value > 100 || Math.abs(target.value * 100 - Math.round(target.value * 100)) > 0.00001)) ctx.addIssue({ code: "custom", message: "Use a percentage from 0 to 100 with up to two decimal places." });
+});
+export const budgetRulesSchema = z.object({ savings: targetSchema, investing: targetSchema });
 export const budgetSheetSchema = z.object({
   version: z.literal(2), salary: z.number().int().positive("Enter your monthly take-home income.").max(1e9),
   rows: z.array(budgetRowSchema).max(100), excludedLoanIds: z.array(z.string().uuid()).max(100).default([]),
+  rules: budgetRulesSchema.optional(),
 }).superRefine((plan, ctx) => {
   if (new TextEncoder().encode(JSON.stringify(plan)).byteLength > 50000) ctx.addIssue({ code: "custom", message: "This budget is too large. Shorten item names or remove some rows." });
   const ids = new Set<string>(), loans = new Set<string>();
@@ -39,6 +45,33 @@ export const budgetSheetSchema = z.object({
 });
 export type BudgetSheet = z.infer<typeof budgetSheetSchema>;
 export type BudgetSheetRow = BudgetSheet["rows"][number];
+export type BudgetRules = z.infer<typeof budgetRulesSchema>;
+export const RULE_ROW_IDS = ["rule-savings", "rule-investing", "rule-personal"] as const;
+export const isRuleRow = (row: BudgetSheetRow) => (RULE_ROW_IDS as readonly string[]).includes(row.id);
+export const targetAmount = (target: BudgetRules["savings"], salary: number) => target.mode === "amount" ? target.value : Math.round(salary * target.value / 100);
+
+/** Targets are category totals, not extra charges on top of existing SIPs or named savings. */
+export function applyBudgetRules(plan: BudgetSheet): BudgetSheet {
+  if (!plan.rules) return plan;
+  const rows = plan.rows.filter((row) => !isRuleRow(row));
+  for (const category of ["savings", "investing"] as const) {
+    const included = rows.filter((r) => r.category === category).reduce((s, r) => s + rowAmount(r, plan.salary), 0);
+    const value = Math.max(0, targetAmount(plan.rules[category], plan.salary) - included);
+    if (value > 0) rows.push({ id: `rule-${category}`, name: category === "savings" ? "Savings to assign" : "Investing to assign", category, mode: "amount", value, loanId: null });
+  }
+  const free = Math.max(0, plan.salary - rows.reduce((s, r) => s + rowAmount(r, plan.salary), 0));
+  if (free > 0) rows.push({ id: "rule-personal", name: "Free to spend", category: "personal", mode: "amount", value: free, loanId: null });
+  return { ...plan, rows };
+}
+
+export function budgetRuleGaps(plan: BudgetSheet) {
+  if (!plan.rules) return [];
+  return (["savings", "investing"] as const).flatMap((category) => {
+    const amount = plan.rows.filter((r) => r.category === category && !isRuleRow(r)).reduce((s, r) => s + rowAmount(r, plan.salary), 0);
+    const excess = amount - targetAmount(plan.rules![category], plan.salary);
+    return excess > 0 ? [{ category, excess }] : [];
+  });
+}
 export function rowAmount(row: BudgetSheetRow, salary: number): number {
   return row.mode === "amount" ? Math.round(row.value) : Math.round(salary * row.value / 100);
 }
@@ -62,7 +95,7 @@ export function addScheduledEmis(plan: BudgetSheet, loans: SheetLoan[]): BudgetS
     rows.push({ id: `emi-${loan.id}`, name: `${loan.name} EMI`.slice(0, 80), category: "fixed", mode: "amount", value: loan.emi, loanId: loan.id });
     existing.add(loan.id);
   }
-  return { ...plan, rows };
+  return applyBudgetRules({ ...plan, rows });
 }
 /** Old saved plans become editable rows. No database write happens during conversion. */
 export function readBudgetSheet(raw: unknown, salary: number, loans: SheetLoan[]): BudgetSheet | null {

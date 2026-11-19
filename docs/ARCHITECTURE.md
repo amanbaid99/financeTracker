@@ -3,6 +3,10 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+## Budget target rules
+
+Optional rules in version-2 JSON store savings/investing basis and value. applyBudgetRules removes and rebuilds reserved derived rows, counts existing category items toward targets, and materialises remaining personal free spending. It is pure and idempotent. BudgetTargets previews and confirms rule changes into the local draft; Save remains persistence. budgetRuleGaps exposes named items exceeding targets and prevents server saves. Server saves and loadSavedSheet normalise derived amounts, preserving existing owner/loan checks. addScheduledEmis normalises again after active loan changes. Old manual documents have no rules and remain unchanged. This supersedes the remainder-proposal and archived assisted wizard descriptions below.
+
 ## Current single-sheet budget and remainder
 
 The latest single-sheet budget supersedes the assisted wizard described below. BudgetRemainder owns an isolated editable proposal, keyed to the current draft so stale amounts cannot be accepted after another edit. suggestRemainingAllocation uses category amounts and largest-remainder rounding; assistedBudget validates and composes accepted additions. Explicit Save persists the draft through the existing action. Recorded costs, loan EMIs and SIPs fill fresh drafts; saved sheets feed loadBudget for the goal plan and salary coverage. The records route redirects to Budget.

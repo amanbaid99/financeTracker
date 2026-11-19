@@ -3,6 +3,10 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Stable savings and investing targets, 19 Nov 2026
+
+The owner approved four sections: Commitments, Savings, Investments and Personal spending. Set category targets once, default to editable percentages based on existing allocations, and allow fixed rupees. Existing users explicitly confirm before adoption; no forced ideal ratio or automatic conversion. All income left after commitments and targets belongs to Personal spending, including commute, personal costs and Free to spend. Deleting costs changes personal balance only. Existing future allocations count toward targets rather than being duplicated; items above targets must be reconciled explicitly. Shortfalls never shrink targets or erase costs. This supersedes the proportional remainder proposal.
+
 ## Budget remainder proposals, 19 Nov 2026
 
 The owner wants freed budget money automatically proposed across savings, investing and guilt-free spending for approval. Keep the simplified single-sheet Budget and replace the two destination buttons with an editable inline proposal. Use existing category proportions, including zero shares; use 40/40/20 only without an existing mix. Never silently accept or save. Acceptance adds dedicated allocation rows without rewriting existing commitments or percentage bases.

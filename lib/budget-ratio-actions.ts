@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "./data";
-import { budgetSheetSchema, rowAmount } from "./budget-sheet";
+import { applyBudgetRules, budgetRuleGaps, budgetSheetSchema, rowAmount } from "./budget-sheet";
 import { ratioPlanSchema } from "./budget-ratios";
 
 export async function saveRatioPlan(input: unknown) {
@@ -27,13 +27,15 @@ export async function saveRatioPlan(input: unknown) {
 export async function saveBudgetSheet(input: unknown) {
   const parsed = budgetSheetSchema.safeParse(input);
   if (!parsed.success) return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Check the budget amounts." };
+  const normalised = budgetSheetSchema.safeParse(applyBudgetRules(parsed.data));
+  if (!normalised.success || budgetRuleGaps(parsed.data).length > 0) return { ok: false as const, error: "Check your targets and named allocations before saving." };
   const { supabase, user } = await requireUser();
-  const loanIds = parsed.data.rows.flatMap((r) => r.loanId ? [r.loanId] : []);
+  const loanIds = normalised.data.rows.flatMap((r) => r.loanId ? [r.loanId] : []);
   if (loanIds.length) {
     const { data, error } = await supabase.from("loans").select("id").eq("user_id", user.id).in("id", loanIds);
     if (error || data?.length !== loanIds.length) return { ok: false as const, error: "A loan has changed. Reload your budget before saving." };
   }
-  const { error } = await supabase.from("budget_ratio_plans").upsert({ user_id: user.id, plan: parsed.data, updated_at: new Date().toISOString() });
+  const { error } = await supabase.from("budget_ratio_plans").upsert({ user_id: user.id, plan: normalised.data, updated_at: new Date().toISOString() });
   if (error) return { ok: false as const, error: "Could not save. Your edits are still here. Try again." };
   // Your plan and Covered till salary read the saved budget.
   revalidatePath("/", "layout");
@@ -46,7 +48,7 @@ export async function applySheetToPlan() {
   const { data, error } = await supabase.from("budget_ratio_plans").select("plan").eq("user_id", user.id).maybeSingle();
   const parsed = budgetSheetSchema.safeParse(data?.plan);
   if (error || !parsed.success) return { ok: false as const, error: "Save your budget first." };
-  const monthly = parsed.data.rows
+  const monthly = applyBudgetRules(parsed.data).rows
     .filter((r) => r.category === "savings" || r.category === "investing")
     .reduce((s, r) => s + rowAmount(r, parsed.data.salary), 0);
   if (monthly <= 0) return { ok: false as const, error: "Add savings or investments to your budget first." };

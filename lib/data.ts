@@ -1,4 +1,4 @@
-import { budgetSheetSchema, rowAmount, type BudgetSheet } from "./budget-sheet";
+import { applyBudgetRules, budgetSheetSchema, rowAmount, type BudgetSheet } from "./budget-sheet";
 import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -440,7 +440,7 @@ const loadSavedSheet = cache(async (): Promise<BudgetSheet | null> => {
     .maybeSingle();
   if (error || !data) return null;
   const parsed = budgetSheetSchema.safeParse(data.plan);
-  return parsed.success ? parsed.data : null;
+  return parsed.success ? applyBudgetRules(parsed.data) : null;
 });
 
 export const loadBudget = cache(async () => {

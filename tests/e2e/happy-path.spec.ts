@@ -1033,13 +1033,16 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Edit Rent" })).toContainText("₹32,000");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByText("Budget saved. Your plan and goals now use it.")).toBeVisible();
-  // Review the proposed remainder before accepting it into the draft.
+  // Confirm persistent targets before assigning the remainder to personal spending.
   const month = page.getByRole("region", { name: "Your month" });
   await expect(month).toContainText("not assigned yet");
-  await expect(month.getByLabel("Additional savings", { exact: true })).toBeVisible();
-  await month.getByRole("button", { name: "Use this split" }).click();
+  await month.getByRole("button", { name: "Set savings & investing targets" }).click();
+  const targets = page.getByRole("dialog");
+  await targets.getByLabel("Savings target", { exact: true }).fill("20");
+  await targets.getByLabel("Investing target", { exact: true }).fill("20");
+  await targets.getByRole("button", { name: "Use these targets" }).click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(month).toContainText("Every rupee has a place.");
+  await expect(month).toContainText("Your targets are covered.");
   await page.screenshot({ path: "test-results/budget-375.png", fullPage: true });
   await month.getByRole("button", { name: /^Use ₹[\d,]+ for Your plan$/ }).click();
   await expect(page.getByText(/^Your plan now uses ₹[\d,]+ a month\.$/)).toBeVisible();

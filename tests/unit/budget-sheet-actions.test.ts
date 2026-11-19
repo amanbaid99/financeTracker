@@ -36,3 +36,15 @@ it("reports a reset database error without deleting any other records", async ()
   expect((await resetBudgetSheet("RESET_BUDGET")).ok).toBe(false);
   expect(from).toHaveBeenCalledTimes(1);
 });
+
+it("normalises rules on the server rather than trusting a stale free-spending row", async () => {
+  const plan = { ...emptyBudgetSheet(100000), rules: { savings: { mode: "percent", value: 20 }, investing: { mode: "amount", value: 30000 } }, rows: [] };
+  expect((await saveBudgetSheet(plan)).ok).toBe(true);
+  const saved = upsert.mock.calls[0][0].plan;
+  expect(saved.rows.map((r: { value: number }) => r.value)).toEqual([20000, 30000, 50000]);
+  expect(saved.rules).toEqual(plan.rules);
+});
+it("rejects named allocations above a target before writing", async () => {
+  const plan = { ...emptyBudgetSheet(100000), rules: { savings: { mode: "percent", value: 10 }, investing: { mode: "amount", value: 0 } }, rows: [{ id: "saving", name: "Emergency", category: "savings", mode: "amount", value: 20000, loanId: null }] };
+  expect((await saveBudgetSheet(plan)).ok).toBe(false); expect(upsert).not.toHaveBeenCalled();
+});
