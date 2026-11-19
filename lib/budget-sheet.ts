@@ -5,6 +5,16 @@ export const BUDGET_CATEGORIES = {
   fixed: "Fixed expense", variable: "Variable expense", investing: "Investing",
   savings: "Savings", debt: "Debt repayment", personal: "Personal / guilt-free",
 } as const;
+export const EXPENSE_PRESETS = [
+  { value: "rent", name: "Rent", category: "fixed" },
+  { value: "utilities", name: "Utilities", category: "fixed" },
+  { value: "emi", name: "EMI", category: "fixed" },
+  { value: "insurance", name: "Insurance", category: "fixed" },
+  { value: "subscriptions", name: "Subscriptions", category: "fixed" },
+  { value: "groceries", name: "Groceries", category: "variable" },
+  { value: "transport", name: "Transport", category: "variable" },
+  { value: "personal", name: "Personal spending", category: "personal" },
+] as const;
 export type SheetLoan = { id?: string; name: string; emi: number };
 export const budgetRowSchema = z.object({
   id: z.string().min(1).max(100), name: z.string().trim().min(1, "Name each budget item.").max(80),

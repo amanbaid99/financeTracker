@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 19 Nov 2026.
 
+## Expense presets and fixed-cost grouping, 19 Nov 2026
+
+Added common expense choices including Rent, Utilities, EMI, Insurance, Subscriptions and Custom. Fixed presets fill the name/category with fewer inputs; Custom exposes the manual name/type fields and defaults to fixed. Groceries and transport remain variable. Expenses now separates Fixed costs from Variable & other expenses with subtotals. The EMI preset is marked already included and disabled while tracked EMI rows exist, avoiding accidental duplicate entry. Existing categories and amounts remain unchanged.
+
+Verification: lint, TypeScript, 602 unit tests, 40 Python CAS tests and production build passed. Twelve responsive grouped-budget cases passed across four widths and three themes. Additional browser checks cover Utilities, Custom fixed defaults, variable presets, fixed subtotals, tracked-EMI duplicate prevention and an untracked manual EMI. No SQL migration is needed. Assisted budget creation was discussed as an optional future flow, not implemented in this release.
+
 ## Grouped budget list and typed adding, 19 Nov 2026
 
 Budget rows are grouped into Expenses, Savings and Investments with section totals, income shares and contextual Add buttons. Full names are readable, expense subtypes remain visible and amount/percentage editing stays inline. An add/edit panel handles names, types and removal; changing category moves rows between groups. Savings/investment adds preset their category and omit an unnecessary category picker. Closing a panel leaves the draft unchanged. Existing rows and JSON storage are preserved, with no migration or hosted record rewrite.

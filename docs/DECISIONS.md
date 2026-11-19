@@ -3,6 +3,12 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Expense presets and fixed costs, 19 Nov 2026
+
+The owner wants quick expense choices such as Utilities, EMI and Custom, with fixed costs visible inside Expenses. New expense entry starts with a preset dropdown. Rent, utilities, EMI, insurance and subscriptions default to fixed; groceries/transport are variable and personal spending keeps its category. Custom defaults to fixed and exposes name/type fields. Existing rows are never reclassified automatically.
+
+Expenses shows Fixed costs and Variable & other expenses subtotals without changing the three main budget sections or stored format. An EMI preset is disabled when tracked loan rows are already in the draft; separate untracked payments can use Custom. Savings/investment entry and direct amount/percentage editing remain unchanged. All edits still require Save budget to persist.
+
 ## Grouped budget sections, 19 Nov 2026
 
 The owner wants the budget list and adding flow organised into Expenses, Savings and Investments. Existing fixed/variable/debt/personal categories belong to Expenses; savings and investing each have their own section. Each section shows its total and income share and has a typed Add action. No storage format or amount calculation changes.

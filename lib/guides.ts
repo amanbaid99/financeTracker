@@ -96,7 +96,9 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro: "One manual sheet, like a simple spreadsheet.",
     steps: [
       "Enter your monthly take-home income. Expenses, Savings and Investments each have their own section, total and Add action.",
-      "Add expense lets you enter the name, type and amount together. Add savings and Add investment use their section automatically. Close the panel to cancel, or add the item to your draft.",
+      "Add expense offers Rent, Utilities, EMI, Insurance, Subscriptions, Groceries, Transport, Personal spending and Custom. Recurring bills default to Fixed costs; everyday spending uses variable categories. Custom starts as a fixed cost and lets you enter its name and type.",
+      "Expenses has Fixed costs and Variable & other expenses subtotals. Tracked loan EMIs are already included, so the EMI preset is disabled while those rows exist to avoid adding them twice.",
+      "Add savings and Add investment use their section automatically. Close an add panel to cancel, or add the item to your draft.",
       "Read full item names in the list and edit amounts or percentages directly. The pencil button opens a panel for renaming, changing type or removing an item. Changing type moves it to the right section.",
       "Give each item a category: fixed expense, variable expense, investing, savings, debt repayment or personal/guilt-free spending.",
       "Enter either an amount or a percentage of income. The other value updates immediately. With ₹1,00,000 income, ₹20,000 is 20%, and typing 20% gives ₹20,000.",
@@ -143,6 +145,9 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-19", title: "Quicker expense entry", items: [
+    { title: "Common expenses and Custom", text: "Choose Rent, Utilities, EMI or another common expense instead of typing everything. Fixed costs have their own subtotal within Expenses. Custom lets you add anything else, and tracked EMIs are protected against accidental duplication." },
+  ] },
   { date: "2026-11-19", title: "Clearer budget sections", items: [
     { title: "Expenses, Savings and Investments", text: "Each budget section has its own total and Add action. Rows show full names with direct amount/percentage editing. Use the pencil for name, type or removal, so the list stays easy to scan." },
   ] },
