@@ -95,6 +95,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "Your budget",
     intro: "One manual sheet, like a simple spreadsheet.",
     steps: [
+      "Help me build my budget opens optional assisted setup: confirm known items, add missing expenses, then review and save editable extra allocations. Closing the assistant leaves the manual draft unchanged.",
       "Enter your monthly take-home income. Expenses, Savings and Investments each have their own section, total and Add action.",
       "Add expense offers Rent, Utilities, EMI, Insurance, Subscriptions, Groceries, Transport, Personal spending and Custom. Recurring bills default to Fixed costs; everyday spending uses variable categories. Custom starts as a fixed cost and lets you enter its name and type.",
       "Expenses has Fixed costs and Variable & other expenses subtotals. Tracked loan EMIs are already included, so the EMI preset is disabled while those rows exist to avoid adding them twice.",
@@ -146,6 +147,9 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-19", title: "Help me build my budget", items: [
+    { title: "Optional assisted setup", text: "Review known costs, EMIs and recorded SIPs, add missing expenses, then edit a proposal for the money left. Savings, investing and personal amounts stay editable, and nothing is saved before your final confirmation." },
+  ] },
   { date: "2026-11-19", title: "Start your budget over", items: [
     { title: "Reset budget", text: "Use Reset budget at the bottom of Budget, then confirm. It clears the saved budget and unsaved edits and starts a fresh sheet with recorded income and current EMIs. Other financial records stay intact." },
   ] },

@@ -3,6 +3,14 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Working assisted budget setup, 19 Nov 2026
+
+The owner expected the proposed Help me build my budget option to be available. It is now an explicit opt-in entry below income, alongside the manual sheet. Three steps confirm income/known items, collect missing expenses and review editable extra allocations. Current draft amounts are preserved unless the user changes or deselects them. Recorded-cost IDs and matching existing expense names prevent common duplicates; ambiguous EMI records start unchecked. Previously excluded loan rows require explicit inclusion. Known SIPs appear once, and are unchecked by default if current future-money allocations may already cover them.
+
+Only the remainder after confirmed items is allocated. Existing personal spending is kept; otherwise an editable starting amount uses 20% of the remainder. Known non-loan goal gaps guide future allocations and an unfinished emergency goal gets first priority toward its savings pace. Unknown/surplus future money uses a disclosed editable starter split. Nothing creates or changes an actual SIP or payment. A plan that already fits can be kept without manufacturing extra allocations.
+
+One final Save this budget uses the existing owner-scoped budget action. Cancelling leaves manual drafts and saved data untouched; failed saves retain the proposal. Income shortfalls and allocations exceeding available money block assisted completion. Stable assisted row IDs avoid repeated-run duplication. No external AI or schema change is used.
+
 ## Confirmed budget reset, 19 Nov 2026
 
 The owner needs a way to start the budget over. Reset budget is a separate confirmed action at the bottom of Budget. It deletes only the authenticated owner's `budget_ratio_plans` document, discards local unsaved edits and opens the normal fresh sheet with recorded take-home income and active EMIs. Loans, investments, SIPs, recorded income, goals and cards stay intact. The confirmation previews the starting income and states that reset cannot be undone. Closing or cancelling performs no deletion; a failed reset keeps the current draft visible.

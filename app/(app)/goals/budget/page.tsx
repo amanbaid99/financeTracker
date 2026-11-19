@@ -17,7 +17,7 @@ export const metadata: Metadata = { title: "Budget" };
 
 /** The Budget tab: money in and out each month, and, between jobs, whether you're covered till salary. */
 export default async function BudgetPage() {
-  const [{ loanEmis, budget }, r, g] = await Promise.all([
+  const [{ loanEmis, costs, sips, budget }, r, g] = await Promise.all([
     loadBudget(),
     loadRunway(),
     loadGoals(),
@@ -69,7 +69,7 @@ export default async function BudgetPage() {
         </p>
       </div>
       {head && runwayRow}
-      <BudgetSheet initial={sheet.plan} salary={budget.income} loans={loanEmis} goals={g.goals.map((goal) => ({ type: goal.type, status: goal.status, isLoan: !!goal.loanState, monthlySip: goal.monthlySip, extraSipNeeded: goal.extraSipNeeded }))} loadError={sheet.error} />
+      <BudgetSheet initial={sheet.plan} salary={budget.income} loans={loanEmis} knownCosts={costs} recordedSips={sips} goals={g.goals.map((goal) => ({ type: goal.type, status: goal.status, isLoan: !!goal.loanState, isBillsFund: !!goal.billsFund, monthlySip: goal.monthlySip, extraSipNeeded: goal.extraSipNeeded }))} loadError={sheet.error} />
       <Link href="/goals/budget/records" className="inline-flex min-h-10 items-center text-sm text-muted-foreground">Income and cost records →</Link>
       {/* Not between jobs: a quiet link at the end. */}
       {!head && runwayRow}

@@ -1,10 +1,12 @@
 "use client";
 
+import { BudgetAssistant } from "@/components/budget-assistant";
+import type { KnownBudgetCost } from "@/lib/budget-assist";
 import { BudgetAllocation } from "@/components/budget-allocation";
 import type { BudgetReviewGoal } from "@/lib/budget-insights";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Pencil, PiggyBank, Plus, TrendingUp, Wallet } from "lucide-react";
+import { Pencil, PiggyBank, Plus, Sparkles, TrendingUp, Wallet } from "lucide-react";
 import { Sheet } from "@/components/sheet";
 import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
@@ -57,12 +59,13 @@ function ItemEditor({ initial, isNew, section, salary, hasAutomaticEmis, onClose
   </Sheet>;
 }
 
-export function BudgetSheet({ initial, salary, loans, goals = [], loadError = null }: {
-  initial: Plan | null; salary: number; loans: SheetLoan[]; goals?: BudgetReviewGoal[]; loadError?: string | null;
+export function BudgetSheet({ initial, salary, loans, goals = [], knownCosts = [], recordedSips = 0, loadError = null }: {
+  initial: Plan | null; salary: number; loans: SheetLoan[]; goals?: BudgetReviewGoal[]; knownCosts?: KnownBudgetCost[]; recordedSips?: number; loadError?: string | null;
 }) {
   const [saved, setSaved] = useState(() => initial ?? addScheduledEmis(emptyBudgetSheet(salary), loans));
   const [draft, setDraft] = useState(saved);
   const [editor, setEditor] = useState<{ row: BudgetSheetRow; isNew: boolean; section: SectionId } | null>(null);
+  const [showAssistant, setShowAssistant] = useState(false);
   const [showReset, setShowReset] = useState(false);
   const [resetError, setResetError] = useState("");
   const [message, setMessage] = useState("");
@@ -115,6 +118,7 @@ export function BudgetSheet({ initial, salary, loans, goals = [], loadError = nu
     {loadError && <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">{loadError}</p>}
     <fieldset disabled={pending || !!loadError} className="min-w-0 space-y-4 disabled:opacity-60">
       <div className="rounded-2xl border bg-card p-4"><Field label="Monthly take-home income" htmlFor="sheet-income"><MoneyInput id="sheet-income" value={draft.salary || null} onChange={(v) => { setDraft((p) => ({ ...p, salary: v ?? 0 })); setMessage(""); }} /></Field></div>
+      <Button type="button" variant="outline" className="w-full" onClick={() => setShowAssistant(true)}><Sparkles className="size-4" /> Help me build my budget</Button>
       <BudgetAllocation plan={draft} goals={goals} />
       <div className="space-y-4">{SECTIONS.map((section) => {
         const rows = draft.rows.filter((row) => sectionFor(row) === section.id);
@@ -145,6 +149,11 @@ export function BudgetSheet({ initial, salary, loans, goals = [], loadError = nu
     {!validation.success && draft.salary > 0 && <p className="text-sm text-muted-foreground">{validation.error.issues[0]?.message}</p>}
     {error && <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">{error}</p>}
     {message && <p role="status" className="text-sm text-primary">{message}</p>}
+    {showAssistant && <BudgetAssistant initial={draft} costs={knownCosts} loans={loans} recordedSips={recordedSips} goals={goals} onClose={() => setShowAssistant(false)} onSave={async (plan) => {
+      const result = await saveBudgetSheet(plan);
+      if (result.ok) { setSaved(plan); setDraft(plan); setError(""); setShowAssistant(false); setMessage("Budget saved."); router.refresh(); }
+      return result;
+    }} />}
     {showReset && <Sheet title="Reset budget?" onClose={() => { if (!pending) { setShowReset(false); setResetError(""); } }}>
       <div className="space-y-4">
         <p className="text-sm">This removes your saved budget and unsaved edits. It cannot be undone.</p>

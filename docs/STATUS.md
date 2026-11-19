@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 19 Nov 2026.
 
+## Assisted budget option implemented, 19 Nov 2026
+
+Added the working Help me build my budget entry below income. It reviews known costs/current draft items/EMIs/SIPs, collects missing expenses and presents editable additional savings, investing and guilt-free amounts. Known source identities and names prevent common duplicate entries; uncertain EMI overlaps and previously excluded loans are not silently included. Existing future allocations can be kept or explicitly rebuilt. Recorded SIPs are offered without automatically stacking them over existing saving/investing allocations. Only the final save writes the existing budget document; cancellation and failures leave the manual draft unchanged. The manual sheet and reset remain available.
+
+Verification: lint, TypeScript, 612 unit tests, 40 Python CAS tests and production build passed. Twelve responsive assisted flows cover four widths and three themes. Browser checks verify known costs, missing expenses, editable proposals, explicit final save, cancellation, loan exclusion persistence, income shortfalls, over-allocation and failed-save isolation. Additional scenarios cover known SIPs, repeated-use de-duplication, already-complete plan reassurance and rebuilding existing allocations. Model regressions also ensure combined SIP capacity is not counted twice across goal types. No SQL migration, external AI call or hosted record rewrite is needed.
+
 ## Confirmed reset budget, 19 Nov 2026
 
 Added Reset budget at the bottom of the Budget sheet with an explicit confirmation panel. The action deletes only the signed-in owner's budget document and starts the client sheet with income records and current EMIs. Other financial records are untouched. Cancelling leaves saved and unsaved data intact; failed resets show an error in the panel and preserve the visible draft. The server checks explicit confirmation before authentication/deletion and filters deletion by the authenticated owner. Existing RLS and grants support the action without SQL changes. No hosted budget was reset from the workspace.

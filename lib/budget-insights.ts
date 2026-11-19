@@ -2,7 +2,7 @@ import { formatINR } from "./format";
 import { BUDGET_CATEGORIES, rowAmount, sheetTotals, type BudgetSheet, type BudgetSheetRow } from "./budget-sheet";
 
 export type BudgetReviewGoal = {
-  type: string; status: string; isLoan: boolean; monthlySip: number; extraSipNeeded: number;
+  type: string; status: string; isLoan: boolean; isBillsFund?: boolean; monthlySip: number; extraSipNeeded: number;
 };
 export type BudgetInsight = { title: string; text: string; tone: "good" | "neutral" | "attention" };
 export type AllocationSlice = { key: BudgetSheetRow["category"] | "remaining"; label: string; amount: number; percent: number | null; width: number };

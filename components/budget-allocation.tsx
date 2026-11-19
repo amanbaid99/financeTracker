@@ -1,3 +1,6 @@
+"use client";
+
+import { useId } from "react";
 import { formatINR } from "@/lib/format";
 import { reviewBudget, type BudgetReviewGoal } from "@/lib/budget-insights";
 import type { BudgetSheet } from "@/lib/budget-sheet";
@@ -8,8 +11,9 @@ const COLORS = {
 };
 export function BudgetAllocation({ plan, goals }: { plan: BudgetSheet; goals: BudgetReviewGoal[] }) {
   const review = reviewBudget(plan, goals);
-  return <section aria-labelledby="allocation-heading" className="space-y-4 rounded-2xl border bg-card p-4">
-    <h3 id="allocation-heading" className="text-sm font-semibold">Your allocation</h3>
+  const headingId = useId();
+  return <section aria-labelledby={headingId} className="space-y-4 rounded-2xl border bg-card p-4">
+    <h3 id={headingId} className="text-sm font-semibold">Your allocation</h3>
     {review.slices.length > 0 && <>
       <div aria-hidden className="flex h-3 gap-0.5 overflow-hidden rounded-full bg-muted">{review.slices.map((s) => <span key={s.key} className={`h-full ${COLORS[s.key]}`} style={{ width: `${s.width}%` }} />)}</div>
       <dl className="grid grid-cols-2 gap-x-4 gap-y-3">{review.slices.map((s) => <div key={s.key} className="min-w-0">

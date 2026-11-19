@@ -155,6 +155,19 @@ export const HELP: HelpTopic[] = [
     ],
     tags: "delete clear budget start over reset",
   },
+  {
+    id: "budget-assisted",
+    section: "Budget",
+    q: "What does Help me build my budget do?",
+    a: [
+      "The optional button below income opens three steps: Known costs, Anything else, and Review. The manual sheet stays available.",
+      "Confirm income and check known monthly costs, loan EMIs and current budget items. Existing amounts win over matching cost records, with differences shown for review. Potential EMI overlaps start unchecked. Previously excluded loans stay unchecked until you choose them. Recorded SIPs are offered once, and start unchecked if your current saving/investing items may already cover them.",
+      "Add missing expenses with monthly amounts. Common choices already included are disabled to help avoid duplicates. Use the keep-existing-allocations checkbox to decide whether to rebuild saving, investing and personal amounts.",
+      "The proposal uses only money left after confirmed items. If there is no personal allocation yet, a starting amount uses 20% of the remainder, not salary. Known goal gaps guide savings/investing, with an unfinished emergency goal prioritised. Other future money has an editable starter split. These are calculations from recorded figures, not external AI or investment advice.",
+      "Edit the proposed amounts, leave some money unassigned if you prefer, and review the whole plan. Save this budget is the only persistence action. It does not change income records, loans, holdings or SIPs. Closing the assistant cancels its changes. An income shortfall cannot generate invented extra allocations, and failed saves keep the proposal available.",
+    ],
+    tags: "assistant assisted create budget known expenses salary allocation",
+  },
   // Assets
   {
     id: "net-worth",
