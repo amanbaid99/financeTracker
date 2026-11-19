@@ -3,6 +3,10 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Guided, independent budget creation, 19 Nov 2026
+
+The owner wants recommendations rather than selecting ratios, a conversational setup and a compact saved view. Adopt a conscious-spending inspired four-bucket plan, without claiming an optimal or certified industry ratio. Known expenses require confirmation; essentials include necessary commute. Annual bills are monthly savings provisions. Ask only buffer status and an optional desired spending amount, not saving/investing percentages. Default spending starts at 25% of income capped at half the available money after essentials/provisions. Split future money 60/40 toward savings/investing while building a buffer, 40/60 otherwise; all amounts are editable and assumptions disclosed. Infeasible spending preferences and income shortfalls are shown honestly. The final save locks rupee targets, independent of goals and SIP records. Use local calculations rather than an AI dependency for reliable arithmetic and private cost names. Existing budgets survive cancellation and failures; rebuilding replaces allocations only on explicit final save. Four collapsed rows replace the permanent item editor and repeated goal prompts.
+
 ## Stable savings and investing targets, 19 Nov 2026
 
 The owner approved four sections: Commitments, Savings, Investments and Personal spending. Set category targets once, default to editable percentages based on existing allocations, and allow fixed rupees. Existing users explicitly confirm before adoption; no forced ideal ratio or automatic conversion. All income left after commitments and targets belongs to Personal spending, including commute, personal costs and Free to spend. Deleting costs changes personal balance only. Existing future allocations count toward targets rather than being duplicated; items above targets must be reconciled explicitly. Shortfalls never shrink targets or erase costs. This supersedes the proportional remainder proposal.

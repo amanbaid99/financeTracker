@@ -34,6 +34,7 @@ export const budgetSheetSchema = z.object({
   version: z.literal(2), salary: z.number().int().positive("Enter your monthly take-home income.").max(1e9),
   rows: z.array(budgetRowSchema).max(100), excludedLoanIds: z.array(z.string().uuid()).max(100).default([]),
   rules: budgetRulesSchema.optional(),
+  standalone: z.boolean().optional(),
 }).superRefine((plan, ctx) => {
   if (new TextEncoder().encode(JSON.stringify(plan)).byteLength > 50000) ctx.addIssue({ code: "custom", message: "This budget is too large. Shorten item names or remove some rows." });
   const ids = new Set<string>(), loans = new Set<string>();
@@ -101,7 +102,7 @@ export function addScheduledEmis(plan: BudgetSheet, loans: SheetLoan[]): BudgetS
 export function readBudgetSheet(raw: unknown, salary: number, loans: SheetLoan[]): BudgetSheet | null {
   if (raw == null) return addScheduledEmis(emptyBudgetSheet(salary), loans);
   const current = budgetSheetSchema.safeParse(raw);
-  if (current.success) return addScheduledEmis(current.data, loans);
+  if (current.success) return current.data.standalone ? applyBudgetRules(current.data) : addScheduledEmis(current.data, loans);
   const legacy = ratioPlanSchema.safeParse(raw);
   if (!legacy.success) return null;
   const plan = emptyBudgetSheet(legacy.data.salary);

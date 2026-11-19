@@ -1017,37 +1017,26 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Back is named after the screen you came from, not always "Your goals".
   await page.getByRole("main").getByRole("link").first().click();
 
-  // Budget: take-home and costs give what's free, which can feed the plan.
+  // Guided budget: review each answer, save a standalone plan, then see four compact buckets.
   await tab("Budget").click();
   await expect(page.getByRole("heading", { name: "Budget", exact: true })).toBeVisible();
-  // One budget: income, then rows you tap to change, saved from the bar.
-  await page.getByLabel("Monthly take-home income").fill("200000");
-  await page.getByRole("button", { name: "Add expense" }).click();
-  const itemSheet = page.getByRole("dialog");
-  await itemSheet.getByLabel("Expense").selectOption("rent");
-  await itemSheet.getByLabel("Monthly amount").fill("30000");
-  await itemSheet.getByRole("button", { name: "Add expense" }).click();
-  await page.getByRole("button", { name: "Edit Rent" }).click();
-  await itemSheet.getByLabel("Monthly amount").fill("32000");
-  await itemSheet.getByRole("button", { name: "Update item" }).click();
-  await expect(page.getByRole("button", { name: "Edit Rent" })).toContainText("₹32,000");
-  await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.getByText("Budget saved. Your plan and goals now use it.")).toBeVisible();
-  // Confirm persistent targets before assigning the remainder to personal spending.
-  const month = page.getByRole("region", { name: "Your month" });
-  await expect(month).toContainText("not assigned yet");
-  await month.getByRole("button", { name: "Set savings & investing targets" }).click();
-  const targets = page.getByRole("dialog");
-  await targets.getByLabel("Savings target", { exact: true }).fill("20");
-  await targets.getByLabel("Investing target", { exact: true }).fill("20");
-  await targets.getByRole("button", { name: "Use these targets" }).click();
-  await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(month).toContainText("Your targets are covered.");
+  await page.getByRole("button", { name: "Plan my budget", exact: true }).click();
+  await page.getByLabel("Monthly take-home income", { exact: true }).fill("200000");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Use selected costs", exact: true }).click();
+  while (await page.getByRole("button", { name: "Not applicable / already covered", exact: true }).count()) {
+    await page.getByRole("button", { name: "Not applicable / already covered", exact: true }).click();
+  }
+  await page.getByRole("button", { name: "That is everything", exact: true }).click();
+  await page.getByRole("button", { name: "No additional annual bills", exact: true }).click();
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  await page.getByRole("button", { name: "Show my recommended plan", exact: true }).click();
+  await expect(page.getByLabel("Monthly savings", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Save this budget", exact: true }).click();
+  await expect(page.getByText("Budget saved.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit monthly amounts", exact: true })).toBeVisible();
   await page.screenshot({ path: "test-results/budget-375.png", fullPage: true });
-  await month.getByRole("button", { name: /^Use ₹[\d,]+ for Your plan$/ }).click();
-  await expect(page.getByText(/^Your plan now uses ₹[\d,]+ a month\.$/)).toBeVisible();
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
-  await expect(page.getByRole("link", { name: "Your plan", exact: true })).toBeVisible();
 
   // Your plan: the monthly split, with Edit order.
   await page.getByRole("link", { name: "Your plan", exact: true }).click();

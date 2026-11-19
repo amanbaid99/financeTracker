@@ -3,6 +3,10 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+## Guided budget experience
+
+BudgetExperience is the live Budget client entry. It displays a clean setup entry or four collapsed totals, owns optional quick-edit/reset sheets and swaps to BudgetGuide for conversational creation. lib/budget-guide.ts builds cost candidates from existing expense sources only, recommends local amounts, and composes a standalone version-2 document. BudgetGuide isolates answers until the final authenticated saveBudgetSheet action; no intermediate or cancel writes occur. Optional standalone on budgetSheetSchema uses the existing owner-scoped JSON table. readBudgetSheet skips automatic EMI insertion for standalone plans, and loadSavedSheet excludes them from existing goal/runway budget inputs. Confirmed loan identities/exclusions still receive server ownership validation. Annual provision rows count within Savings targets. The former manual BudgetSheet and ratio helpers remain archived for compatibility; they are not the active page UI.
+
 ## Budget target rules
 
 Optional rules in version-2 JSON store savings/investing basis and value. applyBudgetRules removes and rebuilds reserved derived rows, counts existing category items toward targets, and materialises remaining personal free spending. It is pure and idempotent. BudgetTargets previews and confirms rule changes into the local draft; Save remains persistence. budgetRuleGaps exposes named items exceeding targets and prevents server saves. Server saves and loadSavedSheet normalise derived amounts, preserving existing owner/loan checks. addScheduledEmis normalises again after active loan changes. Old manual documents have no rules and remain unchanged. This supersedes the remainder-proposal and archived assisted wizard descriptions below.

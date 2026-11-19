@@ -430,7 +430,7 @@ export const loadLoans = cache(async (): Promise<Loan[]> => {
 });
 
 /** Money in and money out for the budget, plus EMIs and SIPs from the app. */
-/** The saved budget sheet (version 2), or null when there isn't a valid one. */
+/** Only legacy linked sheets feed goal/runway calculations. Guided budgets stay independent. */
 const loadSavedSheet = cache(async (): Promise<BudgetSheet | null> => {
   const { supabase, user } = await requireUser();
   const { data, error } = await supabase
@@ -440,7 +440,7 @@ const loadSavedSheet = cache(async (): Promise<BudgetSheet | null> => {
     .maybeSingle();
   if (error || !data) return null;
   const parsed = budgetSheetSchema.safeParse(data.plan);
-  return parsed.success ? applyBudgetRules(parsed.data) : null;
+  return parsed.success && !parsed.data.standalone ? applyBudgetRules(parsed.data) : null;
 });
 
 export const loadBudget = cache(async () => {
