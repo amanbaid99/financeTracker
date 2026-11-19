@@ -3,7 +3,13 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 19 Nov 2026.
 
-## Assisted budget option implemented, 19 Nov 2026
+## One simple budget, 19 Nov 2026
+
+Budget is now the single source of truth for monthly income and costs. `loadBudget` (lib/data.ts) reads the saved budget sheet when there is one, so Your plan, Covered till salary, Ask and the goal calculator use it; without one it falls back to income and expense records. `/goals/budget/records` redirects to Budget. The Help me build assistant, the allocation and planner components are removed. A new budget starts as an unsaved draft filled from recorded costs, loan EMIs and SIPs (`fillFromRecords` in lib/budget-assist.ts); "Fill from my records" adds anything missing later. The top card shows income, the bar, what's not assigned (To savings / To investing), over-budget help, and the goals line with "Use ₹X for Your plan" (`applySheetToPlan` sets profiles.plan_monthly to savings plus investing). Rows are compact and tap to edit. A sticky bar holds Undo and Save, with a leave warning while unsaved. No migration.
+
+Verification: npm run check and the e2e happy path pass. The e2e also drops two assertions made stale by the owner's 18 Nov removals (holdings gain line, "What you owe on loans" region name).
+
+## Assisted budget option implemented (superseded), 19 Nov 2026
 
 Added the working Help me build my budget entry below income. It reviews known costs/current draft items/EMIs/SIPs, collects missing expenses and presents editable additional savings, investing and guilt-free amounts. Known source identities and names prevent common duplicate entries; uncertain EMI overlaps and previously excluded loans are not silently included. Existing future allocations can be kept or explicitly rebuilt. Recorded SIPs are offered without automatically stacking them over existing saving/investing allocations. Only the final save writes the existing budget document; cancellation and failures leave the manual draft unchanged. The manual sheet and reset remain available.
 

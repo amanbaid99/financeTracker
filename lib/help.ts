@@ -12,8 +12,24 @@ export interface HelpTopic {
 }
 
 export const HELP: HelpTopic[] = [
-  { id: "home", section: "Getting started", q: "What is on Home?", a: ["Your current net worth, first three unfinished goals in your Goals order, card milestone with the smallest amount left and updates due. Tap a section to open its details. The sticky + button adds or updates information."], tags: "overview focus dashboard" },
-  { id: "current-balances", section: "Net worth", q: "How do I keep my balances up to date?", a: ["Upload CAS for funds and ETFs, review the amounts and confirm before saving. Use Update amounts for other balances such as savings, EPF and US stocks. The app shows recorded balances, without gains, losses or live market-price tracking."], tags: "manual CAS amounts portfolio" },
+  {
+    id: "home",
+    section: "Getting started",
+    q: "What is on Home?",
+    a: [
+      "Your current net worth, first three unfinished goals in your Goals order, card milestone with the smallest amount left and updates due. Tap a section to open its details. The sticky + button adds or updates information.",
+    ],
+    tags: "overview focus dashboard",
+  },
+  {
+    id: "current-balances",
+    section: "Net worth",
+    q: "How do I keep my balances up to date?",
+    a: [
+      "Upload CAS for funds and ETFs, review the amounts and confirm before saving. Use Update amounts for other balances such as savings, EPF and US stocks. The app shows recorded balances, without gains, losses or live market-price tracking.",
+    ],
+    tags: "manual CAS amounts portfolio",
+  },
   {
     id: "updates-due",
     section: "Goals",
@@ -130,19 +146,16 @@ export const HELP: HelpTopic[] = [
   },
   {
     id: "budget",
-    section: "Goals",
-    q: "What does the budget do?",
+    section: "Budget",
+    q: "How does the budget work?",
     a: [
-      "It is one manual monthly sheet. Enter take-home income and add rows with an item name, category, amount and percentage. Edit either value and the other updates.",
-      "Expenses, Savings and Investments have their own totals and Add buttons. Expenses includes fixed, variable, personal and debt-repayment items. Add savings or Add investment sets the category for you. The pencil opens an edit panel for name, type and removal; changing category moves the item between sections. Amounts and percentages remain directly editable in the list. Closing an add/edit panel cancels its unconfirmed changes.",
-      "Add expense has common choices including Utilities, Rent, EMI and Custom. Recurring bill presets and Custom default to fixed costs; groceries and transport are variable. Custom lets you name and classify your own expense. Fixed costs and other expenses have separate subtotals. If tracked loan EMI rows are already present, the EMI preset is marked already included; use Custom for a different payment.",
-      "Rupee entries stay fixed when income changes; percentage entries resize. For ₹1,00,000 income, ₹20,000 is 20%. No split is suggested and you do not need to reach 100% before saving.",
-      "Active loan EMIs appear once as fixed expenses. You can edit or remove them. Removed rows stay removed until you restore them. Existing saved allocations are converted into rows without an automatic database save; existing debt allocations are used toward EMIs first to avoid counting the same debt twice.",
-      "Your allocation groups the sheet by category with amounts and percentages of income. Unassigned money stays visible. If the plan exceeds income, the bar scales to planned spending and labels the income percentages separately.",
-      "How this looks is a short review of the current draft. It recognises an affordable plan, future saving, personal spending and completed emergency targets where the recorded data supports that. Savings and investing are compared with the combined recorded monthly pace of unfinished non-loan goals. This is capacity, not money already assigned to those goals. Goals without a known pace are excluded, and no ideal salary percentage is imposed.",
-      "Total planned and Money left show the result. Over-budget plans are clearly labelled. Save budget keeps the sheet; Undo changes restores the previous version. This does not change loan payments, holdings or SIPs. The Income and cost records link opens the separate records used by the goal plan.",
+      "One sheet for your month: take-home income, then Expenses, Savings and Investments. A new budget starts from what the app already knows: your recorded costs, loan EMIs and SIPs. Check it and tap Save.",
+      "The top card shows where your income goes and what's left. Money not assigned yet can go To savings or To investing in one tap. If you plan more than you earn, it names your biggest cost so you can change it.",
+      "Tap any row to change its amount or percentage of income, its type, or remove it. Rupee amounts stay fixed when income changes; percentages resize.",
+      "Changes are a draft until you tap Save in the bar at the bottom. Undo puts back the saved version, and the app warns you before leaving with unsaved changes.",
+      "Once saved, this budget is what Your plan and Covered till salary use. Use the amount for Your plan sets your plan's monthly amount to the budget's savings plus investing.",
     ],
-    tags: "income costs free to invest",
+    tags: "income costs expenses budget free to invest plan",
   },
   {
     id: "budget-reset",
@@ -150,23 +163,19 @@ export const HELP: HelpTopic[] = [
     q: "How do I reset my budget and start over?",
     a: [
       "Scroll to the bottom of Budget, tap Reset budget, then Reset and start over. Keep my budget or closing the panel cancels without deleting anything.",
-      "Reset removes your saved budget and unsaved edits. The fresh sheet uses take-home income from your income records and active loan EMIs as fixed expenses. Your loans, holdings, SIPs, income records, goals and cards are not deleted. The confirmation shows the starting income before you proceed.",
-      "Reset cannot be undone. If the reset fails, the app keeps the current sheet visible and shows an error. Save budget stores your new plan when you are ready.",
+      "Reset removes your saved budget and unsaved edits. A fresh budget starts again from your recorded income, costs, loan EMIs and SIPs, for you to review and save. Your loans, holdings, SIPs, income records, goals and cards are not deleted. The confirmation shows the starting income before you proceed.",
+      "Reset cannot be undone. If the reset fails, the app keeps the current sheet visible and shows an error. Tap Save at the bottom when you're ready.",
     ],
     tags: "delete clear budget start over reset",
   },
   {
-    id: "budget-assisted",
+    id: "budget-fill",
     section: "Budget",
-    q: "What does Help me build my budget do?",
+    q: "What does Fill from my records do?",
     a: [
-      "The optional button below income opens three steps: Known costs, Anything else, and Review. The manual sheet stays available.",
-      "Confirm income and check known monthly costs, loan EMIs and current budget items. Existing amounts win over matching cost records, with differences shown for review. Potential EMI overlaps start unchecked. Previously excluded loans stay unchecked until you choose them. Recorded SIPs are offered once, and start unchecked if your current saving/investing items may already cover them.",
-      "Add missing expenses with monthly amounts. Common choices already included are disabled to help avoid duplicates. Use the keep-existing-allocations checkbox to decide whether to rebuild saving, investing and personal amounts.",
-      "The proposal uses only money left after confirmed items. If there is no personal allocation yet, a starting amount uses 20% of the remainder, not salary. Known goal gaps guide savings/investing, with an unfinished emergency goal prioritised. Other future money has an editable starter split. These are calculations from recorded figures, not external AI or investment advice.",
-      "Edit the proposed amounts, leave some money unassigned if you prefer, and review the whole plan. Save this budget is the only persistence action. It does not change income records, loans, holdings or SIPs. Closing the assistant cancels its changes. An income shortfall cannot generate invented extra allocations, and failed saves keep the proposal available.",
+      "It adds recorded costs, loan EMIs and SIPs that aren't in your budget yet, without doubling anything already there. It only appears when there's something to add. Nothing is saved until you tap Save.",
     ],
-    tags: "assistant assisted create budget known expenses salary allocation",
+    tags: "fill records known costs emi sip",
   },
   // Assets
   {

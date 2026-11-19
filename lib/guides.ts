@@ -93,22 +93,14 @@ export const GUIDES: Record<GuideId, Guide> = {
   },
   budget: {
     title: "Your budget",
-    intro: "One manual sheet, like a simple spreadsheet.",
+    intro: "Your monthly money, in one place.",
     steps: [
-      "Help me build my budget opens optional assisted setup: confirm known items, add missing expenses, then review and save editable extra allocations. Closing the assistant leaves the manual draft unchanged.",
-      "Enter your monthly take-home income. Expenses, Savings and Investments each have their own section, total and Add action.",
-      "Add expense offers Rent, Utilities, EMI, Insurance, Subscriptions, Groceries, Transport, Personal spending and Custom. Recurring bills default to Fixed costs; everyday spending uses variable categories. Custom starts as a fixed cost and lets you enter its name and type.",
-      "Expenses has Fixed costs and Variable & other expenses subtotals. Tracked loan EMIs are already included, so the EMI preset is disabled while those rows exist to avoid adding them twice.",
-      "Add savings and Add investment use their section automatically. Close an add panel to cancel, or add the item to your draft.",
-      "Read full item names in the list and edit amounts or percentages directly. The pencil button opens a panel for renaming, changing type or removing an item. Changing type moves it to the right section.",
-      "Give each item a category: fixed expense, variable expense, investing, savings, debt repayment or personal/guilt-free spending.",
-      "Enter either an amount or a percentage of income. The other value updates immediately. With ₹1,00,000 income, ₹20,000 is 20%, and typing 20% gives ₹20,000.",
-      "When income changes, entries last typed in rupees stay fixed. Entries last typed as percentages resize with income.",
-      "Active loan EMIs are added once as fixed expenses. You can edit or remove these rows. Removed loan rows stay out, and Restore removed loan EMIs brings them back.",
-      "The allocation bar groups your rows by category and includes unassigned money. The short review recognises what fits your income and supports your recorded goals, without prescribing a fixed ideal split.",
-      "Total planned and Money left update as you type. You can save a partial or over-budget plan; an excess is clearly shown. There is no forced 100% split or automated suggestion.",
-      "To start over, scroll to Reset budget. Confirm Reset and start over to clear the saved budget and unsaved edits. The new sheet uses income records and active EMIs. Your other financial records are not deleted, and this reset cannot be undone.",
-      "Tap Save budget to keep your sheet. Existing saved plans are converted into rows for review, without automatic saving. Income and cost records for the separate goal/SIP plan remain available from the quiet link below.",
+      "A new budget starts from what the app knows: your recorded costs, loan EMIs and SIPs. Check it, then tap Save.",
+      "The top card shows where your income goes and what's left. Put what's left To savings or To investing in one tap.",
+      "Tap a row to change its amount or percentage, its type, or remove it. Add more with Add expense, Add savings or Add investment.",
+      "Changes stay a draft until you tap Save in the bar at the bottom. Undo puts back what you saved.",
+      "Your plan and Covered till salary use this budget once it's saved. Use the amount for Your plan to set your plan's monthly amount.",
+      "Between jobs? Covered till salary sits at the top and shows whether your money lasts till your salary.",
     ],
   },
   ask: {
@@ -147,6 +139,11 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-19", title: "A simpler budget", items: [
+    { title: "Starts from what you have", text: "A new budget fills in your recorded costs, loan EMIs and SIPs. Check it and save. The separate records page is gone: this budget is what Your plan uses." },
+    { title: "What's left, in one tap", text: "The top card shows what isn't assigned yet. Send it To savings or To investing, then use it for Your plan." },
+    { title: "Tap to edit, save once", text: "Rows show the amount and share of income. Tap one to change it. A bar at the bottom saves your changes, and the app warns before you leave without saving." },
+  ] },
   { date: "2026-11-19", title: "Help me build my budget", items: [
     { title: "Optional assisted setup", text: "Review known costs, EMIs and recorded SIPs, add missing expenses, then edit a proposal for the money left. Savings, investing and personal amounts stay editable, and nothing is saved before your final confirmation." },
   ] },

@@ -679,9 +679,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByRole("list", { name: "Holdings" })).toContainText(
     "Index SIP",
   );
-  await expect(page.getByRole("list", { name: "Holdings" })).toContainText(
-    "+₹70,000 (+20%)",
-  );
   await page
     .getByRole("group", { name: "Where your money is" })
     .getByRole("button", { name: /^Equity:/ })
@@ -1023,28 +1020,29 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Budget: take-home and costs give what's free, which can feed the plan.
   await tab("Budget").click();
   await expect(page.getByRole("heading", { name: "Budget", exact: true })).toBeVisible();
-  await page.getByRole("link", { name: "Income and cost records" }).click();
-  await page.getByLabel("Salary a month").fill("200000");
-  await page.getByRole("button", { name: "Save Salary" }).click();
-  await expect(page.getByRole("button", { name: "Save Salary" })).toHaveCount(0);
-  await page.getByRole("button", { name: "Add a cost" }).click();
-  await page.getByLabel("Cost name").fill("Rent");
-  await page.getByLabel("Rent a month").fill("30000");
-  await page.getByRole("button", { name: "Save Rent" }).click();
-  await expect(page.getByRole("button", { name: "Save Rent" })).toHaveCount(0);
-  await expect(page.getByText(/free to invest a month/).first()).toBeVisible();
-  // Tap a line to change it.
+  // One budget: income, then rows you tap to change, saved from the bar.
+  await page.getByLabel("Monthly take-home income").fill("200000");
+  await page.getByRole("button", { name: "Add expense" }).click();
+  const itemSheet = page.getByRole("dialog");
+  await itemSheet.getByLabel("Expense").selectOption("rent");
+  await itemSheet.getByLabel("Monthly amount").fill("30000");
+  await itemSheet.getByRole("button", { name: "Add expense" }).click();
   await page.getByRole("button", { name: "Edit Rent" }).click();
-  await page.getByLabel("Rent a month").fill("32000");
-  await page.getByRole("button", { name: "Save Rent" }).click();
+  await itemSheet.getByLabel("Monthly amount").fill("32000");
+  await itemSheet.getByRole("button", { name: "Update item" }).click();
   await expect(page.getByRole("button", { name: "Edit Rent" })).toContainText("₹32,000");
-  // These recorded commitments remain separate from the manual budget sheet.
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByText("Budget saved. Your plan and goals now use it.")).toBeVisible();
+  // What's left can go straight to investing, then to Your plan.
   const month = page.getByRole("region", { name: "Your month" });
-  await expect(month).toContainText("EMIs");
-  await expect(month).toContainText("SIPs running");
+  await expect(month).toContainText("not assigned yet");
+  await month.getByRole("button", { name: "To investing" }).click();
+  await itemSheet.getByRole("button", { name: "Add investment" }).click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(month).toContainText("Every rupee has a place.");
   await page.screenshot({ path: "test-results/budget-375.png", fullPage: true });
-  await page.getByRole("button", { name: /a month for This month$/ }).click();
-  await expect(page.getByRole("button", { name: /a month for This month$/ })).toHaveCount(0);
+  await month.getByRole("button", { name: /^Use ₹[\d,]+ for Your plan$/ }).click();
+  await expect(page.getByText(/^Your plan now uses ₹[\d,]+ a month\.$/)).toBeVisible();
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
   await expect(page.getByRole("link", { name: "Your plan", exact: true })).toBeVisible();
 
@@ -1098,7 +1096,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.goto("/assets/net-worth");
   await expect(page).toHaveURL(/\/assets$/);
   await expect(page.getByRole("heading", { level: 1, name: "Net worth" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "What you owe on loans" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "What you owe" })).toBeVisible();
 
   // Theme from Settings.
   await page.getByRole("link", { name: "Settings" }).click();

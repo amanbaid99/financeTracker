@@ -5,6 +5,12 @@ import type { BudgetReviewGoal } from "./budget-insights";
 export type KnownBudgetCost = { id: string; name: string; amount: number };
 export type AssistedItem = { row: BudgetSheetRow; included: boolean; source: string };
 export type ExtraAllocation = { savings: number; investing: number; personal: number };
+/** Names that are the same every month; anything else counts as variable. */
+const FIXED_LIKE = /\b(rent|emi|loan|insurance|premium|utilit|electric|internet|wifi|broadband|phone|mobile|subscription|fees?|tuition|maintenance)/i;
+/** New rows from records: known costs, EMIs and SIPs, without duplicates. */
+export function fillFromRecords(plan: BudgetSheet, costs: KnownBudgetCost[], loans: SheetLoan[], recordedSips = 0): BudgetSheet {
+  return confirmedBudget(plan, plan.salary, knownBudgetItems(plan, costs, loans, recordedSips), []);
+}
 const normalise = (name: string) => name.trim().toLocaleLowerCase("en-IN").replace(/\s+/g, " ");
 const isExpense = (r: BudgetSheetRow) => r.category !== "savings" && r.category !== "investing";
 
@@ -24,7 +30,7 @@ export function knownBudgetItems(plan: BudgetSheet, costs: KnownBudgetCost[], lo
     }
     if (ids.has(id) || names.has(normalise(cost.name))) continue;
     const preset = EXPENSE_PRESETS.find((p) => normalise(p.name) === normalise(cost.name));
-    items.push({ row: { id, name: cost.name.slice(0, 80), category: preset?.category ?? "fixed", mode: "amount", value: cost.amount, loanId: null }, included: !(/\bemi\b/i.test(cost.name) && loans.length > 0), source: /\bemi\b/i.test(cost.name) && loans.length > 0 ? "May overlap with loan EMIs; include only if separate" : "Income and cost records" });
+    items.push({ row: { id, name: cost.name.slice(0, 80), category: preset?.category ?? (FIXED_LIKE.test(cost.name) ? "fixed" : "variable"), mode: "amount", value: cost.amount, loanId: null }, included: !(/\bemi\b/i.test(cost.name) && loans.length > 0), source: /\bemi\b/i.test(cost.name) && loans.length > 0 ? "May overlap with loan EMIs; include only if separate" : "Income and cost records" });
     ids.add(id);
   }
   const existingLoans = new Set(plan.rows.flatMap((r) => r.loanId ? [r.loanId] : []));

@@ -1,7 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "./data";
-import { budgetSheetSchema } from "./budget-sheet";
+import { budgetSheetSchema, rowAmount } from "./budget-sheet";
 import { ratioPlanSchema } from "./budget-ratios";
 
 export async function saveRatioPlan(input: unknown) {
@@ -35,8 +35,25 @@ export async function saveBudgetSheet(input: unknown) {
   }
   const { error } = await supabase.from("budget_ratio_plans").upsert({ user_id: user.id, plan: parsed.data, updated_at: new Date().toISOString() });
   if (error) return { ok: false as const, error: "Could not save. Your edits are still here. Try again." };
-  revalidatePath("/goals/budget");
+  // Your plan and Covered till salary read the saved budget.
+  revalidatePath("/", "layout");
   return { ok: true as const };
+}
+
+/** Your plan's monthly amount becomes the saved budget's savings plus investing. */
+export async function applySheetToPlan() {
+  const { supabase, user } = await requireUser();
+  const { data, error } = await supabase.from("budget_ratio_plans").select("plan").eq("user_id", user.id).maybeSingle();
+  const parsed = budgetSheetSchema.safeParse(data?.plan);
+  if (error || !parsed.success) return { ok: false as const, error: "Save your budget first." };
+  const monthly = parsed.data.rows
+    .filter((r) => r.category === "savings" || r.category === "investing")
+    .reduce((s, r) => s + rowAmount(r, parsed.data.salary), 0);
+  if (monthly <= 0) return { ok: false as const, error: "Add savings or investments to your budget first." };
+  const { error: saveError } = await supabase.from("profiles").update({ plan_monthly: monthly }).eq("user_id", user.id);
+  if (saveError) return { ok: false as const, error: "Could not update your plan. Try again." };
+  revalidatePath("/", "layout");
+  return { ok: true as const, monthly };
 }
 
 /** Reset only the authenticated owner's budget after an explicit in-app confirmation. */
@@ -45,6 +62,6 @@ export async function resetBudgetSheet(confirmation: unknown) {
   const { supabase, user } = await requireUser();
   const { error } = await supabase.from("budget_ratio_plans").delete().eq("user_id", user.id);
   if (error) return { ok: false as const, error: "Could not reset your budget. Try again." };
-  revalidatePath("/goals/budget");
+  revalidatePath("/", "layout");
   return { ok: true as const };
 }

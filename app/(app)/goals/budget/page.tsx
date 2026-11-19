@@ -17,12 +17,13 @@ export const metadata: Metadata = { title: "Budget" };
 
 /** The Budget tab: money in and out each month, and, between jobs, whether you're covered till salary. */
 export default async function BudgetPage() {
-  const [{ loanEmis, costs, sips, budget }, r, g] = await Promise.all([
+  const [{ loanEmis, recordCosts, recordIncome, sips, budget, plan }, r, g] = await Promise.all([
     loadBudget(),
     loadRunway(),
     loadGoals(),
   ]);
-  const sheet = await loadBudgetSheet(budget.income, loanEmis);
+  // A new budget starts at your recorded income; a saved one keeps its own.
+  const sheet = await loadBudgetSheet(budget.income || recordIncome, loanEmis);
   const head = r.active && r.runway ? runwayHeadline(r.runway) : null;
   const runwayRow = (
     <Link
@@ -65,12 +66,11 @@ export default async function BudgetPage() {
           <GuideButton id="budget" />
         </div>
         <p className="text-sm text-muted-foreground">
-          A simple sheet for your monthly money.
+          Your monthly money, in one place.
         </p>
       </div>
       {head && runwayRow}
-      <BudgetSheet initial={sheet.plan} salary={budget.income} loans={loanEmis} knownCosts={costs} recordedSips={sips} goals={g.goals.map((goal) => ({ type: goal.type, status: goal.status, isLoan: !!goal.loanState, isBillsFund: !!goal.billsFund, monthlySip: goal.monthlySip, extraSipNeeded: goal.extraSipNeeded }))} loadError={sheet.error} />
-      <Link href="/goals/budget/records" className="inline-flex min-h-10 items-center text-sm text-muted-foreground">Income and cost records →</Link>
+      <BudgetSheet initial={sheet.plan} saved={sheet.saved} salary={recordIncome} loans={loanEmis} knownCosts={recordCosts} recordedSips={sips} planMonthly={plan?.monthly ?? null} goals={g.goals.map((goal) => ({ type: goal.type, status: goal.status, isLoan: !!goal.loanState, isBillsFund: !!goal.billsFund, monthlySip: goal.monthlySip, extraSipNeeded: goal.extraSipNeeded }))} loadError={sheet.error} />
       {/* Not between jobs: a quiet link at the end. */}
       {!head && runwayRow}
     </main>
