@@ -1017,7 +1017,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Back is named after the screen you came from, not always "Your goals".
   await page.getByRole("main").getByRole("link").first().click();
 
-  // Guided budget: review each answer, save a standalone plan, then see four compact buckets.
+  // Guided budget: review each answer, save a standalone plan, then see three compact buckets.
   await tab("Budget").click();
   await expect(page.getByRole("heading", { name: "Budget", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Plan my budget", exact: true }).click();
@@ -1028,10 +1028,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     await page.getByRole("button", { name: "Not applicable / already covered", exact: true }).click();
   }
   await page.getByRole("button", { name: "That is everything", exact: true }).click();
-  await page.getByRole("button", { name: "No additional annual bills", exact: true }).click();
-  await page.getByRole("button", { name: "Continue", exact: true }).click();
   await page.getByRole("button", { name: "Show my recommended plan", exact: true }).click();
-  await expect(page.getByLabel("Monthly savings", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Monthly save & invest", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Save this budget", exact: true }).click();
   await expect(page.getByText("Budget saved.", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Edit monthly amounts", exact: true })).toBeVisible();

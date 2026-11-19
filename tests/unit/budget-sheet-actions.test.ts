@@ -48,3 +48,10 @@ it("rejects named allocations above a target before writing", async () => {
   const plan = { ...emptyBudgetSheet(100000), rules: { savings: { mode: "percent", value: 10 }, investing: { mode: "amount", value: 0 } }, rows: [{ id: "saving", name: "Emergency", category: "savings", mode: "amount", value: 20000, loanId: null }] };
   expect((await saveBudgetSheet(plan)).ok).toBe(false); expect(upsert).not.toHaveBeenCalled();
 });
+
+it("persists a combined target without splitting or duplicating existing allocations", async () => {
+ const plan={...emptyBudgetSheet(100000),standalone:true,rules:{savings:{mode:"amount",value:0},investing:{mode:"amount",value:0},future:{mode:"amount",value:40000}},rows:[{id:"existing",name:"Existing monthly investment",category:"investing",mode:"amount",value:15000,loanId:null}]};
+ expect((await saveBudgetSheet(plan)).ok).toBe(true);
+ const saved=upsert.mock.calls[0][0].plan;
+ expect(saved.rules.future).toEqual({mode:"amount",value:40000});expect(saved.rows.map((r:{value:number})=>r.value)).toEqual([15000,25000,60000]);
+});

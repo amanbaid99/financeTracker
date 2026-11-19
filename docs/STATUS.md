@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 19 Nov 2026.
 
+## Three-bucket budget, 19 Nov 2026
+
+Combined Savings and Investing into Save & invest throughout guided setup, recommendations, overview and quick edits. Removed annual-contribution and emergency-buffer questions. Recommendations reserve optional/default spending room and allocate the remainder to one future-money target; no internal savings/investing ratio is chosen. Existing rows are grouped without a write; optional rules.future supports an aggregate target while older separate targets remain readable. Combined target gaps count existing named saving/investment items once. Annual goal contributions are not imported or created. Existing annual provision rows are preserved until explicit edit or replacement. No SQL migration.
+
+Verification: lint, TypeScript, unit suite, combined-target action regressions, 40 Python tests and production build passed. Twelve responsive guided flows cover four widths and three themes, one recommended target, no annual/buffer steps, explicit Save/reload and expense removal into guilt-free spending. Additional browser verification covers legacy combined totals, named-item preservation, aggregate minimums and rebuilding without annual provisions. The signed-in local Supabase check remains blocked by the previously confirmed Postgres image extraction limit.
+
 ## Guided budget and compact overview, 19 Nov 2026
 
 Replaced the live Budget entry with Plan my budget for new users and a compact four-bucket overview for saved budgets. The guide confirms income and known costs, asks only about missing essential categories, collects annual provisions, emergency-buffer status and an optional guilt-free preference, then offers editable rupee recommendations and one explicit Save. Recommendations are deterministic and explain their starter assumptions. No external AI, goal linkage, SIP import or new table is required. Optional standalone metadata prevents guided plans from feeding existing goal/runway money calculations and prevents automatic loan insertion during read. Legacy budgets remain visible and unchanged until explicit rebuild/save. Edit monthly amounts supports quick cost/target changes and removal; future amounts stay fixed and spending receives the remainder. Reset returns to the clean entry screen.

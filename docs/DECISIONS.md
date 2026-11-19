@@ -3,6 +3,10 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## One Save & invest bucket, 19 Nov 2026
+
+The owner wants Save & invest as one budget bucket and annual contributions left in Goals. Use exactly three visible buckets: Essentials, Save & invest and Guilt-free spending. Remove annual and buffer questions because the budget no longer chooses a cash-versus-investing split. Recommend a combined monthly rupee target and keep it fixed unless edited; expense changes affect spending room. Existing separate allocations are grouped without rewriting data; editing/rebuilding requires explicit Save. Rebuilding excludes old annual provisions rather than creating another contribution beside Goals.
+
 ## Guided, independent budget creation, 19 Nov 2026
 
 The owner wants recommendations rather than selecting ratios, a conversational setup and a compact saved view. Adopt a conscious-spending inspired four-bucket plan, without claiming an optimal or certified industry ratio. Known expenses require confirmation; essentials include necessary commute. Annual bills are monthly savings provisions. Ask only buffer status and an optional desired spending amount, not saving/investing percentages. Default spending starts at 25% of income capped at half the available money after essentials/provisions. Split future money 60/40 toward savings/investing while building a buffer, 40/60 otherwise; all amounts are editable and assumptions disclosed. Infeasible spending preferences and income shortfalls are shown honestly. The final save locks rupee targets, independent of goals and SIP records. Use local calculations rather than an AI dependency for reliable arithmetic and private cost names. Existing budgets survive cancellation and failures; rebuilding replaces allocations only on explicit final save. Four collapsed rows replace the permanent item editor and repeated goal prompts.

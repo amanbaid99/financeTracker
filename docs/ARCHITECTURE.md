@@ -3,6 +3,10 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+## Combined budget target
+
+budgetRulesSchema optionally accepts future, an aggregate target taking precedence over legacy savings/investing targets. applyBudgetRules counts existing rows in both categories once and creates only the missing combined allocation; budgetRuleGaps compares their combined named amounts. Legacy documents remain valid. BudgetExperience maps both categories to one visible future bucket and edits only the aggregate target. BudgetGuide has income, known costs, missing monthly essentials, optional spending preference and review; annual/buffer state and questions are removed. composeGuidedBudget stores one fixed aggregate rule in the existing standalone JSON document, without a schema migration or goal linkage.
+
 ## Guided budget experience
 
 BudgetExperience is the live Budget client entry. It displays a clean setup entry or four collapsed totals, owns optional quick-edit/reset sheets and swaps to BudgetGuide for conversational creation. lib/budget-guide.ts builds cost candidates from existing expense sources only, recommends local amounts, and composes a standalone version-2 document. BudgetGuide isolates answers until the final authenticated saveBudgetSheet action; no intermediate or cancel writes occur. Optional standalone on budgetSheetSchema uses the existing owner-scoped JSON table. readBudgetSheet skips automatic EMI insertion for standalone plans, and loadSavedSheet excludes them from existing goal/runway budget inputs. Confirmed loan identities/exclusions still receive server ownership validation. Annual provision rows count within Savings targets. The former manual BudgetSheet and ratio helpers remain archived for compatibility; they are not the active page UI.
