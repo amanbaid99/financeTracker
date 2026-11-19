@@ -152,7 +152,7 @@ export const HELP: HelpTopic[] = [
       "Tap Plan my budget for a guided setup: take-home income, recorded commitments you confirm, paired questions about missing essentials and an optional personal-spending preference. No percentages, annual contributions or savings-versus-investing split are required.",
       "The guide recommends one monthly Save & invest amount. Adjust it before Save this budget. Personal spending gets what is left after Essentials and Save & invest. Annual contributions remain in Goals and are not imported or added here.",
       "Without a spending preference, the starting amount is 25% of income, capped at half the money left after essentials. The remainder goes to Save & invest. This is an editable starting point, not an ideal ratio or investment advice.",
-      "Personal spending includes your transport, day-to-day personal purchases and guilt-free money. Help me estimate Personal spending uses monthly transport, daily spending multiplied by days per month, and fun money. Existing named personal costs count within the estimate, not on top. Use this estimate changes the proposal; review Save & invest and save to confirm.",
+      "Personal spending includes transport, day-to-day personal purchases and guilt-free money. Enter one optional monthly amount in setup, or leave it blank for a recommendation. Review the suggested plan before saving.",
       "After saving, three collapsed rows show Essentials, Save & invest and Personal spending. Tap a row for details. Edit monthly amounts changes income, the combined target or included costs without running the guide again. Removing a cost increases Personal spending, keeping the combined target fixed.",
       "Existing savings and investing rows appear under the combined total without rewriting stored amounts. Existing annual provision rows stay until you explicitly edit or rebuild the budget. Rebuild with guide replaces a budget only after you save. Goals, SIPs and investment records are separate, and no actual spending is tracked.",
     ],
@@ -176,6 +176,16 @@ export const HELP: HelpTopic[] = [
       "The guide uses local, checked calculations from the answers you give. It works without an AI key. It does not send your costs or names to an AI service, import existing SIP amounts, or change goal allocations. This keeps the budget independent and makes every recommended amount explainable.",
     ],
     tags: "guided budget recommendations AI goals SIP independent",
+  },
+  {
+    id: "budget-sip",
+    section: "Budget",
+    q: "Can I create a SIP plan from Save & invest?",
+    a: [
+      "Choose Save & create SIP plan at the end of setup, or Create a SIP plan on your saved budget. The Save & invest amount prefills a separate review screen. Lower it if some money should stay as accessible savings.",
+      "Review how the monthly amount supports your goals. Existing SIPs count within the total, not on top. Save SIP plan explicitly sets the monthly amount for Your plan; no SIP mandate, investment record or trade is created. Your budget remains unchanged. Any existing one-time planning amount is kept.",
+    ],
+    tags: "budget sip save invest monthly allocation plan",
   },
   // Assets
   {

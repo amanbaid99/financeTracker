@@ -99,7 +99,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Enter a preferred Personal spending amount or let the guide suggest one. There is no savings-versus-investing split to choose.",
       "Review one Save & invest amount and Personal spending in rupees. Change anything before Save this budget. No percentages are required.",
       "Your saved view has three collapsed rows. Tap one for details or use Edit monthly amounts for quick changes.",
-      "Rebuild with guide leaves the current budget intact until you save its replacement. Goals, SIPs and investment records are not linked or changed.",
+      "Rebuild with guide leaves the current budget intact until you save its replacement. The budget stays independent unless you choose Create a SIP plan and explicitly save its monthly allocation. Investment records and SIP mandates are not created automatically.",
     ],
   },
   ask: {
@@ -138,8 +138,10 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-19", title: "From budget to SIP plan", items: [{ title: "Review before linking", text: "Create a SIP plan from Save & invest, adjust how much to use and review the goal allocation before saving. The personal estimate calculator is removed; a manual Personal amount or standard suggestion keeps setup simple." }] },
+  { date: "2026-11-19", title: "A simpler Personal spending step", items: [{ title: "Just one amount", text: "The optional estimate calculator is removed from setup and monthly editing. Enter a Personal spending amount or leave it blank for the usual recommendation." }] },
   { date: "2026-11-19", title: "Fewer budget setup screens", items: [{ title: "Answer two costs together", text: "The initial list contains recorded commitments. Groceries, everyday costs and personal transport are handled later. Missing expense questions now appear in pairs, with no default amounts." }] },
-  { date: "2026-11-19", title: "Your Personal spending bucket", items: [{ title: "Transport, everyday spending and fun", text: "Personal spending brings them together. Use the calculator in guided setup or Edit monthly amounts to estimate a total from your routine, then review and save." }] },
+  { date: "2026-11-19", title: "Your Personal spending bucket", items: [{ title: "Transport, everyday spending and fun", text: "Personal spending brings them together. Enter one monthly personal amount in setup, or leave it blank for a suggestion. Review and save." }] },
   { date: "2026-11-19", title: "Just three budget buckets", items: [{ title: "Save & invest together", text: "One combined monthly amount for saving and investing. Annual contributions stay in Goals, so the guide skips yearly bills and buffer questions. Essentials, Save & invest and Personal spending keep the overview simple." }] },
   { date: "2026-11-19", title: "Build your budget together", items: [{ title: "Questions, then a plan", text: "Confirm income and costs, add missing essentials and let the guide recommend monthly savings, investing and spending room. Review before saving. The saved view is three compact rows with details tucked away." }] },
   { date: "2026-11-19", title: "Your budget, your rules", items: [{ title: "Set targets once", text: "Choose savings and investing percentages or fixed amounts. After commitments, the rest goes to Personal spending. Add commute and personal costs there to see what is free to spend. Confirm targets, then Save." }] },

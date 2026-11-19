@@ -3,6 +3,14 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## SIP planning is an explicit budget action, 19 Nov 2026
+
+The owner wants the estimate calculator removed and an option to create a SIP plan using Save & invest after calculation. A separate review screen is prefilled with the combined amount, with a smaller amount allowed to retain savings. Reuse the existing goal allocation engine and saved monthly money-plan field. Do not automatically link every saved budget. Only Save SIP plan changes the monthly plan; preserve existing lump-sum input and existing SIP amounts. Existing SIPs exceeding the chosen budget must be reconciled before saving.
+
+## Personal estimate option removed, 19 Nov 2026
+
+Removed the Help me estimate calculator from guided setup and monthly editing at the owner's request. The optional manual Personal spending field and standard recommendation remain. No budget amounts or stored records are changed.
+
 ## Commitments first, paired questions later, 19 Nov 2026
 
 The owner does not want groceries, day-to-day costs or transport prefilled in the first list. Defer them rather than removing records: ask groceries among later monthly Essentials, and transport/everyday personal use in Personal spending. Present up to two missing cost questions per screen, with blank amounts allowed and no automatic defaults. Keep tracked loan commitments in the confirmation list. Existing saved budgets remain intact until the owner saves a replacement.

@@ -3,8 +3,6 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { ArrowLeft, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PersonalBudgetCalculator } from "@/components/personal-budget-calculator";
-import { isPersonalTransport, personalMinimum } from "@/lib/personal-budget";
 import { MoneyInput } from "@/components/money-input";
 import { Field } from "@/components/forms/field";
 import { saveBudgetSheet } from "@/lib/budget-ratio-actions";
@@ -13,7 +11,7 @@ import { budgetSheetSchema, rowAmount, sheetTotals, type BudgetSheet, type Budge
 import type { KnownBudgetCost } from "@/lib/budget-assist";
 import { formatINR } from "@/lib/format";
 
-export function BudgetGuide({ initial, costs, loans, replacing, onCancel, onSaved }: { initial: BudgetSheet; costs: KnownBudgetCost[]; loans: SheetLoan[]; replacing: boolean; onCancel:()=>void; onSaved:(plan:BudgetSheet)=>void }) {
+export function BudgetGuide({ initial, costs, loans, replacing, onCancel, onSaved }: { initial: BudgetSheet; costs: KnownBudgetCost[]; loans: SheetLoan[]; replacing: boolean; onCancel:()=>void; onSaved:(plan:BudgetSheet,createSip?:boolean)=>void }) {
   const [salary,setSalary]=useState(initial.salary);
   const [known,setKnown]=useState(()=>guideCosts(initial,costs,loans));
   const [extra,setExtra]=useState<BudgetSheetRow[]>([]);
@@ -48,7 +46,7 @@ export function BudgetGuide({ initial, costs, loans, replacing, onCancel, onSave
     setExtra(r=>[...r.filter(item=>item.id!==id),{id,name:otherName.trim()||"Other essentials",category:"fixed",mode:"amount",value:answer,loanId:null}]);
     setAnswer(0);setOtherName("");setCustomSplit(null);
   }
-  function save(){if(!valid)return;setError("");start(async()=>{try{const result=await saveBudgetSheet(plan);if(!result.ok){setError(result.error);return;}onSaved(plan);}catch{setError("Could not save. Your answers are still here. Try again.");}});}
+  function save(createSip=false){if(!valid)return;setError("");start(async()=>{try{const result=await saveBudgetSheet(plan);if(!result.ok){setError(result.error);return;}onSaved(plan,createSip);}catch{setError("Could not save. Your answers are still here. Try again.");}});}
   const personal=plan.rows.filter(r=>r.category==="personal").reduce((s,r)=>s+rowAmount(r,salary),0);
   const title=step===0?"What lands in your account each month?":step===1?"We found these costs. Keep any of them?":currentQuestions?"A couple of monthly costs":step===otherStep?"Any other regular essentials?":step===spendingStep?"How much spending room would feel comfortable?":"Here is your starting plan";
   return <section aria-label="Budget setup" data-guide="budget-sheet" className="space-y-4">
@@ -78,7 +76,7 @@ export function BudgetGuide({ initial, costs, loans, replacing, onCancel, onSave
         <Button className="w-full" variant="outline" disabled={answer<=0||answer>1e9||!otherName.trim()||rows.length>=95} onClick={addCost}><Plus className="size-4" />Add this expense</Button>
         <Button className="w-full" disabled={answer>1e9||(answer>0&&(!otherName.trim()||rows.length>=95))} onClick={()=>{if(answer>0)addCost();advance();}}>That is everything</Button>
       </>}
-      {step===spendingStep&&<><p className="text-sm text-muted-foreground">One total for your personal transport, day-to-day purchases and guilt-free money. Leave it blank for a starting suggestion, or build an estimate below.</p><Field label="Preferred monthly Personal spending (optional)" htmlFor="guide-spending"><MoneyInput id="guide-spending" value={spending} onChange={v=>{setSpending(v);setCustomSplit(null);}} /></Field><PersonalBudgetCalculator transport={rows.filter(r=>r.category==="personal" && isPersonalTransport(r)).reduce((sum,r)=>sum+rowAmount(r,salary),0)} minimum={personalMinimum(rows,salary)} available={Math.max(0,salary-expenseTotal(rows,salary))} onUse={amount=>{setSpending(amount);setCustomSplit(null);}} /><Button className="w-full" disabled={spending!==null&&spending>1e9} onClick={advance}>Show my recommended plan</Button></>}
+      {step===spendingStep&&<><p className="text-sm text-muted-foreground">One total for your personal transport, day-to-day purchases and guilt-free money. Enter a monthly amount, or leave it blank for a starting suggestion.</p><Field label="Preferred monthly Personal spending (optional)" htmlFor="guide-spending"><MoneyInput id="guide-spending" value={spending} onChange={v=>{setSpending(v);setCustomSplit(null);}} /></Field><Button className="w-full" disabled={spending!==null&&spending>1e9} onClick={advance}>Show my recommended plan</Button></>}
       {step===reviewStep&&<>
         <p className="text-sm text-muted-foreground">A practical starting point from your answers. Adjust the rupee amounts until it feels right.</p>
         <div className="flex items-center justify-between text-sm"><span>Take-home income</span><b>{formatINR(salary)}</b></div>
@@ -94,7 +92,8 @@ export function BudgetGuide({ initial, costs, loans, replacing, onCancel, onSave
         {replacing&&<p className="text-xs text-muted-foreground">Saving replaces your current budget with this plan. Goals, investments and SIP records stay as they are.</p>}
         {!budgetSheetSchema.safeParse(plan).success&&<p role="alert" className="text-sm text-danger">{budgetSheetSchema.safeParse(plan).error?.issues[0]?.message}</p>}
         {error&&<p role="alert" className="text-sm text-danger">{error}</p>}
-        <Button className="w-full" disabled={!valid} onClick={save}>{pending?"Saving…":"Save this budget"}</Button>
+        <Button className="w-full" disabled={!valid} onClick={()=>save()}>{pending?"Saving…":"Save this budget"}</Button>
+        {split.future>0&&<Button variant="outline" className="w-full" disabled={!valid||pending} onClick={()=>save(true)}>Save & create SIP plan</Button>}
       </>}
       </fieldset>
     </div>

@@ -3,6 +3,14 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+## Budget SIP handoff
+
+budgetSipHref and parseSipMonthly validate the explicit query handoff. BudgetGuide optionally saves its budget before navigating to /goals/sip; BudgetExperience exposes the same entry on saved budgets. The server loads owner-scoped planning data; BudgetSipPlanner previews planMoney with the selected monthly total and existing one-time amount. No write occurs during navigation or input changes. Explicit Save SIP plan uses existing authenticated savePlan and opens /goals/plan. The standalone budget flag remains unchanged, so future budget edits do not automatically alter the saved SIP plan.
+
+## Personal estimate option removed, 19 Nov 2026
+
+Removed the Help me estimate calculator from guided setup and monthly editing at the owner's request. The optional manual Personal spending field and standard recommendation remain. No budget amounts or stored records are changed.
+
 ## Paired guided expense inputs
 
 guideCosts filters deferred everyday categories from candidate costs while preserving loan-linked commitments. BudgetGuide groups remaining known-missing essential prompts into pairs and stores answers as stable-ID draft rows as they are typed. The later custom-cost and Personal calculator steps remain separate. Navigating backward retains paired amounts; clearing an answer removes only its own draft row. No database or action changes are needed.

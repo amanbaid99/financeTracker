@@ -3,6 +3,16 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 19 Nov 2026.
 
+## Optional budget-to-SIP planning, 19 Nov 2026
+
+Removed the personal estimate option from guided setup and quick edits. Added Save & create SIP plan after budget calculation and Create a SIP plan on the saved overview. /goals/sip prefills a validated positive monthly amount and previews the existing goal allocation engine. The owner can reduce the amount to retain accessible savings, sees existing SIPs counted once, and explicitly saves the monthly plan through the existing owner-scoped action. Recorded SIPs above the selected amount block saving. Existing one-time planning money is preserved and included in preview. Saving a budget alone remains independent. No investment records, bank mandates, trades or SQL migrations are created.
+
+Verification: lint, TypeScript, 642 unit tests, 40 Python tests and production build passed. Twelve responsive SIP-preview fixtures cover four widths and three themes, validated prefills, source-amount limits, recorded-SIP shortfalls, preserving existing one-time input and explicit save. Additional browser checks cover failed saves, the budget-save handoff, saved-budget links and removal of the estimate option. Full signed-in local integration remains blocked by the previously confirmed database-image extraction limit.
+
+## Personal estimate option removed, 19 Nov 2026
+
+Removed the Help me estimate calculator from guided setup and monthly editing at the owner's request. The optional manual Personal spending field and standard recommendation remain. No budget amounts or stored records are changed.
+
 ## Paired questions and fewer prefilled costs, 19 Nov 2026
 
 The initial known-cost list now excludes groceries, day-to-day expenses and transport; loan-linked rows remain available even when their names mention transport. Grocery amounts are entered later without a default, and personal transport/day-to-day spending stay in the Personal step/calculator. Missing essential questions appear in pairs with one Continue action; blank/zero means not applicable. Back navigation preserves entered amounts and stable row identities avoid duplicates. Other custom commitments have their own short add step. No saved budget or financial record is rewritten until explicit Save.
