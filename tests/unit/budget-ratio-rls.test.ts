@@ -1,7 +1,7 @@
 import { PGlite } from "@electric-sql/pglite";
 import { readFileSync } from "node:fs";
 import { expect, it } from "vitest";
-const migration = readFileSync(new URL("../../supabase/migrations/20261118173158_budget_ratio_plan.sql", import.meta.url), "utf8");
+const migration = readFileSync(new URL("../../supabase/migrations/20261119061828_budget_ratio_plan.sql", import.meta.url), "utf8");
 const owner = "00000000-0000-4000-8000-000000000001";
 const other = "00000000-0000-4000-8000-000000000002";
 it("enforces one budget per owner, CRUD isolation, anonymous denial and account-deletion cascade in PostgreSQL", async () => {

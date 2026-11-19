@@ -140,7 +140,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
-  { date: "2026-11-18", title: "Plan your salary your way", items: [
+  { date: "2026-11-19", title: "Plan your salary your way", items: [
     { title: "A budget with your own buckets", text: "Set your salary and percentages for fixed costs, investing, debt, savings or custom buckets. Add smaller allocations inside each. Suggest a split uses your commitments and goals, then you edit and save one monthly plan.", show: { path: "/goals/budget", target: "ratio-budget" } },
   ] },
   { date: "2026-11-18", title: "A simpler home for your money", items: [

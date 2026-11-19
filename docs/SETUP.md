@@ -2,9 +2,9 @@
 
 Accounts, secret names (never values) and CI. For running the app locally, see AGENTS.md.
 
-## Pending ratio budget migration
+## Ratio budget migration
 
-Apply `supabase/migrations/20261118173158_budget_ratio_plan.sql` to project `sbkpirchaaljlwzgntrf` before publishing the ratio planner. It creates an empty `budget_ratio_plans` table, owner-only policies and grants. No existing finance data is updated. The migration has been exercised with embedded PostgreSQL including real role-based ownership checks. Metadata access through the connector stalled twice; CLI fallback requires an authenticated Supabase login. Do not fetch production secrets to work around this.
+Applied `supabase/migrations/20261119061828_budget_ratio_plan.sql` to project `sbkpirchaaljlwzgntrf` on 19 Nov 2026. The filename matches the recorded hosted migration version. It creates the private `budget_ratio_plans` table, owner-only policies and explicit grants. No existing finance data was updated. Local regression exercises actual PostgreSQL owner isolation and account-deletion cascade; hosted metadata and security advisors were also checked.
 
 ## Accounts
 
