@@ -144,6 +144,17 @@ export const HELP: HelpTopic[] = [
     ],
     tags: "income costs free to invest",
   },
+  {
+    id: "budget-reset",
+    section: "Budget",
+    q: "How do I reset my budget and start over?",
+    a: [
+      "Scroll to the bottom of Budget, tap Reset budget, then Reset and start over. Keep my budget or closing the panel cancels without deleting anything.",
+      "Reset removes your saved budget and unsaved edits. The fresh sheet uses take-home income from your income records and active loan EMIs as fixed expenses. Your loans, holdings, SIPs, income records, goals and cards are not deleted. The confirmation shows the starting income before you proceed.",
+      "Reset cannot be undone. If the reset fails, the app keeps the current sheet visible and shows an error. Save budget stores your new plan when you are ready.",
+    ],
+    tags: "delete clear budget start over reset",
+  },
   // Assets
   {
     id: "net-worth",

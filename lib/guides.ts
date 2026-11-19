@@ -106,6 +106,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Active loan EMIs are added once as fixed expenses. You can edit or remove these rows. Removed loan rows stay out, and Restore removed loan EMIs brings them back.",
       "The allocation bar groups your rows by category and includes unassigned money. The short review recognises what fits your income and supports your recorded goals, without prescribing a fixed ideal split.",
       "Total planned and Money left update as you type. You can save a partial or over-budget plan; an excess is clearly shown. There is no forced 100% split or automated suggestion.",
+      "To start over, scroll to Reset budget. Confirm Reset and start over to clear the saved budget and unsaved edits. The new sheet uses income records and active EMIs. Your other financial records are not deleted, and this reset cannot be undone.",
       "Tap Save budget to keep your sheet. Existing saved plans are converted into rows for review, without automatic saving. Income and cost records for the separate goal/SIP plan remain available from the quiet link below.",
     ],
   },
@@ -145,6 +146,9 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-19", title: "Start your budget over", items: [
+    { title: "Reset budget", text: "Use Reset budget at the bottom of Budget, then confirm. It clears the saved budget and unsaved edits and starts a fresh sheet with recorded income and current EMIs. Other financial records stay intact." },
+  ] },
   { date: "2026-11-19", title: "Quicker expense entry", items: [
     { title: "Common expenses and Custom", text: "Choose Rent, Utilities, EMI or another common expense instead of typing everything. Fixed costs have their own subtotal within Expenses. Custom lets you add anything else, and tracked EMIs are protected against accidental duplication." },
   ] },

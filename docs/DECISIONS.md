@@ -3,6 +3,12 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Confirmed budget reset, 19 Nov 2026
+
+The owner needs a way to start the budget over. Reset budget is a separate confirmed action at the bottom of Budget. It deletes only the authenticated owner's `budget_ratio_plans` document, discards local unsaved edits and opens the normal fresh sheet with recorded take-home income and active EMIs. Loans, investments, SIPs, recorded income, goals and cards stay intact. The confirmation previews the starting income and states that reset cannot be undone. Closing or cancelling performs no deletion; a failed reset keeps the current draft visible.
+
+The server requires an explicit confirmation literal and obtains the owner from the authenticated session, not client input. Existing owner-only DELETE policy/grants apply; no schema migration is needed. This feature adds a user-controlled app action and does not reset the owner's hosted budget from the workspace.
+
 ## Expense presets and fixed costs, 19 Nov 2026
 
 The owner wants quick expense choices such as Utilities, EMI and Custom, with fixed costs visible inside Expenses. New expense entry starts with a preset dropdown. Rent, utilities, EMI, insurance and subscriptions default to fixed; groceries/transport are variable and personal spending keeps its category. Custom defaults to fixed and exposes name/type fields. Existing rows are never reclassified automatically.

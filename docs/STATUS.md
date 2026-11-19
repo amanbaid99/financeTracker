@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 19 Nov 2026.
 
+## Confirmed reset budget, 19 Nov 2026
+
+Added Reset budget at the bottom of the Budget sheet with an explicit confirmation panel. The action deletes only the signed-in owner's budget document and starts the client sheet with income records and current EMIs. Other financial records are untouched. Cancelling leaves saved and unsaved data intact; failed resets show an error in the panel and preserve the visible draft. The server checks explicit confirmation before authentication/deletion and filters deletion by the authenticated owner. Existing RLS and grants support the action without SQL changes. No hosted budget was reset from the workspace.
+
+Verification: lint, TypeScript, 605 unit tests, 40 Python CAS tests and production build passed. Twelve responsive reset cases cover four widths and three themes. Browser checks confirm no request before confirmation or after cancellation, preservation of unsaved edits on cancel, fresh recorded-income/EMI defaults, reset persistence after reload, no old-budget undo and preserved draft on failure. Embedded PostgreSQL now also exercises owner deletion while preserving the other owner's budget, alongside existing RLS/cascade checks. No hosted user budget was reset during verification.
+
 ## Expense presets and fixed-cost grouping, 19 Nov 2026
 
 Added common expense choices including Rent, Utilities, EMI, Insurance, Subscriptions and Custom. Fixed presets fill the name/category with fewer inputs; Custom exposes the manual name/type fields and defaults to fixed. Groceries and transport remain variable. Expenses now separates Fixed costs from Variable & other expenses with subtotals. The EMI preset is marked already included and disabled while tracked EMI rows exist, avoiding accidental duplicate entry. Existing categories and amounts remain unchanged.

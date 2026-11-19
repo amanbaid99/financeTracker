@@ -25,9 +25,15 @@ it("enforces one budget per owner, CRUD isolation, anonymous denial and account-
     expect((await db.query("update public.budget_ratio_plans set plan='{}' returning user_id")).rows).toEqual([]);
     expect((await db.query("delete from public.budget_ratio_plans returning user_id")).rows).toEqual([]);
     await expect(db.exec(`insert into public.budget_ratio_plans(user_id,plan) values ('${owner}','{}')`)).rejects.toThrow();
+    await db.exec("insert into public.budget_ratio_plans(plan) values ('{}')");
+    await db.exec(`set request.jwt.claim.sub = '${owner}'`);
+    expect((await db.query("delete from public.budget_ratio_plans returning user_id")).rows).toEqual([{ user_id: owner }]);
+    expect((await db.query("select * from public.budget_ratio_plans")).rows).toEqual([]);
+    await db.exec("insert into public.budget_ratio_plans(plan) values ('{}')");
     await db.exec("reset role; set role anon");
     await expect(db.query("select * from public.budget_ratio_plans")).rejects.toThrow();
     await db.exec(`reset role; delete from auth.users where id='${owner}'`);
-    expect((await db.query("select * from public.budget_ratio_plans")).rows).toEqual([]);
+    expect((await db.query("select user_id from public.budget_ratio_plans")).rows).toEqual([{ user_id: other }]);
+    expect((await db.query("select id from auth.users")).rows).toEqual([{ id: other }]);
   } finally { await db.close(); }
 }, 20000);

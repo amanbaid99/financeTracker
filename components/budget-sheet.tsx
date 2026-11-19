@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { Field } from "@/components/forms/field";
 import { formatINR } from "@/lib/format";
-import { saveBudgetSheet } from "@/lib/budget-ratio-actions";
+import { resetBudgetSheet, saveBudgetSheet } from "@/lib/budget-ratio-actions";
 import { BUDGET_CATEGORIES, EXPENSE_PRESETS, addScheduledEmis, emptyBudgetSheet, rowAmount, rowPercent, sheetTotals, budgetSheetSchema, budgetRowSchema, type BudgetSheet as Plan, type BudgetSheetRow, type SheetLoan } from "@/lib/budget-sheet";
 
 const SECTIONS = [
@@ -63,6 +63,8 @@ export function BudgetSheet({ initial, salary, loans, goals = [], loadError = nu
   const [saved, setSaved] = useState(() => initial ?? addScheduledEmis(emptyBudgetSheet(salary), loans));
   const [draft, setDraft] = useState(saved);
   const [editor, setEditor] = useState<{ row: BudgetSheetRow; isNew: boolean; section: SectionId } | null>(null);
+  const [showReset, setShowReset] = useState(false);
+  const [resetError, setResetError] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
@@ -86,6 +88,18 @@ export function BudgetSheet({ initial, salary, loans, goals = [], loadError = nu
         if (!result.ok) { setError(result.error); return; }
         setSaved(draft); setMessage("Budget saved."); router.refresh();
       } catch { setError("Could not save. Your edits are still here. Try again."); }
+    });
+  }
+  function reset() {
+    setResetError("");
+    start(async () => {
+      try {
+        const result = await resetBudgetSheet("RESET_BUDGET");
+        if (!result.ok) { setResetError(result.error); return; }
+        const fresh = addScheduledEmis(emptyBudgetSheet(salary), loans);
+        setSaved(fresh); setDraft(fresh); setEditor(null); setError(""); setShowReset(false);
+        setMessage("Budget reset. Start with a fresh sheet."); router.refresh();
+      } catch { setResetError("Could not reset your budget. Try again."); }
     });
   }
   const renderRow = (row: BudgetSheetRow) => (<li key={row.id} className="grid grid-cols-[minmax(0,1fr)_6rem] items-center gap-x-2 gap-y-2 px-4 py-3 sm:grid-cols-[minmax(0,1fr)_9rem_6rem_2.75rem]">
@@ -126,10 +140,21 @@ export function BudgetSheet({ initial, salary, loans, goals = [], loadError = nu
       <p className="text-xs text-muted-foreground">When income changes, rupee entries stay fixed and percentage entries resize. Loan EMIs start as fixed expenses. Nothing is saved until you tap Save budget.</p>
       {draft.excludedLoanIds.length > 0 && <Button type="button" variant="ghost" size="sm" onClick={() => setDraft((p) => addScheduledEmis({ ...p, excludedLoanIds: [] }, loans))}>Restore removed loan EMIs</Button>}
       <div className="flex gap-2"><Button type="button" className="flex-1" disabled={!validation.success} onClick={save}>{pending ? "Saving…" : "Save budget"}</Button>{dirty && <Button type="button" variant="outline" onClick={() => { setDraft(saved); setError(""); setMessage(""); }}>Undo changes</Button>}</div>
+      <Button type="button" variant="ghost" className="w-full text-muted-foreground" onClick={() => { setResetError(""); setShowReset(true); }}>Reset budget</Button>
     </fieldset>
     {!validation.success && draft.salary > 0 && <p className="text-sm text-muted-foreground">{validation.error.issues[0]?.message}</p>}
     {error && <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">{error}</p>}
     {message && <p role="status" className="text-sm text-primary">{message}</p>}
+    {showReset && <Sheet title="Reset budget?" onClose={() => { if (!pending) { setShowReset(false); setResetError(""); } }}>
+      <div className="space-y-4">
+        <p className="text-sm">This removes your saved budget and unsaved edits. It cannot be undone.</p>
+        <div className="space-y-2 rounded-xl border bg-muted/20 p-3 text-sm"><p>Your fresh sheet will start with:</p><ul className="list-disc space-y-1 pl-4 text-muted-foreground"><li>{formatINR(salary)} monthly income from your income records.</li><li>{loans.length ? "Current loan EMIs as fixed expenses." : "No budget items."}</li></ul></div>
+        <p className="text-sm text-muted-foreground">Your income records, loans, investments, SIPs, goals and card data stay intact.</p>
+        {resetError && <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">{resetError}</p>}
+        <Button type="button" variant="destructive" className="w-full" disabled={pending} onClick={reset}>{pending ? "Resetting…" : "Reset and start over"}</Button>
+        <Button type="button" variant="outline" className="w-full" disabled={pending} onClick={() => setShowReset(false)}>Keep my budget</Button>
+      </div>
+    </Sheet>}
     {editor && <ItemEditor key={editor.row.id} initial={editor.row} isNew={editor.isNew} section={editor.section} salary={draft.salary} hasAutomaticEmis={draft.rows.some((r) => !!r.loanId)} onClose={() => setEditor(null)} onRemove={() => remove(editor.row)} onApply={(row) => {
       setDraft((p) => ({ ...p, rows: editor.isNew ? [...p.rows, row] : p.rows.map((r) => r.id === row.id ? row : r) }));
       setEditor(null); setError(""); setMessage("");

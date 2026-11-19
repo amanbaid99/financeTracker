@@ -11,6 +11,10 @@ The signed-in entry is `/today` (Home). It reads cached owner-scoped goals, card
 
 `lib/budget-sheet.ts` validates version-2 row documents and derives amount/percentage values from the last-edited basis. `BudgetSheet` groups rows into Expenses, Savings and Investments with per-section totals. Amounts/percentages remain directly editable; typed add/edit sheets handle names, categories and removal. Panel changes update the draft, and explicit Save budget persists it. `saveBudgetSheet` validates ownership of loan-linked rows and upserts the signed-in user's existing `budget_ratio_plans` JSON document. Active EMIs are merged once as fixed expenses on read; deleted row IDs are excluded until restored. Saved version-1 allocations flatten into rows for review, avoiding duplicate debt. Reading never writes or rewrites existing records. The former ratio calculation helpers remain only for compatibility and tests. Recorded income/cost tools are at `/goals/budget/records`.
 
+## Budget reset
+
+`resetBudgetSheet` requires an explicit confirmation literal, authenticates the owner and deletes only that user's budget JSON row. The confirmation sheet previews the defaults and destructive effect. After success, the client resets saved/draft state to normal recorded-income/active-EMI defaults and refreshes the route. Failure leaves current draft state intact. No loan, holding, income or goal record is deleted, and no reset is run from the workspace.
+
 ## Budget allocation review
 
 `lib/budget-insights.ts` derives category totals and deterministic, balanced explanations from the current sheet and a compact owner-scoped goal summary. `BudgetAllocation` renders the bar, legend and two short notes, with an optional third. Goal comparison is overall monthly capacity, not goal assignment. Calculations stay local to the draft; no AI call, save or allocation mutation occurs. Invalid and early drafts receive neutral guidance, and over-budget plans never receive an overall healthy verdict.
