@@ -3,6 +3,10 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 19 Nov 2026.
 
+## All monthly steps visible, 19 Nov 2026
+
+This month now renders all visible SIP checklist steps without a two-item limit or Show all/Show fewer toggle. Ticking, the 10-second Undo window and plan details remain as before. No calculation or database changes. Verification: lint, TypeScript, real-plan regression tests and production build passed. Updated the existing end-to-end expectation to require no Show all/Show fewer controls.
+
 ## Optional budget-to-SIP planning, 19 Nov 2026
 
 Removed the personal estimate option from guided setup and quick edits. Added Save & create SIP plan after budget calculation and Create a SIP plan on the saved overview. /goals/sip prefills a validated positive monthly amount and previews the existing goal allocation engine. The owner can reduce the amount to retain accessible savings, sees existing SIPs counted once, and explicitly saves the monthly plan through the existing owner-scoped action. Recorded SIPs above the selected amount block saving. Existing one-time planning money is preserved and included in preview. Saving a budget alone remains independent. No investment records, bank mandates, trades or SQL migrations are created.

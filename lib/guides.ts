@@ -138,6 +138,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-19", title: "All monthly SIP steps visible", items: [{ title: "No extra tap", text: "This month now shows every pending SIP step. The Show all and Show fewer controls are removed." }] },
   { date: "2026-11-19", title: "From budget to SIP plan", items: [{ title: "Review before linking", text: "Create a SIP plan from Save & invest, adjust how much to use and review the goal allocation before saving. The personal estimate calculator is removed; a manual Personal amount or standard suggestion keeps setup simple." }] },
   { date: "2026-11-19", title: "A simpler Personal spending step", items: [{ title: "Just one amount", text: "The optional estimate calculator is removed from setup and monthly editing. Enter a Personal spending amount or leave it blank for the usual recommendation." }] },
   { date: "2026-11-19", title: "Fewer budget setup screens", items: [{ title: "Answer two costs together", text: "The initial list contains recorded commitments. Groceries, everyday costs and personal transport are handled later. Missing expense questions now appear in pairs, with no default amounts." }] },

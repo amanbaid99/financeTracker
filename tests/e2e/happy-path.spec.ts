@@ -394,9 +394,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "This month" })).toBeVisible();
   await expect(page.getByText(/plus ₹2,80,000 once/)).toBeVisible();
   const steps = page.getByRole("list", { name: "This month's steps" });
-  expect(await steps.locator(":scope > li").count()).toBeLessThanOrEqual(2);
-  const showAllSteps = page.getByRole("button", { name: /^Show all \d+$/ });
-  if (await showAllSteps.isVisible()) await showAllSteps.click();
+  await expect(page.getByRole("button", { name: /^Show all \d+$|^Show fewer$/ })).toHaveCount(0);
   await expect(steps).toContainText("Index SIP");
   await expect(steps).toContainText("₹2,80,000 now");
   // Strategy lives under plan details and changes the steps, not your data.

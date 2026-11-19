@@ -191,7 +191,6 @@ function Checklist({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [adding, setAdding] = useState<PlanStep | null>(null);
-  const [showAll, setShowAll] = useState(false);
   const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   useEffect(() => {
     const t = timers.current;
@@ -203,7 +202,6 @@ function Checklist({
   for (const [id, t] of Object.entries(ticked))
     if (!gone.has(id) && !visible.some((st) => idOf(st) === id))
       visible.splice(Math.min(t.at, visible.length), 0, t.step);
-  const shown = showAll ? visible : visible.slice(0, 2);
 
   const tick = async (st: PlanStep) => {
     if (!st.investment) return;
@@ -248,7 +246,7 @@ function Checklist({
   return (
     <div className="space-y-2">
       <ul className="divide-y divide-border/60" aria-label="This month's steps">
-        {shown.map((st) => {
+        {visible.map((st) => {
           const id = idOf(st);
           const done = !!ticked[id];
           const goals = st.goals.map((g) => g.name).join(", ");
@@ -316,16 +314,6 @@ function Checklist({
           );
         })}
       </ul>
-      {visible.length > 2 && (
-        <button
-          type="button"
-          className="min-h-11 w-full rounded-xl bg-muted/60 text-sm font-medium text-primary hover:bg-muted"
-          aria-expanded={showAll}
-          onClick={() => setShowAll(!showAll)}
-        >
-          {showAll ? "Show fewer" : `Show all ${visible.length}`}
-        </button>
-      )}
       {error && (
         <p role="alert" className="rounded-lg bg-card p-2 text-sm text-danger">
           {error}
