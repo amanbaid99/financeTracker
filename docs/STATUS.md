@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 19 Nov 2026.
 
+## Budget allocation and balanced review, 19 Nov 2026
+
+Added a top category allocation bar with rupee amounts, income percentages and unassigned money. A compact draft review recognises affordability, goal capacity and existing progress as well as relevant gaps. The review never rewrites amounts, applies an ideal ratio or claims that savings are assigned to goals. It excludes reached/loan goals and discloses unknown goal pace in comparisons. Over-budget bars are explicitly scaled to planned spending; percentages still refer to income.
+
+Verification: lint, TypeScript, 602 unit tests, 40 Python CAS tests and production build passed. Twelve Chromium cases cover four widths and three themes with the live allocation card. Additional checks verify live goal reassurance, completed emergency context, over-budget scale labels and zero-income guidance. Calculation regressions cover unassigned money, honest overspending warnings, unknown goal pace, no double-counting of goal SIPs and positive recognition without an imposed ratio. No schema or hosted financial-record changes are needed.
+
 ## Manual budget sheet, 19 Nov 2026
 
 Replaced the ratio wizard and suggestion UI with a manual sheet. Each row has name, category, amount and percentage, with instant two-way conversion. Last-edited rupee values remain fixed when salary changes; percentage values resize. Totals allow partial allocation and clearly flag overspending. Active EMIs default to fixed-expense rows once; manual edits and removals persist. Older saved plans flatten into reviewable rows, with old debt allocations covering scheduled EMIs before any extra amount is added. No automatic save or hosted data rewrite occurs.

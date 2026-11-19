@@ -136,6 +136,8 @@ export const HELP: HelpTopic[] = [
       "It is one manual monthly sheet. Enter take-home income and add rows with an item name, category, amount and percentage. Edit either value and the other updates.",
       "Rupee entries stay fixed when income changes; percentage entries resize. For ₹1,00,000 income, ₹20,000 is 20%. No split is suggested and you do not need to reach 100% before saving.",
       "Active loan EMIs appear once as fixed expenses. You can edit or remove them. Removed rows stay removed until you restore them. Existing saved allocations are converted into rows without an automatic database save; existing debt allocations are used toward EMIs first to avoid counting the same debt twice.",
+      "Your allocation groups the sheet by category with amounts and percentages of income. Unassigned money stays visible. If the plan exceeds income, the bar scales to planned spending and labels the income percentages separately.",
+      "How this looks is a short review of the current draft. It recognises an affordable plan, future saving, personal spending and completed emergency targets where the recorded data supports that. Savings and investing are compared with the combined recorded monthly pace of unfinished non-loan goals. This is capacity, not money already assigned to those goals. Goals without a known pace are excluded, and no ideal salary percentage is imposed.",
       "Total planned and Money left show the result. Over-budget plans are clearly labelled. Save budget keeps the sheet; Undo changes restores the previous version. This does not change loan payments, holdings or SIPs. The Income and cost records link opens the separate records used by the goal plan.",
     ],
     tags: "income costs free to invest",

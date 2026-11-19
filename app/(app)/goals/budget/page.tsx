@@ -11,15 +11,16 @@ import { loadBudgetSheet } from "@/lib/budget-ratio-data";
 import { GuideButton } from "@/components/guides";
 import { runwayHeadline } from "@/components/runway-card";
 import { formatINR } from "@/lib/format";
-import { loadBudget, loadRunway } from "@/lib/data";
+import { loadBudget, loadRunway, loadGoals } from "@/lib/data";
 
 export const metadata: Metadata = { title: "Budget" };
 
 /** The Budget tab: money in and out each month, and, between jobs, whether you're covered till salary. */
 export default async function BudgetPage() {
-  const [{ loanEmis, budget }, r] = await Promise.all([
+  const [{ loanEmis, budget }, r, g] = await Promise.all([
     loadBudget(),
     loadRunway(),
+    loadGoals(),
   ]);
   const sheet = await loadBudgetSheet(budget.income, loanEmis);
   const head = r.active && r.runway ? runwayHeadline(r.runway) : null;
@@ -68,7 +69,7 @@ export default async function BudgetPage() {
         </p>
       </div>
       {head && runwayRow}
-      <BudgetSheet initial={sheet.plan} salary={budget.income} loans={loanEmis} loadError={sheet.error} />
+      <BudgetSheet initial={sheet.plan} salary={budget.income} loans={loanEmis} goals={g.goals.map((goal) => ({ type: goal.type, status: goal.status, isLoan: !!goal.loanState, monthlySip: goal.monthlySip, extraSipNeeded: goal.extraSipNeeded }))} loadError={sheet.error} />
       <Link href="/goals/budget/records" className="inline-flex min-h-10 items-center text-sm text-muted-foreground">Income and cost records →</Link>
       {/* Not between jobs: a quiet link at the end. */}
       {!head && runwayRow}

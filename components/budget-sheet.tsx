@@ -1,5 +1,7 @@
 "use client";
 
+import { BudgetAllocation } from "@/components/budget-allocation";
+import type { BudgetReviewGoal } from "@/lib/budget-insights";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2 } from "lucide-react";
@@ -11,8 +13,8 @@ import { formatINR } from "@/lib/format";
 import { saveBudgetSheet } from "@/lib/budget-ratio-actions";
 import { BUDGET_CATEGORIES, addScheduledEmis, emptyBudgetSheet, rowAmount, rowPercent, sheetTotals, budgetSheetSchema, type BudgetSheet as Plan, type BudgetSheetRow, type SheetLoan } from "@/lib/budget-sheet";
 
-export function BudgetSheet({ initial, salary, loans, loadError = null }: {
-  initial: Plan | null; salary: number; loans: SheetLoan[]; loadError?: string | null;
+export function BudgetSheet({ initial, salary, loans, goals = [], loadError = null }: {
+  initial: Plan | null; salary: number; loans: SheetLoan[]; goals?: BudgetReviewGoal[]; loadError?: string | null;
 }) {
   const [saved, setSaved] = useState(() => initial ?? addScheduledEmis(emptyBudgetSheet(salary), loans));
   const [draft, setDraft] = useState(saved);
@@ -42,6 +44,7 @@ export function BudgetSheet({ initial, salary, loans, loadError = null }: {
     {loadError && <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">{loadError}</p>}
     <fieldset disabled={pending || !!loadError} className="min-w-0 space-y-4 disabled:opacity-60">
       <div className="rounded-2xl border bg-card p-4"><Field label="Monthly take-home income" htmlFor="sheet-income"><MoneyInput id="sheet-income" value={draft.salary || null} onChange={(v) => { setDraft((p) => ({ ...p, salary: v ?? 0 })); setMessage(""); }} /></Field></div>
+      <BudgetAllocation plan={draft} goals={goals} />
       <div className="overflow-hidden rounded-2xl border bg-card">
         <div className="hidden grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_8rem_6rem_2rem] gap-2 border-b bg-muted/40 px-3 py-2 text-xs text-muted-foreground sm:grid" aria-hidden><span>Item</span><span>Category</span><span>Amount</span><span>% of income</span><span /></div>
         {draft.rows.length === 0 && <p className="p-5 text-center text-sm text-muted-foreground">Add your first item, such as rent, groceries or savings.</p>}

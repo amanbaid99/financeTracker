@@ -11,6 +11,10 @@ The signed-in entry is `/today` (Home). It reads cached owner-scoped goals, card
 
 `lib/budget-sheet.ts` validates version-2 row documents and derives amount/percentage values from the last-edited basis. `BudgetSheet` is always directly editable, with totals and explicit Save budget. `saveBudgetSheet` validates ownership of loan-linked rows and upserts the signed-in user's existing `budget_ratio_plans` JSON document. Active EMIs are merged once as fixed expenses on read; deleted row IDs are excluded until restored. Saved version-1 allocations flatten into rows for review, avoiding duplicate debt. Reading never writes or rewrites existing records. The former ratio calculation helpers remain only for compatibility and tests. Recorded income/cost tools are at `/goals/budget/records`.
 
+## Budget allocation review
+
+`lib/budget-insights.ts` derives category totals and deterministic, balanced explanations from the current sheet and a compact owner-scoped goal summary. `BudgetAllocation` renders the bar, legend and two short notes, with an optional third. Goal comparison is overall monthly capacity, not goal assignment. Calculations stay local to the draft; no AI call, save or allocation mutation occurs. Invalid and early drafts receive neutral guidance, and over-budget plans never receive an overall healthy verdict.
+
 ## Stack
 
 - **Next.js 16 App Router** with React 19.3, TypeScript, Tailwind CSS v4. Server components load

@@ -100,6 +100,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Enter either an amount or a percentage of income. The other value updates immediately. With ₹1,00,000 income, ₹20,000 is 20%, and typing 20% gives ₹20,000.",
       "When income changes, entries last typed in rupees stay fixed. Entries last typed as percentages resize with income.",
       "Active loan EMIs are added once as fixed expenses. You can edit or remove these rows. Removed loan rows stay out, and Restore removed loan EMIs brings them back.",
+      "The allocation bar groups your rows by category and includes unassigned money. The short review recognises what fits your income and supports your recorded goals, without prescribing a fixed ideal split.",
       "Total planned and Money left update as you type. You can save a partial or over-budget plan; an excess is clearly shown. There is no forced 100% split or automated suggestion.",
       "Tap Save budget to keep your sheet. Existing saved plans are converted into rows for review, without automatic saving. Income and cost records for the separate goal/SIP plan remain available from the quiet link below.",
     ],
@@ -140,6 +141,9 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-19", title: "See your allocation at a glance", items: [
+    { title: "A balanced look at your budget", text: "The category bar shows where your income is planned, including money left unassigned. A short review recognises progress and compares saving/investing capacity with recorded goal pace. It also flags genuine gaps without rewriting your plan." },
+  ] },
   { date: "2026-11-19", title: "A simple budget sheet", items: [
     { title: "Amounts and percentages, side by side", text: "Add an item, pick its category and type an amount or percentage. The other updates automatically. Loan EMIs start as fixed-expense rows. There are no split suggestions or setup steps.", show: { path: "/goals/budget", target: "budget-sheet" } },
   ] },

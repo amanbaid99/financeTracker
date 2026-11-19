@@ -3,6 +3,12 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Balanced allocation review, 19 Nov 2026
+
+The owner wants a category allocation bar and supportive, evidence-based insight on salary and goals, not continual criticism. The top review groups the current manual rows, includes unassigned income and updates locally during edits. Above-income plans use planned spending as the bar denominator, while legend percentages remain shares of income and the changed scale is labelled explicitly.
+
+The review has no fixed ideal ratio, score or automatic adjustment. It recognises income fit, saving/investing capacity, personal spending and tracked emergency targets where appropriate. Goal comparison uses current SIP plus calculated extra SIP for unfinished non-loan goals with a known finite positive pace, without adding these amounts to the budget or claiming assignment. Unknown goal pace is disclosed. Overspending receives a clear primary warning and cannot get a healthy overall verdict. Two notes are visible, with additional context and any third note folded below. No external AI, new schema or user-record writes are required.
+
 ## Manual spreadsheet budget, 19 Nov 2026
 
 The owner replaced ratio suggestions, the wizard and nested bucket editing with a manual sheet. Each row has a name, category and either a rupee value or percentage as its last-edited basis. The other value is derived, preventing drift. Salary changes retain rupee entries and resize percentage entries. Categories are fixed expense, variable expense, investing, savings, debt repayment and personal/guilt-free. Partial and over-budget plans are valid, with explicit totals and excess labels.
