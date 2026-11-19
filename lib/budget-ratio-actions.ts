@@ -12,6 +12,10 @@ export async function saveRatioPlan(input: unknown) {
     const { data, error } = await supabase.from("goals").select("id").eq("user_id", user.id).in("id", goalIds);
     if (error || data?.length !== goalIds.length) return { ok: false as const, error: "A linked goal is no longer available. Choose it again or remove the link." };
   }
+  if (parsed.data.includedEmiIds.length) {
+    const { data, error } = await supabase.from("loans").select("id").eq("user_id", user.id).in("id", parsed.data.includedEmiIds);
+    if (error || data?.length !== parsed.data.includedEmiIds.length) return { ok: false as const, error: "A selected loan is no longer available. Review your EMI selection." };
+  }
   const { error } = await supabase.from("budget_ratio_plans").upsert({ user_id: user.id, plan: parsed.data, updated_at: new Date().toISOString() });
   if (error) return { ok: false as const, error: "Could not save your budget. Your edits are still here. Try again." };
   revalidatePath("/goals/budget");

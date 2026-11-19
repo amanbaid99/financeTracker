@@ -9,7 +9,7 @@ The signed-in entry is `/today` (Home). It reads cached owner-scoped goals, card
 
 ## Ratio budget planner
 
-`lib/budget-ratios.ts` validates and calculates one monthly ratio plan. Main shares total 100%; child shares are of their parent and may leave money unassigned. `BudgetRatioPlanner` keeps edits local until an explicit `saveRatioPlan` action validates ownership and upserts the signed-in user's `budget_ratio_plans` row. This is independent from the existing goal/SIP money plan and recorded income/expenses. `loadRatioPlan` uses an owner-filtered read; a failed load disables saving rather than overwriting an unseen plan.
+`lib/budget-ratios.ts` validates and calculates one monthly ratio plan. Main shares total 100%; child shares are of their parent and may leave money unassigned. `BudgetRatioPlanner` keeps edits local until an explicit `saveRatioPlan` action validates ownership and upserts the signed-in user's `budget_ratio_plans` row. This is independent from the existing goal/SIP money plan and recorded income/expenses. The Salary/Split/Review editor uses a separate allocation sheet. `includedEmiIds` defaults to an empty array; only owner-validated selected loans enter ratio suggestions and the Budget tab commitment summary. `loadRatioPlan` uses an owner-filtered read; a failed load disables saving rather than overwriting an unseen plan.
 
 ## Stack
 

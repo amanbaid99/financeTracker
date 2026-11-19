@@ -135,7 +135,8 @@ export const HELP: HelpTopic[] = [
     a: [
       "Plan my budget saves one monthly plan. Enter take-home salary and divide it into main buckets that total 100%. Rename them or add your own.",
       "Smaller bucket percentages are of their parent. If Savings gets ₹15,000, 60% for an emergency fund means ₹9,000. You can leave some money unassigned within a bucket, and optionally link it to a goal.",
-      "Suggest a split considers recorded costs, scheduled EMIs, existing SIPs and unfinished goals. Emergency savings get extra priority when needed. Suggest details follows your goal order and monthly needs. These are editable planning suggestions, not investment advice.",
+      "Suggest a split considers recorded costs, only the loan EMIs you selected, existing SIPs and unfinished goals. Emergency savings get extra priority when needed. Suggest details follows your goal order and monthly needs. These are editable planning suggestions, not investment advice.",
+      "Use Salary, Split, then Review. In Salary, Choose EMIs lets you select loans explicitly. None are preselected. New loans are not added automatically. Tap a bucket name for smaller allocations in a separate panel. Existing saved ratios stay as you set them until you edit or suggest a new split.",
       "Nothing is saved until Save budget. Saving does not change income records, expenses, SIPs or loan payments. Open Recorded income and commitments for the existing tools and goal-plan budget.",
     ],
     tags: "income costs free to invest",

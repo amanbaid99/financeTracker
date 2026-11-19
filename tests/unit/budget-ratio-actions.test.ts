@@ -35,3 +35,13 @@ it("reports a failed database write", async () => {
   upsert.mockResolvedValue({ error: { message: "offline" } });
   expect((await saveRatioPlan(defaultRatioPlan(100000))).ok).toBe(false);
 });
+
+it("validates ownership of explicitly selected loans before saving", async () => {
+  const plan = { ...defaultRatioPlan(100000), includedEmiIds: ["00000000-0000-4000-8000-000000000090"] };
+  const filter = vi.fn().mockReturnThis();
+  from.mockReturnValue({ select: filter, eq: filter, in: vi.fn().mockResolvedValue({ data: [], error: null }) });
+  expect((await saveRatioPlan(plan)).ok).toBe(false);
+  expect(from).toHaveBeenCalledWith("loans");
+  expect(filter).toHaveBeenCalledWith("user_id", "owner");
+  expect(upsert).not.toHaveBeenCalled();
+});

@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { approvedEmis } from "@/lib/budget-ratios";
 import { BudgetRatioPlanner } from "@/components/budget-ratio-planner";
 import { loadRatioPlan } from "@/lib/budget-ratio-data";
 import { BudgetPlanner } from "@/components/budget-planner";
@@ -77,7 +78,7 @@ export default async function BudgetPage() {
       <BudgetPlanner
         incomes={incomes}
         costs={costs}
-        loanEmis={loanEmis}
+        loanEmis={approvedEmis(ratio.plan, { loanEmis })}
         sips={sips}
         planMonthly={plan?.monthly ?? null}
         between={r.active}

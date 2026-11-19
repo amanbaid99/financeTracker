@@ -9,7 +9,7 @@ const percent = z.number().min(0).max(100).refine((n) => Math.abs(n * 100 - Math
 const label = z.string().trim().min(1, "Give each bucket a name.").max(60);
 const childSchema = z.object({ id: z.string().min(1).max(80), label, percent, goalId: z.string().uuid().nullable() });
 const bucketSchema = z.object({ id: z.string().min(1).max(80), label, kind: z.enum(["fixed", "investing", "debt", "savings", "custom"]), percent, children: z.array(childSchema).max(20) });
-export const ratioPlanSchema = z.object({ version: z.literal(1), salary: z.number().int().positive("Enter your monthly take-home salary.").max(1e9), buckets: z.array(bucketSchema).min(1).max(12) }).superRefine((p, ctx) => {
+export const ratioPlanSchema = z.object({ version: z.literal(1), includedEmiIds: z.array(z.string().uuid()).max(100).default([]), salary: z.number().int().positive("Enter your monthly take-home salary.").max(1e9), buckets: z.array(bucketSchema).min(1).max(12) }).superRefine((p, ctx) => {
   if (basisTotal(p.buckets) !== 10000) ctx.addIssue({ code: "custom", message: "Your main buckets must add up to 100%.", path: ["buckets"] });
   const ids = new Set<string>();
   const goals = new Set<string>();
@@ -30,11 +30,14 @@ export type RatioBucket = RatioPlan["buckets"][number];
 export type RatioChild = RatioBucket["children"][number];
 export type RatioContext = {
   costs: { name: string; amount: number }[];
-  loanEmis: { name: string; emi: number }[];
+  loanEmis: { id?: string; name: string; emi: number }[];
   sips: number;
   goals: TrackedGoal[];
   today: string;
 };
+/** Approval is per loan. A new loan never joins an existing selection automatically. */
+export const emiKey = (loan: RatioContext["loanEmis"][number]) => loan.id ?? loan.name;
+export const approvedEmis = (plan: Pick<RatioPlan, "includedEmiIds"> | null, context: Pick<RatioContext, "loanEmis">) => context.loanEmis.filter((loan) => plan?.includedEmiIds?.includes(emiKey(loan)));
 export const basisTotal = (items: { percent: number }[]) => items.reduce((s, i) => s + Math.round((Number.isFinite(i.percent) ? i.percent : 0) * 100), 0);
 
 /** Largest remainders keep every rupee, including with fractional ratios. Never normalise an invalid over-allocation. */
@@ -62,7 +65,7 @@ function proportions(weights: number[]): number[] {
   return points.map((p) => p / 100);
 }
 export function defaultRatioPlan(salary: number): RatioPlan {
-  return { version: 1, salary, buckets: [
+  return { version: 1, includedEmiIds: [], salary, buckets: [
     { id: "fixed", label: "Fixed costs", kind: "fixed", percent: 50, children: [] },
     { id: "investing", label: "Investing", kind: "investing", percent: 30, children: [] },
     { id: "debt", label: "Debt repayment", kind: "debt", percent: 0, children: [] },
@@ -74,21 +77,21 @@ export function ratioWarnings(plan: RatioPlan, context: RatioContext): string[] 
   const budgetFor = (kind: RatioBucket["kind"]) => plan.buckets.reduce((s, b, i) => s + (b.kind === kind ? amounts[i] : 0), 0);
   const warnings: string[] = [];
   const fixed = context.costs.reduce((s, c) => s + c.amount, 0);
-  const debt = context.loanEmis.reduce((s, c) => s + c.emi, 0);
+  const debt = approvedEmis(plan, context).reduce((s, c) => s + c.emi, 0);
   if (budgetFor("fixed") < fixed) warnings.push("Fixed costs are below your recorded monthly costs.");
   if (budgetFor("debt") < debt) warnings.push("Debt repayment is below your scheduled EMIs. Existing EMIs still need to be paid.");
   if (budgetFor("investing") + budgetFor("savings") < context.sips) warnings.push("Savings and investing together are below your current SIPs. Saving this budget does not reduce any SIP.");
-  if (fixed + debt + context.sips > plan.salary) warnings.push("Your recorded costs, EMIs and SIPs exceed this salary. The proposed split cannot cover them all.");
+  if (fixed + debt + context.sips > plan.salary) warnings.push("Your recorded costs, selected EMIs and SIPs exceed this salary. The proposed split cannot cover them all.");
   return warnings;
 }
 
 /** A reviewable starting point: commitments first, then savings and investing. No external AI call. */
-export function suggestRatioPlan(salary: number, context: RatioContext): { plan: RatioPlan; reasons: string[] } {
-  const plan = defaultRatioPlan(salary);
+export function suggestRatioPlan(salary: number, context: RatioContext, includedEmiIds: string[] = []): { plan: RatioPlan; reasons: string[] } {
+  const plan = { ...defaultRatioPlan(salary), includedEmiIds: [...new Set(includedEmiIds)] };
   if (!Number.isSafeInteger(salary) || salary <= 0 || salary > 1e9) return { plan, reasons: ["Enter your monthly take-home salary first."] };
   const recordedFixed = context.costs.reduce((s, c) => s + c.amount, 0);
   const fixed = recordedFixed || Math.round(salary * 0.5);
-  const debt = context.loanEmis.reduce((s, c) => s + c.emi, 0);
+  const debt = approvedEmis(plan, context).reduce((s, c) => s + c.emi, 0);
   const spare = Math.max(0, salary - fixed - debt - context.sips);
   const needsSafety = context.goals.some((g) => g.type === "emergency_fund" && g.status !== "reached");
   const savingsSips = Math.min(context.sips, context.goals.filter((g) => g.type === "emergency_fund" || !!g.billsFund).reduce((sum, g) => sum + g.monthlySip, 0));
@@ -97,20 +100,20 @@ export function suggestRatioPlan(salary: number, context: RatioContext): { plan:
   const investing = context.sips - savingsSips + spare - extraSavings;
   const ratios = proportions([fixed, investing, debt, savings]);
   plan.buckets = plan.buckets.map((b, i) => ({ ...b, percent: ratios[i] }));
-  plan.buckets = plan.buckets.map((b) => ({ ...b, children: suggestChildren(b, splitRupees(salary, ratios)[plan.buckets.indexOf(b)], context) }));
+  plan.buckets = plan.buckets.map((b) => ({ ...b, children: suggestChildren(b, splitRupees(salary, ratios)[plan.buckets.indexOf(b)], context, plan.includedEmiIds) }));
   return { plan, reasons: [
     recordedFixed ? "Fixed costs start from your recorded monthly costs." : "No monthly costs recorded: fixed costs start at an editable 50% of salary.",
-    "Scheduled EMIs and existing SIPs are included once before splitting the remaining money.",
+    plan.includedEmiIds.length ? "Only EMIs you selected are included, alongside existing SIPs." : "Loan EMIs are left out. You can choose to include them in the salary step.",
     needsSafety ? "More of the remaining money goes to Savings while your emergency goal is unfinished." : "The remaining money is split 60% to Investing and 40% to Savings.",
     "Goal splits follow your goal order and monthly needs. They are planning amounts, not new SIP orders.",
   ] };
 }
 
 /** Percentages belong to the parent, not the salary. A goal is linked at most once by automatic splits. */
-export function suggestChildren(bucket: RatioBucket, amount: number, context: RatioContext): RatioChild[] {
+export function suggestChildren(bucket: RatioBucket, amount: number, context: RatioContext, includedEmiIds: string[] = []): RatioChild[] {
   if (amount <= 0) return [];
   const rows = bucket.kind === "fixed" ? context.costs.map((c) => ({ label: c.name, weight: c.amount }))
-    : bucket.kind === "debt" ? context.loanEmis.map((l) => ({ label: l.name, weight: l.emi })) : [];
+    : bucket.kind === "debt" ? approvedEmis({ includedEmiIds }, context).map((l) => ({ label: l.name, weight: l.emi })) : [];
   if (rows.length) {
     const selected = rows.slice(0, 19);
     if (rows.length > 19) selected.push({ label: "Other commitments", weight: rows.slice(19).reduce((s, r) => s + r.weight, 0) });

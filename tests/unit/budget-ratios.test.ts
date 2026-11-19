@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { defaultRatioPlan, ratioPlanSchema, ratioWarnings, splitRupees, suggestChildren, suggestRatioPlan, basisTotal, type RatioContext } from "@/lib/budget-ratios";
+import { defaultRatioPlan, ratioPlanSchema, ratioWarnings, splitRupees, suggestChildren, suggestRatioPlan, basisTotal, type RatioContext, approvedEmis } from "@/lib/budget-ratios";
 import type { TrackedGoal } from "@/lib/tracker";
-const context: RatioContext = { costs: [{ name: "Rent", amount: 30000 }], loanEmis: [{ name: "Loan", emi: 10000 }], sips: 10000, goals: [], today: "2026-11-18" };
+const context: RatioContext = { costs: [{ name: "Rent", amount: 30000 }], loanEmis: [{ id: "00000000-0000-4000-8000-000000000090", name: "Loan", emi: 10000 }], sips: 10000, goals: [], today: "2026-11-18" };
 const goal = (n: number, type: string, need: number, sip = 0) => ({ id: `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`, name: `Goal ${n}`, type, monthlySip: sip, extraSipNeeded: need, futureTarget: 100000, current: 0, months: 12, targetDate: "2027-11-18", status: "behind", planRank: n }) as TrackedGoal;
 
 describe("ratio budgets", () => {
@@ -29,12 +29,33 @@ describe("ratio budgets", () => {
   });
   it("includes recorded commitments once and changes savings when an emergency goal needs money", () => {
     const c = { ...context, goals: [goal(1, "emergency_fund", 2000, 3000)] };
-    const { plan } = suggestRatioPlan(100000, c);
+    const { plan } = suggestRatioPlan(100000, c, [context.loanEmis[0].id!]);
     expect(plan.buckets.map((b) => b.percent)).toEqual([30, 27, 10, 33]);
     expect(basisTotal(plan.buckets)).toBe(10000);
     expect(ratioPlanSchema.safeParse(plan).success).toBe(true);
     expect(ratioWarnings(plan, c)).toEqual([]);
     expect(c.goals[0].monthlySip).toBe(3000);
+  });
+  it("excludes EMIs until explicitly selected, including from debt details and warnings", () => {
+    const { plan } = suggestRatioPlan(100000, context);
+    expect(plan.includedEmiIds).toEqual([]);
+    expect(plan.buckets.find((b) => b.kind === "debt")?.percent).toBe(0);
+    expect(suggestChildren(plan.buckets[2], 10000, context)).toEqual([]);
+    expect(ratioWarnings(plan, context).join(" ")).not.toContain("scheduled EMIs");
+    const selected = suggestRatioPlan(100000, context, [context.loanEmis[0].id!]).plan;
+    expect(selected.buckets[2].percent).toBe(10);
+    expect(selected.buckets[2].children[0].label).toBe("Loan");
+    const newer = { ...context, loanEmis: [...context.loanEmis, { id: "00000000-0000-4000-8000-000000000091", name: "New loan", emi: 5000 }] };
+    expect(approvedEmis(selected, newer).map((l) => l.name)).toEqual(["Loan"]);
+    expect(suggestRatioPlan(100000, newer, selected.includedEmiIds).plan.buckets[2].percent).toBe(10);
+  });
+  it("loads older plans without assuming consent or changing saved amounts", () => {
+    const old = defaultRatioPlan(100000);
+    const { includedEmiIds: _, ...legacy } = old;
+    void _;
+    const restored = ratioPlanSchema.parse(legacy);
+    expect(restored.includedEmiIds).toEqual([]);
+    expect(restored.buckets).toEqual(old.buckets);
   });
   it("shows commitment shortfalls instead of treating a smaller salary as sufficient", () => {
     const { plan } = suggestRatioPlan(10000, context);

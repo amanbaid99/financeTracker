@@ -3,6 +3,12 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Simpler budget and explicit EMI choice, 19 Nov 2026
+
+The owner wants running loan EMIs offered as optional budget inputs instead of automatically counted. Ratio plans now store `includedEmiIds` in the existing JSON document, defaulting to an empty list for old and new plans. Approval is per loan, so a new loan is not included automatically. Main suggestions, debt detail suggestions, budget warnings and the Budget tab's recorded-commitment summary use only the selected EMIs. Existing saved ratios are preserved. Loan schedules, payoff goals and the separate conservative goal money-plan calculations are unchanged.
+
+The editor is now Salary, Split, Review. Main buckets are compact rows; tapping a name opens a separate allocation panel. EMI selection is unchecked until chosen, applies only with Use selected EMIs and is saved only with the budget. Closing the chooser cancels its pending selection. Cancel changes restores the saved plan and EMI choices. No schema migration or financial-record rewrite is needed.
+
 ## Ratio budget planner, 18 Nov 2026
 
 The owner requested one saved monthly budget with salary, custom percentage buckets and smaller allocations within each bucket. Main ratios total 100%; child ratios share their parent and may total less than 100%, leaving visible unassigned money. Amounts use integer rupees with deterministic rounding. Defaults and suggestions are editable before Save budget.

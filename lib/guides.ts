@@ -93,15 +93,15 @@ export const GUIDES: Record<GuideId, Guide> = {
   },
   budget: {
     title: "Your budget",
-    intro: "Plan your salary with editable buckets and smaller goal allocations.",
+    intro: "Three steps: salary, split, then review and save.",
     steps: [
-      "Enter your monthly take-home salary. Main bucket percentages must add to 100%.",
-      "Start with the editable split, create custom buckets, or tap Suggest a split to use your recorded costs, EMIs, SIPs and goals.",
-      "Open Add details for smaller buckets. Their percentages are shares of that main bucket, not shares of salary. Savings of ₹15,000 with 60% for an emergency fund means ₹9,000 for that fund.",
-      "Link smaller buckets to your goals or enter your own labels. Suggest details uses current commitments or unfinished goals in your order. Money left within a bucket stays unassigned.",
-      "Review warnings for costs, EMIs or SIPs that the split cannot cover. Suggestions are starting points, not investment advice.",
-      "Tap Save budget to keep one plan across devices. Nothing is saved by suggesting or editing. Saving does not change income, expenses, SIPs or loan payments.",
-      "Recorded income and commitments below keeps the existing income, cost and goal-plan tools. Between jobs, Covered till salary remains available.",
+      "Enter your monthly take-home salary, then Continue to split.",
+      "Loan EMIs are optional. Choose EMIs opens an unchecked list. Select only the loans you want this budget to cover, then Use selected EMIs. Continuing without choosing leaves them out.",
+      "Adjust your main percentages to total 100%, or use Suggest a split. Suggestions count only the EMIs you selected. New loans are never added automatically.",
+      "Tap a bucket name to rename it or add smaller allocations in a separate panel. Their percentages share that bucket, not salary. Savings of ₹15,000 with 60% for an emergency fund means ₹9,000.",
+      "Review budget shows the amounts and any warnings. Save budget confirms the plan; Cancel changes restores the saved version.",
+      "Existing saved amounts remain editable. Choosing an EMI does not rewrite your ratios; Suggest a split uses the selection to prepare new ones. Saving does not change income records, SIPs or loan payments.",
+      "Recorded income and commitments below keeps the income and cost tools. Loan schedules and goal payoff calculations remain recorded separately.",
     ],
   },
   ask: {
@@ -140,6 +140,9 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-19", title: "An easier budget flow", items: [
+    { title: "Salary, split, review", text: "Plan your budget one step at a time. Tap a bucket for smaller allocations in a separate panel. Loan EMIs are optional: choose which ones to include before they enter suggestions. New loans are never added automatically." },
+  ] },
   { date: "2026-11-19", title: "Plan your salary your way", items: [
     { title: "A budget with your own buckets", text: "Set your salary and percentages for fixed costs, investing, debt, savings or custom buckets. Add smaller allocations inside each. Suggest a split uses your commitments and goals, then you edit and save one monthly plan.", show: { path: "/goals/budget", target: "ratio-budget" } },
   ] },

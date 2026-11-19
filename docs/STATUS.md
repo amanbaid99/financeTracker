@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 19 Nov 2026.
 
+## Budget UX and optional EMIs, 19 Nov 2026
+
+Prepared a three-step Salary/Split/Review editor with compact main-bucket rows and a separate panel for optional smaller allocations. EMIs are now explicitly selected per loan. No EMI is included by default; only selected loans affect ratio suggestions, debt detail suggestions, warnings and the Budget tab's recorded commitment summary. New loans are not silently opted in. Existing saved allocations remain intact and editable. The server checks ownership of selected loan IDs. The existing JSON storage supports this without SQL changes.
+
+Verification: lint, TypeScript, 588 unit tests and production build passed. Twelve Chromium cases cover the three-step flow across four widths and three themes. Additional browser scenarios verify unchecked EMI defaults, cancellation of the chooser, a selected subset, saved selections after reload, opting out, cancellation of edits and nested percentage validation. Older plans default to no approved EMIs and keep their saved amounts. No hosted financial records are modified by this release.
+
 ## Ratio budget release, 19 Nov 2026
 
 Supabase access recovered. Applied the budget table migration as recorded version `20261119061828` and aligned the repository filename with that hosted version. Existing balances, income, SIPs and loan records were untouched. Hosted metadata confirms owner-only RLS policies, authenticated CRUD grants and no anonymous access. No budget-table security advisories were reported. The previously tested feature is ready for production deployment.

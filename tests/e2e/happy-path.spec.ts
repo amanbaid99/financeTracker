@@ -1038,7 +1038,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Rent a month").fill("32000");
   await page.getByRole("button", { name: "Save Rent" }).click();
   await expect(page.getByRole("button", { name: "Edit Rent" })).toContainText("₹32,000");
-  // EMIs and SIPs are counted for you in the summary.
+  // SIPs remain recorded; EMIs need an explicit budget selection.
   const month = page.getByRole("region", { name: "Your month" });
   await expect(month).toContainText("EMIs");
   await expect(month).toContainText("SIPs running");

@@ -439,9 +439,9 @@ export const loadBudget = cache(async () => {
   const costs = { data: snap.expenses, error: null };
   const today = goals.today;
   const loanEmis = loans
-    .map((l) => ({ name: l.name, view: loanView(l, today) }))
+    .map((l) => ({ id: l.id, name: l.name, view: loanView(l, today) }))
     .filter((x) => !x.view.closed && x.view.state.emi > 0)
-    .map((x) => ({ name: x.name, emi: x.view.state.emi }));
+    .map((x) => ({ id: x.id, name: x.name, emi: x.view.state.emi }));
   const incomeRows: Income[] = check(incomes).map((i) => ({
     id: i.id,
     label: i.label,
