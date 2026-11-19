@@ -93,15 +93,15 @@ export const GUIDES: Record<GuideId, Guide> = {
   },
   budget: {
     title: "Your budget",
-    intro: "Three steps: salary, split, then review and save.",
+    intro: "One manual sheet, like a simple spreadsheet.",
     steps: [
-      "Enter your monthly take-home salary, then Continue to split.",
-      "Loan EMIs are optional. Choose EMIs opens an unchecked list. Select only the loans you want this budget to cover, then Use selected EMIs. Continuing without choosing leaves them out.",
-      "Adjust your main percentages to total 100%, or use Suggest a split. Suggestions count only the EMIs you selected. New loans are never added automatically.",
-      "Tap a bucket name to rename it or add smaller allocations in a separate panel. Their percentages share that bucket, not salary. Savings of ₹15,000 with 60% for an emergency fund means ₹9,000.",
-      "Review budget shows the amounts and any warnings. Save budget confirms the plan; Cancel changes restores the saved version.",
-      "Existing saved amounts remain editable. Choosing an EMI does not rewrite your ratios; Suggest a split uses the selection to prepare new ones. Saving does not change income records, SIPs or loan payments.",
-      "Recorded income and commitments below keeps the income and cost tools. Loan schedules and goal payoff calculations remain recorded separately.",
+      "Enter your monthly take-home income. Add rows for rent, groceries, investing, savings or anything else.",
+      "Give each item a category: fixed expense, variable expense, investing, savings, debt repayment or personal/guilt-free spending.",
+      "Enter either an amount or a percentage of income. The other value updates immediately. With ₹1,00,000 income, ₹20,000 is 20%, and typing 20% gives ₹20,000.",
+      "When income changes, entries last typed in rupees stay fixed. Entries last typed as percentages resize with income.",
+      "Active loan EMIs are added once as fixed expenses. You can edit or remove these rows. Removed loan rows stay out, and Restore removed loan EMIs brings them back.",
+      "Total planned and Money left update as you type. You can save a partial or over-budget plan; an excess is clearly shown. There is no forced 100% split or automated suggestion.",
+      "Tap Save budget to keep your sheet. Existing saved plans are converted into rows for review, without automatic saving. Income and cost records for the separate goal/SIP plan remain available from the quiet link below.",
     ],
   },
   ask: {
@@ -140,6 +140,9 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-19", title: "A simple budget sheet", items: [
+    { title: "Amounts and percentages, side by side", text: "Add an item, pick its category and type an amount or percentage. The other updates automatically. Loan EMIs start as fixed-expense rows. There are no split suggestions or setup steps.", show: { path: "/goals/budget", target: "budget-sheet" } },
+  ] },
   { date: "2026-11-19", title: "An easier budget flow", items: [
     { title: "Salary, split, review", text: "Plan your budget one step at a time. Tap a bucket for smaller allocations in a separate panel. Loan EMIs are optional: choose which ones to include before they enter suggestions. New loans are never added automatically." },
   ] },

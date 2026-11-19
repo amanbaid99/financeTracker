@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 19 Nov 2026.
 
+## Manual budget sheet, 19 Nov 2026
+
+Replaced the ratio wizard and suggestion UI with a manual sheet. Each row has name, category, amount and percentage, with instant two-way conversion. Last-edited rupee values remain fixed when salary changes; percentage values resize. Totals allow partial allocation and clearly flag overspending. Active EMIs default to fixed-expense rows once; manual edits and removals persist. Older saved plans flatten into reviewable rows, with old debt allocations covering scheduled EMIs before any extra amount is added. No automatic save or hosted data rewrite occurs.
+
+The existing JSON table stores version 2; no schema migration is required. Server validation protects row size, amounts, categories, unique loan rows and loan ownership. Separate goal-plan income/cost tools remain at `/goals/budget/records`. Verification: lint, TypeScript, 596 unit tests, 40 Python CAS tests and production build passed. Twelve Chromium cases cover four widths and three themes, including two-way amount/percentage edits, income changes, categories and saving. Additional cases verify removed EMI persistence and restoration, undo, over-budget plans and failed saves. Compatibility tests cover old nested budgets and prevention of duplicate debt. No hosted financial records were written from the workspace.
+
 ## Budget UX and optional EMIs, 19 Nov 2026
 
 Prepared a three-step Salary/Split/Review editor with compact main-bucket rows and a separate panel for optional smaller allocations. EMIs are now explicitly selected per loan. No EMI is included by default; only selected loans affect ratio suggestions, debt detail suggestions, warnings and the Budget tab's recorded commitment summary. New loans are not silently opted in. Existing saved allocations remain intact and editable. The server checks ownership of selected loan IDs. The existing JSON storage supports this without SQL changes.

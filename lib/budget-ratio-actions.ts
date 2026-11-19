@@ -1,6 +1,7 @@
 "use server";
 import { revalidatePath } from "next/cache";
 import { requireUser } from "./data";
+import { budgetSheetSchema } from "./budget-sheet";
 import { ratioPlanSchema } from "./budget-ratios";
 
 export async function saveRatioPlan(input: unknown) {
@@ -18,6 +19,22 @@ export async function saveRatioPlan(input: unknown) {
   }
   const { error } = await supabase.from("budget_ratio_plans").upsert({ user_id: user.id, plan: parsed.data, updated_at: new Date().toISOString() });
   if (error) return { ok: false as const, error: "Could not save your budget. Your edits are still here. Try again." };
+  revalidatePath("/goals/budget");
+  return { ok: true as const };
+}
+
+/** The manual sheet stores one owner-scoped document, without changing financial records. */
+export async function saveBudgetSheet(input: unknown) {
+  const parsed = budgetSheetSchema.safeParse(input);
+  if (!parsed.success) return { ok: false as const, error: parsed.error.issues[0]?.message ?? "Check the budget amounts." };
+  const { supabase, user } = await requireUser();
+  const loanIds = parsed.data.rows.flatMap((r) => r.loanId ? [r.loanId] : []);
+  if (loanIds.length) {
+    const { data, error } = await supabase.from("loans").select("id").eq("user_id", user.id).in("id", loanIds);
+    if (error || data?.length !== loanIds.length) return { ok: false as const, error: "A loan has changed. Reload your budget before saving." };
+  }
+  const { error } = await supabase.from("budget_ratio_plans").upsert({ user_id: user.id, plan: parsed.data, updated_at: new Date().toISOString() });
+  if (error) return { ok: false as const, error: "Could not save. Your edits are still here. Try again." };
   revalidatePath("/goals/budget");
   return { ok: true as const };
 }

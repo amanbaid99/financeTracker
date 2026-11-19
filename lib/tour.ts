@@ -27,9 +27,9 @@ export const INTRO_TOUR: TourStep[] = [
   },
   {
     path: "/goals/budget",
-    target: "ratio-budget",
+    target: "budget-sheet",
     title: "Your budget",
-    text: "Split salary into your own buckets, add smaller goal allocations, then review and save.",
+    text: "Enter an amount or a percentage in each budget row. The other updates for you.",
   },
   {
     path: "/assets",

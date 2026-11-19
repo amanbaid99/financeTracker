@@ -3,6 +3,14 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Manual spreadsheet budget, 19 Nov 2026
+
+The owner replaced ratio suggestions, the wizard and nested bucket editing with a manual sheet. Each row has a name, category and either a rupee value or percentage as its last-edited basis. The other value is derived, preventing drift. Salary changes retain rupee entries and resize percentage entries. Categories are fixed expense, variable expense, investing, savings, debt repayment and personal/guilt-free. Partial and over-budget plans are valid, with explicit totals and excess labels.
+
+The owner now explicitly permits automatic loan inclusion, superseding the previous opt-in decision. Active EMIs are added once as editable fixed-expense rows; removed loan IDs are remembered, and a restore action is available. Existing edited amounts are preserved. Closed/deleted loan rows leave the loaded draft. Nothing is written until Save budget.
+
+Version 2 uses the existing owner-scoped JSON table, with no SQL migration. Old main/child allocations flatten into rows. Scheduled EMIs consume old debt allocations first, avoiding duplication; an existing shortfall is shown rather than silently normalised. Old JSON stays unchanged until the user saves the converted sheet. Recorded income/cost/goal-plan tools move to `/goals/budget/records`, linked quietly below the sheet. Loans, holdings, SIPs and recorded income are not rewritten.
+
 ## Simpler budget and explicit EMI choice, 19 Nov 2026
 
 The owner wants running loan EMIs offered as optional budget inputs instead of automatically counted. Ratio plans now store `includedEmiIds` in the existing JSON document, defaulting to an empty list for old and new plans. Approval is per loan, so a new loan is not included automatically. Main suggestions, debt detail suggestions, budget warnings and the Budget tab's recorded-commitment summary use only the selected EMIs. Existing saved ratios are preserved. Loan schedules, payoff goals and the separate conservative goal money-plan calculations are unchanged.

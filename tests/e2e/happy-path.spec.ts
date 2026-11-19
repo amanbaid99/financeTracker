@@ -1023,7 +1023,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Budget: take-home and costs give what's free, which can feed the plan.
   await tab("Budget").click();
   await expect(page.getByRole("heading", { name: "Budget", exact: true })).toBeVisible();
-  await page.getByText("Recorded income and commitments", { exact: true }).click();
+  await page.getByRole("link", { name: "Income and cost records" }).click();
   await page.getByLabel("Salary a month").fill("200000");
   await page.getByRole("button", { name: "Save Salary" }).click();
   await expect(page.getByRole("button", { name: "Save Salary" })).toHaveCount(0);
@@ -1038,7 +1038,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Rent a month").fill("32000");
   await page.getByRole("button", { name: "Save Rent" }).click();
   await expect(page.getByRole("button", { name: "Edit Rent" })).toContainText("₹32,000");
-  // SIPs remain recorded; EMIs need an explicit budget selection.
+  // These recorded commitments remain separate from the manual budget sheet.
   const month = page.getByRole("region", { name: "Your month" });
   await expect(month).toContainText("EMIs");
   await expect(month).toContainText("SIPs running");
