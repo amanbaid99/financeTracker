@@ -3,6 +3,10 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Budget remainder proposals, 19 Nov 2026
+
+The owner wants freed budget money automatically proposed across savings, investing and guilt-free spending for approval. Keep the simplified single-sheet Budget and replace the two destination buttons with an editable inline proposal. Use existing category proportions, including zero shares; use 40/40/20 only without an existing mix. Never silently accept or save. Acceptance adds dedicated allocation rows without rewriting existing commitments or percentage bases.
+
 ## Working assisted budget setup, 19 Nov 2026
 
 The owner expected the proposed Help me build my budget option to be available. It is now an explicit opt-in entry below income, alongside the manual sheet. Three steps confirm income/known items, collect missing expenses and review editable extra allocations. Current draft amounts are preserved unless the user changes or deselects them. Recorded-cost IDs and matching existing expense names prevent common duplicates; ambiguous EMI records start unchecked. Previously excluded loan rows require explicit inclusion. Known SIPs appear once, and are unchecked by default if current future-money allocations may already cover them.

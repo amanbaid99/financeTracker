@@ -55,6 +55,22 @@ export function confirmedBudget(original: BudgetSheet, salary: number, items: As
 const categoryAmount = (plan: BudgetSheet, category: BudgetSheetRow["category"]) => plan.rows.filter((r) => r.category === category).reduce((sum, r) => sum + rowAmount(r, plan.salary), 0);
 export const moneyAvailable = (plan: BudgetSheet) => plan.salary - plan.rows.reduce((sum, r) => sum + rowAmount(r, plan.salary), 0);
 
+/** Reuse the current discretionary mix. Largest remainders keep every rupee accounted for. */
+export function suggestRemainingAllocation(plan: BudgetSheet): ExtraAllocation {
+  const categories = ["savings", "investing", "personal"] as const;
+  const available = Math.max(0, moneyAvailable(plan));
+  const amounts = categories.map((category) => categoryAmount(plan, category));
+  const total = amounts.reduce((a, b) => a + b, 0);
+  const weights = total > 0 ? amounts : [40, 40, 20];
+  const denominator = total || 100;
+  const raw = weights.map((weight) => available * weight / denominator);
+  const values = raw.map(Math.floor);
+  const order = raw.map((value, index) => ({ index, remainder: value - values[index] })).sort((a, b) => b.remainder - a.remainder || a.index - b.index);
+  const left = available - values.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < left; i++) values[order[i % order.length].index]++;
+  return { savings: values[0], investing: values[1], personal: values[2] };
+}
+
 /** Allocate the actual remainder, never the gross salary or already committed SIPs a second time. */
 export function suggestAssistedAllocation(plan: BudgetSheet, goals: BudgetReviewGoal[]) {
   const available = Math.max(0, moneyAvailable(plan));

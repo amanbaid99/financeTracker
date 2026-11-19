@@ -150,7 +150,7 @@ export const HELP: HelpTopic[] = [
     q: "How does the budget work?",
     a: [
       "One sheet for your month: take-home income, then Expenses, Savings and Investments. A new budget starts from what the app already knows: your recorded costs, loan EMIs and SIPs. Check it and tap Save.",
-      "The top card shows where your income goes and what's left. Money not assigned yet can go To savings or To investing in one tap. If you plan more than you earn, it names your biggest cost so you can change it.",
+      "The top card shows where your income goes and what's left. Money not assigned yet comes with an editable split for savings, investing and guilt-free spending, based on your current proportions. With no existing mix, it starts at 40%, 40% and 20%. Use this split updates the draft; Save keeps it. If you plan more than you earn, it names your biggest cost so you can change it.",
       "Tap any row to change its amount or percentage of income, its type, or remove it. Rupee amounts stay fixed when income changes; percentages resize.",
       "Changes are a draft until you tap Save in the bar at the bottom. Undo puts back the saved version, and the app warns you before leaving with unsaved changes.",
       "Once saved, this budget is what Your plan and Covered till salary use. Use the amount for Your plan sets your plan's monthly amount to the budget's savings plus investing.",

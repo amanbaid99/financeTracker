@@ -1033,11 +1033,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Edit Rent" })).toContainText("₹32,000");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByText("Budget saved. Your plan and goals now use it.")).toBeVisible();
-  // What's left can go straight to investing, then to Your plan.
+  // Review the proposed remainder before accepting it into the draft.
   const month = page.getByRole("region", { name: "Your month" });
   await expect(month).toContainText("not assigned yet");
-  await month.getByRole("button", { name: "To investing" }).click();
-  await itemSheet.getByRole("button", { name: "Add investment" }).click();
+  await expect(month.getByLabel("Additional savings", { exact: true })).toBeVisible();
+  await month.getByRole("button", { name: "Use this split" }).click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(month).toContainText("Every rupee has a place.");
   await page.screenshot({ path: "test-results/budget-375.png", fullPage: true });

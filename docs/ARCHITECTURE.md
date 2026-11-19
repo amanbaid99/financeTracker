@@ -3,6 +3,10 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+## Current single-sheet budget and remainder
+
+The latest single-sheet budget supersedes the assisted wizard described below. BudgetRemainder owns an isolated editable proposal, keyed to the current draft so stale amounts cannot be accepted after another edit. suggestRemainingAllocation uses category amounts and largest-remainder rounding; assistedBudget validates and composes accepted additions. Explicit Save persists the draft through the existing action. Recorded costs, loan EMIs and SIPs fill fresh drafts; saved sheets feed loadBudget for the goal plan and salary coverage. The records route redirects to Budget.
+
 ## Current overview
 
 The signed-in entry is `/today` (Home). It reads cached owner-scoped goals, cards, loans and recorded balances. `lib/home.ts` selects three unfinished goals and the next unfinished milestone without side effects. Portfolio accepts CAS imports and manual current-balance updates. Radar UI and price-refresh actions are removed; stored data and pure research libraries remain archived. No active route depends on broker tokens.

@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 19 Nov 2026.
 
+## Suggested remainder split, 19 Nov 2026
+
+Reviewed and retained the latest single-source Budget simplification (ed6cc5f). Unassigned money now shows an editable savings, investing and guilt-free proposal using the current category proportions, or a disclosed 40/40/20 starter mix if none exist. Integer rounding accounts for every rupee. Use this split changes only the draft, followed by explicit Save. Existing commitments and loan exclusions are preserved. No database change.
+
+Verification: lint, TypeScript, 618 unit tests, 40 Python tests and production build passed. Twelve responsive browser fixtures cover four widths and three themes, including deletion, editable proposals, over-allocation blocking, explicit acceptance, Undo and final Save. The signed-in end-to-end test was updated; the local Supabase stack remains unavailable in this environment. No hosted financial records were changed during checks.
+
 ## One simple budget, 19 Nov 2026
 
 Budget is now the single source of truth for monthly income and costs. `loadBudget` (lib/data.ts) reads the saved budget sheet when there is one, so Your plan, Covered till salary, Ask and the goal calculator use it; without one it falls back to income and expense records. `/goals/budget/records` redirects to Budget. The Help me build assistant, the allocation and planner components are removed. A new budget starts as an unsaved draft filled from recorded costs, loan EMIs and SIPs (`fillFromRecords` in lib/budget-assist.ts); "Fill from my records" adds anything missing later. The top card shows income, the bar, what's not assigned (To savings / To investing), over-budget help, and the goals line with "Use ₹X for Your plan" (`applySheetToPlan` sets profiles.plan_monthly to savings plus investing). Rows are compact and tap to edit. A sticky bar holds Undo and Save, with a leave warning while unsaved. No migration.

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight, PiggyBank, Plus, RefreshCw, TrendingUp, Wallet } from "lucide-react";
 import { Sheet } from "@/components/sheet";
+import { BudgetRemainder } from "@/components/budget-remainder";
 import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
@@ -172,11 +173,7 @@ export function BudgetSheet({ initial, saved: hasSaved = true, salary, loans, go
           {draft.salary <= 0 ? <p className="text-sm text-muted-foreground">Add your take-home income to start.</p>
           : totals.remaining > 0 ? <>
             <p className="font-semibold"><span className="tabular">{formatINR(totals.remaining)}</span> not assigned yet</p>
-            <p className="text-xs text-muted-foreground">Give every rupee a place. Savings for safety and plans, investing for long-term goals.</p>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <Button type="button" size="sm" variant="outline" className="min-h-10" onClick={() => openNew("savings", totals.remaining)}><PiggyBank className="size-4" /> To savings</Button>
-              <Button type="button" size="sm" variant="outline" className="min-h-10" onClick={() => openNew("investments", totals.remaining)}><TrendingUp className="size-4" /> To investing</Button>
-            </div>
+            <BudgetRemainder key={JSON.stringify(draft)} plan={draft} onApply={(plan) => { setDraft(plan); setMessage(""); setError(""); }} />
           </> : totals.remaining < 0 ? <>
             <p className="font-semibold text-danger"><span className="tabular">{formatINR(-totals.remaining)}</span> more than you earn</p>
             {biggest && <p className="text-xs text-muted-foreground">Biggest cost: {biggest.name}, {formatINR(rowAmount(biggest, draft.salary))}. <button type="button" className="font-medium text-primary underline" onClick={() => setEditor({ row: biggest, isNew: false, section: "expenses" })}>Change it</button></p>}

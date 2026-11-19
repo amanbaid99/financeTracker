@@ -96,7 +96,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro: "Your monthly money, in one place.",
     steps: [
       "A new budget starts from what the app knows: your recorded costs, loan EMIs and SIPs. Check it, then tap Save.",
-      "The top card shows where your income goes and what's left. Put what's left To savings or To investing in one tap.",
+      "The top card shows where your income goes and what's left. Review the suggested split for savings, investing and guilt-free spending. Edit it, then tap Use this split and Save.",
       "Tap a row to change its amount or percentage, its type, or remove it. Add more with Add expense, Add savings or Add investment.",
       "Changes stay a draft until you tap Save in the bar at the bottom. Undo puts back what you saved.",
       "Your plan and Covered till salary use this budget once it's saved. Use the amount for Your plan to set your plan's monthly amount.",
@@ -139,6 +139,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-19", title: "A suggested home for spare money", items: [{ title: "Review the money left", text: "After removing or reducing an item, review an editable split across savings, investing and guilt-free spending. Use this split, then Save when you are happy with it." }] },
   { date: "2026-11-19", title: "A simpler budget", items: [
     { title: "Starts from what you have", text: "A new budget fills in your recorded costs, loan EMIs and SIPs. Check it and save. The separate records page is gone: this budget is what Your plan uses." },
     { title: "What's left, in one tap", text: "The top card shows what isn't assigned yet. Send it To savings or To investing, then use it for Your plan." },
