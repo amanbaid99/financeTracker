@@ -6,7 +6,7 @@ export const BUDGET_CATEGORIES = {
   savings: "Savings", debt: "Debt repayment", personal: "Personal / guilt-free",
 } as const;
 export type SheetLoan = { id?: string; name: string; emi: number };
-const rowSchema = z.object({
+export const budgetRowSchema = z.object({
   id: z.string().min(1).max(100), name: z.string().trim().min(1, "Name each budget item.").max(80),
   category: z.enum(["fixed", "variable", "investing", "savings", "debt", "personal"]),
   mode: z.enum(["amount", "percent"]), value: z.number().finite().min(0).max(1e9),
@@ -17,7 +17,7 @@ const rowSchema = z.object({
 });
 export const budgetSheetSchema = z.object({
   version: z.literal(2), salary: z.number().int().positive("Enter your monthly take-home income.").max(1e9),
-  rows: z.array(rowSchema).max(100), excludedLoanIds: z.array(z.string().uuid()).max(100).default([]),
+  rows: z.array(budgetRowSchema).max(100), excludedLoanIds: z.array(z.string().uuid()).max(100).default([]),
 }).superRefine((plan, ctx) => {
   if (new TextEncoder().encode(JSON.stringify(plan)).byteLength > 50000) ctx.addIssue({ code: "custom", message: "This budget is too large. Shorten item names or remove some rows." });
   const ids = new Set<string>(), loans = new Set<string>();

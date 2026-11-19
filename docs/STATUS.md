@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 19 Nov 2026.
 
+## Grouped budget list and typed adding, 19 Nov 2026
+
+Budget rows are grouped into Expenses, Savings and Investments with section totals, income shares and contextual Add buttons. Full names are readable, expense subtypes remain visible and amount/percentage editing stays inline. An add/edit panel handles names, types and removal; changing category moves rows between groups. Savings/investment adds preset their category and omit an unnecessary category picker. Closing a panel leaves the draft unchanged. Existing rows and JSON storage are preserved, with no migration or hosted record rewrite.
+
+Verification: lint, TypeScript, 602 unit tests, 40 Python CAS tests and production build passed. Twelve Chromium cases cover four widths and three themes. Browser flows exercise section-specific adds, direct amount/percentage editing, correct categories, moving edited items between groups, cancellation without blank rows, save/reload, EMI removal/restore and undo. No hosted financial records were modified from the workspace.
+
 ## Budget allocation and balanced review, 19 Nov 2026
 
 Added a top category allocation bar with rupee amounts, income percentages and unassigned money. A compact draft review recognises affordability, goal capacity and existing progress as well as relevant gaps. The review never rewrites amounts, applies an ideal ratio or claims that savings are assigned to goals. It excludes reached/loan goals and discloses unknown goal pace in comparisons. Over-budget bars are explicitly scaled to planned spending; percentages still refer to income.

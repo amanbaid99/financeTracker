@@ -95,7 +95,9 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "Your budget",
     intro: "One manual sheet, like a simple spreadsheet.",
     steps: [
-      "Enter your monthly take-home income. Add rows for rent, groceries, investing, savings or anything else.",
+      "Enter your monthly take-home income. Expenses, Savings and Investments each have their own section, total and Add action.",
+      "Add expense lets you enter the name, type and amount together. Add savings and Add investment use their section automatically. Close the panel to cancel, or add the item to your draft.",
+      "Read full item names in the list and edit amounts or percentages directly. The pencil button opens a panel for renaming, changing type or removing an item. Changing type moves it to the right section.",
       "Give each item a category: fixed expense, variable expense, investing, savings, debt repayment or personal/guilt-free spending.",
       "Enter either an amount or a percentage of income. The other value updates immediately. With ₹1,00,000 income, ₹20,000 is 20%, and typing 20% gives ₹20,000.",
       "When income changes, entries last typed in rupees stay fixed. Entries last typed as percentages resize with income.",
@@ -141,6 +143,9 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-19", title: "Clearer budget sections", items: [
+    { title: "Expenses, Savings and Investments", text: "Each budget section has its own total and Add action. Rows show full names with direct amount/percentage editing. Use the pencil for name, type or removal, so the list stays easy to scan." },
+  ] },
   { date: "2026-11-19", title: "See your allocation at a glance", items: [
     { title: "A balanced look at your budget", text: "The category bar shows where your income is planned, including money left unassigned. A short review recognises progress and compares saving/investing capacity with recorded goal pace. It also flags genuine gaps without rewriting your plan." },
   ] },

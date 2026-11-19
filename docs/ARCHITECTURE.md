@@ -9,7 +9,7 @@ The signed-in entry is `/today` (Home). It reads cached owner-scoped goals, card
 
 ## Manual budget sheet
 
-`lib/budget-sheet.ts` validates version-2 row documents and derives amount/percentage values from the last-edited basis. `BudgetSheet` is always directly editable, with totals and explicit Save budget. `saveBudgetSheet` validates ownership of loan-linked rows and upserts the signed-in user's existing `budget_ratio_plans` JSON document. Active EMIs are merged once as fixed expenses on read; deleted row IDs are excluded until restored. Saved version-1 allocations flatten into rows for review, avoiding duplicate debt. Reading never writes or rewrites existing records. The former ratio calculation helpers remain only for compatibility and tests. Recorded income/cost tools are at `/goals/budget/records`.
+`lib/budget-sheet.ts` validates version-2 row documents and derives amount/percentage values from the last-edited basis. `BudgetSheet` groups rows into Expenses, Savings and Investments with per-section totals. Amounts/percentages remain directly editable; typed add/edit sheets handle names, categories and removal. Panel changes update the draft, and explicit Save budget persists it. `saveBudgetSheet` validates ownership of loan-linked rows and upserts the signed-in user's existing `budget_ratio_plans` JSON document. Active EMIs are merged once as fixed expenses on read; deleted row IDs are excluded until restored. Saved version-1 allocations flatten into rows for review, avoiding duplicate debt. Reading never writes or rewrites existing records. The former ratio calculation helpers remain only for compatibility and tests. Recorded income/cost tools are at `/goals/budget/records`.
 
 ## Budget allocation review
 

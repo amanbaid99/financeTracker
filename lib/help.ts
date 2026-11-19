@@ -134,6 +134,7 @@ export const HELP: HelpTopic[] = [
     q: "What does the budget do?",
     a: [
       "It is one manual monthly sheet. Enter take-home income and add rows with an item name, category, amount and percentage. Edit either value and the other updates.",
+      "Expenses, Savings and Investments have their own totals and Add buttons. Expenses includes fixed, variable, personal and debt-repayment items. Add savings or Add investment sets the category for you. The pencil opens an edit panel for name, type and removal; changing category moves the item between sections. Amounts and percentages remain directly editable in the list. Closing an add/edit panel cancels its unconfirmed changes.",
       "Rupee entries stay fixed when income changes; percentage entries resize. For ₹1,00,000 income, ₹20,000 is 20%. No split is suggested and you do not need to reach 100% before saving.",
       "Active loan EMIs appear once as fixed expenses. You can edit or remove them. Removed rows stay removed until you restore them. Existing saved allocations are converted into rows without an automatic database save; existing debt allocations are used toward EMIs first to avoid counting the same debt twice.",
       "Your allocation groups the sheet by category with amounts and percentages of income. Unassigned money stays visible. If the plan exceeds income, the bar scales to planned spending and labels the income percentages separately.",

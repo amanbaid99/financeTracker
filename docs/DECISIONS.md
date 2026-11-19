@@ -3,6 +3,12 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Grouped budget sections, 19 Nov 2026
+
+The owner wants the budget list and adding flow organised into Expenses, Savings and Investments. Existing fixed/variable/debt/personal categories belong to Expenses; savings and investing each have their own section. Each section shows its total and income share and has a typed Add action. No storage format or amount calculation changes.
+
+Names and types are readable text rather than permanent input controls. Amounts and percentages remain editable inline. A small panel handles adding, renaming, changing type and removing items; changing type moves an existing row into its section. Add actions preset the section category. Closing a panel cancels local edits and avoids leaving unnamed rows. Updating a panel changes the budget draft only; Save budget remains the persistence action. Loan removal/restore and undo keep their existing semantics.
+
 ## Balanced allocation review, 19 Nov 2026
 
 The owner wants a category allocation bar and supportive, evidence-based insight on salary and goals, not continual criticism. The top review groups the current manual rows, includes unassigned income and updates locally during edits. Above-income plans use planned spending as the bar denominator, while legend percentages remain shares of income and the changed scale is labelled explicitly.
