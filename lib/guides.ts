@@ -23,7 +23,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "Your money at a glance",
     intro: "Start here for the essentials, then open a section for details.",
     steps: [
-      "Net worth is recorded holdings minus loan balances. Tap the balance card for holdings, or use I have extra money inside it to preview an allocation.",
+      "Net worth is recorded holdings minus loan balances. Tap the balance card for holdings, or use I have extra money in + to preview an allocation.",
       "Focus goals shows the first three unfinished goals in your Goals order.",
       "Closest card milestone shows the unfinished target with the smallest amount left. Tap it to open the card; it is hidden when no unfinished target exists.",
       "Updates due reminds you about missing statements, monthly loan balances and a recent CAS. No payment is assumed missed.",
@@ -38,7 +38,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "I have extra money previews where spare cash helps your goals. Nothing is saved until you confirm. New goal adds something you want to save for.",
       "Update amounts lets you enter the latest amounts for your investments.",
       "Import statement reads a CAS. You review the results before saving.",
-      "Plan my money helps split what you can invest across goals.",
+      "SIP plan helps split your monthly amount across goals, starting with your saved Save & invest amount when available.",
       "Log a card bill records a statement for an existing card. Add a new card in the Cards tab.",
       "You can reopen this guide from the info button inside the + menu.",
     ],
@@ -54,7 +54,6 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Focus goals shows the first three unfinished goals, followed by Other goals and then Covered. A goal on hold keeps its place. Use Change order to move goals.",
       "Loans can have payoff goals. Manage any loan in Net worth, even if its goal was deleted. Each shows what's left, the EMI and when it ends. Confirm the outstanding amount from your lender each month. Once confirmed, it stays until your next update. Older schedule-based balances and future payoff figures are estimates.",
       "Tap +, then Update amounts to enter new amounts, or Import statement to update funds from a CAS.",
-      "Between jobs? Your savings goals wait, On hold till salary. The Budget tab shows whether your money lasts till then.",
       "Your plan (top right) shows how your monthly money is split, top of your order first. Edit order there to choose which goals come first.",
       "Use Plan monthly contributions when starting a plan, or Your plan for an existing allocation. Reminders stay on Home, so Goals stays focused on progress.",
       "Your plan has its own page: tap Your plan. It shows where the money goes and why, then This month lists what to add to your SIPs. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
@@ -68,7 +67,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "Your net worth",
     intro: "What you own and what you owe, in one place.",
     steps: [
-      "What you owe lists each loan with its balance and how much is repaid. Tap one to open its goal and update it.",
+      "What you owe lists each loan with its balance and how much is repaid. Tap one to manage its balance, closure or deletion. Its payoff goal is a separate link inside. Closed loans are hidden.",
       "Net worth at the top is what you own minus what you owe on loans. Current balances stay visible without performance charts.",
       "The overview shows your total, monthly investments and asset split. One bar and small chips with each share. Tap a chip to filter the holdings below, and again to clear it. Switch to Instrument to see it by kind of investment, like mutual funds, stocks or EPF.",
       "Search holdings by name or category. Sort by value or name. Upload CAS for funds and ETFs, and update other balances manually.",
@@ -86,7 +85,6 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Add milestones like a fee waiver or bonus points, with the spend target and when it resets.",
       "Log each monthly statement: the month and the amount. Tap +, then Log card spend, or Log bill on a card. Statements only count toward milestones.",
       "When a new card year or quarter starts, progress counts the statements in that new period.",
-      "Open Which card to use for suggestions on where planned spending could help a milestone. Do not spend extra just to reach a reward.",
       "Read features fills in a card from its features PDF or your description. You tick what to keep.",
       "Loans, including EMIs on a card, are goals: add one with New goal, then Close my loan.",
     ],
@@ -98,8 +96,8 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap Plan my budget. Confirm income and recorded commitments first. Groceries and everyday costs are asked later, with up to two expense questions per screen. Personal transport stays in the Personal spending step. Annual contributions stay in Goals.",
       "Enter a preferred Personal spending amount or let the guide suggest one. There is no savings-versus-investing split to choose.",
       "Review one Save & invest amount and Personal spending in rupees. Change anything before Save this budget. No percentages are required.",
-      "Your saved view has three totals. Itemised buckets expand into a breakdown; Edit beside income opens monthly amounts. Budget options holds rebuilding and reset.",
-      "Rebuild with guide leaves the current budget intact until you save its replacement. The budget stays independent unless you choose Create a SIP plan and explicitly save its monthly allocation. Investment records and SIP mandates are not created automatically.",
+      "Your saved view has three totals. Itemised buckets expand into a breakdown; Edit beside income opens monthly amounts. Edit includes Personal spending and Save & invest; changing one adjusts the other. Budget options holds reset.",
+      "The budget stays independent unless you choose Create a SIP plan and explicitly save its monthly allocation. Investment records and SIP mandates are not created automatically.",
     ],
   },
   ask: {
@@ -138,6 +136,11 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-21", title: "Less clutter, clearer actions", items: [
+    { title: "Editable Personal spending", text: "Edit income, Save & invest and Personal spending together. Changing one allocation adjusts the other. Rebuild with guide and salary coverage have been removed." },
+    { title: "Cards focus on milestones", text: "Amount left and deadline stay visible. Open a card for pace details and editing. Which card to use has been removed." },
+    { title: "Actions where you expect them", text: "Extra money and SIP plan are in +. Net worth loans open management directly, and closed loans are hidden. Your plan puts every monthly step before optional allocation details." },
+  ] },
   { date: "2026-11-21", title: "Cleaner Goals and Budget", items: [{ title: "Less repetition", text: "Goals puts unfinished goals first and covered goals in their own section, with calculations behind Show details. Budget keeps three totals, a header Edit action and one SIP action; rebuild and reset live in Budget options." }] },
   { date: "2026-11-21", title: "A quieter Home", items: [{ title: "The essentials, without repeated links", text: "One balance card, a compact reminder and shorter goal and milestone summaries. Extra money stays easy to reach inside the balance card. Empty milestone cards and duplicate navigation links are removed." }] },
   { date: "2026-11-21", title: "Manage closed loans and spare money", items: [{ title: "Loan controls in Net worth", text: "Manage a loan even after its goal is deleted. Mark it closed or confirm permanent removal. Closed loans stop counting as debt or future EMIs." }, { title: "I have extra money", text: "Open the allocation preview directly from Home or the + menu. Review suggestions before adding anything to your plan." }] },
@@ -248,11 +251,6 @@ export const RELEASES: Release[] = [
       {
         title: "Your roadmap",
         text: "See your plan as steps from today: first salary, bills months, loans paid off and each goal's date. Green is on plan, grey waits for salary, amber needs you.",
-      },
-      {
-        title: "Covered till salary",
-        text: "Add the earliest and latest your salary could start. See whether your money lasts till then, with a weekly amount you can spend and stay on plan.",
-        show: { path: "/goals/salary", target: "runway" },
       },
       {
         title: "On hold, not behind",
@@ -580,10 +578,6 @@ export const RELEASES: Release[] = [
       {
         title: "Monthly bills",
         text: "Log each statement, mark it paid and see your average monthly spend per card.",
-      },
-      {
-        title: "Which card to use",
-        text: "See which card to put your spend on so you hit milestones before they reset, and which ones are out of reach.",
       },
       {
         title: "Set up a card from its features",

@@ -10,7 +10,8 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
-import { CardAdvisor } from "@/components/card-advisor";
+import { useDayRefresh } from "@/components/use-day-refresh";
+import { GuideButton } from "@/components/guides";
 import { CardFeaturesSheet } from "@/components/card-features";
 import { Field } from "@/components/forms/field";
 import { MoneyInput } from "@/components/money-input";
@@ -19,7 +20,6 @@ import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
-  averageBill,
   cardsForMilestones,
   milestoneState,
   PERIOD_LABELS,
@@ -124,10 +124,10 @@ function MilestoneRow({
         className="press block w-full space-y-1.5 text-left"
       >
         <span className="flex items-start justify-between gap-2">
-          <span className="min-w-0 text-sm font-medium">
+          <span className="min-w-0 break-words text-sm font-medium">
             {milestoneLabel(s)}
           </span>
-          {pill && (
+          {showDetails && pill && (
             <span
               className={cn(
                 "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
@@ -144,24 +144,12 @@ function MilestoneRow({
           tone={tone}
           label={`${s.name} progress`}
         />
-        <span
-          className={cn(
-            "tabular block text-xs",
-            s.status === "achieved"
-              ? "text-success"
-              : s.status === "missed"
-                ? "text-danger"
-                : "text-muted-foreground",
-          )}
-        >
-          {s.status === "achieved"
-            ? `✓ Target of ${formatINR(s.target)} reached`
-            : `${formatINR(s.remaining)} left of ${formatINR(s.target)}${pace}`}
-          {s.end && s.status !== "achieved"
-            ? `${s.status === "missed" ? " · ended" : " · by"} ${formatDate(s.end)}`
-            : ""}
+        <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs">
+          <span className={cn("tabular font-medium",s.status==="achieved"?"text-success":s.status==="missed"?"text-danger":"text-foreground")}>{s.status==="achieved"?`✓ Target of ${formatINR(s.target)} reached`:`${formatINR(s.remaining)} to go`}</span>
+          {s.end&&s.status!=="achieved"&&<span className="text-muted-foreground">{s.status==="missed"?"Ended":"By"} {formatDate(s.end)}</span>}
         </span>
       </button>
+      {showDetails && <p className="tabular mt-1 text-xs text-muted-foreground">{formatINR(s.spentNow)} of {formatINR(s.target)} eligible spending{pace}</p>}
       {showDetails && (
         <p className="mt-1 text-xs text-muted-foreground">
           {s.billCount > 0
@@ -683,15 +671,12 @@ function BillRow({ bill, onEdit }: { bill: Bill; onEdit: () => void }) {
 
 function BillsSection({
   card,
-  onLog,
   onEdit,
 }: {
   card: Card;
-  onLog: () => void;
   onEdit: (b: Bill) => void;
 }) {
   const [all, setAll] = useState(false);
-  const avg = averageBill(card.bills);
   const ordered = [...card.bills].sort((x, y) =>
     y.month.localeCompare(x.month),
   );
@@ -700,15 +685,7 @@ function BillsSection({
     <section className="space-y-1" aria-label={`${card.label} bills`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold">Statements</h3>
-        <Button
-          type="button"
-          size="sm"
-          className="min-h-11"
-          variant="outline"
-          onClick={onLog}
-        >
-          <Plus /> Log bill
-        </Button>
+
       </div>
       {card.bills.length === 0 ? (
         <p className="text-sm text-muted-foreground">
@@ -716,11 +693,6 @@ function BillsSection({
         </p>
       ) : (
         <>
-          {avg !== null && (
-            <p className="text-xs text-muted-foreground">
-              Average statement: {formatINR(avg)}/month
-            </p>
-          )}
           <ul className="divide-y">
             {shown.map((b) => (
               <BillRow key={b.id} bill={b} onEdit={() => onEdit(b)} />
@@ -744,12 +716,10 @@ function BillsSection({
 function AboutCard({
   card,
   today,
-  onEdit,
   onFeatures,
 }: {
   card: Card;
   today: string;
-  onEdit: () => void;
   onFeatures: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -822,16 +792,8 @@ function AboutCard({
               ))}
             </ul>
           )}
-          <div className="grid grid-cols-2 gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="min-h-11"
-              onClick={onEdit}
-            >
-              <Pencil /> Edit card
-            </Button>
+          <div>
+
             <Button
               type="button"
               variant="outline"
@@ -872,6 +834,7 @@ export function CardList({
   /** From the + menu: "bill" logs a bill, "card" adds a card. */
   action?: string | null;
 }) {
+  useDayRefresh(today);
   const [localOpen, setLocalOpen] = useState<string | null>(initialOpen);
   const open = openCardId === undefined ? localOpen : openCardId;
   const setOpen = onOpenChange ?? setLocalOpen;
@@ -915,6 +878,7 @@ export function CardList({
 
   return (
     <div className="space-y-4">
+      <header className="flex items-center justify-between gap-3"><div className="flex items-center gap-1"><h1 className="text-2xl font-semibold tracking-tight">Cards</h1><GuideButton id="cards" /></div>{cards.length>0&&<Button variant="outline" size="sm" className="min-h-11" onClick={()=>setSheet({kind:"card",card:null})}><Plus className="size-4" />Add a card</Button>}</header>
       {cards.length === 0 ? (
         <div className="space-y-2 rounded-2xl border bg-card p-6 text-center">
           <CreditCard className="mx-auto size-8 text-primary" aria-hidden />
@@ -925,21 +889,8 @@ export function CardList({
             Add a card, log its monthly bills, and see how close you are to fee
             waivers and bonus points.
           </p>
-          <div className="grid grid-cols-2 gap-2 pt-2">
-            <Button
-              type="button"
-              onClick={() => setSheet({ kind: "card", card: null })}
-            >
-              <Plus /> Add a card
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setSheet({ kind: "features", card: null })}
-            >
-              <FileText /> From features
-            </Button>
-          </div>
+          <Button type="button" className="min-h-11 w-full" onClick={()=>setSheet({kind:"card",card:null})}><Plus />Add a card</Button>
+
         </div>
       ) : (
         <ul className="space-y-3">
@@ -956,7 +907,7 @@ export function CardList({
                 key={c.id}
                 data-card-id={c.id}
                 className={cn(
-                  "surface-card overflow-hidden rounded-2xl border border-border/70 bg-card",
+                  "overflow-hidden rounded-2xl border border-border/70 bg-card",
                   isOpen && "border-primary",
                 )}
               >
@@ -965,7 +916,7 @@ export function CardList({
                   <div className="flex items-start gap-3">
                     <span
                       className={cn(
-                        "inline-flex size-10 shrink-0 items-center justify-center rounded-xl",
+                        "inline-flex size-8 shrink-0 items-center justify-center rounded-xl",
                         allReached
                           ? "bg-success-soft text-success"
                           : "bg-primary-soft text-primary",
@@ -1003,35 +954,7 @@ export function CardList({
                       aria-hidden
                     />
                   </div>
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    <p className="min-w-0 text-sm text-muted-foreground">
-                      {latest ? (
-                        <>
-                          {monthLabel(latest.month)} statement:{" "}
-                          <span className="tabular font-medium text-foreground">
-                            {formatINR(latest.amount)}
-                          </span>
-                        </>
-                      ) : (
-                        "No statements logged"
-                      )}
-                    </p>
-                    {/* Open cards log from Statements below. */}
-                    {!isOpen && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="relative z-10 min-h-10 shrink-0"
-                        aria-label={`Log a ${c.label} bill`}
-                        onClick={() =>
-                          setSheet({ kind: "bill", card: c, bill: null })
-                        }
-                      >
-                        <Plus /> Log bill
-                      </Button>
-                    )}
-                  </div>
+                  <div className="mt-2 flex items-center justify-between gap-3">{!isOpen?<p className="min-w-0 text-xs text-muted-foreground">{latest?`Last statement: ${monthLabel(latest.month)}`:"No statements logged"}</p>:<span/>}<Button type="button" variant="outline" size="sm" className="relative z-10 min-h-11 shrink-0" aria-label={`Log a ${c.label} bill`} onClick={()=>setSheet({kind:"bill",card:c,bill:null})}><Plus className="size-4" />Log bill</Button></div>
                 </div>
 
                 {/* A card with every milestone reached stays short until opened. */}
@@ -1040,11 +963,6 @@ export function CardList({
                     aria-label={`${c.label} milestones`}
                     className="border-t px-4 pb-3"
                   >
-                    <div className="flex min-h-10 items-center justify-between gap-3 pt-1">
-                      <h3 className="text-xs font-medium text-muted-foreground">
-                        Milestones
-                      </h3>
-                    </div>
                     {states.length > 0 ? (
                       <ul className="divide-y">
                         {[...states]
@@ -1075,7 +993,7 @@ export function CardList({
                         No milestones yet. Add one to track a reward.
                       </p>
                     )}
-                    {(isOpen || states.length === 0) && (
+                    {(!isOpen && states.length === 0) && (
                       <Button
                         type="button"
                         variant="ghost"
@@ -1098,20 +1016,20 @@ export function CardList({
 
                 {isOpen && (
                   <div className="expand-in space-y-4 border-t px-4 pb-4 pt-2">
+                    <div className="grid grid-cols-2 gap-2"><Button variant="outline" size="sm" className="min-h-11" onClick={()=>setSheet({kind:"milestone",cardId:c.id,milestone:null})}><Plus className="size-4" />Add milestone</Button><Button variant="outline" size="sm" className="min-h-11" onClick={()=>setSheet({kind:"card",card:c})}><Pencil className="size-4" />Edit card</Button></div>
+
                     <BillsSection
                       card={c}
-                      onLog={() =>
-                        setSheet({ kind: "bill", card: c, bill: null })
-                      }
                       onEdit={(b) =>
                         setSheet({ kind: "bill", card: c, bill: b })
                       }
                     />
 
+
+
                     <AboutCard
                       card={c}
                       today={today}
-                      onEdit={() => setSheet({ kind: "card", card: c })}
                       onFeatures={() => setSheet({ kind: "features", card: c })}
                     />
                   </div>
@@ -1122,18 +1040,6 @@ export function CardList({
         </ul>
       )}
 
-      {cards.length > 0 && (
-        <Button
-          type="button"
-          variant="outline"
-          className="min-h-11 w-full"
-          onClick={() => setSheet({ kind: "card", card: null })}
-        >
-          <Plus /> Add a card
-        </Button>
-      )}
-
-      {cards.length > 0 && <CardAdvisor cards={cards} today={today} />}
 
       {sheet?.kind === "card" && (
         <CardSheet

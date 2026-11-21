@@ -9,7 +9,7 @@ import type { Loan } from "@/lib/loans";
 import { formatDate, formatINR } from "@/lib/format";
 import { confirmLoanBalance } from "@/lib/updates-actions";
 
-export function LoanBalanceUpdate({ loan }: { loan: Loan }) {
+export function LoanBalanceUpdate({ loan,returnTo="/goals" }: { loan: Loan;returnTo?:"/goals"|"/assets" }) {
   // Leave blank so a projected or stale figure cannot be silently confirmed.
   const [balance, setBalance] = useState<number | null>(null);
   const [principal, setPrincipal] = useState(loan.principal);
@@ -31,7 +31,7 @@ export function LoanBalanceUpdate({ loan }: { loan: Loan }) {
           });
           if (!result.ok) setError(result.error ?? "Try again.");
           else {
-            router.push("/goals");
+            router.push(returnTo);
             router.refresh();
           }
         });

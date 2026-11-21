@@ -3,6 +3,10 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Focused actions and editable spending, 21 Nov 2026
+
+The owner wants one location for repeated actions: extra money and SIP plan in +, CAS/update controls there rather than at the top of Net worth. Loans open their own management panel; payoff goals are explicit links, and closed loans have no section. Cards omit Which card to use and show simple milestone progress. Your plan prioritises every monthly checklist step with allocation explanations folded. Budget permits direct Personal spending edits by adjusting Save & invest while preserving included costs. Rebuild with guide and salary coverage are removed; reset and initial guided creation remain.
+
 ## Focused Goals and Budget views, 21 Nov 2026
 
 The owner asked to simplify both pages and remove repeated controls and facts. Goals owns goal progress; Home owns update reminders and Your plan owns monthly allocation/checklists. Preserve all goal actions and calculations, but show exact math only when requested. Covered goals are always a separate bottom section, never included among the first three focus goals. Budget shows three totals, one header Edit action and the requested Create a SIP plan action. Rebuild/reset are secondary maintenance options, not permanently exposed actions. Do not offer an empty expansion that only repeats a bucket total. Between-jobs warnings remain accessible and date-sensitive refresh must survive UI simplification.

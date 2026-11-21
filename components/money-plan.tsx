@@ -359,9 +359,11 @@ export function MoneyPlanCard({
   goals = [],
   between = false,
   variant = "summary",
+  concise = false,
 }: {
   /** "form" keeps Goals actions available; "full" is the plan page. */
   variant?: "summary" | "full" | "form";
+  concise?: boolean;
   /** Between jobs: no nudges to start a plan yet. */
   between?: boolean;
   /** To say what the goals still need before there's a plan. */
@@ -467,16 +469,17 @@ export function MoneyPlanCard({
             : "Add savings or a monthly amount to get suggestions."}
         </p>
       )}
-      {(suggestions.length > 0 || budget.income > 0) && (
+      {(suggestions.length > 0 || budget.income > 0) && (!concise || sips.length > 0) && (
         <details className="group/plan border-t text-card-foreground">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
-            Budget and plan details
+            {concise ? "Plan options" : "Budget and plan details"}
             <ChevronDown
               className="size-4 shrink-0 transition-transform group-open/plan:rotate-180"
               aria-hidden
             />
           </summary>
           <div className="space-y-3 px-3 pb-3">
+            {!concise && <>
             <BudgetDetails
               b={budget}
               planMonthly={plan.monthlyTotal}
@@ -507,6 +510,7 @@ export function MoneyPlanCard({
                 </li>
               ))}
             </ul>
+            </>}
             {sips.length > 0 && (
               <div className="space-y-2 border-t pt-3">
                 <p className="text-sm font-medium">

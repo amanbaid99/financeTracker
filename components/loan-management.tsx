@@ -7,11 +7,13 @@ import Link from "next/link";
 import { manageLoan } from "@/lib/loan-management-actions";
 import type { Loan } from "@/lib/loans";
 
-export function LoanManagement({loan,closed=false}:{loan:Loan;closed?:boolean}){
+export function LoanManagement({loan,closed=false,children}:{loan:Loan;closed?:boolean;children?:React.ReactNode}){
  const [open,setOpen]=useState(false),[action,setAction]=useState<"close"|"delete"|null>(null),[error,setError]=useState("");const[pending,start]=useTransition();const router=useRouter();
- return <><Button variant="ghost" size="sm" className="min-h-10 text-primary" onClick={()=>{setOpen(true);setAction(null);setError("");}} aria-label={`Manage ${loan.name}`}>Manage loan</Button>
+ const show=()=>{setOpen(true);setAction(null);setError("");};
+ return <>{children?<button type="button" className="press flex w-full items-center gap-3 py-3 text-left" onClick={show} aria-label={`Manage ${loan.name}`}>{children}</button>:<Button variant="ghost" size="sm" className="min-h-10 text-primary" onClick={show} aria-label={`Manage ${loan.name}`}>Manage loan</Button>}
+
  {open&&<Sheet title={loan.name} onClose={()=>{if(!pending)setOpen(false);}}><div className="space-y-4">
- {!action?<><p className="text-sm text-muted-foreground">{closed?"This loan is closed. It is excluded from what you owe and future EMIs.":"Update this loan even if its payoff goal has been deleted."}</p><Link href={`/updates?loan=${encodeURIComponent(loan.id)}`} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border text-sm font-medium">Update loan balance</Link>{!closed&&<><Button variant="outline" className="w-full" onClick={()=>setAction("close")}>Mark closed / foreclosed</Button></>}<Button variant="ghost" className="w-full text-danger" onClick={()=>setAction("delete")}>Delete loan</Button></>:<>
+ {!action?<><p className="text-sm text-muted-foreground">{closed?"This loan is closed. It is excluded from what you owe and future EMIs.":"Update this loan even if its payoff goal has been deleted."}</p>{loan.goal&&<Link href={`/goals?open=${encodeURIComponent(loan.goal.id)}`} className="inline-flex min-h-10 items-center text-sm text-primary">View payoff goal</Link>}<Link href={`/updates?loan=${encodeURIComponent(loan.id)}&from=networth`} className="inline-flex min-h-11 w-full items-center justify-center rounded-xl border text-sm font-medium">Update loan balance</Link>{!closed&&<><Button variant="outline" className="w-full" onClick={()=>setAction("close")}>Mark closed / foreclosed</Button></>}<Button variant="ghost" className="w-full text-danger" onClick={()=>setAction("delete")}>Delete loan</Button></>:<>
  <p className="text-sm">{action==="close"?"Confirm that this loan is fully repaid or foreclosed. Its outstanding balance will be set to ₹0. It will leave your active loans and EMI reminders, while its history stays.":"Permanently delete this loan and its recorded EMI payment history? This cannot be undone. Your investments will not be deleted."}</p>
  {loan.goal&&action==="delete"&&<p className="text-sm text-muted-foreground">A payoff goal is still linked. Marking the loan closed keeps that history. Delete the payoff goal first if you want to permanently remove the loan.</p>}
  {error&&<p role="alert" className="text-sm text-danger">{error}</p>}

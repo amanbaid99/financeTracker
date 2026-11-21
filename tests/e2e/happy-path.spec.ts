@@ -390,6 +390,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // A saved plan opens on its own page: where it goes and why, then
   // "This month" as a checklist in your own funds.
   await expect(page).toHaveURL(/\/goals\/plan$/);
+  await page.getByText("Allocation details", { exact: true }).click();
   await expect(page.getByRole("heading", { name: "Where it goes, and why" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "This month" })).toBeVisible();
   await expect(page.getByText(/plus ₹2,80,000 once/)).toBeVisible();
@@ -398,7 +399,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(steps).toContainText("Index SIP");
   await expect(steps).toContainText("₹2,80,000 now");
   // Strategy lives under plan details and changes the steps, not your data.
-  await page.getByText("Budget and plan details", { exact: true }).click();
+  await page.getByText("Plan options", { exact: true }).click();
   await page.getByRole("button", { name: "One holding per goal", exact: true }).click();
   await expect(page.getByRole("button", { name: "One holding per goal", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(steps).toContainText("Index SIP");
@@ -853,7 +854,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     page.getByText("No bills logged in this period yet"),
   ).toBeVisible();
   // Log a bill: it counts toward the milestone.
-  await page.getByRole("button", { name: "Log bill" }).click();
+  await page.getByRole("button", { name: /^Log a .* bill$/ }).click();
   await page.getByLabel("Statement month").fill("2026-09");
   await page.getByLabel("Bill amount").fill("100000");
   // Statements are logged for milestones only: no due date or paid state.
@@ -867,10 +868,10 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   const bills = page.getByRole("region", { name: "Regalia Gold bills" });
   await expect(bills).toContainText("Sep 2026");
   await expect(bills).toContainText("₹1,00,000");
-  await expect(page.getByText("Sep 2026 statement: ₹1,00,000")).toBeVisible();
+  await expect(page.getByRole("region", { name: "Regalia Gold bills" })).toContainText("Sep 2026");
   await expect(page.getByRole("button", { name: /Mark .* bill paid/ })).toHaveCount(0);
   // Logging the same month again doesn't overwrite it.
-  await page.getByRole("button", { name: "Log bill" }).click();
+  await page.getByRole("button", { name: /^Log a .* bill$/ }).click();
   await page.getByLabel("Statement month").fill("2026-09");
   await page.getByLabel("Bill amount").fill("1");
   await page
@@ -885,7 +886,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Milestones change only when another statement is logged, with no
   // separate "spent since your bill" entry.
   await expect(page.getByText(/Spent since your .* bill/)).toHaveCount(0);
-  await page.getByRole("button", { name: "Log bill" }).click();
+  await page.getByRole("button", { name: /^Log a .* bill$/ }).click();
   await page.getByLabel("Statement month").fill("2026-10");
   await page.getByLabel("Bill amount").fill("300000");
   await page.getByRole("button", { name: "Log bill", exact: true }).last().click();
@@ -941,13 +942,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(
     page.getByLabel("Regalia Gold is best for"),
   ).toContainText("Travel");
-  // Which card to use: the bonus is reachable at the usual spend.
-  const advisor = page.getByRole("region", { name: "Which card to use" });
-  await advisor.locator("summary").first().click();
-  await expect(advisor).toContainText("Use Regalia Gold");
-  await advisor.getByText("Why this card?", { exact: true }).click();
-  await expect(advisor).toContainText("Within reach");
-  await expect(advisor).toContainText("Based on your usual ₹2,00,000 a month");
+  await expect(page.getByRole("region", { name: "Which card to use" })).toHaveCount(0);
 
   await page.screenshot({ path: "test-results/cards-375.png", fullPage: true });
 
@@ -1037,6 +1032,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Your plan: the monthly split, with Edit order.
   await page.getByRole("link", { name: "Your plan", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Your plan" })).toBeVisible();
+  await page.getByText("Allocation details", { exact: true }).click();
   await expect(page.getByRole("heading", { name: "Where it goes, and why" })).toBeVisible();
   await page.getByRole("link", { name: "Edit order" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Your order" })).toBeVisible();
@@ -1054,28 +1050,10 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.goto("/liabilities");
   await expect(page).toHaveURL(/\/goals$/);
 
-  // Between jobs: covered till salary, with goals on hold meanwhile.
+  // Removed salary-coverage links safely return to Budget.
   await page.goto("/goals/salary");
-  await page.getByLabel("Earliest").fill("2027-01-05");
-  await page.getByLabel("Latest").fill("2027-01-31");
-  await page.getByRole("button", { name: "Save dates" }).click();
-  await expect(page.getByText("If salary comes 31 Jan").first()).toBeVisible();
-  await expect(page.getByRole("button", { name: "Add something to pay" })).toHaveCount(0);
-  // Budget waits for the salary instead of showing a red number.
-  await page.goto("/goals/budget");
-  await expect(page.getByRole("heading", { name: "Budget", exact: true })).toBeVisible();
-  await expect(page.getByText("a month more going out than coming in")).toHaveCount(0);
-  // Budget shows Covered till salary at the top while between jobs.
-  await expect(page.getByText(/^Covered till salary · /)).toBeVisible();
-  await page.goto("/goals");
-  // Goals is just the goals: the top three first, then everything else.
-  await expect(page.getByRole("heading", { name: "Focus goals" })).toBeVisible();
-  await expect(page.getByRole("region", { name: "Where you are" })).toHaveCount(0);
-  await page.screenshot({ path: "test-results/runway-375.png", fullPage: true });
-  await page.goto("/goals/salary");
-  await page.getByRole("button", { name: "My salary has started" }).click();
-  await expect(page.getByText(/Your goals are active again/)).toBeVisible();
-  await page.goto("/goals");
+  await expect(page).toHaveURL(/\/goals\/budget$/);
+  await expect(page.getByText(/^Covered till salary/)).toHaveCount(0);
 
   // Portfolio starts with net worth: holdings minus loans.
   await tab("Net worth").click();

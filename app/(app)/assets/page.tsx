@@ -69,6 +69,7 @@ export default async function PortfolioPage({
           <UpdateButton
             items={updatable}
             autoOpen={action === "update"}
+            showButton={false}
             />
         )}
         <div className="flex items-center gap-1">
@@ -109,11 +110,10 @@ export default async function PortfolioPage({
         <UpdateButton
           items={updatable}
           autoOpen={action === "update"}
+            showButton={false}
         />
       )}
 
-      <Link href="/import?from=portfolio" className={buttonVariants({ variant: "outline", className: "w-full" })}><FileUp /> Upload CAS</Link>
-      <p className="text-sm text-muted-foreground">Upload CAS for funds and ETFs. Update other balances manually.</p>
       <NetWorthCard history={[{ day: today, ...worth }]} />
       <OweList loans={loans} today={today} />
       <h2 className="-mb-2 px-0.5 text-lg font-semibold">What you own</h2>

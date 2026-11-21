@@ -17,7 +17,7 @@ export const HELP: HelpTopic[] = [
     section: "Getting started",
     q: "What is on Home?",
     a: [
-      "Home shows one net-worth card, a compact update reminder, your first three unfinished goals and the closest unfinished card milestone. Tap the net-worth card for holdings, a goal for its details, or the milestone for its card. I have extra money is inside the balance card. Empty milestone cards are hidden; a first-goal action appears only when you have no goals.",
+      "Home shows one net-worth card, a compact update reminder, your first three unfinished goals and the closest unfinished card milestone. Tap the net-worth card for holdings, a goal for its details, or the milestone for its card. I have extra money and SIP plan are in the + menu. Empty milestone cards are hidden; a first-goal action appears only when you have no goals.",
     ],
     tags: "overview focus dashboard",
   },
@@ -94,27 +94,6 @@ export const HELP: HelpTopic[] = [
     tags: "priority rank order first emergency",
   },
   {
-    id: "between-jobs",
-    section: "Goals",
-    q: "I'm between jobs. Why do my goals say On hold till salary?",
-    a: [
-      "Add when your salary should start (the earliest and latest dates) in Covered till salary, at the top of the Budget tab. Until then, savings goals wait, as planned, instead of showing Behind. Bills funds and loans still show their real state.",
-      "When the salary starts, tap My salary has started and your goals are active again.",
-    ],
-    tags: "job gap salary on hold paused",
-  },
-  {
-    id: "runway",
-    section: "Goals",
-    q: "How does Covered till salary work?",
-    a: [
-      "It adds up everything due until your salary: EMIs from your loan goals, living costs from your budget and payments from bills funds. Then it compares that with money you can reach quickly: savings accounts, FDs and liquid funds.",
-      "It works this out for both salary dates, and gives one weekly amount for day-to-day spending that keeps you covered even if salary is late.",
-      "A bills-fund payment that looks like an EMI or living costs already counted isn't added twice. You can change that on each line.",
-    ],
-    tags: "runway cash salary weekly safe to spend",
-  },
-  {
     id: "plan-steps",
     section: "Goals",
     q: "What happens when I tick a step on the plan?",
@@ -129,7 +108,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "I have a bonus. Where should it go?",
     a: [
-      "Tap I have extra money on Home or in the + menu from any main tab. You can also open it from Your plan. Type the amount to see where it helps most, in the same order the plan uses. Nothing is saved until you tap Add to my plan.",
+      "Tap I have extra money in the + menu from any main tab. Type the amount to see where it helps most, in the same order the plan uses. Nothing is saved until you tap Add to my plan.",
     ],
     tags: "lump sum one time bonus",
   },
@@ -153,8 +132,8 @@ export const HELP: HelpTopic[] = [
       "The guide recommends one monthly Save & invest amount. Adjust it before Save this budget. Personal spending gets what is left after Essentials and Save & invest. Annual contributions remain in Goals and are not imported or added here.",
       "Without a spending preference, the starting amount is 25% of income, capped at half the money left after essentials. The remainder goes to Save & invest. This is an editable starting point, not an ideal ratio or investment advice.",
       "Personal spending includes transport, day-to-day personal purchases and guilt-free money. Enter one optional monthly amount in setup, or leave it blank for a recommendation. Review the suggested plan before saving.",
-      "After saving, Essentials, Save & invest and Personal spending show their monthly totals. Only buckets with named items expand into a breakdown. Tap Edit beside income for monthly amounts; Budget options holds Rebuild with guide and Reset budget. Removing a cost increases Personal spending, keeping the combined target fixed.",
-      "Existing savings and investing rows appear under the combined total without rewriting stored amounts. Existing annual provision rows stay until you explicitly edit or rebuild the budget. Rebuild with guide replaces a budget only after you save. Goals, SIPs and investment records are separate, and no actual spending is tracked.",
+      "After saving, Essentials, Save & invest and Personal spending show their monthly totals. Only buckets with named items expand into a breakdown. Tap Edit beside income for monthly amounts; Edit includes take-home, Save & invest and Personal spending. Changing either allocation adjusts the other; included costs stay unchanged. Budget options holds Reset budget. Removing a cost increases Personal spending, keeping the combined target fixed.",
+      "Existing savings and investing rows appear under the combined total without rewriting stored amounts. Existing annual provision rows stay until you explicitly edit or reset the budget. Goals, SIPs and investment records are separate, and no actual spending is tracked.",
     ],
     tags: "income costs expenses budget free to invest plan",
   },
@@ -236,7 +215,7 @@ export const HELP: HelpTopic[] = [
     a: [
       "Loans are tracked separately from their payoff goals. Add one with New goal, then Close my loan. Open Net worth, What you owe, and tap Manage loan to update, mark it closed or delete it, even if the payoff goal was removed.",
       "Open a loan and tap Update loan balance. Enter the outstanding principal from your lender and confirm. It stays until your next update, with a reminder from the 2nd each month. Amount borrowed is optional; when known, the loan card in your goals shows what's repaid of it, otherwise what's left, with the end date. If you're saving to close it early, a second bar shows that saving. Older unconfirmed balances and future payoff figures are estimates.",
-      "Deleting a payoff goal does not close its loan. Mark closed / foreclosed sets the outstanding balance to zero, removes future EMIs and keeps history under Closed loans. Permanently deleting an unlinked loan also removes its recorded payment history, after confirmation. If a payoff goal is still linked, close the loan or remove the payoff goal first.",
+      "Deleting a payoff goal does not close its loan. Mark closed / foreclosed sets the outstanding balance to zero, removes future EMIs and keeps history while hiding the closed loan from the page. Permanently deleting an unlinked loan also removes its recorded payment history, after confirmation. If a payoff goal is still linked, close the loan or remove the payoff goal first.",
     ],
     tags: "loan emi debt owe balance outstanding personal card",
   },

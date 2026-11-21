@@ -3,6 +3,10 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+## Focused actions and editable spending, 21 Nov 2026
+
+CardList owns the Cards header and visible milestone rows with expanded audit details. PlanView renders MoneyPlanCard in concise full mode, followed by folded allocation details. QuickAdd routes SIP planning to /goals/sip, whose server loader uses a saved budget only as a reviewable initial amount. OweList wraps each active loan row in LoanManagement; updates use an allowlisted Net worth return destination. BudgetExperience materialises a combined future target when Personal spending changes and validates exact requested spending and existing target gaps before save. The salary route redirects to Budget; old data and calculation helpers remain available without a salary-coverage UI.
+
 ## Goals and Budget presentation simplification
 
 GoalsOverview mounts MoneyPlanCard in form-only mode so quick actions and strategy synchronisation remain functional, without duplicating the plan summary. It exposes one form trigger for new plans and retains the existing Your plan navigation for saved plans. GoalList groups ordered unfinished goals into focus/rest and reached goals into Covered; expanded math uses the existing details state. BudgetExperience keeps existing save/reset actions but moves maintenance controls into an options sheet and renders static total rows unless a real item breakdown exists. useDayRefresh is shared by GoalsOverview and UpdatesDue to retain wake/midnight behaviour without redundant reminder UI. Loaders and financial models are unchanged.

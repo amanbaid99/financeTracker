@@ -66,13 +66,6 @@ export function NextStep({
     action: { label: string; href?: string; onClick?: () => void };
   }[] = [];
   if (between) return null;
-  if (!plan && budget.income <= 0)
-    options.push({
-      key: "between-jobs",
-      title: "Between jobs?",
-      text: "Add when your salary should start, and see if you're covered till then.",
-      action: { label: "Check", href: "/goals/salary" },
-    });
   if (plan && steps > 0)
     options.push({
       key: `steps-${plan.monthlyTotal}-${steps}`,

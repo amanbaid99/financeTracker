@@ -87,7 +87,7 @@ export function PlanView(props: {
   unassigned: number;
   budgetMonthly: number | null;
 }) {
-  const { plan, budget } = props;
+  const { plan } = props;
   const [strategy, setStrategy] = useState<SipStrategy>("diversified");
   const byStage = STAGES.map((st) => ({
     ...st,
@@ -97,10 +97,6 @@ export function PlanView(props: {
     items.reduce((t, s) => t + s.monthly, 0);
   const newMonthly = monthlyOf(plan.suggestions);
   const lumpTotal = plan.suggestions.reduce((t, s) => t + s.lump, 0);
-  const over =
-    budget.income > 0 && plan.monthlyTotal > budget.planMonthly
-      ? plan.monthlyTotal - budget.planMonthly
-      : 0;
 
   return (
     <div className="space-y-5">
@@ -119,48 +115,9 @@ export function PlanView(props: {
               {newMonthly > 0 && ` · ${formatINR(newMonthly)} new`}
             </span>
             {lumpTotal > 0 && <span>plus {formatINR(lumpTotal)} once</span>}
-            {over > 0 && (
-              <span className="rounded-full bg-warning-soft px-2 py-0.5 font-medium text-warning">
-                {formatINR(over)} over your budget
-              </span>
-            )}
+
           </p>
         </div>
-        {newMonthly > 0 && (
-          <div className="space-y-2">
-            <div
-              className="flex h-2.5 gap-0.5 overflow-hidden rounded-full"
-              aria-hidden
-            >
-              {byStage.map((st) => {
-                const m = monthlyOf(st.items);
-                return m > 0 ? (
-                  <span
-                    key={st.key}
-                    className={cn("h-full", st.color)}
-                    style={{ width: `${(m / newMonthly) * 100}%` }}
-                  />
-                ) : null;
-              })}
-            </div>
-            <ul className="space-y-1 text-xs">
-              {byStage.map((st) => (
-                <li key={st.key} className="flex items-center gap-1.5">
-                  <span
-                    className={cn("size-2 shrink-0 rounded-full", st.color)}
-                    aria-hidden
-                  />
-                  <span className="truncate text-muted-foreground">
-                    {st.title}
-                  </span>
-                  <span className="tabular ml-auto font-medium">
-                    {formatINR(monthlyOf(st.items))}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
         <p
           className={cn(
             "rounded-lg p-2.5 text-sm",
@@ -171,23 +128,21 @@ export function PlanView(props: {
         >
           {plan.stillShortMonthly > 0
             ? `Your dated goals still need ${formatINR(plan.stillShortMonthly)} a month more to be on time.`
-            : "Every dated goal is on time with this plan."}
+            : props.goals.some(g=>!!g.targetDate) ? "Every dated goal is on time with this plan." : "Your monthly allocation is ready to review."}
           {plan.leftoverMonthly > 0 &&
             ` ${formatINR(plan.leftoverMonthly)} a month is left over.`}
         </p>
       </section>
 
-      <section aria-labelledby="why-h" className="space-y-3">
+      <MoneyPlanCard {...props} variant="full" concise strategy={strategy} onStrategyChange={setStrategy} />
+      <details className="rounded-2xl border bg-card p-4">
+        <summary className="min-h-11 cursor-pointer font-medium">Allocation details</summary>
+      <section aria-labelledby="why-h" className="space-y-3 pt-3">
         <div className="px-0.5">
           <h2 id="why-h" className="font-semibold">
             Where it goes, and why
           </h2>
-          <p className="text-xs text-muted-foreground">
-            The plan fills these in order, top to bottom.{" "}
-            <NextLink href="/goals/order" className="text-primary underline">
-              Change the order
-            </NextLink>
-          </p>
+
         </div>
         <ol className="space-y-3">
           {byStage.map((st, i) => (
@@ -221,9 +176,7 @@ export function PlanView(props: {
                   return (
                     <li key={s.goalId} className="py-2.5">
                       <div className="flex items-baseline justify-between gap-3">
-                        <span className="min-w-0 truncate text-sm font-medium">
-                          {s.goalName}
-                        </span>
+                        <NextLink href={`/goals?open=${encodeURIComponent(s.goalId)}`} className="min-w-0 break-words text-sm font-medium text-primary">{s.goalName}</NextLink>
                         <span className="tabular shrink-0 text-sm">
                           {amounts(s)}
                         </span>
@@ -244,17 +197,7 @@ export function PlanView(props: {
           ))}
         </ol>
       </section>
-
-      <MoneyPlanCard
-        {...props}
-        variant="full"
-        strategy={strategy}
-        onStrategyChange={setStrategy}
-      />
-      <p className="text-xs text-muted-foreground">
-        Suggestions only, not investment advice. Nothing changes until you tick
-        a step or save a form.
-      </p>
+      </details>
     </div>
   );
 }

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { GuideButton } from "@/components/guides";
 import { CreditOverview } from "@/components/credit-overview";
 import { loadCards, loadLoans } from "@/lib/data";
 import { cardEmis } from "@/lib/loans";
@@ -22,17 +21,7 @@ export default async function CardsPage({
     emiPerBill: cardEmis(loans, c.id, today),
   }));
   return (
-    <main className="space-y-6">
-      <div>
-        <div className="flex items-center gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">Cards</h1>
-          <GuideButton id="cards" />
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Log each statement and see how close you are to fee waivers and bonus
-          points.
-        </p>
-      </div>
+    <main className="space-y-4">
       <CreditOverview
         cards={withEmis}
         today={today}

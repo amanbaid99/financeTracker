@@ -1,6 +1,6 @@
 "use client";
 
-import { Coins, FileUp, Plus, Receipt, RefreshCw, Target, Wallet } from "lucide-react";
+import { CalendarDays, Coins, FileUp, Plus, Receipt, RefreshCw, Target, Wallet } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -22,6 +22,7 @@ export function useQuickAction(action: string, fn: () => void) {
 }
 
 const ACTIONS = [
+  { href:"/goals/sip", label:"SIP plan", hint:"Plan monthly contributions across your goals", icon:CalendarDays },
   { href:"/goals?do=extra", label:"I have extra money", hint:"See where a bonus or spare cash helps most", icon:Coins },
   {
     href: "/goals/new",

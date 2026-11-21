@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 21 Nov 2026.
 
+## Focused actions and editable spending, 21 Nov 2026
+
+Implemented the owner-requested Cards, Your plan, quick-menu and Net worth cleanup. Cards keep milestones visible with optional pace details and one Log bill action; Which card to use is removed. Your plan puts the complete checklist before folded allocation details and avoids repeated budget totals. Extra money and SIP plan live in +; SIP planning can start with the saved Save & invest amount. Net worth top update/import actions are removed, loan rows open management, loan updates return to Net worth and closed loans are hidden. Budget Personal spending is editable and adjusts Save & invest; invalid totals and named-item target gaps prevent saving. Removed Rebuild with guide and salary-coverage UI; old salary URLs redirect to Budget. No database migration or hosted financial write.
+
+Verification: lint, TypeScript, 648 unit tests, 40 Python tests and production build passed. Twelve Cards fixtures and twelve combined responsive fixtures cover four widths and three themes, statement forms, editable Personal spending, reciprocal allocation changes, named-item minimums, unsaved previews, loan management and + shortcuts. Full signed-in local integration remains blocked by the previously confirmed database-image extraction limit.
+
 ## Simpler Goals and Budget pages, 21 Nov 2026
 
 Goals no longer repeats Home reminders or an extra Next step card beside the plan link. The existing money-plan form remains available through a single Plan monthly contributions entry when no plan exists, or Your plan when saved. Goal cards use smaller icons and shorter statuses; exact amounts/inflation move behind Show details, alongside existing management access. Focus goals contains only the first three unfinished goals, Other goals the rest, and Covered is separate at the bottom. Budget removes the filler subtitle and balanced-plan reassurance, uses Edit in the income header and a single primary SIP action. Rebuild and Reset move into Budget options. Only itemised buckets expand, eliminating accordions that repeated the same amount. The inactive salary-coverage prompt is now a quiet link; active warnings remain visible. A shared useDayRefresh hook preserves midnight/wake refresh after reminders move off Goals. No calculations or saved data are changed.

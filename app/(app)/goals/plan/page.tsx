@@ -4,13 +4,13 @@ import Link from "next/link";
 import { BackLink } from "@/components/back-link";
 import { PlanView } from "@/components/plan-view";
 import { buttonVariants } from "@/components/ui/button";
-import { loadMoneyPlan, loadRunway } from "@/lib/data";
+import { loadMoneyPlan } from "@/lib/data";
 
 export const metadata: Metadata = { title: "Your plan" };
 
 /** How your monthly money is split across goals, in your order. */
 export default async function PlanPage() {
-  const [d, r] = await Promise.all([loadMoneyPlan(), loadRunway()]);
+  const d = await loadMoneyPlan();
   return (
     <main className="space-y-5">
       <BackLink fallback="/goals" label="Goals" />
@@ -24,16 +24,7 @@ export default async function PlanPage() {
             <ArrowUpDown /> Edit order
           </Link>
         </div>
-        <p className="text-sm text-muted-foreground">
-          How your monthly money is split across goals, top of your order first.
-        </p>
       </div>
-      <Link
-        href="/goals?do=extra"
-        className="inline-flex min-h-10 items-center text-sm font-medium text-primary"
-      >
-        I have extra money
-      </Link>
       {d.plan ? (
         <PlanView
           plan={d.plan}
@@ -48,17 +39,15 @@ export default async function PlanPage() {
       ) : (
         <div className="surface-card space-y-3 rounded-2xl border bg-card p-4">
           <p className="text-sm text-muted-foreground">
-            {r.active
-              ? "No monthly split yet. That's fine while you're between jobs: make one once your salary starts."
-              : "No monthly split yet. Tell the app what you can invest each month, and it splits it across your goals."}
+            Choose a monthly amount to split across your goals.
           </p>
           <Link
-            href="/goals?do=plan"
+            href="/goals/sip"
             className={buttonVariants({
-              variant: r.active ? "outline" : "default",
+              variant: "default",
             })}
           >
-            <Sparkles /> Make a plan
+            <Sparkles /> Create a SIP plan
           </Link>
         </div>
       )}
