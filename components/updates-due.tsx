@@ -11,9 +11,11 @@ import { snoozeUpdate } from "@/lib/updates-actions";
 export function UpdatesDue({
   items,
   today,
+  compact=false,
 }: {
   items: UpdateDue[];
   today: string;
+  compact?:boolean;
 }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState("");
@@ -37,14 +39,14 @@ export function UpdatesDue({
     <section
       aria-label="Updates due"
       data-guide="updates-due"
-      className="rounded-2xl border bg-card p-4 space-y-2"
+      className={compact?"rounded-xl border border-border/70 bg-card p-3 space-y-2":"rounded-2xl border bg-card p-4 space-y-2"}
     >
       <div className="flex items-center justify-between gap-3 text-sm">
-        <h2 className="font-medium">Updates due</h2>
-        <span className="text-muted-foreground">{items.length}</span>
+        <h2 className="font-medium">{compact?"Update needed":"Updates due"}</h2>
+        <span className="text-muted-foreground">{compact?(items.length>1?`+${items.length-1} more`:null):items.length}</span>
       </div>
-      <p className="font-semibold break-words">{item.title}</p>
-      <p className="text-sm text-muted-foreground">{item.detail}</p>
+      <p className={compact?"break-words text-sm font-medium":"font-semibold break-words"}>{item.title}</p>
+      <p className={compact?"text-xs text-muted-foreground":"text-sm text-muted-foreground"}>{item.detail}</p>
       <div className="flex flex-wrap items-center gap-2">
         <Link href={item.href} className={buttonVariants({ size: "sm" })}>
           Update
@@ -53,6 +55,7 @@ export function UpdatesDue({
           size="sm"
           variant="ghost"
           disabled={pending}
+          aria-label="Remind me tomorrow"
           onClick={() =>
             start(async () => {
               setError("");
@@ -62,7 +65,7 @@ export function UpdatesDue({
             })
           }
         >
-          Remind me tomorrow
+          {compact?"Tomorrow":"Remind me tomorrow"}
         </Button>
       </div>
       {error && (

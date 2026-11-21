@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 21 Nov 2026.
 
+## Simpler Home, 21 Nov 2026
+
+Home now uses one balance card with current net worth, compact asset/debt totals, direct holdings navigation and the extra-money shortcut in its footer. Removed the repeated holdings link, standalone extra-money card, filler subtitle and asset/debt ratio bar. Focus-goal rows are shorter without changing the first-three order or between-jobs status. The closest milestone is one tappable card with amount left, progress and deadline, without duplicate navigation or repeated spend totals. Empty milestone cards are hidden; no-goal and all-covered states stay concise. Home uses a compact UpdatesDue variant while other tabs retain the existing reminder layout. No financial calculations or data writes changed.
+
+Verification: lint, TypeScript, 648 unit tests, 40 Python tests and production build passed. Twelve responsive browser fixtures cover four widths and three themes, single holdings/extra-money navigation, three focus goals, milestone links and snoozing. Additional checks cover empty/covered states, long labels and negative net worth. Full signed-in local integration remains blocked by the previously confirmed database-image extraction limit.
+
 ## Loan foreclosure and extra-money access, 21 Nov 2026
 
 Found a loan with an outstanding balance but no payoff goal, while Portfolio linked orphaned loans back to Goals and exposed no independent management controls. Added Manage loan in Net worth for all active loans and a folded Closed loans history. Explicit closure zeroes and confirms the balance, retaining EMI/payment history; deletion requires confirmation and blocks while a payoff goal remains linked to avoid stale legacy loan fields. Standalone budget reads drop EMI rows for closed/deleted loans without adding unapproved new ones. Goal deletion now explains that the loan remains separate. Restored I have extra money in the global + menu, added a Home action and mounted the existing preview for empty-goal pages with a useful empty state. No schema change. On the owner's foreclosure report, repaired the uniquely matched IDFC loan to a confirmed zero balance; verified its existing payment record remains.

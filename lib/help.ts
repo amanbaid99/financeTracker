@@ -17,7 +17,7 @@ export const HELP: HelpTopic[] = [
     section: "Getting started",
     q: "What is on Home?",
     a: [
-      "Your current net worth, first three unfinished goals in your Goals order, card milestone with the smallest amount left and updates due. Tap a section to open its details. The sticky + button adds or updates information.",
+      "Home shows one net-worth card, a compact update reminder, your first three unfinished goals and the closest unfinished card milestone. Tap the net-worth card for holdings, a goal for its details, or the milestone for its card. I have extra money is inside the balance card. Empty milestone cards are hidden; a first-goal action appears only when you have no goals.",
     ],
     tags: "overview focus dashboard",
   },

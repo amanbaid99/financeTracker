@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { GuideButton } from "@/components/guides";
-import { NetWorthCard } from "@/components/net-worth-card";
+import { HomeBalance } from "@/components/home-balance";
 import { HomeOverview } from "@/components/home-overview";
 import { UpdatesDue } from "@/components/updates-due";
 import { loadGoals, loadCards, loadLoans, loadCurrentNetWorth, loadSnapshot, loadRunway } from "@/lib/data";
@@ -19,17 +18,12 @@ export default async function HomePage() {
     hasFunds: g.investments.some((i) => i.kind === "mutual_fund" || i.kind === "gold"),
     snoozes: (snapshot.settings?.update_snoozes ?? {}) as Record<string, unknown>,
   });
-  return <main className="space-y-5">
+  return <main className="space-y-4">
     <header>
       <div className="flex items-center gap-1"><h1 className="text-2xl font-semibold tracking-tight">Home</h1><GuideButton id="home" /></div>
-      <p className="text-sm text-muted-foreground">Your money at a glance.</p>
     </header>
-    <div className="space-y-2">
-      <NetWorthCard history={[{ day: g.today, ...worth }]} />
-      <Link href="/assets" className="inline-flex min-h-10 items-center text-sm font-medium text-primary">View net worth and holdings →</Link>
-    </div>
-    <Link href="/goals?do=extra" className="surface-card press flex min-h-12 items-center justify-between rounded-2xl border bg-card px-4 py-3 text-sm font-medium text-primary">I have extra money<span aria-hidden>→</span></Link>
-    <UpdatesDue items={due} today={g.today} />
+    <HomeBalance assets={worth.assets} liabilities={worth.liabilities} />
+    <UpdatesDue items={due} today={g.today} compact />
     <HomeOverview goals={g.goals} cards={c.cards} loans={loans} today={g.today} between={runway.active} />
   </main>;
 }

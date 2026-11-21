@@ -23,9 +23,9 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "Your money at a glance",
     intro: "Start here for the essentials, then open a section for details.",
     steps: [
-      "Net worth is your recorded holdings minus loan balances. It is not a live market value.",
+      "Net worth is recorded holdings minus loan balances. Tap the balance card for holdings, or use I have extra money inside it to preview an allocation.",
       "Focus goals shows the first three unfinished goals in your Goals order.",
-      "Next card milestone shows the unfinished target with the smallest amount left, based on eligible spending you have logged.",
+      "Closest card milestone shows the unfinished target with the smallest amount left. Tap it to open the card; it is hidden when no unfinished target exists.",
       "Updates due reminds you about missing statements, monthly loan balances and a recent CAS. No payment is assumed missed.",
       "Tap the sticky + button to add a goal, upload CAS or update amounts. Add new cards in Cards.",
     ],
@@ -138,6 +138,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-21", title: "A quieter Home", items: [{ title: "The essentials, without repeated links", text: "One balance card, a compact reminder and shorter goal and milestone summaries. Extra money stays easy to reach inside the balance card. Empty milestone cards and duplicate navigation links are removed." }] },
   { date: "2026-11-21", title: "Manage closed loans and spare money", items: [{ title: "Loan controls in Net worth", text: "Manage a loan even after its goal is deleted. Mark it closed or confirm permanent removal. Closed loans stop counting as debt or future EMIs." }, { title: "I have extra money", text: "Open the allocation preview directly from Home or the + menu. Review suggestions before adding anything to your plan." }] },
   { date: "2026-11-19", title: "All monthly SIP steps visible", items: [{ title: "No extra tap", text: "This month now shows every pending SIP step. The Show all and Show fewer controls are removed." }] },
   { date: "2026-11-19", title: "From budget to SIP plan", items: [{ title: "Review before linking", text: "Create a SIP plan from Save & invest, adjust how much to use and review the goal allocation before saving. The personal estimate calculator is removed; a manual Personal amount or standard suggestion keeps setup simple." }] },

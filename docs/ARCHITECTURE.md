@@ -3,6 +3,10 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+## Compact Home presentation
+
+HomeBalance is a server-rendered summary with signed net worth, asset/loan totals and two distinct navigation areas: holdings and extra money. HomeOverview retains focusGoals/nextMilestone selectors but renders shorter goal rows and a single linked milestone, omitting empty milestone cards. UpdatesDue accepts optional compact styling for Home only; snooze handling and daily refresh are unchanged. Existing data loaders and financial functions are reused without new queries or mutations.
+
 ## Independent loan management
 
 OweList keeps active loans and folded closed history and mounts LoanManagement for either, without requiring a goal link. manageLoan validates confirmation, authenticates via requireUser, applies owner/id filters, confirms zero balances on closure or checks linked goals before deleting, and refreshes the app layout. Existing RLS, loan-payment cascades and net-worth snapshot triggers apply; no migration. readBudgetSheet removes inactive linked EMI rows from standalone budgets while preserving the no-auto-insertion policy. QuickAdd and Home route to /goals?do=extra; Goals mounts ExtraMoney for both populated and empty goal lists.
