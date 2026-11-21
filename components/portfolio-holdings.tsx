@@ -93,7 +93,17 @@ export function PortfolioHoldings({
                 className="h-11 pl-9"
               />
             </div>
-            <div className="flex flex-wrap items-center justify-between gap-2">
+            {/* Sort sits on the left so the floating + never covers it. */}
+            <div className="flex flex-wrap items-center gap-3">
+              <Select
+                aria-label="Sort holdings"
+                value={sort}
+                onChange={(e) => setSort(e.target.value as HoldingSort)}
+                className="h-11 w-auto max-w-full text-sm"
+              >
+                <option value="value">Largest value</option>
+                <option value="name">Name A to Z</option>
+              </Select>
               {activeLabel ? (
                 <button
                   type="button"
@@ -109,15 +119,6 @@ export function PortfolioHoldings({
                   All asset classes
                 </span>
               )}
-              <Select
-                aria-label="Sort holdings"
-                value={sort}
-                onChange={(e) => setSort(e.target.value as HoldingSort)}
-                className="h-11 w-auto max-w-full text-sm"
-              >
-                <option value="value">Largest value</option>
-                <option value="name">Name A to Z</option>
-              </Select>
             </div>
           </>
         )}

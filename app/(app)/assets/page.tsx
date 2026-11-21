@@ -118,7 +118,8 @@ export default async function PortfolioPage({
 
       <NetWorthCard history={[{ day: today, ...worth }]} />
       <OweList loans={loans} today={today} />
-      <h2 className="-mb-2 px-0.5 text-lg font-semibold">What you own</h2>
+      <section aria-labelledby="own-h" className="space-y-2">
+      <h2 id="own-h" className="px-0.5 text-lg font-semibold">What you own</h2>
       <PortfolioOverview
         portfolio={p}
         investments={investments}
@@ -131,6 +132,7 @@ export default async function PortfolioPage({
         }
         autoAdd={action === "add"}
       />
+      </section>
       <SimplifyCard hints={simplifyHints(investments, allocation)} />
     </main>
   );

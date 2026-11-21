@@ -87,10 +87,12 @@ export function simplifyHints(
       id: "spare",
       title: `${formatINR(allocation.spareTotal)} not needed by any goal`,
       text:
-        `Mostly ${POOL_LABEL[pools[0]]}. It's free for a new goal, or to give a goal more room.` +
-        (cash >= 50000
-          ? ` ${formatINR(cash)} of it is safe money no goal due soon needs; for goals 3 or more years away, equity usually suits better.`
-          : ""),
+        cash >= 50000 && cash >= allocation.spareTotal * 0.95
+          ? "It's all safe money that no goal due soon needs. It's free for a new goal; for goals 3 or more years away, equity usually suits better."
+          : `Mostly ${POOL_LABEL[pools[0]]}. It's free for a new goal, or to give a goal more room.` +
+            (cash >= 50000
+              ? ` ${formatINR(cash)} of it is safe money no goal due soon needs; for goals 3 or more years away, equity usually suits better.`
+              : ""),
     });
   }
   return hints;
