@@ -74,7 +74,7 @@ export default async function GoalsPage({
         <div className="space-y-3 rounded-2xl border bg-card p-6 text-center">
           <p className="text-lg font-semibold">What are you saving for?</p>
           <p className="text-sm text-muted-foreground">
-            Add a goal, attach the investments saving for it, and see if
+            Add a goal and your investments, and the app shows if
             you&apos;ll get there on time.
           </p>
           <Link href="/goals/new" className={buttonVariants()}>

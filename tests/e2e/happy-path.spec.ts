@@ -187,7 +187,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByLabel("Fund category")).toHaveValue("equity_index");
   await page.getByRole("button", { name: "Close", exact: true }).click();
 
-  // A mutual fund, 60% for this goal.
+  // A mutual fund: the app works out which goal it covers.
   await page.getByRole("button", { name: "Add investment" }).click();
   await page.getByLabel("Fund category").selectOption("flexi_cap");
   await page.getByLabel("Nickname (optional)").fill("Index SIP");
@@ -198,12 +198,12 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     "placeholder",
     "11.5",
   );
-  await page.getByLabel("Share for this goal, %").fill("60");
+  await expect(page.getByLabel("Share for this goal, %")).toHaveCount(0);
   await page.getByRole("button", { name: "Add investment" }).last().click();
   await expect(
     page.getByRole("button", { name: "Edit Index SIP" }),
   ).toBeVisible();
-  await expect(page.getByText("60% of it")).toBeVisible();
+  await expect(page.getByText(/Far away, so it uses equity/)).toBeVisible();
 
   // An FD as well.
   await page.getByRole("button", { name: "Add investment" }).click();
@@ -211,7 +211,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Nickname (optional)").fill("Bank FD");
   await page.getByLabel("Value today").fill("100000");
   await page.getByRole("button", { name: "Add investment" }).last().click();
-  await expect(page.getByText("₹2,80,000", { exact: true })).toBeVisible();
+  // A far goal doesn't use safe money like an FD, so House keeps the fund only.
+  await expect(page.getByRole("button", { name: "Edit Bank FD" })).toHaveCount(0);
+  await expect(page.getByText("₹3,00,000", { exact: true }).first()).toBeVisible();
   await expect(
     page.getByText(/Put ₹[\d,]+ a month into it to be on time/),
   ).toBeVisible();
@@ -284,15 +286,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText("This month: principal")).toBeVisible();
   await expect(page.getByText("₹5,168", { exact: true })).toBeVisible();
 
-  // Link the rest of the fund to the loan goal.
-  await page.getByRole("button", { name: "Add investment" }).click();
-  await page.getByRole("radio", { name: "One I already have" }).click();
-  await expect(page.getByLabel("Share for this goal, %")).toHaveValue("40");
-  await page.getByRole("button", { name: "Add investment" }).last().click();
-  await expect(page.getByText("40% of it")).toBeVisible();
-  await expect(
-    page.getByText(/your savings catch up with the cost of closing it/),
-  ).toBeVisible();
+  // The FD covers part of the loan on its own.
+  await expect(page.getByRole("button", { name: "Edit Bank FD" })).toBeVisible();
   await expect(page.getByText(/4% \+ GST · ₹47,200 today/)).toBeVisible();
   await expect(page.getByText(/in foreclosure charges:/)).toBeVisible();
   await expect(page.getByText(/^around \w{3} \d{4}$/).first()).toBeVisible();
@@ -305,27 +300,18 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     fullPage: true,
   });
 
-  // Update the fund once from here; the House goal follows.
+  // Update the fund from the House goal; the goal follows.
+  await page.getByRole("button", { name: /^House/ }).click();
   await page.getByRole("button", { name: "Edit Index SIP" }).click();
   await page.getByLabel("Value today").fill("400000");
-  await expect(page.getByText(/also counts toward another goal/)).toBeVisible();
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.getByRole("button", { name: /^House/ }).click();
-  await expect(page.getByText("₹3,40,000", { exact: true })).toBeVisible();
-
-  // Can't give a goal more than the free share.
-  await page.getByRole("button", { name: "Edit Index SIP" }).click();
-  await page.getByLabel("Share for this goal, %").fill("70");
-  await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(
-    page.getByText("Only 60% of this investment is free"),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Close", exact: true }).click();
+  await expect(page.getByText("₹4,00,000", { exact: true }).first()).toBeVisible();
 
   // Turn on inflation for the House goal.
   await page.getByRole("button", { name: "Edit", exact: true }).click();
   await page.getByLabel(/grow the target with inflation/).check();
   await page.getByRole("button", { name: "Save goal" }).click();
+  await page.getByRole("button", { name: "Show details" }).click();
   await expect(page.getByText(/grown at 6% a year/)).toBeVisible();
 
   // Update amounts for everything in one go.
@@ -339,14 +325,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText("Was ₹1,00,000")).toBeVisible();
   await page.screenshot({ path: "test-results/update-375.png" });
   await page.getByRole("button", { name: "Save 1 change" }).click();
-  await expect(page.getByText("₹3,60,000", { exact: true })).toBeVisible();
-
-  // Take the FD off the goal, then delete it from there.
-  await page.getByRole("button", { name: "Edit Bank FD" }).click();
-  await page.getByRole("button", { name: "Remove from goal" }).click();
-  await expect(page.getByRole("button", { name: "Edit Bank FD" })).toHaveCount(
-    0,
-  );
+  await expect(page.getByText("Was ₹1,00,000")).toHaveCount(0);
   await page.getByRole("button", { name: /^House/ }).click();
   await expect(page.getByRole("button", { name: /^House/ })).toHaveAttribute(
     "aria-expanded",
@@ -379,11 +358,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.goto("/goals?do=plan");
   await page.getByText("Add a one-time amount", { exact: true }).click();
   await expect(
-    page.getByText(/is not linked to a goal/),
+    page.getByText(/is not needed by any goal right now/),
   ).toBeVisible();
   await page.getByRole("button", { name: "Use this amount" }).click();
   await expect(page.getByLabel("Savings to put toward goals now")).toHaveValue(
-    "2,80,000",
+    "1,20,000",
   );
   await page.getByLabel("Monthly investment budget").fill("40000");
   await page.getByRole("button", { name: "Show my plan" }).click();
@@ -393,11 +372,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByText("Allocation details", { exact: true }).click();
   await expect(page.getByRole("heading", { name: "Where it goes, and why" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "This month" })).toBeVisible();
-  await expect(page.getByText(/plus ₹2,80,000 once/)).toBeVisible();
+  await expect(page.getByText(/plus ₹1,20,000 once/)).toBeVisible();
   const steps = page.getByRole("list", { name: "This month's steps" });
   await expect(page.getByRole("button", { name: /^Show all \d+$|^Show fewer$/ })).toHaveCount(0);
   await expect(steps).toContainText("Index SIP");
-  await expect(steps).toContainText("₹2,80,000 now");
+  await expect(steps).toContainText("₹1,20,000 now");
   // Strategy lives under plan details and changes the steps, not your data.
   await page.getByText("Plan options", { exact: true }).click();
   await page.getByRole("button", { name: "One holding per goal", exact: true }).click();
@@ -427,9 +406,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "I've invested this" }).click();
   const raise = page.getByRole("dialog", { name: "Index SIP" });
   await expect(raise).toContainText(
-    "Raised by your plan: +₹2,80,000 now, +₹16,000 a month",
+    "Raised by your plan: +₹1,20,000 now, +₹12,000 a month",
   );
-  await expect(raise.getByLabel("Monthly SIP")).toHaveValue("26,000");
+  await expect(raise.getByLabel("Monthly SIP")).toHaveValue("22,000");
   await page.getByRole("button", { name: "Close", exact: true }).click();
   // Set it up as a separate fund instead, and take the savings out of the plan.
   await page.getByRole("button", { name: "Add investment" }).click();
@@ -459,7 +438,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(
     page
       .getByRole("list", { name: "Where it goes" })
-      .or(page.getByText("Your goals don't need a one-time amount right now.")),
+      .or(page.getByText(/^Your goals do(n't| not) need a one-time amount right now\.$/)),
   ).toBeVisible();
   await page.getByRole("button", { name: "Close", exact: true }).click();
 
@@ -490,15 +469,13 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   ).toHaveAttribute("aria-expanded", "true");
   await page.getByRole("button", { name: "Show details" }).click();
   await expect(page.getByText("Needs today")).toBeVisible();
-  await expect(page.getByText("Put in each month to cover it")).toBeVisible();
-  // Empty fund: the card asks for a monthly amount, the details explain
-  // the gap and both ways to close it.
+  // The spare FD is safe money, so it covers the payments straight away.
   const billsCard = page.getByRole("button", { name: /^Bills fund/ });
-  await expect(billsCard).toContainText(/Short in \w{3}/);
-  // The plan funds it, so one "What to do" box says how.
-  await expect(page.getByText(/^Put ₹[\d,]+ a month into a liquid fund/)).toBeVisible();
+  await expect(billsCard).toContainText("Covered");
+  await expect(page.getByRole("button", { name: "Edit Bank FD" })).toBeVisible();
+  await expect(page.getByText(/^Covered by your safe money\. Due within a year/)).toBeVisible();
 
-  // Link one liquid fund: payments show as covered.
+  // Add a liquid fund as well; the payments stay covered.
   await page.getByRole("button", { name: "Add investment" }).click();
   await page.getByLabel("Fund category").selectOption("liquid_fund");
   await page.getByLabel("Nickname (optional)").fill("Bills liquid fund");
@@ -583,7 +560,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     .getByLabel(`${LIQ}: this is`)
     .selectOption({ label: "Update “Bills liquid fund”" });
   await page.getByLabel(`${MYST}: kind of fund`).selectOption("flexi_cap");
-  await page.getByLabel(`${MYST}: goal`).selectOption({ label: "House" });
+  await expect(page.getByLabel(`${MYST}: goal`)).toHaveCount(0);
   await page.getByLabel("Stocks in demat: this is").selectOption("skip");
   // Answered questions clear, and a fund picked by hand shows its old value.
   await expect(page.getByText("What kind of fund is this?")).toHaveCount(0);
@@ -609,9 +586,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByRole("region", { name: "Will add" })).toContainText(
     MYST,
   );
-  await expect(page.getByRole("region", { name: "Will add" })).toContainText(
-    "Counts toward House",
-  );
   await expect(page.getByRole("region", { name: "Will skip" })).toContainText(
     "Stocks in demat",
   );
@@ -636,9 +610,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Back to your goals" }).click();
   // A covered bills fund is in the list with every other goal.
   await page.getByRole("button", { name: /^Bills fund/ }).click();
-  await expect(
-    page.getByRole("button", { name: "Edit Bills liquid fund" }),
-  ).toContainText("₹31,000");
+  // Bigger holdings are used first, so the FD still covers it.
+  await expect(page.getByRole("button", { name: "Edit Bank FD" })).toBeVisible();
 
   // Importing again matches every fund by its ISIN, with the category kept.
   await quick("Import statement");
@@ -725,7 +698,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Your question").fill("₹50,000 in two weeks");
   await page.getByRole("button", { name: "Send" }).click();
   const answer = page.locator(`ol[aria-label="Conversation"] > li`).last();
-  await expect(answer).toContainText("Take it from “Bank FD” first");
+  await expect(answer).toContainText("Take it from “Bills liquid fund” first");
   await expect(answer).toContainText("Leave “House” alone");
   await expect(answer.locator("strong")).toHaveText("exit load");
   await expect(answer).not.toContainText("[I");

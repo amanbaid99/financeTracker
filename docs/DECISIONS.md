@@ -3,6 +3,11 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+
+## Automatic goal coverage, 21 Nov 2026
+
+The owner wants a simple portfolio (a liquid fund or two, a few equity funds and stocks) and for the app to decide which money covers which goal, instead of linking each goal by hand. All current links are dropped from use (rows kept, not deleted). Priority is smart about the emergency fund: it gets a third of its target first so it's never empty, then money due within a year, then the rest of it. 3 to 5 year goals may use equity. A goal that can't be fully covered gets what's available and shows the shortfall. It's a calculated view, so nothing is saved (rule 3). Changing the plan order is the manual lever; per-goal pins could come later. Simplify suggestions name only the user's own holdings and say to check exit loads and tax.
+
 ## Focused actions and editable spending, 21 Nov 2026
 
 The owner wants one location for repeated actions: extra money and SIP plan in +, CAS/update controls there rather than at the top of Net worth. Loans open their own management panel; payoff goals are explicit links, and closed loans have no section. Cards omit Which card to use and show simple milestone progress. Your plan prioritises every monthly checklist step with allocation explanations folded. Budget permits direct Personal spending edits by adjusting Save & invest while preserving included costs. Rebuild with guide and salary coverage are removed; reset and initial guided creation remain.

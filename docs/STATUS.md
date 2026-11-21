@@ -3,6 +3,13 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 21 Nov 2026.
 
+
+## Automatic goal coverage, 21 Nov 2026
+
+Goals no longer use hand-made links. `readGoals` (lib/data.ts) tracks each goal with no links to learn what it needs, then `autoAllocate` (lib/auto-allocate.ts) splits holdings like a waterfall: emergency fund up to a third, bills funds and goals due within a year (soonest first), the rest of the emergency fund, then plan order (must haves first unless a custom order is set). Each goal draws only from pools that suit its horizon (cash-like, debt, hybrid, equity, gold, retirement accounts); goals over a year away get growth credit at the holding's return. A no-date loan payoff goal needs what closing costs today. New SIPs with no value go to the first goal they suit. Each goal carries `cover.why`, shown under "Covered by". The `goal_allocations` rows are left in the database untouched but ignored; the share field, Link buttons, Remove from goal and the import goal picker are gone. Net worth has a read-only Simplify your portfolio card (lib/simplify.ts): same-type funds, tiny holdings, money no goal needs. The This month checklist stays mounted after the last tick so Undo works. No migration.
+
+Verification: npm run check and the e2e happy path pass (e2e numbers updated to the automatic split).
+
 ## Focused actions and editable spending, 21 Nov 2026
 
 Implemented the owner-requested Cards, Your plan, quick-menu and Net worth cleanup. Cards keep milestones visible with optional pace details and one Log bill action; Which card to use is removed. Your plan puts the complete checklist before folded allocation details and avoids repeated budget totals. Extra money and SIP plan live in +; SIP planning can start with the saved Save & invest amount. Net worth top update/import actions are removed, loan rows open management, loan updates return to Net worth and closed loans are hidden. Budget Personal spending is editable and adjusts Save & invest; invalid totals and named-item target gaps prevent saving. Removed Rebuild with guide and salary-coverage UI; old salary URLs redirect to Budget. No database migration or hosted financial write.

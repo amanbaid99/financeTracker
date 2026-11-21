@@ -16,10 +16,12 @@ import type { NetWorthPoint } from "@/components/net-worth-card";
 import {
   freePercent,
   trackGoal,
+  type GoalInput,
   type Investment,
   type Link,
   type TrackedGoal,
 } from "@/lib/tracker";
+import { autoAllocate, type AutoAllocation } from "@/lib/auto-allocate";
 
 /**
  * The signed-in user, or a redirect to /login. Cached per request.
@@ -199,6 +201,8 @@ export interface GoalsData {
   goals: TrackedGoal[];
   investments: Investment[];
   links: Link[];
+  /** How your money is split across goals, worked out automatically. */
+  allocation: AutoAllocation;
   today: string;
   theme: string;
   accent: string;
@@ -239,14 +243,11 @@ export async function readGoals(): Promise<GoalsData> {
     isin: h.isin ?? null,
     units: h.units == null ? null : Number(h.units),
   }));
-  const links: Link[] = check(allocations).map((a) => ({
-    goalId: a.goal_id,
-    investmentId: a.holding_id,
-    percent: Number(a.percent),
-  }));
-  const tracked = check(goals).map((g) =>
-    trackGoal(
-      {
+  // Old hand-made links (goal_allocations) are no longer used: which money
+  // covers which goal is worked out automatically (lib/auto-allocate.ts).
+  void allocations;
+  const inputs: GoalInput[] = check(goals).map(
+    (g): GoalInput => ({
         id: g.id,
         name: g.name,
         type: g.type,
@@ -289,16 +290,23 @@ export async function readGoals(): Promise<GoalsData> {
                   nextDue: b.next_due,
                 }))
             : null,
-      },
-      investments,
-      links,
-      today,
-    ),
+    }),
   );
+  const bare = inputs.map((g) => trackGoal(g, investments, [], today));
+  const allocation = autoAllocate(bare, investments, today);
+  const links = allocation.links;
+  const tracked = inputs.map((g) => {
+    const c = allocation.covers[g.id];
+    return {
+      ...trackGoal(g, investments, links, today),
+      cover: c && { taken: c.taken, short: c.short, why: c.why },
+    };
+  });
   return {
     goals: tracked,
     investments,
     links,
+    allocation,
     today,
     theme: profile.data?.theme ?? "white",
     accent: profile.data?.accent ?? "green",

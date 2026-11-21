@@ -116,7 +116,7 @@ function PlanForm({
             </Field>
             {unassigned > 0 && (
               <p className="text-xs text-muted-foreground">
-                {formatINR(unassigned)} is not linked to a goal.{" "}
+                {formatINR(unassigned)} is not needed by any goal right now.{" "}
                 <button
                   type="button"
                   className="text-primary underline"
@@ -176,10 +176,13 @@ function Checklist({
   steps,
   investments,
   links,
+  empty,
 }: {
   steps: PlanStep[];
   investments: Investment[];
   links: Link[];
+  /** Shown when there's nothing to do (kept mounted so Undo survives the last tick). */
+  empty: React.ReactNode;
 }) {
   const router = useRouter();
   // Ticked steps, kept on screen (with Undo) for a few seconds even though
@@ -243,6 +246,7 @@ function Checklist({
     router.refresh();
   };
 
+  if (!visible.length) return <>{empty}</>;
   return (
     <div className="space-y-2">
       <ul className="divide-y divide-border/60" aria-label="This month's steps">
@@ -324,7 +328,7 @@ function Checklist({
       </p>
       {adding && (
         <InvestmentSheet
-          goalId={adding.goals[0]?.id ?? null}
+          goalId={null}
           goalName={adding.goals[0]?.name}
           linkedIds={links
             .filter((l) => l.goalId === adding.goals[0]?.id)
@@ -460,15 +464,18 @@ export function MoneyPlanCard({
           Edit plan
         </button>
       </div>
-      {steps.length > 0 ? (
-        <Checklist steps={steps} investments={investments} links={links} />
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          {plan.lump || plan.monthlyFree
-            ? "You're all set. Your goals don't need anything extra right now."
-            : "Add savings or a monthly amount to get suggestions."}
-        </p>
-      )}
+      <Checklist
+        steps={steps}
+        investments={investments}
+        links={links}
+        empty={
+          <p className="text-sm text-muted-foreground">
+            {plan.lump || plan.monthlyFree
+              ? "You're all set. Your goals don't need anything extra right now."
+              : "Add savings or a monthly amount to get suggestions."}
+          </p>
+        }
+      />
       {(suggestions.length > 0 || budget.income > 0) && (!concise || sips.length > 0) && (
         <details className="group/plan border-t text-card-foreground">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-medium [&::-webkit-details-marker]:hidden">

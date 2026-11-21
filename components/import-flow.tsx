@@ -614,28 +614,6 @@ export function ImportFlow({
                     />
                   </Field>
                 )}
-                {!skipped && ready.goals.length > 0 && (
-                  <Field
-                    label={updating ? "Also count toward" : "Counts toward"}
-                    htmlFor={`g-${r.key}`}
-                  >
-                    <Select
-                      id={`g-${r.key}`}
-                      aria-label={`${r.name}: goal`}
-                      value={s.goalId}
-                      onChange={(e) => set(r.key, { goalId: e.target.value })}
-                    >
-                      <option value="">
-                        {updating ? "No change" : "No goal yet"}
-                      </option>
-                      {ready.goals.map((g) => (
-                        <option key={g.id} value={g.id}>
-                          {g.name}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                )}
               </div>
             </li>
           );

@@ -14,6 +14,8 @@ import { OweList } from "@/components/owe-list";
 import { NetWorthCard } from "@/components/net-worth-card";
 // import { AI_CONSENT_VERSION } from "@/lib/legal";
 import { buildPortfolio } from "@/lib/portfolio";
+import { SimplifyCard } from "@/components/simplify-card";
+import { simplifyHints } from "@/lib/simplify";
 
 export const metadata: Metadata = { title: "Net worth" };
 
@@ -24,7 +26,7 @@ export default async function PortfolioPage({
 }) {
   const { do: action } = await searchParams;
   // One snapshot for everything here (shared with the layout).
-  const [{ investments, links, goals, today }, snap, worth, loans] =
+  const [{ investments, links, goals, today, allocation }, snap, worth, loans] =
     await Promise.all([
       loadGoals(),
       loadSnapshot(),
@@ -129,6 +131,7 @@ export default async function PortfolioPage({
         }
         autoAdd={action === "add"}
       />
+      <SimplifyCard hints={simplifyHints(investments, allocation)} />
     </main>
   );
 }

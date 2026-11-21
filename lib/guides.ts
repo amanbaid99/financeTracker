@@ -49,7 +49,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Everything here starts with a goal: what you're saving for, or a loan you want to close.",
     steps: [
       "Tap Add a goal and pick a type: a purchase, a trip, an emergency fund, a bills fund or paying off a loan.",
-      "Link the mutual funds, savings or deposits that pay for it. One investment can be split across goals.",
+      "Add your mutual funds, stocks, savings and deposits. The app works out which goal each one covers, and why.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
       "Focus goals shows the first three unfinished goals, followed by Other goals and then Covered. A goal on hold keeps its place. Use Change order to move goals.",
       "Loans can have payoff goals. Manage any loan in Net worth, even if its goal was deleted. Each shows what's left, the EMI and when it ends. Confirm the outstanding amount from your lender each month. Once confirmed, it stays until your next update. Older schedule-based balances and future payoff figures are estimates.",
@@ -136,6 +136,11 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-21", title: "Goals cover themselves", items: [
+    { title: "No more linking", text: "The app works out which of your money covers which goal: safe money for what's due soon and the emergency fund, equity for goals far away. Open a goal to see Covered by and why." },
+    { title: "What gets money first", text: "A third of the emergency fund, then bills and goals due this year, then the rest of the emergency fund, then your plan order. Change order on Goals moves a goal up." },
+    { title: "Simplify your portfolio", text: "Net worth suggests funds you could merge, tiny holdings and money no goal needs. Ideas only; nothing is moved." },
+  ] },
   { date: "2026-11-21", title: "Less clutter, clearer actions", items: [
     { title: "Editable Personal spending", text: "Edit income, Save & invest and Personal spending together. Changing one allocation adjusts the other. Rebuild with guide and salary coverage have been removed." },
     { title: "Cards focus on milestones", text: "Amount left and deadline stay visible. Open a card for pace details and editing. Which card to use has been removed." },

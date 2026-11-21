@@ -47,7 +47,7 @@ export function describeChanges(
       );
       if (s.sip) lines.push(`SIP ${formatINR(s.sip)} a month`);
       if (s.category) lines.push(categoryLabel(s.category));
-      lines.push(goal ? `Counts toward ${goal}` : "Not linked to a goal");
+      if (goal) lines.push(`Counts toward ${goal}`);
       return {
         key: r.key,
         action: "add",

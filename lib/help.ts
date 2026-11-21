@@ -49,9 +49,33 @@ export const HELP: HelpTopic[] = [
     a: [
       "On track: at the money going in each month, the goal reaches its target by its date.",
       "Behind: at the current pace it falls short. Open it to see how much more a month keeps it on time.",
-      "Not started: nothing is linked to it yet. Open it to link an investment or start one.",
+      "Not started: none of your money suits it yet. Open it to see what kind of investment would.",
     ],
     tags: "status label behind today",
+  },
+  {
+    id: "goal-cover",
+    section: "Goals",
+    q: "How does the app decide which money covers which goal?",
+    a: [
+      "You don't link investments to goals any more. The app splits your money across goals by itself, each time you open it, and saves nothing.",
+      "Order: the emergency fund gets a third of its target first, then bills funds and goals due within a year (soonest first), then the rest of the emergency fund, then every other goal in your plan order.",
+      "Each goal only uses money that suits its timeline: safe money (savings, liquid funds, FDs) for the next year, low-risk funds for 1 to 3 years, hybrid funds and some equity for 3 to 5 years, and equity for longer. Equity is never used for money needed within a year.",
+      "A goal more than a year away needs less today, because the money it takes can grow until then. Bigger holdings are used first, so each goal uses as few as it can.",
+      "Open a goal to see Covered by and one line on why. If a goal is short, it gets what's available and shows what's left. Money no goal needs shows on Net worth.",
+      "To change what gets money first, use Change order on Goals.",
+    ],
+    tags: "auto allocate link map which fund covers goal priority emergency sinking",
+  },
+  {
+    id: "goal-simplify",
+    section: "Net worth",
+    q: "What is Simplify your portfolio?",
+    a: [
+      "Ideas for having fewer things to track: several funds of the same type, tiny holdings with no SIP, and money no goal needs right now. It only names funds you already hold.",
+      "Nothing is sold or moved. Check exit loads and tax before you sell anything. Not investment advice.",
+    ],
+    tags: "simplify merge consolidate liquid funds small holdings spare",
   },
   {
     id: "goal-groups",
@@ -98,7 +122,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "What happens when I tick a step on the plan?",
     a: [
-      "Ticking means you've set it up with your provider. The app raises that holding's SIP (and adds any one-time amount) and links it to the goal. Undo stays on screen for a few seconds.",
+      "Ticking means you've set it up with your provider. The app raises that holding's SIP (and adds any one-time amount). Undo stays on screen for a few seconds.",
       "No money moves. The app never invests for you.",
     ],
     tags: "this month checklist tick sip",
