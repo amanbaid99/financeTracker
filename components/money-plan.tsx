@@ -325,7 +325,7 @@ function Checklist({
             </li>
           );
         })}
-        {running.map(row=><li key={row.key} className="space-y-1 py-3 text-sm"><b className="block break-words">{row.label}</b><span className="tabular block">{formatINR(row.total)}/mo · Already running</span><VehicleCoverage row={row}/></li>)}
+        {running.map(row=><li key={row.key} className="space-y-1 py-3 text-sm"><b className="block break-words">{row.label}</b><span className="tabular block">{formatINR(row.total)}/mo · {row.fixed&&row.extra>0?"Set up with your provider":"Already running"}</span><VehicleCoverage row={row}/>{row.fixed&&row.current>0&&row.extra>0&&<p className="text-xs text-muted-foreground">{formatINR(row.current)} running · {formatINR(row.extra)} to add</p>}</li>)}
       </ul>
       {error && (
         <p role="alert" className="rounded-lg bg-card p-2 text-sm text-danger">
@@ -394,6 +394,7 @@ export function MoneyPlanCard({
   strategy: SipStrategy;
   onStrategyChange: (strategy: SipStrategy) => void;
 }) {
+  const router=useRouter();
   const [open, setOpen] = useState(autoOpen);
   const close = useCallback(() => {
     setOpen(false);
@@ -467,7 +468,7 @@ export function MoneyPlanCard({
         <button
           type="button"
           aria-label="Edit money plan"
-          onClick={() => setOpen(true)}
+          onClick={() => concise?router.push("/goals/sip"):setOpen(true)}
           className="-mr-1 -mt-2 min-h-11 rounded-lg px-2 text-sm text-primary hover:bg-primary-soft"
         >
           Edit plan

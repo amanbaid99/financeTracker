@@ -1107,6 +1107,7 @@ export type Database = {
           onboarding_completed_at: string | null;
           plan_lump_sum: number | null;
           plan_monthly: number | null;
+          plan_sip_minimums: Json;
           risk_profile: Database["public"]["Enums"]["risk_profile"] | null;
           runway_choices: NonNullable<Json>;
           salary_best: string | null;
@@ -1132,6 +1133,7 @@ export type Database = {
           onboarding_completed_at?: string | null;
           plan_lump_sum?: number | null;
           plan_monthly?: number | null;
+          plan_sip_minimums?: Json;
           risk_profile?: Database["public"]["Enums"]["risk_profile"] | null;
           runway_choices?: NonNullable<Json>;
           salary_best?: string | null;
@@ -1156,6 +1158,7 @@ export type Database = {
           onboarding_completed_at?: string | null;
           plan_lump_sum?: number | null;
           plan_monthly?: number | null;
+          plan_sip_minimums?: Json;
           risk_profile?: Database["public"]["Enums"]["risk_profile"] | null;
           runway_choices?: NonNullable<Json>;
           salary_best?: string | null;

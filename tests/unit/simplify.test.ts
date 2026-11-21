@@ -41,3 +41,6 @@ describe("simplifyHints", () => {
     expect(hints[1].title).toBe("₹9,00,000 not needed by any goal");
   });
 });
+
+it("reviews extra bank accounts without assuming a low balance means unused",()=>{const accounts=[1,2,3].map(n=>({...fund(`account${n}`,"savings_account",n===3?0:10000),kind:"savings"}));const hints=simplifyHints(accounts,{spare:{},spareTotal:0});expect(hints[0].id).toBe("bank-accounts");expect(hints[0].text).toContain("salary credits, EMIs, UPI");expect(hints[0].text).toContain("A low balance alone does not mean an account is unused");});
+it("shows at most three focused simplification ideas",()=>{const many=["liquid_fund","equity_index","large_cap","flexi_cap"].flatMap(cat=>[1,2,3].map(n=>fund(`${cat}${n}`,cat,100000)));expect(simplifyHints(many,{spare:{cash:100000},spareTotal:100000})).toHaveLength(3);});

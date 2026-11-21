@@ -43,6 +43,8 @@ export type PlanStage =
   | "open";
 
 export interface MoneyPlan {
+  minimums?: import("./sip-minimums").SipMinimums;
+  reservedMonthly?: number;
   lump: number;
   monthlyTotal: number;
   /** SIPs already running across all investments. */

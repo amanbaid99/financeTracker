@@ -72,7 +72,7 @@ export const HELP: HelpTopic[] = [
     section: "Net worth",
     q: "What is Simplify your portfolio?",
     a: [
-      "Ideas for having fewer things to track: several funds of the same type, tiny holdings with no SIP, and money no goal needs right now. It only names funds you already hold.",
+      "Up to three ideas for having fewer things to track: extra bank accounts, several funds of the same type, tiny holdings with no SIP, or money no goal needs right now. Bank-account reviews include salary credits, EMIs, UPI, autopay and minimum balances. A small balance alone does not mean an account is unused. It only names funds you already hold.",
       "Nothing is sold or moved. Check exit loads and tax before you sell anything. Not investment advice.",
     ],
     tags: "simplify merge consolidate liquid funds small holdings spare",
@@ -103,7 +103,7 @@ export const HELP: HelpTopic[] = [
     a: [
       "In this order: bills funds first, so known payments are never short. Then the emergency fund, up to 3 months of essentials and EMIs, built over about a year.",
       "A fifth of the monthly money is kept for goals 5+ years away, like retirement, so they're never left for last. Nearer goals come next, by time group, must-haves first, each getting just enough to be on time.",
-      "Whatever is left goes to goals with no date, by how much each still needs. The plan groups contributions by investment vehicle. Each shows the goals it covers, with dates and amounts under Goal breakdown.",
+      "Whatever is left goes to goals with no date, by how much each still needs. The plan groups contributions by investment vehicle. Each shows one monthly amount and a short Covers line. There is no per-goal breakdown.",
     ],
     tags: "money plan priority split sip allocate emergency floor fifth",
   },
@@ -186,7 +186,7 @@ export const HELP: HelpTopic[] = [
     q: "Can I create a SIP plan from Save & invest?",
     a: [
       "Choose Save & create SIP plan at the end of setup, or Create a SIP plan on your saved budget. The Save & invest amount prefills a separate review screen. Lower it if some money should stay as accessible savings.",
-      "Review the monthly amount by investment vehicle, with covered goals underneath. Suitable existing holdings are reused across goals; otherwise a category is shown. Existing SIPs count within the total, not on top. Save SIP plan explicitly sets the monthly amount for Your plan; no SIP mandate, investment record or trade is created. Your budget remains unchanged. Any existing one-time planning amount is kept.",
+      "Review the monthly amount by investment vehicle, with covered goals underneath. Suitable existing holdings are reused across goals; otherwise a category is shown. Every held investment type has an optional monthly minimum, starting at zero. Existing SIPs count toward its minimum. Only the extra needed for your minimums is reserved before the remaining money is recommended for goals. A minimum does not silently reduce a larger running SIP. Create plan explicitly saves the monthly amount and your minimums for Your plan; no SIP mandate, investment record or trade is created. Your budget remains unchanged. Any existing one-time planning amount is kept.",
     ],
     tags: "budget sip save invest monthly allocation plan",
   },

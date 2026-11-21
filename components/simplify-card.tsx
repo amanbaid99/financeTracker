@@ -25,7 +25,7 @@ export function SimplifyCard({ hints }: { hints: SimplifyHint[] }) {
         ))}
       </ul>
       <p className="text-xs text-muted-foreground">
-        Ideas only. Check exit loads and tax before you sell anything.
+        Review ideas only. Check linked payments before closing accounts, and tax or charges before selling.
       </p>
     </section>
   );

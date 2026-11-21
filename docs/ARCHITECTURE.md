@@ -3,6 +3,10 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+## Monthly minimums and fewer details, 21 Nov 2026
+
+sip-minimums validates held-kind preferences, computes additional reservations above current contributions and wraps planMoney with the remaining budget. MoneyPlan carries the reserved amount and preferences; investment-plan displays custom type rows and recommendations without counting running contributions twice. A cached owner-scoped loader reads preferences separately from app_snapshot; no snapshot function replacement is needed. saveSipPlan validates input, held kinds and budget capacity before one owner-filtered profiles update. The JSONB profile column inherits existing owner-only RLS and adds an object/size constraint. Legacy plan removal clears preferences. Simplify hints now prioritise bank-account review and cap the list at three.
+
 ## Vehicle-first planning and withdrawal previews, 21 Nov 2026
 
 sip-plan adds a pooled strategy without changing legacy strategies. investment-plan builds monthly vehicle rows from current contributions plus pooled additions; investment-vehicles renders goal coverage and dates. BudgetSipPlanner and MoneyPlanCard share these rows. withdrawal-plan runs autoAllocate before and after a simulated deduction, with eligibility filtering and reserve-aware slices; it never writes. /assets/withdraw loads owner data through loadGoals and renders WithdrawalPlanner locally. Ask detects amount-based withdrawal intent, renders coded deterministic results and exposes the preview link, without routing the withdrawal answer through a model. codeAskText strips known user names and identifiers from subsequent provider-bound history.

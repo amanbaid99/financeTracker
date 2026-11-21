@@ -10,7 +10,6 @@ import { todayIST } from "@/lib/dates";
 import { PRIVACY_VERSION } from "@/lib/legal";
 import type { Database, Tables } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
-import { planMoney } from "@/lib/allocate";
 import { betweenJobs, runway, type RunwayItem } from "@/lib/runway";
 import type { NetWorthPoint } from "@/components/net-worth-card";
 import {
@@ -21,6 +20,8 @@ import {
   type Link,
   type TrackedGoal,
 } from "@/lib/tracker";
+import { loadSipMinimums } from "./sip-minimums-data";
+import { planWithMinimums } from "./sip-minimums";
 import { autoAllocate, type AutoAllocation } from "@/lib/auto-allocate";
 
 /**
@@ -526,7 +527,7 @@ export const loadBudget = cache(async () => {
 
 /** The money plan as Goals and the plan page show it, worked out once. */
 export const loadMoneyPlan = cache(async () => {
-  const [g, b] = await Promise.all([loadGoals(), loadBudget()]);
+  const [g, b, minimums] = await Promise.all([loadGoals(), loadBudget(), loadSipMinimums()]);
   const { goals, investments, links, today, plan: input } = g;
   const sipsNow = investments.reduce((s, i) => s + i.monthlySip, 0);
   const unassigned = Math.round(
@@ -536,7 +537,7 @@ export const loadMoneyPlan = cache(async () => {
     ),
   );
   const plan = input
-    ? planMoney({
+    ? planWithMinimums({
         goals,
         investments,
         links,
@@ -544,7 +545,7 @@ export const loadMoneyPlan = cache(async () => {
         monthlyTotal: input.monthly,
         todayISO: today,
         essentialsMonthly: b.budget.costs + b.budget.emis,
-      })
+      }, minimums)
     : null;
   return {
     ...g,

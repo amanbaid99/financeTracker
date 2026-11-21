@@ -95,7 +95,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     steps: [
       "Tap Plan my budget. Confirm income and recorded commitments first. Groceries and everyday costs are asked later, with up to two expense questions per screen. Personal transport stays in the Personal spending step. Annual contributions stay in Goals.",
       "Enter a preferred Personal spending amount or let the guide suggest one. There is no savings-versus-investing split to choose.",
-      "Review one Save & invest amount and Personal spending in rupees. Change anything before Save this budget. No percentages are required.",
+      "Review one Save & invest amount and Personal spending in rupees. Change anything before Save this budget. Create a SIP plan can then reserve optional monthly minimums by investment type.",
       "Your saved view has three totals. Itemised buckets expand into a breakdown; Edit beside income opens monthly amounts. Edit includes Personal spending and Save & invest; changing one adjusts the other. Budget options holds reset.",
       "The budget stays independent unless you choose Create a SIP plan and explicitly save its monthly allocation. Investment records and SIP mandates are not created automatically.",
     ],
@@ -136,8 +136,12 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-21", title: "Your minimums, a simpler plan", items: [
+    { title: "Set a monthly minimum", text: "Enter an optional amount for each investment type you hold. Existing SIPs count toward it; recommendations use what remains. Create plan remembers your choices." },
+    { title: "Just the essentials", text: "Monthly investments show the amount and covered goals without a breakdown. Net worth offers at most three simplification ideas, including reviewing extra bank accounts." },
+  ] },
   { date: "2026-11-21", title: "Invest simply, see what it covers", items: [
-    { title: "Investment vehicles first", text: "SIP planning and Your plan group contributions into shared vehicles. Existing SIPs count once; covered goals and dates sit underneath. Nothing creates a mandate or moves money." },
+    { title: "Investment vehicles first", text: "SIP planning and Your plan group contributions into shared vehicles. Existing SIPs count once; a short Covers line sits underneath. Nothing creates a mandate or moves money." },
     { title: "Plan a withdrawal", text: "Use + or Your plan to preview where money could come from and the effect on goals. Emergency reserves are protected by default. Ask uses the same calculation for amount-based withdrawal questions." },
   ] },
   { date: "2026-11-21", title: "Cleaner asset summary", items: [

@@ -4,6 +4,10 @@ Why the app works the way it does. Newest first within each section. When the ow
 direction, add a line here so the next person doesn't undo it.
 
 
+## Monthly minimums and fewer details, 21 Nov 2026
+
+The owner wants only monthly amounts and a short Covers line, with no goal breakdown. List all types already held, with zero meaning no monthly minimum. An entered amount is a minimum, not an extra contribution on top of recorded SIPs and not permission to cut a larger running SIP. Reserve only the additional amount needed before recommending the remainder. Save these preferences with the plan; do not change holding records or provider mandates. Keep custom type allocations separate until recorded so forecasts do not claim unspecified contributions already fund goals. Keep portfolio simplification to three review ideas, including extra bank accounts only with linked-payment and account-rule checks.
+
 ## Vehicle-first planning and withdrawal previews, 21 Nov 2026
 
 The owner wants to keep investing in a few suitable vehicles while the app maps them to goals. Lead SIP preview and Your plan with vehicles and full monthly amounts, not one fund choice per goal. Keep goal mapping visible as supporting detail. Existing SIPs remain in the total; do not silently move them. Pool new contributions within suitable horizon categories, using only owned names or category placeholders. Withdrawal previews must preserve emergency reserves by default, distinguish unassigned/selected/other-goal money and compare the impact with unchanged goal targets. Exclude assets whose lock or maturity cannot be verified. Chat explains the same local calculation; it cannot execute a redemption or invent tax/settlement figures.

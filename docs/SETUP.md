@@ -2,6 +2,10 @@
 
 Accounts, secret names (never values) and CI. For running the app locally, see AGENTS.md.
 
+## SIP minimum preferences
+
+Applied 20261121142356_sip_monthly_minimums to project sbkpirchaaljlwzgntrf on 21 Nov 2026. profiles.plan_sip_minimums stores a JSON object of held investment kinds and integer monthly minimums. It defaults to an empty object; existing owner-only profile policies remain in force. The object/size constraint and RLS state were verified after applying. No holding balances or SIP records were changed.
+
 ## Ratio budget migration
 
 Applied `supabase/migrations/20261119061828_budget_ratio_plan.sql` to project `sbkpirchaaljlwzgntrf` on 19 Nov 2026. The filename matches the recorded hosted migration version. It creates the private `budget_ratio_plans` table, owner-only policies and explicit grants. No existing finance data was updated. Local regression exercises actual PostgreSQL owner isolation and account-deletion cascade; hosted metadata and security advisors were also checked.

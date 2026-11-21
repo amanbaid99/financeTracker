@@ -1,11 +1,10 @@
 import { formatINR } from "@/lib/format";
-import { monthYear } from "@/lib/goal-summary";
 import type { MonthlyVehicle } from "@/lib/investment-plan";
 
 export function VehicleCoverage({row}:{row:MonthlyVehicle}){
  return <div className="space-y-1 text-xs text-muted-foreground">
-   {row.parts.length>0?<p className="break-words">Covers {row.parts.map(p=>p.goalName).join(", ")}</p>:<p>Not mapped to a goal yet.</p>}
-   {row.parts.length>0&&<details><summary className="min-h-8 cursor-pointer text-primary">Goal breakdown</summary><ul className="space-y-1 pb-2">{row.parts.map(p=><li key={p.goalId} className="flex flex-wrap justify-between gap-x-3"><span className="min-w-0 break-words">{p.goalName}{p.until?` · ${monthYear(p.until)}`:""}</span><span className="tabular">{formatINR(p.monthly)}/mo</span></li>)}</ul>{row.parts.reduce((sum,p)=>sum+p.monthly,0)<row.total&&<p>{formatINR(row.total-row.parts.reduce((sum,p)=>sum+p.monthly,0))}/mo not mapped to a goal yet.</p>}<p>Estimated mapping. Review it when your balances or goals change.</p></details>}
+   {row.parts.length>0?<p className="break-words">Covers {row.parts.map(p=>p.goalName).join(", ")}</p>:<p>{row.fixed?"Chosen by you":"Not mapped to a goal yet."}</p>}
+
  </div>;
 }
 export function InvestmentVehicles({rows}:{rows:MonthlyVehicle[]}){

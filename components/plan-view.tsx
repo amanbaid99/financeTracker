@@ -22,7 +22,7 @@ export function PlanView(props: {
 }) {
   const { plan } = props;
   const [strategy, setStrategy] = useState<SipStrategy>("pooled");
-  const newMonthly = plan.suggestions.reduce((sum,s)=>sum+s.monthly,0);
+  const newMonthly = plan.suggestions.reduce((sum,s)=>sum+s.monthly,0)+(plan.reservedMonthly??0);
   const lumpTotal = plan.suggestions.reduce((t, s) => t + s.lump, 0);
 
   return (
@@ -45,6 +45,7 @@ export function PlanView(props: {
 
           </p>
         </div>
+        {plan.sipsNow+(plan.reservedMonthly??0)>plan.monthlyTotal&&<p role="alert" className="text-sm text-danger">Your recorded SIPs and minimums exceed this budget by {formatINR(plan.sipsNow+(plan.reservedMonthly??0)-plan.monthlyTotal)}. Edit the plan to review it.</p>}
         <p
           className={cn(
             "rounded-lg p-2.5 text-sm",

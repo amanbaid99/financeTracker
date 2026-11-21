@@ -42,6 +42,9 @@ export function simplifyHints(
   );
   const total = investments.reduce((s, i) => s + Math.max(0, i.value), 0);
 
+  const accounts=investments.filter(i=>i.kind==="savings");
+  if(accounts.length>2)hints.push({id:"bank-accounts",title:`${accounts.length} bank accounts to review`,text:`Give each account a clear job, such as salary, bills or a backup. Consider closing an extra account only after checking salary credits, EMIs, UPI, autopay, linked investments, fees and minimum-balance rules. A low balance alone does not mean an account is unused.`});
+
   // Several funds of the same type.
   const byType = new Map<string, Investment[]>();
   for (const f of funds)
@@ -95,5 +98,5 @@ export function simplifyHints(
               : ""),
     });
   }
-  return hints;
+  return hints.slice(0,3);
 }

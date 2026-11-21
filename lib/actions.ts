@@ -403,6 +403,7 @@ export async function savePlan(
       .update({
         plan_lump_sum: v?.lump ?? null,
         plan_monthly: v?.monthly ?? null,
+        ...(v === null ? {plan_sip_minimums:{}} : {}),
       })
       .eq("user_id", userId);
     if (error) throw new Error(error.message);
