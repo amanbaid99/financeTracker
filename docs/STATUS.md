@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 21 Nov 2026.
 
+## Compact asset summary, 21 Nov 2026
+
+Total value and the holdings count now share one line. Removed Last edited from the portfolio overview and every holding row. A recorded CAS import date remains visible; an unknown import date no longer adds placeholder text. No financial data or calculations changed.
+
+Verification: npm run check and production build passed on the latest branch. Browser checks at 320, 375, 768 and 1024 pixels confirm a single-line header, no edit dates, working allocation tabs/search and no horizontal overflow. Full signed-in local integration was not rerun for this presentation-only change.
+
 
 ## Automatic goal coverage, 21 Nov 2026
 

@@ -32,26 +32,18 @@ export function PortfolioOverview({
   const [view, setView] = useState<"asset" | "kind">("asset");
   const kindSlot = (c: AssetClass) =>
     ASSET_CLASSES.find((x) => x.key === c)?.slot ?? 7;
-  const lastEdit = investments
-    .map((i) => i.updatedAt)
-    .filter((v): v is string => !!v && Number.isFinite(Date.parse(v)))
-    .sort((a, b) => Date.parse(b) - Date.parse(a))[0];
   const imported = editedDate(lastImportAt);
-  const edited = editedDate(lastEdit);
   return (
     <>
       <section
         className="surface-card rounded-2xl border border-border/70 bg-card p-4"
         aria-label="Portfolio overview"
       >
-        <div className="flex items-start justify-between gap-3">
-          <div className="text-xs text-muted-foreground">
-            <p>Total value</p>
-            <p>
-              {p.holdings.length}{" "}
-              {p.holdings.length === 1 ? "holding" : "holdings"}
-            </p>
-          </div>
+        <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+          <p>Total value</p>
+          <p className="shrink-0">
+            {p.holdings.length} {p.holdings.length === 1 ? "holding" : "holdings"}
+          </p>
         </div>
         <p className="tabular mt-1 text-3xl font-semibold tracking-tight">
           {formatINR(p.total)}
@@ -115,12 +107,9 @@ export function PortfolioOverview({
             />
           )}
         </div>
-        <p className="mt-3 border-t pt-2 text-[11px] text-muted-foreground">
-          {edited ? `Last edited ${edited}` : "Edit date unavailable"}
-          {imported
-            ? ` · CAS imported ${imported}`
-            : " · CAS import date not recorded"}
-        </p>
+        {imported && <p className="mt-3 border-t pt-2 text-[11px] text-muted-foreground">
+          CAS imported {imported}
+        </p>}
       </section>
       {review}
       <section

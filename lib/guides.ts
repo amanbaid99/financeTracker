@@ -71,7 +71,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Net worth at the top is what you own minus what you owe on loans. Current balances stay visible without performance charts.",
       "The overview shows your total, monthly investments and asset split. One bar and small chips with each share. Tap a chip to filter the holdings below, and again to clear it. Switch to Instrument to see it by kind of investment, like mutual funds, stocks or EPF.",
       "Search holdings by name or category. Sort by value or name. Upload CAS for funds and ETFs, and update other balances manually.",
-      "Last edited is when a holding record changed, not a market price date. CAS import dates are recorded for new successful imports; older dates may be unknown.",
+      "Total value and the holding count share one line. The latest CAS import date appears when recorded; edit dates are hidden.",
       "Tap + to add an investment or saving, update values or import a CAS statement. Tap a holding to edit it.",
     ],
   },
@@ -136,6 +136,9 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-21", title: "Cleaner asset summary", items: [
+    { title: "A simpler Net worth view", text: "Total value and the holding count share one line. Last edited dates are removed from the overview and holdings." },
+  ] },
   { date: "2026-11-21", title: "Goals cover themselves", items: [
     { title: "No more linking", text: "The app works out which of your money covers which goal: safe money for what's due soon and the emergency fund, equity for goals far away. Open a goal to see Covered by and why." },
     { title: "What gets money first", text: "A third of the emergency fund, then bills and goals due this year, then the rest of the emergency fund, then your plan order. Change order on Goals moves a goal up." },
@@ -366,7 +369,7 @@ export const RELEASES: Release[] = [
       },
       {
         title: "A clearer portfolio",
-        text: "One overview, allocation filters, searchable holdings and sorting. Add investments from +. Record edit dates and new CAS import dates are shown separately.",
+        text: "One overview, allocation filters, searchable holdings and sorting. Add investments from +. The latest recorded CAS import date is shown without edit dates.",
       },
       {
         title: "One monthly overview",

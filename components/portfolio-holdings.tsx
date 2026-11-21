@@ -7,7 +7,6 @@ import { useQuickAction } from "@/components/quick-add";
 import { clearParam } from "@/lib/clear-param";
 import { Input, Select } from "@/components/ui/input";
 import {
-  editedDate,
   visibleHoldings,
   type HoldingSort,
 } from "@/lib/portfolio-view";
@@ -176,11 +175,6 @@ export function PortfolioHoldings({
                     {formatINR(h.value)}
                   </span>
                 </span>
-                {editedDate(inv?.updatedAt) && (
-                  <span className="col-span-2 ml-4 text-[11px] text-muted-foreground">
-                    Last edited {editedDate(inv?.updatedAt)}
-                  </span>
-                )}
               </button>
             </li>
           );
