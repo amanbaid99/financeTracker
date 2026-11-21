@@ -29,6 +29,7 @@ interface Message {
   choices?: string[];
   plan?: { amount: number; frequency: "once" | "monthly" };
   unchecked?: string[];
+  withdrawalHref?: string;
 }
 
 /** Adds an answer's split to the money plan, so This month shows the steps. */
@@ -156,6 +157,7 @@ export function AskChat() {
           choices: res.choices,
           plan: res.plan,
           unchecked: res.unchecked,
+          withdrawalHref: res.withdrawalHref,
         },
       ]);
     });
@@ -210,6 +212,7 @@ export function AskChat() {
                   care.
                 </p>
               )}
+              {m.withdrawalHref&&<Link href={m.withdrawalHref} className="mt-2 inline-flex min-h-11 items-center font-medium text-primary underline">Review withdrawal</Link>}
               {m.plan && <AddToPlan plan={m.plan} />}
               {m.choices && i === messages.length - 1 && (
                 <div className="mt-2 flex flex-wrap gap-2">

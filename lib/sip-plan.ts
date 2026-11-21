@@ -32,7 +32,7 @@ export interface SipLine {
   parts: SipPart[];
 }
 
-export type SipStrategy = "simple" | "diversified";
+export type SipStrategy = "simple" | "diversified" | "pooled";
 
 /** Amounts in a suggestion are additions to an existing monthly contribution. */
 export function sipAction(line: SipLine) {
@@ -235,6 +235,15 @@ export function splitForGoal(
   links: Link[],
   strategy: SipStrategy = "diversified",
 ): FundShare[] {
+  // Share suitable vehicles across goals. Near-term money never falls back to
+  // equity, gold, locked ELSS or a savings account presented as a fund.
+  if (strategy === "pooled") {
+    const allowed=(STAND_INS[category]??[category]).filter(k=>!["gold","savings_account","elss"].includes(k));
+    const candidates=investments.filter(i=>allowed.includes(kindOf(i)??""));
+    candidates.sort((a,b)=>allowed.indexOf(kindOf(a)!)-allowed.indexOf(kindOf(b)!) || b.monthlySip-a.monthlySip || b.value-a.value || a.id.localeCompare(b.id));
+    const investment=candidates[0];
+    return investment?[{investment,monthly,lump,similar:kindOf(investment)!==category,percent:100,note:noteFor(investment)}]:[];
+  }
   const pctOf = new Map(
     links
       .filter((l) => l.goalId === goalId)
@@ -390,7 +399,7 @@ export function sipPlan(
         `new:${s.category}`,
         () => ({
           investment: null,
-          label: `New ${categoryLabel(s.category).toLowerCase()}`,
+          label: strategy==="pooled"?categoryLabel(s.category):`New ${categoryLabel(s.category).toLowerCase()}`,
           category: s.category,
           similar: false,
           note: null,
@@ -501,7 +510,7 @@ export function planSteps(
           {
             key: `new:${s.category}`,
             investment: null,
-            label: `New ${categoryLabel(s.category).toLowerCase()}`,
+            label: strategy==="pooled"?categoryLabel(s.category):`New ${categoryLabel(s.category).toLowerCase()}`,
             lump: s.lump,
             note: null,
           },

@@ -16,7 +16,8 @@ import {
   splitFacts,
   unsupportedFigures,
 } from "./amount";
-import { ASK_INSTRUCTIONS, buildAskContext, restoreNames } from "./context";
+import { withdrawalAmount, withdrawalAnswer } from "./withdrawal";
+import { ASK_INSTRUCTIONS, buildAskContext, restoreNames, codeAskText } from "./context";
 
 async function session() {
   const supabase = await createClient();
@@ -70,6 +71,7 @@ export type AskResult =
       plan?: { amount: number; frequency: "once" | "monthly" };
       /** Figures in the answer that couldn't be checked against your data. */
       unchecked?: string[];
+      withdrawalHref?: string;
     }
   | { ok: false; error: string };
 
@@ -79,13 +81,12 @@ export async function askQuestion(history: AskTurn[]): Promise<AskResult> {
   if (!parsed.success || parsed.data.at(-1)?.role !== "user") {
     return { ok: false, error: "Type a question first." };
   }
-  const settings = openRouterSettings();
-  if (!settings) return { ok: false, error: "Ask isn't set up yet." };
   const { supabase, userId } = await session();
 
   // "Where should ₹10,000 go?": the app's planner answers; the AI explains.
   const question = amountQuestion(parsed.data.at(-1)!.content);
-  if (question?.frequency === "unknown") {
+  const withdrawing=withdrawalAmount(parsed.data.at(-1)!.content);
+  if (withdrawing===null&&question?.frequency === "unknown") {
     const text = `Is ${formatINR(question.amount)} a one-time amount, or every month? The answer is different for each.`;
     return {
       ok: true,
@@ -102,6 +103,15 @@ export async function askQuestion(history: AskTurn[]): Promise<AskResult> {
     .single();
   if (!profile.data?.ai_enabled)
     return { ok: false, error: "Turn on Ask first." };
+
+  if(withdrawing!==null){
+    const {goals,investments,links,plan,today}=await loadGoals();
+    const ctx=buildAskContext({goals,investments,links,plan,todayISO:today});
+    const coded=withdrawalAnswer({text:parsed.data.at(-1)!.content,amount:withdrawing,goals,investments,today,codeOf:ctx.codeOf});
+    return {ok:true,coded,shown:restoreNames(coded,ctx.names),withdrawalHref:"/assets/withdraw"};
+  }
+  const settings = openRouterSettings();
+  if (!settings) return { ok: false, error: "Ask isn't set up yet." };
 
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const used = await supabase
@@ -159,7 +169,7 @@ export async function askQuestion(history: AskTurn[]): Promise<AskResult> {
     },
     ...parsed.data
       .slice(-10)
-      .map((t) => ({ role: t.role, content: t.content })),
+      .map((t) => ({ role: t.role, content: codeAskText(t.content,names) })),
   ];
   let reply = await router.answer("ask", messages, { userMayPay: mayPay });
   // Every figure in the answer must come from the facts. One retry with

@@ -211,3 +211,12 @@ Rules:
 - When the facts include "The app's split", that is the answer: explain it in plain words, in that order, with those amounts. Don't move money between goals, don't add amounts, and don't give the same money to two goals.
 - A one-time amount and a monthly amount are different: never use one to cover the other.
 - You are not a registered investment adviser; for big or complex decisions suggest checking with one.`;
+
+/** Scrub typed names from every turn, including follow-ups to a local preview. */
+export function codeAskText(text:string,names:Record<string,string>):string {
+ let coded=text;
+ for(const [code,name] of Object.entries(names).sort((a,b)=>b[1].length-a[1].length)){
+   if(name.trim()){const escaped=name.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");coded=coded.replace(new RegExp(`(?<![\\p{L}\\p{N}_])${escaped}(?![\\p{L}\\p{N}_])`,"giu"),code);}
+ }
+ return coded.replace(/\b[A-Z]{5}[0-9]{4}[A-Z]\b/gi,"[PAN]").replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,"[email]").replace(/(?<![\d₹])(?:\+91[ -]?)?[6-9]\d{9}(?!\d)/g,"[phone]");
+}

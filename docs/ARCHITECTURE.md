@@ -3,6 +3,10 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+## Vehicle-first planning and withdrawal previews, 21 Nov 2026
+
+sip-plan adds a pooled strategy without changing legacy strategies. investment-plan builds monthly vehicle rows from current contributions plus pooled additions; investment-vehicles renders goal coverage and dates. BudgetSipPlanner and MoneyPlanCard share these rows. withdrawal-plan runs autoAllocate before and after a simulated deduction, with eligibility filtering and reserve-aware slices; it never writes. /assets/withdraw loads owner data through loadGoals and renders WithdrawalPlanner locally. Ask detects amount-based withdrawal intent, renders coded deterministic results and exposes the preview link, without routing the withdrawal answer through a model. codeAskText strips known user names and identifiers from subsequent provider-bound history.
+
 ## Focused actions and editable spending, 21 Nov 2026
 
 CardList owns the Cards header and visible milestone rows with expanded audit details. PlanView renders MoneyPlanCard in concise full mode, followed by folded allocation details. QuickAdd routes SIP planning to /goals/sip, whose server loader uses a saved budget only as a reviewable initial amount. OweList wraps each active loan row in LoanManagement; updates use an allowlisted Net worth return destination. BudgetExperience materialises a combined future target when Personal spending changes and validates exact requested spending and existing target gaps before save. The salary route redirects to Budget; old data and calculation helpers remain available without a salary-coverage UI.

@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 21 Nov 2026.
 
+## Vehicle-first planning and withdrawal previews, 21 Nov 2026
+
+SIP preview now groups monthly contributions by vehicle and includes existing SIPs once. The pooled strategy reuses one suitable holding per horizon, preferring recorded contributions, or uses a category placeholder; near-term money cannot silently use equity or gold. Your plan shows full vehicle amounts, covered goals and optional dated breakdowns, plus explicit setup actions and running contributions. A read-only withdrawal planner is available through + and Your plan. It uses unassigned eligible money before selected-goal money, requires opt-in for other goals, protects emergency reserves unless selected and excludes unverified locked/maturity-dependent assets. It recomputes automatic coverage after lower balances with targets unchanged, showing additional dated shortfalls. Amount-based withdrawal questions in Ask use this same deterministic calculation without a provider call; follow-up AI history codes known typed names and masks identifiers. No SQL, hosted financial writes, orders or mandates.
+
+Verification: lint, TypeScript, 672 unit tests, 40 Python tests and production build passed. Twelve responsive browser flows cover four widths and three themes for pooled preview totals, save confirmation and preserved one-time amounts, vehicle-first monthly steps, direct withdrawal previews, goal impacts and no unsaved writes. New tests cover reserve protection, locked-asset exclusion, rupee conservation, compatible owned vehicles, avoiding double-counted SIPs, coded chat history and provider-free withdrawal answers. Full signed-in local integration is unavailable because the local database image is absent; no hosted account data was changed.
+
 ## Compact asset summary, 21 Nov 2026
 
 Total value and the holdings count now share one line. Removed Last edited from the portfolio overview and every holding row. A recorded CAS import date remains visible; an unknown import date no longer adds placeholder text. No financial data or calculations changed.

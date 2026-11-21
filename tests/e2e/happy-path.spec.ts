@@ -369,20 +369,15 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // A saved plan opens on its own page: where it goes and why, then
   // "This month" as a checklist in your own funds.
   await expect(page).toHaveURL(/\/goals\/plan$/);
-  await page.getByText("Allocation details", { exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Where it goes, and why" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Plan a withdrawal", exact: true })).toBeVisible();
   await expect(page.getByRole("heading", { name: "This month" })).toBeVisible();
   await expect(page.getByText(/plus ₹1,20,000 once/)).toBeVisible();
   const steps = page.getByRole("list", { name: "This month's steps" });
   await expect(page.getByRole("button", { name: /^Show all \d+$|^Show fewer$/ })).toHaveCount(0);
   await expect(steps).toContainText("Index SIP");
-  await expect(steps).toContainText("₹1,20,000 now");
-  // Strategy lives under plan details and changes the steps, not your data.
-  await page.getByText("Plan options", { exact: true }).click();
-  await page.getByRole("button", { name: "One holding per goal", exact: true }).click();
-  await expect(page.getByRole("button", { name: "One holding per goal", exact: true })).toHaveAttribute("aria-pressed", "true");
-  await expect(steps).toContainText("Index SIP");
-  await page.getByRole("button", { name: "Spread across holdings", exact: true }).click();
+  await expect(steps).toContainText("₹1,20,000 once");
+  // Vehicles pool goal contributions without a per-goal strategy choice.
+  await expect(page.getByText("Plan options", { exact: true })).toHaveCount(0);
   await page.screenshot({ path: "test-results/plan-375.png", fullPage: true });
   // Ticking a step records it on the fund, with Undo for a few seconds.
   await steps.getByRole("checkbox", { name: /into Index SIP$/ }).click();
@@ -1005,8 +1000,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Your plan: the monthly split, with Edit order.
   await page.getByRole("link", { name: "Your plan", exact: true }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Your plan" })).toBeVisible();
-  await page.getByText("Allocation details", { exact: true }).click();
-  await expect(page.getByRole("heading", { name: "Where it goes, and why" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Plan a withdrawal", exact: true })).toBeVisible();
   await page.getByRole("link", { name: "Edit order" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Your order" })).toBeVisible();
   await expect(page.getByRole("list", { name: "Your order" })).toBeVisible();

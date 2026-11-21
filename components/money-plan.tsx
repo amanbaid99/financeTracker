@@ -1,6 +1,8 @@
 "use client";
 
 import { Check, ChevronDown, Plus, Sparkles } from "lucide-react";
+import { VehicleCoverage } from "@/components/investment-vehicles";
+import { monthlyVehicles, type MonthlyVehicle } from "@/lib/investment-plan";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { NextStep } from "@/components/next-step";
@@ -177,12 +179,14 @@ function Checklist({
   investments,
   links,
   empty,
+  vehicles = [],
 }: {
   steps: PlanStep[];
   investments: Investment[];
   links: Link[];
   /** Shown when there's nothing to do (kept mounted so Undo survives the last tick). */
   empty: React.ReactNode;
+  vehicles?: MonthlyVehicle[];
 }) {
   const router = useRouter();
   // Ticked steps, kept on screen (with Undo) for a few seconds even though
@@ -246,13 +250,15 @@ function Checklist({
     router.refresh();
   };
 
-  if (!visible.length) return <>{empty}</>;
+  const running=vehicles.filter(v=>!visible.some(st=>st.key===v.key));
+  if (!visible.length&&!running.length) return <>{empty}</>;
   return (
     <div className="space-y-2">
       <ul className="divide-y divide-border/60" aria-label="This month's steps">
         {visible.map((st) => {
           const id = idOf(st);
           const done = !!ticked[id];
+          const vehicle=vehicles.find(v=>v.key===st.key);
           const goals = st.goals.map((g) => g.name).join(", ");
           return (
             <li key={id} className="flex items-start gap-2 py-2 text-sm">
@@ -280,20 +286,22 @@ function Checklist({
                   aria-hidden
                 />
               )}
-              <span
+              <div
                 className={`min-w-0 flex-1 py-1 ${done ? "opacity-70" : ""}`}
               >
                 <span
                   className={`block break-words ${done ? "line-through" : ""}`}
                 >
-                  <span className="tabular">{amountsOf(st)}</span> into{" "}
                   <b>{st.label}</b>
+                  <span className="tabular block">{vehicle&&vehicle.total>0?`${formatINR(vehicle.total)}/mo`:amountsOf(st)}</span>
+                  {!done&&vehicle&&vehicle.total>0&&<span className="block text-xs text-muted-foreground">{vehicle.current>0?`${formatINR(vehicle.current)} running · `:""}{formatINR(st.addMonthly)} to add{st.addLump>0?` + ${formatINR(st.addLump)} once`:""}</span>}
                 </span>
                 <span className="block text-xs opacity-80">
-                  {done ? "Recorded. Undo is available for 10 seconds." : goals}
+                  {done ? "Recorded. Undo is available for 10 seconds." : vehicle ? "" : `Covers ${goals}`}
                   {!done && st.note ? ` · ${st.note}` : ""}
                 </span>
-              </span>
+                {!done&&vehicle&&<VehicleCoverage row={vehicle}/>}
+              </div>
               {done ? (
                 <button
                   type="button"
@@ -317,6 +325,7 @@ function Checklist({
             </li>
           );
         })}
+        {running.map(row=><li key={row.key} className="space-y-1 py-3 text-sm"><b className="block break-words">{row.label}</b><span className="tabular block">{formatINR(row.total)}/mo · Already running</span><VehicleCoverage row={row}/></li>)}
       </ul>
       {error && (
         <p role="alert" className="rounded-lg bg-card p-2 text-sm text-danger">
@@ -465,6 +474,7 @@ export function MoneyPlanCard({
         </button>
       </div>
       <Checklist
+        vehicles={concise?monthlyVehicles(plan,investments,links,goals):[]}
         steps={steps}
         investments={investments}
         links={links}
@@ -476,7 +486,7 @@ export function MoneyPlanCard({
           </p>
         }
       />
-      {(suggestions.length > 0 || budget.income > 0) && (!concise || sips.length > 0) && (
+      {(suggestions.length > 0 || budget.income > 0) && !concise && (
         <details className="group/plan border-t text-card-foreground">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-medium [&::-webkit-details-marker]:hidden">
             {concise ? "Plan options" : "Budget and plan details"}

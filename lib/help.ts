@@ -103,7 +103,7 @@ export const HELP: HelpTopic[] = [
     a: [
       "In this order: bills funds first, so known payments are never short. Then the emergency fund, up to 3 months of essentials and EMIs, built over about a year.",
       "A fifth of the monthly money is kept for goals 5+ years away, like retirement, so they're never left for last. Nearer goals come next, by time group, must-haves first, each getting just enough to be on time.",
-      "Whatever is left goes to goals with no date, by how much each still needs. The plan page shows this order with a reason for each step.",
+      "Whatever is left goes to goals with no date, by how much each still needs. The plan groups contributions by investment vehicle. Each shows the goals it covers, with dates and amounts under Goal breakdown.",
     ],
     tags: "money plan priority split sip allocate emergency floor fifth",
   },
@@ -186,7 +186,7 @@ export const HELP: HelpTopic[] = [
     q: "Can I create a SIP plan from Save & invest?",
     a: [
       "Choose Save & create SIP plan at the end of setup, or Create a SIP plan on your saved budget. The Save & invest amount prefills a separate review screen. Lower it if some money should stay as accessible savings.",
-      "Review how the monthly amount supports your goals. Existing SIPs count within the total, not on top. Save SIP plan explicitly sets the monthly amount for Your plan; no SIP mandate, investment record or trade is created. Your budget remains unchanged. Any existing one-time planning amount is kept.",
+      "Review the monthly amount by investment vehicle, with covered goals underneath. Suitable existing holdings are reused across goals; otherwise a category is shown. Existing SIPs count within the total, not on top. Save SIP plan explicitly sets the monthly amount for Your plan; no SIP mandate, investment record or trade is created. Your budget remains unchanged. Any existing one-time planning amount is kept.",
     ],
     tags: "budget sip save invest monthly allocation plan",
   },
@@ -260,6 +260,17 @@ export const HELP: HelpTopic[] = [
       "Each logged statement in the current period counts, from when the card year or quarter starts. EMIs on the card are left out. Progress moves only when you log another statement. Each milestone shows whether you're on pace, what's left, about how much a month reaches it in time, and the deadline. Annual fee waiver is a target, not confirmation from the bank. Open a card to see which statements counted. Tap a milestone to edit it. Cards with every milestone reached get a tick, stay short until you open them, and appear last; a card with another unfinished milestone stays above them. When a milestone period resets, the card returns to the active list.",
     ],
     tags: "fee waiver bonus points target",
+  },
+  {
+    id: "withdrawal-preview",
+    section: "Net worth",
+    q: "Where should I withdraw money from?",
+    a: [
+      "Open +, then Plan a withdrawal, or use the link on Your plan. Enter the amount and choose its goal or Something else. The preview uses unassigned accessible money first, then money covering the selected goal. Considering other goals needs your explicit choice. Emergency reserves remain protected unless you select that goal.",
+      "It compares the lower balances with current goal targets unchanged and shows additional funding gaps. Completing a goal is a separate update. Tax, exit loads, settlement, units and lot-level locks are not calculated. ELSS, retirement accounts, FDs, physical gold and unknown assets are excluded. Confirm access with your provider, then update balances after withdrawing. Nothing is sold or saved by the preview.",
+      "In Ask, an amount-based withdrawal question uses this same local calculation instead of AI arithmetic. General conversation still uses Ask consent and its normal AI settings.",
+    ],
+    tags: "withdraw redeem spend source money impact goals",
   },
   // Ask and AI
   {

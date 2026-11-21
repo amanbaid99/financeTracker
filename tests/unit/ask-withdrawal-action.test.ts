@@ -1,0 +1,17 @@
+import { beforeEach,it,expect,vi } from "vitest";
+vi.mock("next/cache",()=>({revalidatePath:vi.fn()}));
+vi.mock("next/navigation",()=>({redirect:vi.fn(()=>{throw new Error("login");})}));
+vi.mock("@/lib/supabase/server",()=>({createClient:vi.fn()}));
+vi.mock("@/lib/data",()=>({loadGoals:vi.fn(),loadBudget:vi.fn()}));
+vi.mock("@/lib/ai/openrouter",()=>({openRouterSettings:vi.fn()}));
+vi.mock("@/lib/ai/router",()=>({sharedRouter:vi.fn()}));
+vi.mock("@/lib/ai/budget",()=>({userMayPay:vi.fn()}));
+import { createClient } from "@/lib/supabase/server";
+import { loadGoals } from "@/lib/data";
+import { openRouterSettings } from "@/lib/ai/openrouter";
+import { sharedRouter } from "@/lib/ai/router";
+import { askQuestion } from "@/lib/ask/actions";
+const from=vi.fn();
+beforeEach(()=>{vi.clearAllMocks();const chain={select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),single:vi.fn().mockResolvedValue({data:{ai_enabled:true}})};from.mockReturnValue(chain);vi.mocked(createClient).mockResolvedValue({auth:{getUser:vi.fn().mockResolvedValue({data:{user:{id:"owner"}}})},from} as never);vi.mocked(loadGoals).mockResolvedValue({goals:[],investments:[{id:"cash",name:"Own account",kind:"savings",category:"savings_account",value:20000,monthlySip:0,returnPct:0}],links:[],plan:null,today:"2026-11-21"} as never);});
+it("serves withdrawal arithmetic locally without a model, daily charge or writes",async()=>{const res=await askQuestion([{role:"user",content:"Where can ₹10,000 come from?"}]);expect(res.ok).toBe(true);if(res.ok){expect(res.shown).toContain("Own account");expect(res.coded).toContain("[I1]");expect(res.coded).not.toContain("Own account");expect(res.plan).toBeUndefined();expect(res.withdrawalHref).toBe("/assets/withdraw");}expect(openRouterSettings).not.toHaveBeenCalled();expect(sharedRouter).not.toHaveBeenCalled();expect(from.mock.calls).toEqual([["profiles"]]);});
+it("keeps consent required for the chat entry",async()=>{from.mockReturnValue({select:vi.fn().mockReturnThis(),eq:vi.fn().mockReturnThis(),single:vi.fn().mockResolvedValue({data:{ai_enabled:false}})});expect((await askQuestion([{role:"user",content:"Withdraw ₹10,000"}])).ok).toBe(false);expect(loadGoals).not.toHaveBeenCalled();});

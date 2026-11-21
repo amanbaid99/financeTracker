@@ -38,7 +38,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "I have extra money previews where spare cash helps your goals. Nothing is saved until you confirm. New goal adds something you want to save for.",
       "Update amounts lets you enter the latest amounts for your investments.",
       "Import statement reads a CAS. You review the results before saving.",
-      "SIP plan helps split your monthly amount across goals, starting with your saved Save & invest amount when available.",
+      "SIP plan groups monthly contributions by investment vehicle, with the goals each covers. Plan a withdrawal previews which holdings you could use without moving money.",
       "Log a card bill records a statement for an existing card. Add a new card in the Cards tab.",
       "You can reopen this guide from the info button inside the + menu.",
     ],
@@ -136,6 +136,10 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-21", title: "Invest simply, see what it covers", items: [
+    { title: "Investment vehicles first", text: "SIP planning and Your plan group contributions into shared vehicles. Existing SIPs count once; covered goals and dates sit underneath. Nothing creates a mandate or moves money." },
+    { title: "Plan a withdrawal", text: "Use + or Your plan to preview where money could come from and the effect on goals. Emergency reserves are protected by default. Ask uses the same calculation for amount-based withdrawal questions." },
+  ] },
   { date: "2026-11-21", title: "Cleaner asset summary", items: [
     { title: "A simpler Net worth view", text: "Total value and the holding count share one line. Last edited dates are removed from the overview and holdings." },
   ] },

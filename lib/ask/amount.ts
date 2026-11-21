@@ -107,7 +107,7 @@ export function splitFacts(opts: {
     todayISO,
     essentialsMonthly: opts.essentialsMonthly,
   });
-  const steps = planSteps(plan.suggestions, investments, links);
+  const steps = planSteps(plan.suggestions, investments, links, "pooled");
   const what = q.frequency === "once" ? "one-time amount" : "a month";
   const lines = [
     `The app's split for ${formatINR(q.amount)} ${q.frequency === "once" ? "as a one-time amount" : "a month"} (worked out by the app; explain it, don't change it):`,
