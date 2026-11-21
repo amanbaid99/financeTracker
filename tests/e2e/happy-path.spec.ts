@@ -1069,7 +1069,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText(/^Covered till salary · /)).toBeVisible();
   await page.goto("/goals");
   // Goals is just the goals: the top three first, then everything else.
-  await expect(page.getByRole("heading", { name: "Focus on these first" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Focus goals" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Where you are" })).toHaveCount(0);
   await page.screenshot({ path: "test-results/runway-375.png", fullPage: true });
   await page.goto("/goals/salary");

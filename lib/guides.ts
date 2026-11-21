@@ -51,12 +51,12 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap Add a goal and pick a type: a purchase, a trip, an emergency fund, a bills fund or paying off a loan.",
       "Link the mutual funds, savings or deposits that pay for it. One investment can be split across goals.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
-      "Every goal shows in one list, in your order. The first three are under Focus on these first, the rest under Everything else. A goal on hold keeps its place. Change order to move any goal, loans included.",
+      "Focus goals shows the first three unfinished goals, followed by Other goals and then Covered. A goal on hold keeps its place. Use Change order to move goals.",
       "Loans can have payoff goals. Manage any loan in Net worth, even if its goal was deleted. Each shows what's left, the EMI and when it ends. Confirm the outstanding amount from your lender each month. Once confirmed, it stays until your next update. Older schedule-based balances and future payoff figures are estimates.",
       "Tap +, then Update amounts to enter new amounts, or Import statement to update funds from a CAS.",
       "Between jobs? Your savings goals wait, On hold till salary. The Budget tab shows whether your money lasts till then.",
       "Your plan (top right) shows how your monthly money is split, top of your order first. Edit order there to choose which goals come first.",
-      "A Next step card shows when there's something to do: set your budget, start a SIP plan or set up this month's SIPs. Tap Not now to hide it. ",
+      "Use Plan monthly contributions when starting a plan, or Your plan for an existing allocation. Reminders stay on Home, so Goals stays focused on progress.",
       "Your plan has its own page: tap Your plan. It shows where the money goes and why, then This month lists what to add to your SIPs. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
       "Open a goal for its What to do box. If your plan can't cover it, it says how much more a month keeps it on track.",
       "The plan page shows what your budget allows and what your plan uses. Open Budget and plan details there for income, costs, EMIs and SIPs.",
@@ -98,7 +98,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap Plan my budget. Confirm income and recorded commitments first. Groceries and everyday costs are asked later, with up to two expense questions per screen. Personal transport stays in the Personal spending step. Annual contributions stay in Goals.",
       "Enter a preferred Personal spending amount or let the guide suggest one. There is no savings-versus-investing split to choose.",
       "Review one Save & invest amount and Personal spending in rupees. Change anything before Save this budget. No percentages are required.",
-      "Your saved view has three collapsed rows. Tap one for details or use Edit monthly amounts for quick changes.",
+      "Your saved view has three totals. Itemised buckets expand into a breakdown; Edit beside income opens monthly amounts. Budget options holds rebuilding and reset.",
       "Rebuild with guide leaves the current budget intact until you save its replacement. The budget stays independent unless you choose Create a SIP plan and explicitly save its monthly allocation. Investment records and SIP mandates are not created automatically.",
     ],
   },
@@ -138,6 +138,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-21", title: "Cleaner Goals and Budget", items: [{ title: "Less repetition", text: "Goals puts unfinished goals first and covered goals in their own section, with calculations behind Show details. Budget keeps three totals, a header Edit action and one SIP action; rebuild and reset live in Budget options." }] },
   { date: "2026-11-21", title: "A quieter Home", items: [{ title: "The essentials, without repeated links", text: "One balance card, a compact reminder and shorter goal and milestone summaries. Extra money stays easy to reach inside the balance card. Empty milestone cards and duplicate navigation links are removed." }] },
   { date: "2026-11-21", title: "Manage closed loans and spare money", items: [{ title: "Loan controls in Net worth", text: "Manage a loan even after its goal is deleted. Mark it closed or confirm permanent removal. Closed loans stop counting as debt or future EMIs." }, { title: "I have extra money", text: "Open the allocation preview directly from Home or the + menu. Review suggestions before adding anything to your plan." }] },
   { date: "2026-11-19", title: "All monthly SIP steps visible", items: [{ title: "No extra tap", text: "This month now shows every pending SIP step. The Show all and Show fewer controls are removed." }] },

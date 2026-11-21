@@ -137,14 +137,16 @@ export function GoalList({
   // Every goal in one list, in the plan's order. The first three are the
   // ones to focus on; nothing is folded away.
   const ordered = orderGoals(filtered, today);
-  const top = ordered.slice(0, 3);
-  const rest = ordered.slice(3);
+  const active=ordered.filter(g=>g.status!=="reached");
+  const covered=ordered.filter(g=>g.status==="reached");
+  const top=active.slice(0,3);
+  const rest=active.slice(3);
   const renderGoals = (items: TrackedGoal[]) => (
     <ul className="space-y-3">
       {items.map((g) => {
         const suggestion = suggestions.find((x) => x.goalId === g.id);
         const st = goalStatus(g, today, between);
-        const sub = goalSubline(g);
+        const sub = g.loanState ? (g.targetDate?`Close by ${monthYear(g.targetDate)}`:"") : goalSubline(g);
         const hint = goalHint(g, today, suggestion, between);
         const held = onHold(g, between);
         // Still behind after the plan: offer ways to close the gap.
@@ -157,7 +159,7 @@ export function GoalList({
           <li
             key={g.id}
             className={cn(
-              "surface-card overflow-hidden rounded-2xl border border-border/70 bg-card transition-colors hover:border-primary/40",
+              "overflow-hidden rounded-2xl border border-border/70 bg-card transition-colors hover:border-primary/40",
               isOpen && "border-primary",
             )}
           >
@@ -169,21 +171,15 @@ export function GoalList({
                 setOpen(isOpen ? null : g.id);
                 setDetails(false);
               }}
-              className="press flex w-full items-start gap-3 p-4 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="press flex w-full items-start gap-3 p-3 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
-              <GoalIcon type={g.type} />
+              <GoalIcon type={g.type} className="size-8 rounded-xl" />
               <div className="min-w-0 flex-1 space-y-1.5">
                 <div className="flex items-start justify-between gap-2">
                   <span className="min-w-0 break-words text-base font-semibold leading-snug">
                     {g.name}
                   </span>
-                  <StatusPill
-                    status={
-                      st.label === "Behind"
-                        ? { ...st, label: "Behind today" }
-                        : st
-                    }
-                  />
+                  <StatusPill status={st} />
                 </div>
                 {(sub || g.niceToHave) && (
                   <span className="block text-xs text-muted-foreground">
@@ -240,6 +236,11 @@ export function GoalList({
                 className="expand-in space-y-5 border-t px-4 pb-4 pt-4"
               >
                 <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-sm font-semibold">Plan & investments</h3>
+                  <EditGoalButton goal={g} today={today} />
+                </div>
+
+                {details&&<div className="space-y-1 rounded-xl bg-muted/40 p-3">
                   <div>
                     <p className="tabular text-2xl font-semibold tracking-tight">
                       {formatINR(g.current)}
@@ -258,8 +259,7 @@ export function GoalList({
                         </p>
                       )}
                   </div>
-                  <EditGoalButton goal={g} today={today} />
-                </div>
+                </div>}
 
                 {suggestion && (
                   <SuggestionBox
@@ -325,11 +325,11 @@ export function GoalList({
         <section aria-labelledby="goals-top-h" className="space-y-3">
           <div className="flex items-baseline justify-between gap-2 px-0.5">
             <h2 id="goals-top-h" className="font-semibold">
-              Focus on these first
+              Focus goals
             </h2>
             <NextLink
               href="/goals/order"
-              className="text-xs font-medium text-primary"
+              className="inline-flex min-h-10 items-center text-xs font-medium text-primary"
             >
               Change order
             </NextLink>
@@ -340,7 +340,7 @@ export function GoalList({
       {rest.length > 0 && (
         <section aria-labelledby="goals-rest-h" className="space-y-3">
           <h2 id="goals-rest-h" className="px-0.5 font-semibold">
-            Everything else{" "}
+            Other goals{" "}
             <span className="text-sm font-normal text-muted-foreground">
               {rest.length}
             </span>
@@ -348,6 +348,7 @@ export function GoalList({
           {renderGoals(rest)}
         </section>
       )}
+      {covered.length>0&&<section aria-labelledby="goals-covered-h" className="space-y-3"><h2 id="goals-covered-h" className="px-0.5 font-semibold">Covered <span className="text-sm font-normal text-muted-foreground">{covered.length}</span></h2>{renderGoals(covered)}</section>}
     </div>
   );
 }

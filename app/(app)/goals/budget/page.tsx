@@ -58,20 +58,17 @@ export default async function BudgetPage() {
     </Link>
   );
   return (
-    <main className="space-y-5">
+    <main className="space-y-4">
       <div className="space-y-1">
         <div className="flex items-center gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">Budget</h1>
           <GuideButton id="budget" />
         </div>
-        <p className="text-sm text-muted-foreground">
-          Your monthly money, in one place.
-        </p>
       </div>
       {head && runwayRow}
       <BudgetExperience initial={sheet.plan} saved={sheet.saved} salary={recordIncome} loans={loanEmis} knownCosts={recordCosts} loadError={sheet.error} />
       {/* Not between jobs: a quiet link at the end. */}
-      {!head && runwayRow}
+      {!head && <Link href="/goals/salary" className="inline-flex min-h-10 items-center text-xs text-muted-foreground">Between jobs? Check salary coverage<ChevronRight className="ml-1 size-3.5" aria-hidden /></Link>}
     </main>
   );
 }

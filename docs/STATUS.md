@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 21 Nov 2026.
 
+## Simpler Goals and Budget pages, 21 Nov 2026
+
+Goals no longer repeats Home reminders or an extra Next step card beside the plan link. The existing money-plan form remains available through a single Plan monthly contributions entry when no plan exists, or Your plan when saved. Goal cards use smaller icons and shorter statuses; exact amounts/inflation move behind Show details, alongside existing management access. Focus goals contains only the first three unfinished goals, Other goals the rest, and Covered is separate at the bottom. Budget removes the filler subtitle and balanced-plan reassurance, uses Edit in the income header and a single primary SIP action. Rebuild and Reset move into Budget options. Only itemised buckets expand, eliminating accordions that repeated the same amount. The inactive salary-coverage prompt is now a quiet link; active warnings remain visible. A shared useDayRefresh hook preserves midnight/wake refresh after reminders move off Goals. No calculations or saved data are changed.
+
+Verification: lint, TypeScript, 648 unit tests, 40 Python tests and production build passed. Twelve responsive fixtures cover four widths and three themes for both pages, covered-goal grouping, real monthly-plan form opening, detail toggles, quick budget editing, SIP links, rebuild cancellation and reset confirmation. Additional checks cover between-jobs suppression and the empty budget entry. Nested goal-action bodies are mocked in the layout fixture; existing action/finance tests cover their unchanged logic. Full signed-in local integration remains blocked by the previously confirmed database-image extraction limit.
+
 ## Simpler Home, 21 Nov 2026
 
 Home now uses one balance card with current net worth, compact asset/debt totals, direct holdings navigation and the extra-money shortcut in its footer. Removed the repeated holdings link, standalone extra-money card, filler subtitle and asset/debt ratio bar. Focus-goal rows are shorter without changing the first-three order or between-jobs status. The closest milestone is one tappable card with amount left, progress and deadline, without duplicate navigation or repeated spend totals. Empty milestone cards are hidden; no-goal and all-covered states stay concise. Home uses a compact UpdatesDue variant while other tabs retain the existing reminder layout. No financial calculations or data writes changed.

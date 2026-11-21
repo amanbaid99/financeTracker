@@ -48,7 +48,7 @@ export const HELP: HelpTopic[] = [
     q: "What do On track, Behind and Not started mean?",
     a: [
       "On track: at the money going in each month, the goal reaches its target by its date.",
-      "Behind today: at the current pace it falls short. Open it to see how much more a month keeps it on time.",
+      "Behind: at the current pace it falls short. Open it to see how much more a month keeps it on time.",
       "Not started: nothing is linked to it yet. Open it to link an investment or start one.",
     ],
     tags: "status label behind today",
@@ -59,7 +59,7 @@ export const HELP: HelpTopic[] = [
     q: "What order are my goals in?",
     a: [
       "Your order: bills funds first, then the order you set with Change order, or the app's order (emergency fund first, then by when the money is needed). A goal on hold keeps its place and says so. Loans the EMIs already close come after the rest unless you place them, and goals reached come last.",
-      "The first three are under Focus on these first. Nothing is folded away: every goal is in the list.",
+      "The first three unfinished goals are under Focus goals, followed by Other goals. Reached goals have their own Covered section at the bottom. Every goal stays visible. Open a goal for its plan and investments; Show details reveals exact totals and calculations.",
     ],
     tags: "order priority top three list focus",
   },
@@ -153,7 +153,7 @@ export const HELP: HelpTopic[] = [
       "The guide recommends one monthly Save & invest amount. Adjust it before Save this budget. Personal spending gets what is left after Essentials and Save & invest. Annual contributions remain in Goals and are not imported or added here.",
       "Without a spending preference, the starting amount is 25% of income, capped at half the money left after essentials. The remainder goes to Save & invest. This is an editable starting point, not an ideal ratio or investment advice.",
       "Personal spending includes transport, day-to-day personal purchases and guilt-free money. Enter one optional monthly amount in setup, or leave it blank for a recommendation. Review the suggested plan before saving.",
-      "After saving, three collapsed rows show Essentials, Save & invest and Personal spending. Tap a row for details. Edit monthly amounts changes income, the combined target or included costs without running the guide again. Removing a cost increases Personal spending, keeping the combined target fixed.",
+      "After saving, Essentials, Save & invest and Personal spending show their monthly totals. Only buckets with named items expand into a breakdown. Tap Edit beside income for monthly amounts; Budget options holds Rebuild with guide and Reset budget. Removing a cost increases Personal spending, keeping the combined target fixed.",
       "Existing savings and investing rows appear under the combined total without rewriting stored amounts. Existing annual provision rows stay until you explicitly edit or rebuild the budget. Rebuild with guide replaces a budget only after you save. Goals, SIPs and investment records are separate, and no actual spending is tracked.",
     ],
     tags: "income costs expenses budget free to invest plan",
@@ -163,7 +163,7 @@ export const HELP: HelpTopic[] = [
     section: "Budget",
     q: "How do I reset my budget and start over?",
     a: [
-      "Below the saved budget, tap Reset budget, then Reset and start over. Keep my budget or closing the panel cancels without deleting anything.",
+      "Below the saved budget, open Budget options, choose Reset budget, then Reset and start over. Keep my budget or closing the panel cancels without deleting anything.",
       "Reset removes only your saved budget and returns to Plan my budget. Your loans, holdings, SIPs, income records, goals and cards stay as they are. Reset cannot be undone. If it fails, your budget remains visible with an error.",
     ],
     tags: "delete clear budget start over reset",

@@ -1,5 +1,8 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { QUICK_ACTION } from "@/components/quick-add";
+import { useDayRefresh } from "@/components/use-day-refresh";
 import { useState } from "react";
 import { GoalList } from "@/components/goal-list";
 import { MoneyPlanCard } from "@/components/money-plan";
@@ -27,6 +30,7 @@ export function GoalsOverview(props: {
   /** Between jobs: savings goals wait for the salary. */
   between?: boolean;
 }) {
+  useDayRefresh(props.today);
   const [strategy, setStrategy] = useState<SipStrategy>("diversified");
   return (
     <>
@@ -39,7 +43,9 @@ export function GoalsOverview(props: {
         sipsNow={props.sipsNow}
         autoOpen={props.autoExtra}
       />
+      {!props.plan&&!props.between&&props.goals.some(g=>g.status!=="reached")&&<Button variant="outline" className="w-full" onClick={()=>window.dispatchEvent(new CustomEvent(QUICK_ACTION,{detail:"plan"}))}>Plan monthly contributions</Button>}
       <MoneyPlanCard
+        variant="form"
         {...props}
         strategy={strategy}
         onStrategyChange={setStrategy}

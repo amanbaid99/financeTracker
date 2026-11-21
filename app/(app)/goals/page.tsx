@@ -1,6 +1,3 @@
-import { UpdatesDue } from "@/components/updates-due";
-import { updatesDue } from "@/lib/updates";
-import { loadSnapshot, loadCards, loadLoans } from "@/lib/data";
 import { Plus } from "lucide-react";
 import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
@@ -9,7 +6,6 @@ import { ExtraMoney } from "@/components/extra-money";
 import { GoalsOverview } from "@/components/goals-overview";
 import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
-import { BudgetCard } from "@/components/budget-card";
 import { loadMoneyPlan, loadRunway } from "@/lib/data";
 import { sortGoals } from "@/lib/goal-summary";
 
@@ -27,29 +23,12 @@ export default async function GoalsPage({
     links,
     today,
     plan,
-    planInput,
     budget: monthBudget,
     sipsNow,
     unassigned,
     budgetMonthly,
   } = await loadMoneyPlan();
-  const [between, snapshot, cardData, loans] = await Promise.all([
-    loadRunway(),
-    loadSnapshot(),
-    loadCards(),
-    loadLoans(),
-  ]);
-  const due = updatesDue({
-    today,
-    cards: cardData.cards,
-    loans,
-    lastCas: snapshot.settings?.last_cas_import_at ?? null,
-    hasFunds: investments.some((i) => i.kind === "mutual_fund"),
-    snoozes: (snapshot.settings?.update_snoozes ?? {}) as Record<
-      string,
-      unknown
-    >,
-  });
+  const between=await loadRunway();
   // Every investment remains updatable from the + menu.
   const goalNames = new Map(goals.map((g) => [g.id, g.name]));
   const updatable = investments.map((i) => ({
@@ -60,7 +39,7 @@ export default async function GoalsPage({
   }));
 
   return (
-    <main className="space-y-5">
+    <main className="space-y-4">
       <div className="space-y-4">
         <div className="min-w-0">
           <div className="flex items-center justify-between gap-2">
@@ -68,7 +47,7 @@ export default async function GoalsPage({
               <h1 className="text-2xl font-semibold tracking-tight">Goals</h1>
               <GuideButton id="goals" />
             </div>
-            {goals.length > 0 && (
+            {goals.length > 0 && plan && (
               <Link
                 href="/goals/plan"
                 data-guide="plan-link"
@@ -78,19 +57,9 @@ export default async function GoalsPage({
               </Link>
             )}
           </div>
-          {goals.length === 0 && (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Make room for what matters to you.
-            </p>
-          )}
+
         </div>
       </div>
-
-      <UpdatesDue items={due} today={today} />
-
-      {goals.length === 0 && (
-        <BudgetCard b={monthBudget} planMonthly={planInput?.monthly ?? null} />
-      )}
 
       {updatable.length > 0 && (
         <UpdateButton
@@ -111,15 +80,7 @@ export default async function GoalsPage({
           <Link href="/goals/new" className={buttonVariants()}>
             <Plus /> Add your first goal
           </Link>
-          <p className="text-xs text-muted-foreground">
-            Have mutual funds?{" "}
-            <Link
-              href="/import"
-              className="text-primary underline underline-offset-2"
-            >
-              Import a CAS statement
-            </Link>
-          </p>
+
         </div>
       ) : (
         <>

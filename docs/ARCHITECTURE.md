@@ -3,6 +3,10 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+## Goals and Budget presentation simplification
+
+GoalsOverview mounts MoneyPlanCard in form-only mode so quick actions and strategy synchronisation remain functional, without duplicating the plan summary. It exposes one form trigger for new plans and retains the existing Your plan navigation for saved plans. GoalList groups ordered unfinished goals into focus/rest and reached goals into Covered; expanded math uses the existing details state. BudgetExperience keeps existing save/reset actions but moves maintenance controls into an options sheet and renders static total rows unless a real item breakdown exists. useDayRefresh is shared by GoalsOverview and UpdatesDue to retain wake/midnight behaviour without redundant reminder UI. Loaders and financial models are unchanged.
+
 ## Compact Home presentation
 
 HomeBalance is a server-rendered summary with signed net worth, asset/loan totals and two distinct navigation areas: holdings and extra money. HomeOverview retains focusGoals/nextMilestone selectors but renders shorter goal rows and a single linked milestone, omitting empty milestone cards. UpdatesDue accepts optional compact styling for Home only; snooze handling and daily refresh are unchanged. Existing data loaders and financial functions are reused without new queries or mutations.

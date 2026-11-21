@@ -3,6 +3,10 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Focused Goals and Budget views, 21 Nov 2026
+
+The owner asked to simplify both pages and remove repeated controls and facts. Goals owns goal progress; Home owns update reminders and Your plan owns monthly allocation/checklists. Preserve all goal actions and calculations, but show exact math only when requested. Covered goals are always a separate bottom section, never included among the first three focus goals. Budget shows three totals, one header Edit action and the requested Create a SIP plan action. Rebuild/reset are secondary maintenance options, not permanently exposed actions. Do not offer an empty expansion that only repeats a bucket total. Between-jobs warnings remain accessible and date-sensitive refresh must survive UI simplification.
+
 ## Home is a concise overview, 21 Nov 2026
 
 The owner wants Home simplified, with fewer repeated options and facts. Keep one clear balance hierarchy, one actionable update reminder, three ordered focus goals and the closest unfinished milestone. Put extra-money access inside the balance card and retain the global + shortcut. Make section content itself navigable, rather than repeating View all/Cards/holdings links. Hide empty milestone placeholders, preserve one first-goal entry and a quiet all-covered state. Keep detailed holdings, goal and milestone data in their respective tabs.

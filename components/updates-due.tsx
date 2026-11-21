@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, buttonVariants } from "@/components/ui/button";
 import type { UpdateDue } from "@/lib/updates";
-import { todayIST } from "@/lib/dates";
+import { useDayRefresh } from "@/components/use-day-refresh";
 import { snoozeUpdate } from "@/lib/updates-actions";
 
 export function UpdatesDue({
@@ -20,19 +20,7 @@ export function UpdatesDue({
   const [pending, start] = useTransition();
   const [error, setError] = useState("");
   const router = useRouter();
-  useEffect(() => {
-    const refreshIfNewDay = () => {
-      if (document.visibilityState === "visible" && todayIST() !== today)
-        router.refresh();
-    };
-    refreshIfNewDay();
-    document.addEventListener("visibilitychange", refreshIfNewDay);
-    window.addEventListener("focus", refreshIfNewDay);
-    return () => {
-      document.removeEventListener("visibilitychange", refreshIfNewDay);
-      window.removeEventListener("focus", refreshIfNewDay);
-    };
-  }, [today, router]);
+  useDayRefresh(today);
   const item = items[0];
   if (!item) return null;
   return (
