@@ -3,6 +3,10 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+## Home setup cues and next actions, 21 Nov 2026
+
+home-cues groups unfinished funding needs through the same categoryForHorizon and pooled splitForGoal suitability rules used by SIP planning. homeNextUp interleaves one setup cue with routine updates without dropping items. Home passes the merged list into UpdatesDue compact mode, which supports three rows and expansion. Existing snooze keys use category-stable vehicle prefixes. Net worth validates the category query against a four-category allowlist and passes it through PortfolioOverview/PortfolioHoldings to InvestmentSheet as a non-plan prefill. No new server action or database schema is required.
+
 ## Monthly minimums and fewer details, 21 Nov 2026
 
 sip-minimums validates held-kind preferences, computes additional reservations above current contributions and wraps planMoney with the remaining budget. MoneyPlan carries the reserved amount and preferences; investment-plan displays custom type rows and recommendations without counting running contributions twice. A cached owner-scoped loader reads preferences separately from app_snapshot; no snapshot function replacement is needed. saveSipPlan validates input, held kinds and budget capacity before one owner-filtered profiles update. The JSONB profile column inherits existing owner-only RLS and adds an object/size constraint. Legacy plan removal clears preferences. Simplify hints now prioritise bank-account review and cap the list at three.

@@ -4,6 +4,10 @@ Why the app works the way it does. Newest first within each section. When the ow
 direction, add a line here so the next person doesn't undo it.
 
 
+## Home setup cues and next actions, 21 Nov 2026
+
+The owner wants high-level investment-vehicle setup cues on Home alongside routine reminders. Reuse suitable vehicles and group shared needs by category, avoiding one fund per goal. Do not guess a purchase horizon when its date is missing. A setup cue is guidance to choose a vehicle with the provider, followed by recording it in the app. It cannot open a financial account or select an unowned scheme. Keep up to three next actions visible, make the remainder accessible, and support the existing tomorrow snooze.
+
 ## Monthly minimums and fewer details, 21 Nov 2026
 
 The owner wants only monthly amounts and a short Covers line, with no goal breakdown. List all types already held, with zero meaning no monthly minimum. An entered amount is a minimum, not an extra contribution on top of recorded SIPs and not permission to cut a larger running SIP. Reserve only the additional amount needed before recommending the remainder. Save these preferences with the plan; do not change holding records or provider mandates. Keep custom type allocations separate until recorded so forecasts do not claim unspecified contributions already fund goals. Keep portfolio simplification to three review ideas, including extra bank accounts only with linked-payment and account-rule checks.

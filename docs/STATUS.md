@@ -3,6 +3,12 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 21 Nov 2026.
 
+## Home setup cues and next actions, 21 Nov 2026
+
+Home now merges missing-vehicle setup cues with card statement, loan-balance and CAS reminders under Next up. It shows three actions, keeps a setup cue visible among routine updates and offers Show more for all remaining actions. Goals needing one category share a cue; suitable owned vehicles, reached goals, EMI-completed loans and adequately funded on-track goals do not generate a new-fund prompt. Undated purchases ask for timing first. Record fund uses an allowlisted category to open the existing Net worth add form with blank amounts and no scheme name. fromPlan=false prevents the record flow from deducting one-time planning money. Closing the sheet clears the category. Tomorrow reuses existing owner-scoped snoozes. No database changes or hosted financial writes.
+
+Verification: lint, TypeScript, 691 unit tests, 40 Python tests and production build passed. Twelve responsive fixture flows cover four widths and three themes, setup-cue visibility, Show more, tomorrow snoozing, category handoff, clearing the prefill, and the actual investment form saving only after confirmation with fromPlan=false. Suitable-held and empty states are checked separately. Local signed-in integration remains unavailable without the database image.
+
 ## Monthly minimums and fewer details, 21 Nov 2026
 
 Removed Goal breakdown from every vehicle row, leaving the monthly amount and Covers line. SIP creation lists every held investment type with an optional minimum, default zero. Existing SIPs satisfy minimums before any additional amount is reserved; the remaining budget is recalculated by the existing goal planner. Chosen minimums persist in profiles.plan_sip_minimums and reload when editing. Create plan saves the monthly total, preserved one-time amount and minimums atomically after owner-scoped validation, without changing holdings or mandates. Custom allocations are separate from goal recommendations; their forecast benefit starts once actual contributions are recorded. Net worth shows at most three simplification hints and reviews more than two bank accounts without inferring inactivity from balances. Applied hosted migration 20261121142356_sip_monthly_minimums; verified column, object/size constraint and existing profile RLS.

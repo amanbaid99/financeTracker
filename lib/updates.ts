@@ -7,6 +7,7 @@ export interface UpdateDue {
   title: string;
   detail: string;
   href: string;
+  actionLabel?: string;
 }
 
 /** Missing information asks for an update, never implies a missed payment. */
@@ -39,6 +40,7 @@ export function updatesDue({
     items.push({
       key: `statement:${c.id}:${latest}`,
       title: `Log ${c.label} statement`,
+      actionLabel:"Log bill",
       detail: `${new Intl.DateTimeFormat("en-IN", { month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(latest))}. Add the statement amount for milestone progress.`,
       href: `/cards?do=${encodeURIComponent(`bill:${c.id}:${latest.slice(0, 7)}`)}`,
     });
@@ -55,6 +57,7 @@ export function updatesDue({
       items.push({
         key: `loan:${l.id}:${loanMonth}`,
         title: `Update ${l.name} balance`,
+        actionLabel:"Update balance",
         detail: "Confirm this month's outstanding amount from your lender.",
         href: `/updates?loan=${l.id}`,
       });
@@ -66,6 +69,7 @@ export function updatesDue({
     items.push({
       key: `cas:${refreshMonth}`,
       title: "Refresh your investments",
+      actionLabel:"Upload CAS",
       detail:
         "Upload a recent CAS. Review current balances before saving.",
       href: "/import",

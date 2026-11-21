@@ -17,7 +17,7 @@ export const HELP: HelpTopic[] = [
     section: "Getting started",
     q: "What is on Home?",
     a: [
-      "Home shows one net-worth card, a compact update reminder, your first three unfinished goals and the closest unfinished card milestone. Tap the net-worth card for holdings, a goal for its details, or the milestone for its card. I have extra money and SIP plan are in the + menu. Empty milestone cards are hidden; a first-goal action appears only when you have no goals.",
+      "Home shows one net-worth card, a compact Next up list, your first three unfinished goals and the closest unfinished card milestone. Tap the net-worth card for holdings, a goal for its details, or the milestone for its card. I have extra money and SIP plan are in the + menu. Empty milestone cards are hidden; a first-goal action appears only when you have no goals.",
     ],
     tags: "overview focus dashboard",
   },
@@ -33,10 +33,10 @@ export const HELP: HelpTopic[] = [
   {
     id: "updates-due",
     section: "Goals",
-    q: "What appears in Updates due?",
+    q: "What appears in Next up on Home?",
     a: [
-      "One update at a time on Goals. Missing card statements use the statement day in Edit card. Days beyond the end of a month use its last day. Without a statement day, card reminders stay off.",
-      "Loan balance updates start on the 2nd. Monthly CAS reminders start on the 5th when you hold mutual funds. Saving a relevant update clears its reminder. Remind me tomorrow postpones that item until the next day, across your devices.",
+      "Up to three actions on Home, with Show more for the rest. Missing investment-vehicle cues share the list with routine updates. Missing card statements use the statement day in Edit card. Days beyond the end of a month use its last day. Without a statement day, card reminders stay off.",
+      "Loan balance updates start on the 2nd. Monthly CAS reminders start on the 5th when you hold mutual funds. Saving a relevant update clears its reminder. Goals needing the same missing fund category share one cue. Suitable held funds are reused; an undated purchase asks for a date instead of guessing its horizon. Record fund opens a category-prefilled form, without choosing a scheme or saving anything. Set up the fund with your provider, then confirm its record in Net worth. Remind me tomorrow postpones that item until the next day, across your devices.",
       "A missing statement or balance update never means you missed a payment. Card statements count only for milestones; the app does not track card payment confirmations.",
     ],
     tags: "reminder nudge statement monthly CAS loan balance snooze",

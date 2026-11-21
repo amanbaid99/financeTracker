@@ -26,7 +26,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Net worth is recorded holdings minus loan balances. Tap the balance card for holdings, or use I have extra money in + to preview an allocation.",
       "Focus goals shows the first three unfinished goals in your Goals order.",
       "Closest card milestone shows the unfinished target with the smallest amount left. Tap it to open the card; it is hidden when no unfinished target exists.",
-      "Updates due reminds you about missing statements, monthly loan balances and a recent CAS. No payment is assumed missed.",
+      "Next up groups missing investment-vehicle cues with statements, loan balances and CAS reminders. Show more reveals the rest; Tomorrow postpones one item.",
       "Tap the sticky + button to add a goal, upload CAS or update amounts. Add new cards in Cards.",
     ],
   },
@@ -136,6 +136,10 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-21", title: "Your next actions on Home", items: [
+    { title: "One fund can support several goals", text: "Home suggests a missing fund category only when a goal needs funding and no suitable holding exists. Similar goals share one cue. Undated purchases ask for a date first." },
+    { title: "Reminders together", text: "Next up puts setup cues alongside card statements, loan balances and CAS updates. Record fund prefills only the category; choose and set up the fund with your provider, then save its record." },
+  ] },
   { date: "2026-11-21", title: "Your minimums, a simpler plan", items: [
     { title: "Set a monthly minimum", text: "Enter an optional amount for each investment type you hold. Existing SIPs count toward it; recommendations use what remains. Create plan remembers your choices." },
     { title: "Just the essentials", text: "Monthly investments show the amount and covered goals without a breakdown. Net worth offers at most three simplification ideas, including reviewing extra bank accounts." },

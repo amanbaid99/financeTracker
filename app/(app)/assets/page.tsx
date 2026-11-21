@@ -15,6 +15,7 @@ import { NetWorthCard } from "@/components/net-worth-card";
 // import { AI_CONSENT_VERSION } from "@/lib/legal";
 import { buildPortfolio } from "@/lib/portfolio";
 import { SimplifyCard } from "@/components/simplify-card";
+import { cueCategory } from "@/lib/home-cues";
 import { simplifyHints } from "@/lib/simplify";
 
 export const metadata: Metadata = { title: "Net worth" };
@@ -22,9 +23,10 @@ export const metadata: Metadata = { title: "Net worth" };
 export default async function PortfolioPage({
   searchParams,
 }: {
-  searchParams: Promise<{ do?: string }>;
+  searchParams: Promise<{ do?: string;category?:string }>;
 }) {
-  const { do: action } = await searchParams;
+  const { do: action,category } = await searchParams;
+  const initialCategory=action==="add"?cueCategory(category):null;
   // One snapshot for everything here (shared with the layout).
   const [{ investments, links, goals, today, allocation }, snap, worth, loans] =
     await Promise.all([
@@ -91,6 +93,7 @@ export default async function PortfolioPage({
         <div className="overflow-hidden rounded-2xl border bg-card">
           <PortfolioHoldings
             autoAdd={action === "add"}
+          initialCategory={initialCategory}
             holdings={[]}
             investments={investments}
             links={links}
@@ -131,6 +134,7 @@ export default async function PortfolioPage({
             : (importHistory.data?.last_cas_import_at ?? null)
         }
         autoAdd={action === "add"}
+          initialCategory={initialCategory}
       />
       </section>
       <SimplifyCard hints={simplifyHints(investments, allocation)} />

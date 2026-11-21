@@ -20,6 +20,7 @@ export function PortfolioOverview({
   review,
   lastImportAt,
   autoAdd = false,
+  initialCategory = null,
 }: {
   portfolio: Portfolio;
   investments: Investment[];
@@ -27,6 +28,7 @@ export function PortfolioOverview({
   review: React.ReactNode;
   lastImportAt: string | null;
   autoAdd?: boolean;
+  initialCategory?:string|null;
 }) {
   const [assetClass, setAssetClass] = useState<AssetClass | null>(null);
   const [view, setView] = useState<"asset" | "kind">("asset");
@@ -123,6 +125,7 @@ export function PortfolioOverview({
           assetClass={assetClass}
           onClearClass={() => setAssetClass(null)}
           autoAdd={autoAdd}
+          initialCategory={initialCategory}
         />
       </section>
     </>

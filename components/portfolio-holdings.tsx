@@ -33,10 +33,12 @@ export function PortfolioHoldings({
   assetClass = null,
   onClearClass,
   autoAdd = false,
+  initialCategory = null,
 }: {
   assetClass?: AssetClass | null;
   onClearClass?: () => void;
   autoAdd?: boolean;
+  initialCategory?:string|null;
   holdings: PortfolioHolding[];
   investments: Investment[];
   links: Link[];
@@ -44,9 +46,12 @@ export function PortfolioHoldings({
   const [open, setOpen] = useState<Investment | "new" | null>(
     autoAdd ? "new" : null,
   );
+  const [suggestedCategory,setSuggestedCategory]=useState(initialCategory);
   const close = useCallback(() => {
     setOpen(null);
+    setSuggestedCategory(null);
     clearParam("do");
+    clearParam("category");
   }, []);
   useQuickAction(
     "add",
@@ -199,6 +204,8 @@ export function PortfolioHoldings({
           investments={investments}
           links={links}
           onClose={close}
+          prefill={open==="new"&&suggestedCategory?{fundCategory:suggestedCategory,value:0,monthlySip:0}:undefined}
+          fromPlan={false}
         />
       )}
     </>

@@ -18,11 +18,12 @@ export function UpdatesDue({
   compact?:boolean;
 }) {
   const [pending, start] = useTransition();
+  const [expanded,setExpanded]=useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
   useDayRefresh(today);
-  const item = items[0];
-  if (!item) return null;
+  const visible=compact?(expanded?items:items.slice(0,3)):items.slice(0,1);
+  if (!items.length) return null;
   return (
     <section
       aria-label="Updates due"
@@ -30,20 +31,21 @@ export function UpdatesDue({
       className={compact?"rounded-xl border border-border/70 bg-card p-3 space-y-2":"rounded-2xl border bg-card p-4 space-y-2"}
     >
       <div className="flex items-center justify-between gap-3 text-sm">
-        <h2 className="font-medium">{compact?"Update needed":"Updates due"}</h2>
-        <span className="text-muted-foreground">{compact?(items.length>1?`+${items.length-1} more`:null):items.length}</span>
+        <h2 className="font-medium">{compact?"Next up":"Updates due"}</h2>
+        <span className="text-muted-foreground">{items.length}</span>
       </div>
+      <ul className="divide-y">{visible.map(item=><li key={item.key} className="space-y-2 py-3 first:pt-0 last:pb-0">
       <p className={compact?"break-words text-sm font-medium":"font-semibold break-words"}>{item.title}</p>
       <p className={compact?"text-xs text-muted-foreground":"text-sm text-muted-foreground"}>{item.detail}</p>
       <div className="flex flex-wrap items-center gap-2">
         <Link href={item.href} className={buttonVariants({ size: "sm" })}>
-          Update
+          {item.actionLabel??"Update"}
         </Link>
         <Button
           size="sm"
           variant="ghost"
           disabled={pending}
-          aria-label="Remind me tomorrow"
+          aria-label={compact?`Remind me tomorrow: ${item.title}`:"Remind me tomorrow"}
           onClick={() =>
             start(async () => {
               setError("");
@@ -56,6 +58,8 @@ export function UpdatesDue({
           {compact?"Tomorrow":"Remind me tomorrow"}
         </Button>
       </div>
+      </li>)}</ul>
+      {compact&&items.length>3&&<Button variant="ghost" size="sm" className="w-full" onClick={()=>setExpanded(!expanded)}>{expanded?"Show fewer":`Show ${items.length-3} more`}</Button>}
       {error && (
         <p role="alert" className="text-sm text-danger">
           {error}
