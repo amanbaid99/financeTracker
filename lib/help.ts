@@ -129,7 +129,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "I have a bonus. Where should it go?",
     a: [
-      "Open Your plan (on Goals) and tap I have extra money. Type the amount to see where it helps most, in the same order the plan uses. Nothing is saved until you tap Add to my plan.",
+      "Tap I have extra money on Home or in the + menu from any main tab. You can also open it from Your plan. Type the amount to see where it helps most, in the same order the plan uses. Nothing is saved until you tap Add to my plan.",
     ],
     tags: "lump sum one time bonus",
   },
@@ -234,8 +234,9 @@ export const HELP: HelpTopic[] = [
     section: "Cards and loans",
     q: "Where are my loans?",
     a: [
-      "Loans are goals. Add one with New goal, then Close my loan, with what you owe now and the EMI. A loan on a card works the same way.",
+      "Loans are tracked separately from their payoff goals. Add one with New goal, then Close my loan. Open Net worth, What you owe, and tap Manage loan to update, mark it closed or delete it, even if the payoff goal was removed.",
       "Open a loan and tap Update loan balance. Enter the outstanding principal from your lender and confirm. It stays until your next update, with a reminder from the 2nd each month. Amount borrowed is optional; when known, the loan card in your goals shows what's repaid of it, otherwise what's left, with the end date. If you're saving to close it early, a second bar shows that saving. Older unconfirmed balances and future payoff figures are estimates.",
+      "Deleting a payoff goal does not close its loan. Mark closed / foreclosed sets the outstanding balance to zero, removes future EMIs and keeps history under Closed loans. Permanently deleting an unlinked loan also removes its recorded payment history, after confirmation. If a payoff goal is still linked, close the loan or remove the payoff goal first.",
     ],
     tags: "loan emi debt owe balance outstanding personal card",
   },

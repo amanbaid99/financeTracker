@@ -289,7 +289,7 @@ export function GoalInvestments({
   );
 }
 
-export function DeleteGoalButton({ id }: { id: string }) {
+export function DeleteGoalButton({ id, loanId }: { id: string; loanId?: string | null }) {
   const router = useRouter();
   const [confirm, setConfirm] = useState(false);
   const [pending, start] = useTransition();
@@ -315,7 +315,7 @@ export function DeleteGoalButton({ id }: { id: string }) {
       </Button>
       {confirm && (
         <p className="text-xs text-muted-foreground">
-          Its investments stay; they&apos;re just unlinked.
+          Its investments stay; they&apos;re just unlinked. {loanId&&"The loan remains active. To record repayment or foreclosure, use Manage loan in Net worth."}
         </p>
       )}
     </div>

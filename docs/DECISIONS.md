@@ -3,6 +3,10 @@
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 
+## Loan records survive goal deletion, 21 Nov 2026
+
+A payoff goal and its underlying liability have separate lifecycles. Deleting the goal must not silently imply repayment or erase loan history. Every loan therefore needs management independent of its goal. Offer explicit closure/foreclosure with zero confirmed balance and retained history, plus permanent removal of unlinked loans after a destructive confirmation. Hide closed loans from active debt and EMIs. Loan-linked budget rows for closed/deleted loans must also leave the budget view. I have extra money is a prominent global + action and Home shortcut to the existing read-only allocation preview, with explicit Add to my plan required for writes.
+
 ## Always show the complete monthly SIP checklist, 19 Nov 2026
 
 The owner wants every item in This month visible immediately. Remove the two-row limit and expansion controls; keep confirmation and Undo behaviour unchanged.

@@ -1,7 +1,13 @@
 # Status
 
 What's live, what's open and the known gaps. Update this at the end of every task.
-Last updated: 19 Nov 2026.
+Last updated: 21 Nov 2026.
+
+## Loan foreclosure and extra-money access, 21 Nov 2026
+
+Found a loan with an outstanding balance but no payoff goal, while Portfolio linked orphaned loans back to Goals and exposed no independent management controls. Added Manage loan in Net worth for all active loans and a folded Closed loans history. Explicit closure zeroes and confirms the balance, retaining EMI/payment history; deletion requires confirmation and blocks while a payoff goal remains linked to avoid stale legacy loan fields. Standalone budget reads drop EMI rows for closed/deleted loans without adding unapproved new ones. Goal deletion now explains that the loan remains separate. Restored I have extra money in the global + menu, added a Home action and mounted the existing preview for empty-goal pages with a useful empty state. No schema change. On the owner's foreclosure report, repaired the uniquely matched IDFC loan to a confirmed zero balance; verified its existing payment record remains.
+
+Verification: lint, TypeScript, 648 unit tests, 40 Python tests and production build passed. Twelve responsive loan-management fixtures cover four widths and three themes, explicit closure, cancellation, closed history and permanent deletion. Additional browser checks cover linked-goal protection, failed closure, extra-money shortcuts on Home/Net worth/Goals/Cards and the no-goal preview. Production SQL verification confirms the IDFC balance is zero and the prior payment record is retained. Full local signed-in integration remains blocked by the previously confirmed database-image extraction limit.
 
 ## All monthly steps visible, 19 Nov 2026
 

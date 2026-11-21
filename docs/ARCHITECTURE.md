@@ -3,6 +3,10 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+## Independent loan management
+
+OweList keeps active loans and folded closed history and mounts LoanManagement for either, without requiring a goal link. manageLoan validates confirmation, authenticates via requireUser, applies owner/id filters, confirms zero balances on closure or checks linked goals before deleting, and refreshes the app layout. Existing RLS, loan-payment cascades and net-worth snapshot triggers apply; no migration. readBudgetSheet removes inactive linked EMI rows from standalone budgets while preserving the no-auto-insertion policy. QuickAdd and Home route to /goals?do=extra; Goals mounts ExtraMoney for both populated and empty goal lists.
+
 ## Budget SIP handoff
 
 budgetSipHref and parseSipMonthly validate the explicit query handoff. BudgetGuide optionally saves its budget before navigating to /goals/sip; BudgetExperience exposes the same entry on saved budgets. The server loads owner-scoped planning data; BudgetSipPlanner previews planMoney with the selected monthly total and existing one-time amount. No write occurs during navigation or input changes. Explicit Save SIP plan uses existing authenticated savePlan and opens /goals/plan. The standalone budget flag remains unchanged, so future budget edits do not automatically alter the saved SIP plan.

@@ -112,7 +112,11 @@ export function addScheduledEmis(plan: BudgetSheet, loans: SheetLoan[]): BudgetS
 export function readBudgetSheet(raw: unknown, salary: number, loans: SheetLoan[]): BudgetSheet | null {
   if (raw == null) return addScheduledEmis(emptyBudgetSheet(salary), loans);
   const current = budgetSheetSchema.safeParse(raw);
-  if (current.success) return current.data.standalone ? applyBudgetRules(current.data) : addScheduledEmis(current.data, loans);
+  if (current.success) {
+    if (!current.data.standalone) return addScheduledEmis(current.data,loans);
+    const active=new Set(loans.flatMap(l=>l.id&&l.emi>0?[l.id]:[]));
+    return applyBudgetRules({...current.data,rows:current.data.rows.filter(r=>!r.loanId||active.has(r.loanId))});
+  }
   const legacy = ratioPlanSchema.safeParse(raw);
   if (!legacy.success) return null;
   const plan = emptyBudgetSheet(legacy.data.salary);

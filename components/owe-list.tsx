@@ -1,5 +1,6 @@
 import { ChevronRight, Landmark } from "lucide-react";
 import Link from "next/link";
+import { LoanManagement } from "@/components/loan-management";
 import { Progress } from "@/components/ui/progress";
 import { formatINR, formatINRCompact } from "@/lib/format";
 import { monthYear } from "@/lib/goal-summary";
@@ -7,8 +8,9 @@ import { loanView, type Loan } from "@/lib/loans";
 
 /** What you owe: each loan's balance and how much is repaid. Tap one to open its goal. */
 export function OweList({ loans, today }: { loans: Loan[]; today: string }) {
-  const views = loans
-    .map((l) => loanView(l, today))
+  const all = loans.map(l=>loanView(l,today));
+  const closed = all.filter(v=>v.closed);
+  const views = all
     .filter((v) => !v.closed)
     .sort((a, b) => b.state.balance - a.state.balance);
   const total = views.reduce((s, v) => s + v.state.balance, 0);
@@ -26,7 +28,7 @@ export function OweList({ loans, today }: { loans: Loan[]; today: string }) {
       </div>
       {views.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          No loans. Add one with +, New goal, then Close my loan.
+          No active loans.
         </p>
       ) : (
         <ul className="divide-y">
@@ -34,12 +36,7 @@ export function OweList({ loans, today }: { loans: Loan[]; today: string }) {
             const href = v.loan.goal
               ? `/goals?open=${v.loan.goal.id}`
               : "/goals";
-            return (
-              <li key={v.loan.id}>
-                <Link
-                  href={href}
-                  className="flex items-center gap-3 py-3 hover:opacity-80"
-                >
+            const content=(<>
                   <span
                     className="inline-flex size-9 shrink-0 items-center justify-center rounded-full bg-primary-soft text-primary"
                     aria-hidden
@@ -72,18 +69,24 @@ export function OweList({ loans, today }: { loans: Loan[]; today: string }) {
                         : ""}
                     </span>
                   </span>
-                  <ChevronRight
+                  {v.loan.goal && <ChevronRight
                     className="size-4 shrink-0 text-muted-foreground"
                     aria-hidden
-                  />
-                </Link>
+                  />}
+            </>);
+            return (
+              <li key={v.loan.id} className="py-2">
+                {v.loan.goal ? <Link href={href} className="flex items-center gap-3 py-3 hover:opacity-80">{content}</Link> : <div className="flex items-center gap-3 py-3">{content}</div>}
+
+                <LoanManagement loan={v.loan} />
               </li>
             );
           })}
         </ul>
       )}
+      {closed.length>0&&<details className="border-t pt-3"><summary className="min-h-10 cursor-pointer text-sm text-muted-foreground">Closed loans ({closed.length})</summary><ul className="divide-y">{closed.map(v=><li key={v.loan.id} className="flex items-center justify-between gap-3 py-2"><span className="min-w-0 break-words text-sm">{v.loan.name} · Closed</span><LoanManagement loan={v.loan} closed /></li>)}</ul></details>}
       <p className="text-xs text-muted-foreground">
-        Loans are goals: open one to update its balance.
+        Manage a loan here to update, close or remove it. Deleting a payoff goal does not close the loan.
       </p>
     </section>
   );

@@ -100,7 +100,7 @@ export function ExtraMoney({
               </ul>
             ) : (
               <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-                Your goals don&apos;t need a one-time amount right now.
+                {goals.length?"Your goals do not need a one-time amount right now.":"Add a goal first so we can suggest where this money helps."}
               </p>
             )}
             {split.leftoverLump > 0 && parts.length > 0 && (

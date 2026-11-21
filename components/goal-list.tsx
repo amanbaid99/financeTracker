@@ -310,7 +310,7 @@ export function GoalList({
                     aria-hidden
                   />
                 </button>
-                {details && <DeleteGoalButton id={g.id} />}
+                {details && <DeleteGoalButton id={g.id} loanId={g.loanId} />}
               </div>
             )}
           </li>

@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ExtraMoney } from "@/components/extra-money";
 import { GoalsOverview } from "@/components/goals-overview";
 import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
@@ -99,6 +100,7 @@ export default async function GoalsPage({
         />
       )}
 
+      {goals.length===0&&<ExtraMoney goals={goals} investments={investments} links={links} today={today} plan={plan} sipsNow={sipsNow} autoOpen={action==="extra"} />}
       {goals.length === 0 ? (
         <div className="space-y-3 rounded-2xl border bg-card p-6 text-center">
           <p className="text-lg font-semibold">What are you saving for?</p>

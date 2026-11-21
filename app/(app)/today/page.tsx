@@ -28,6 +28,7 @@ export default async function HomePage() {
       <NetWorthCard history={[{ day: g.today, ...worth }]} />
       <Link href="/assets" className="inline-flex min-h-10 items-center text-sm font-medium text-primary">View net worth and holdings →</Link>
     </div>
+    <Link href="/goals?do=extra" className="surface-card press flex min-h-12 items-center justify-between rounded-2xl border bg-card px-4 py-3 text-sm font-medium text-primary">I have extra money<span aria-hidden>→</span></Link>
     <UpdatesDue items={due} today={g.today} />
     <HomeOverview goals={g.goals} cards={c.cards} loans={loans} today={g.today} between={runway.active} />
   </main>;

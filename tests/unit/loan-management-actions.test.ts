@@ -1,0 +1,12 @@
+import {beforeEach,expect,it,vi} from "vitest";
+vi.mock("next/cache",()=>({revalidatePath:vi.fn()}));vi.mock("@/lib/data",()=>({requireUser:vi.fn()}));vi.mock("@/lib/dates",()=>({todayIST:()=>"2026-11-21"}));
+import {requireUser} from "@/lib/data";
+import {manageLoan} from "@/lib/loan-management-actions";
+const id="00000000-0000-4000-8000-000000000090";
+const update=vi.fn(),remove=vi.fn(),eq=vi.fn(),from=vi.fn(),single=vi.fn(),limit=vi.fn(),select=vi.fn();
+beforeEach(()=>{vi.clearAllMocks();const chain={eq,select,single,limit};eq.mockReturnValue(chain);select.mockReturnValue(chain);update.mockReturnValue(chain);remove.mockReturnValue(chain);single.mockResolvedValue({data:{id},error:null});limit.mockResolvedValue({data:[],error:null});from.mockReturnValue({update,delete:remove,select});vi.mocked(requireUser).mockResolvedValue({user:{id:"owner"},supabase:{from}} as never);});
+it("requires explicit valid confirmation before authentication",async()=>{expect((await manageLoan({id,confirmation:"yes"})).ok).toBe(false);expect(requireUser).not.toHaveBeenCalled();});
+it("closes only the owner's loan and preserves principal, EMI and payment history",async()=>{expect((await manageLoan({id,confirmation:"CLOSE_LOAN"})).ok).toBe(true);expect(update).toHaveBeenCalledWith({outstanding:0,outstanding_as_of:"2026-11-21",balance_confirmed_on:"2026-11-21"});expect(eq).toHaveBeenCalledWith("id",id);expect(eq).toHaveBeenCalledWith("user_id","owner");expect(from).toHaveBeenCalledTimes(1);expect(from).toHaveBeenCalledWith("loans");expect(remove).not.toHaveBeenCalled();});
+it("requires a successful owner-scoped update",async()=>{single.mockResolvedValue({data:null,error:{message:"not found"}});expect((await manageLoan({id,confirmation:"CLOSE_LOAN"})).ok).toBe(false);});
+it("does not leave a linked payoff goal with stale legacy loan fields",async()=>{limit.mockResolvedValue({data:[{id:"goal"}],error:null});expect((await manageLoan({id,confirmation:"DELETE_LOAN"})).ok).toBe(false);expect(remove).not.toHaveBeenCalled();expect(eq).toHaveBeenCalledWith("user_id","owner");});
+it("deletes only an unlinked owner loan after explicit confirmation",async()=>{expect((await manageLoan({id,confirmation:"DELETE_LOAN"})).ok).toBe(true);expect(remove).toHaveBeenCalledTimes(1);expect(eq).toHaveBeenCalledWith("loan_id",id);expect(eq).toHaveBeenCalledWith("id",id);expect(eq).toHaveBeenCalledWith("user_id","owner");});

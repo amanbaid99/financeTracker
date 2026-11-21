@@ -35,7 +35,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro:
       "Tap + above the bottom-right corner of the navigation for your everyday actions.",
     steps: [
-      "New goal adds something you want to save for.",
+      "I have extra money previews where spare cash helps your goals. Nothing is saved until you confirm. New goal adds something you want to save for.",
       "Update amounts lets you enter the latest amounts for your investments.",
       "Import statement reads a CAS. You review the results before saving.",
       "Plan my money helps split what you can invest across goals.",
@@ -52,7 +52,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Link the mutual funds, savings or deposits that pay for it. One investment can be split across goals.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
       "Every goal shows in one list, in your order. The first three are under Focus on these first, the rest under Everything else. A goal on hold keeps its place. Change order to move any goal, loans included.",
-      "Loans are goals too. Each shows what's left, the EMI and when it ends. Confirm the outstanding amount from your lender each month. Once confirmed, it stays until your next update. Older schedule-based balances and future payoff figures are estimates.",
+      "Loans can have payoff goals. Manage any loan in Net worth, even if its goal was deleted. Each shows what's left, the EMI and when it ends. Confirm the outstanding amount from your lender each month. Once confirmed, it stays until your next update. Older schedule-based balances and future payoff figures are estimates.",
       "Tap +, then Update amounts to enter new amounts, or Import statement to update funds from a CAS.",
       "Between jobs? Your savings goals wait, On hold till salary. The Budget tab shows whether your money lasts till then.",
       "Your plan (top right) shows how your monthly money is split, top of your order first. Edit order there to choose which goals come first.",
@@ -138,6 +138,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-21", title: "Manage closed loans and spare money", items: [{ title: "Loan controls in Net worth", text: "Manage a loan even after its goal is deleted. Mark it closed or confirm permanent removal. Closed loans stop counting as debt or future EMIs." }, { title: "I have extra money", text: "Open the allocation preview directly from Home or the + menu. Review suggestions before adding anything to your plan." }] },
   { date: "2026-11-19", title: "All monthly SIP steps visible", items: [{ title: "No extra tap", text: "This month now shows every pending SIP step. The Show all and Show fewer controls are removed." }] },
   { date: "2026-11-19", title: "From budget to SIP plan", items: [{ title: "Review before linking", text: "Create a SIP plan from Save & invest, adjust how much to use and review the goal allocation before saving. The personal estimate calculator is removed; a manual Personal amount or standard suggestion keeps setup simple." }] },
   { date: "2026-11-19", title: "A simpler Personal spending step", items: [{ title: "Just one amount", text: "The optional estimate calculator is removed from setup and monthly editing. Enter a Personal spending amount or leave it blank for the usual recommendation." }] },
