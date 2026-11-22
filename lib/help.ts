@@ -65,6 +65,7 @@ export const HELP: HelpTopic[] = [
       "A goal more than a year away needs less today, because the money it takes can grow until then. Bigger holdings are used first, so each goal uses as few as it can.",
       "Open a goal to see Covered by and one line on why. If a goal is short, it gets what's available and shows what's left. Money no goal needs shows on Net worth.",
       "To change what gets money first, use Change order on Goals.",
+      "When your plan says where to put money, it reuses a fund or bank account you already have that suits the goal. It only suggests a new fund when everything suitable is fully used by other goals.",
     ],
     tags: "auto allocate link map which fund covers goal priority emergency sinking",
   },

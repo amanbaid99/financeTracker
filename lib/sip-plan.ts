@@ -1,7 +1,7 @@
 // The money plan as SIPs to start. Each goal's monthly amount goes into a
-// fund you already hold where one suits it: first one already saving for
-// that goal, then one not yet used by any goal. Only when you hold nothing
-// suitable does it name a kind of fund ("New liquid fund"). Your own funds
+// fund or bank account you already hold where one suits it: first one
+// already saving for that goal, then one goals don't fully use. Only when
+// everything suitable is taken does it name a kind of fund ("New liquid fund"). Your own funds
 // are named; nothing new is ever named.
 
 import type { Suggestion } from "./allocate";
@@ -121,7 +121,7 @@ function stopsAt(s: Suggestion): string | null {
   return g.targetDate;
 }
 
-/** The fund to put a goal's SIP into: linked to it first, then one no goal uses. */
+/** The fund to put a goal's SIP into: linked to it first, then one goals don't fully use. */
 export function pickFund(
   goalId: string,
   category: string,
@@ -144,7 +144,7 @@ export function pickFund(
     ? null
     : best(
         investments.filter(
-          (i) => !linked.has(i.id) && freePercent(i.id, links) >= 100,
+          (i) => !linked.has(i.id) && freePercent(i.id, links) > 0,
         ),
       );
   const hit = own ?? free;
@@ -223,8 +223,8 @@ function splitAmount(
  * - each gets at least what it can take: ₹500 a month (₹1,000 of a lump
  *   sum) for a fund, ₹100 for an ETF, which you can buy a unit at a time;
  * - gold (a gold ETF) gets at most a fifth, as it can swing.
- * With none of the goal's own funds suitable, it uses one fund no goal uses
- * yet. Returns [] when nothing you hold suits.
+ * With none of the goal's own funds suitable, it uses one fund or bank
+ * account that goals don't fully use yet. Returns [] when nothing you hold suits.
  */
 export function splitForGoal(
   goalId: string,
@@ -272,7 +272,7 @@ export function splitForGoal(
       investments.filter(
         (i) =>
           !pctOf.has(i.id) &&
-          freePercent(i.id, links) >= 100 &&
+          freePercent(i.id, links) > 0 &&
           (strategy !== "simple" || kindOf(i) !== "gold"),
       ),
       () => 100,
