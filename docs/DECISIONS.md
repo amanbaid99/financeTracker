@@ -4,6 +4,15 @@ Why the app works the way it does. Newest first within each section. When the ow
 direction, add a line here so the next person doesn't undo it.
 
 
+
+## Separate SIP purposes and quieter Home, 22 Nov 2026
+
+Home leads with net worth, followed by status, the aggregate card logging nudge, useful actions and focus goals. The upcoming EMI card is removed. Existing preferences to omit payment lists and plan steps remain intact.
+
+Monthly recommendations show Safety & essentials (emergency, bills, loan payoff), Lifestyle goals (other goals under five years or undated) and Long-term goals (five years or retirement). The same held vehicle can appear in multiple purposes. Display totals conserve the original contributions; provider setup remains one instruction per holding. Custom or unmapped contributions remain visible separately. Your plan shows purpose amounts beneath shared vehicles without a goal breakdown accordion.
+
+Withdrawal previews use the selected goal before unassigned money. Other-goal permission cannot consume emergency or bill reserves unless that protected goal is explicitly selected. Additional protected-goal shortfalls are flagged. No financial records or mandates change automatically.
+
 ## Home setup cues and next actions, 21 Nov 2026
 
 The owner wants high-level investment-vehicle setup cues on Home alongside routine reminders. Reuse suitable vehicles and group shared needs by category, avoiding one fund per goal. Do not guess a purchase horizon when its date is missing. A setup cue is guidance to choose a vehicle with the provider, followed by recording it in the app. It cannot open a financial account or select an unowned scheme. Keep up to three next actions visible, make the remainder accessible, and support the existing tomorrow snooze.

@@ -23,11 +23,10 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "Your money at a glance",
     intro: "Start here: are you okay, and what needs you this month.",
     steps: [
-      "The top line says how you're doing: green when all is well, amber when a goal needs you.",
+      "Net worth leads with what you own, what you owe and money not assigned to goals. Tap it for your holdings.",
       "From the 1st of each month, one line reminds you to log last month's card bills until they're all in. This month lists reminders and a card milestone when it's close.",
-      "Below it: EMIs due in the next 30 days, so you know what to keep ready.",
+      "A short status highlights how you are doing and what needs attention.",
       "Focus goals shows your first three goals. The emergency fund shows how many months of costs it covers.",
-      "Your money shows what you own, what you owe, money no goal needs and your net worth. Tap it for holdings.",
     ],
   },
   "quick-add": {
@@ -38,7 +37,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "I have extra money previews where spare cash helps your goals. Nothing is saved until you confirm. New goal adds something you want to save for.",
       "Update amounts lets you enter the latest amounts for your investments.",
       "Import statement reads a CAS. You review the results before saving.",
-      "SIP plan groups monthly contributions by investment vehicle, with the goals each covers. Plan a withdrawal previews which holdings you could use without moving money.",
+      "SIP plan separates safety, lifestyle and long-term amounts, then groups vehicles within each purpose. A fund can be shared without mixing its purpose amounts. Plan a withdrawal previews which holdings you could use without moving money.",
       "Log a card bill records a statement for an existing card. Add a new card in the Cards tab.",
       "You can reopen this guide from the info button inside the + menu.",
     ],
@@ -136,6 +135,11 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-22", title: "Separate purposes, simpler Home", items: [
+    { title: "Travel stays separate", text: "Monthly recommendations separate safety and essentials, lifestyle goals and long-term goals. Shared funds show separate amounts without counting contributions twice." },
+    { title: "Your money at a glance", text: "Net worth now leads Home. Upcoming EMI summaries are removed; card logging, useful updates and focus goals stay." },
+    { title: "Protected reserves", text: "Withdrawal previews use your selected goal first. Emergency and bill reserves stay protected unless you choose that goal." },
+  ] },
   { date: "2026-11-22", title: "A calmer Home", items: [
     { title: "How you're doing, first", text: "One line at the top says if you're on track, or what needs you, and how many things there are to do this month." },
     { title: "Card bills and what's coming", text: "From the 1st of each month, one line to log last month's card bills until they're in. Then reminders and EMIs due in the next 30 days." },

@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  CalendarClock,
   ChevronRight,
   CircleAlert,
   CircleCheck,
@@ -9,9 +8,9 @@ import {
 } from "lucide-react";
 import { signedINR } from "@/components/net-worth-card";
 import { Progress } from "@/components/ui/progress";
-import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
+import { formatINRCompact } from "@/lib/format";
 import { goalStatus } from "@/lib/goal-status";
-import { focusGoals, type HomeTone, type Payment } from "@/lib/home";
+import { focusGoals, type HomeTone } from "@/lib/home";
 import type { TrackedGoal } from "@/lib/tracker";
 import { cn } from "@/lib/utils";
 
@@ -42,7 +41,7 @@ export function HomeStatus({
   return (
     <section
       aria-label="How you're doing"
-      className={cn("flex items-start gap-3 rounded-2xl p-4", t.box)}
+      className={cn("flex items-start gap-3 rounded-2xl px-4 py-3", t.box)}
     >
       <t.Icon className={cn("mt-0.5 size-5 shrink-0", t.icon)} aria-hidden />
       <div className="min-w-0 space-y-0.5">
@@ -56,8 +55,6 @@ export function HomeStatus({
     </section>
   );
 }
-
-const shortDate = (iso: string) => formatDate(iso).replace(/ \d{4}$/, "");
 
 /** One line from the 1st of each month until last month's card bills are logged. */
 export function CardBillNudge({
@@ -82,37 +79,6 @@ export function CardBillNudge({
         <span className="font-normal text-muted-foreground">
           {" "}
           · {missing} left
-        </span>
-      </span>
-      <ChevronRight
-        className="size-4 shrink-0 text-muted-foreground"
-        aria-hidden
-      />
-    </Link>
-  );
-}
-
-/** EMIs in the next 30 days, so you know what to keep ready. */
-export function ComingUp({ payments }: { payments: Payment[] }) {
-  if (!payments.length) return null;
-  const total = payments.reduce((s, p) => s + p.amount, 0);
-  const biggest = [...payments].sort((a, b) => b.amount - a.amount)[0];
-  return (
-    <Link
-      href="/assets"
-      aria-label="EMIs in the next 30 days"
-      className="press flex items-center gap-3 rounded-2xl border bg-card p-4"
-    >
-      <CalendarClock className="size-5 shrink-0 text-primary" aria-hidden />
-      <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium">
-          <span className="tabular">{formatINR(total)}</span> in EMIs over the
-          next 30 days
-        </span>
-        <span className="block break-words text-xs text-muted-foreground">
-          {payments.length === 1
-            ? `${biggest.name} on ${shortDate(biggest.date)}`
-            : `${payments.length} payments · biggest: ${biggest.name}, ${formatINR(biggest.amount)} on ${shortDate(biggest.date)}`}
         </span>
       </span>
       <ChevronRight
@@ -258,22 +224,19 @@ export function MoneySummary({
       <Link
         href="/assets"
         aria-label="View net worth and holdings"
-        className="press block space-y-3 rounded-2xl border bg-card p-4"
+        className="press relative block overflow-hidden space-y-5 rounded-3xl border border-primary/15 bg-gradient-to-br from-success-soft via-card to-card p-5"
       >
-        <div className="flex items-center justify-between gap-3 text-sm">
-          <h2 className="font-semibold">Your money</h2>
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-            Net worth{" "}
-            <span className="tabular font-medium text-foreground">
-              {signedINR(assets - liabilities)}
-            </span>
-            <ChevronRight className="size-4" aria-hidden />
-          </span>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 space-y-2">
+            <h2 className="text-sm text-muted-foreground">Net worth</h2>
+            <p className="tabular break-words text-3xl font-semibold tracking-tight sm:text-4xl">{signedINR(assets-liabilities)}</p>
+          </div>
+          <ChevronRight className="mt-1 size-5 shrink-0 text-primary" aria-hidden />
         </div>
         <dl className="grid grid-cols-3 gap-3">
           {cell("You own", assets)}
           {cell("You owe", liabilities)}
-          {cell("Spare", spare)}
+          {cell("Unassigned", spare)}
         </dl>
       </Link>
     </section>

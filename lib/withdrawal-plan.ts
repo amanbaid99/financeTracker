@@ -24,11 +24,11 @@ export function planWithdrawal(opts:{amount:number;goalId?:string|null;allowOthe
     const allocations=before.links.filter(l=>l.investmentId===inv.id).map(l=>({goal:goals.find(g=>g.id===l.goalId)!,amount:inv.value*l.percent/100}));
     const used=allocations.reduce((sum,a)=>sum+a.amount,0);
     const free=Math.max(0,Math.floor(inv.value-used));
-    if(free>0)slices.push({investment:inv,amount:free,tier:0,reason:"unassigned"});
+    if(free>0)slices.push({investment:inv,amount:free,tier:1,reason:"unassigned"});
     const selected=allocations.filter(a=>a.goal?.id===opts.goalId).reduce((sum,a)=>sum+a.amount,0);
-    if(selected>=1)slices.push({investment:inv,amount:Math.floor(selected),tier:1,reason:"selected_goal"});
-    // A regular purchase cannot consume the emergency reserve even with this opt-in.
-    if(opts.allowOtherGoals){const other=allocations.filter(a=>a.goal&&a.goal.id!==opts.goalId&&a.goal.type!=="emergency_fund").reduce((sum,a)=>sum+a.amount,0);if(other>=1)slices.push({investment:inv,amount:Math.floor(other),tier:2,reason:"other_goals"});}
+    if(selected>=1)slices.push({investment:inv,amount:Math.floor(selected),tier:0,reason:"selected_goal"});
+    // Other-goal permission cannot consume emergency or bill reserves.
+    if(opts.allowOtherGoals){const other=allocations.filter(a=>a.goal&&a.goal.id!==opts.goalId&&!["emergency_fund","bills_fund"].includes(a.goal.type)).reduce((sum,a)=>sum+a.amount,0);if(other>=1)slices.push({investment:inv,amount:Math.floor(other),tier:2,reason:"other_goals"});}
   }
   const risk=(i:Investment)=>i.kind==="savings"?0:["liquid_fund","overnight_fund"].includes(i.category??"")?1:assetClassOf(i)==="debt"?2:3;
   slices.sort((a,b)=>a.tier-b.tier||risk(a.investment)-risk(b.investment)||b.amount-a.amount||a.investment.id.localeCompare(b.investment.id));

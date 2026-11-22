@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { GuideButton } from "@/components/guides";
 import {
   CardBillNudge,
-  ComingUp,
   HomeGoals,
   HomeStatus,
   MoneySummary,
@@ -37,8 +36,7 @@ const DAY = new Intl.DateTimeFormat("en-IN", {
 });
 
 /**
- * Home: are you okay, card bills to log, reminders, EMIs coming up, your
- * goals, then your money in small numbers.
+ * Home: net worth, status, card bills to log, useful actions and focus goals.
  */
 export default async function HomePage() {
   const [g, c, loans, worth, snapshot, runway] = await Promise.all([
@@ -96,6 +94,11 @@ export default async function HomePage() {
           {DAY.format(new Date(`${today}T00:00:00Z`))}
         </p>
       </header>
+      <MoneySummary
+        assets={worth.assets}
+        liabilities={worth.liabilities}
+        spare={g.allocation.spareTotal}
+      />
       <HomeStatus
         tone={status.tone}
         text={status.text}
@@ -103,18 +106,13 @@ export default async function HomePage() {
       />
       {bills && <CardBillNudge missing={bills.missing} month={bills.month} />}
       <UpdatesDue items={todo} today={today} compact title="This month" />
-      <ComingUp payments={payments} />
       <HomeGoals
         goals={g.goals}
         today={today}
         between={runway.active}
         emergencyMonths={emergencyMonths(g.goals, essentials)}
       />
-      <MoneySummary
-        assets={worth.assets}
-        liabilities={worth.liabilities}
-        spare={g.allocation.spareTotal}
-      />
+
     </main>
   );
 }

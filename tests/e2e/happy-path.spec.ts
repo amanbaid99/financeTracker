@@ -496,11 +496,12 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     fullPage: true,
   });
 
-  // Home: how you're doing first, then this month, goals and your money.
+  // Home: net worth first, status, monthly actions and goals.
   await page.goto("/today");
   await expect(page.getByRole("region", { name: "How you're doing" })).toBeVisible();
   await expect(page.getByRole("region", { name: "Your money" })).toContainText("You owe");
   await expect(page.getByRole("heading", { name: "Focus goals" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "EMIs in the next 30 days" })).toHaveCount(0);
   o = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,
   );

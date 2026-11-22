@@ -6,6 +6,17 @@ Last updated: 21 Nov 2026.
 
 
 
+
+## Separate SIP purposes and quieter Home, 22 Nov 2026
+
+Home leads with net worth, followed by status, the aggregate card logging nudge, useful actions and focus goals. The upcoming EMI card is removed. Existing preferences to omit payment lists and plan steps remain intact.
+
+Monthly recommendations show Safety & essentials (emergency, bills, loan payoff), Lifestyle goals (other goals under five years or undated) and Long-term goals (five years or retirement). The same held vehicle can appear in multiple purposes. Display totals conserve the original contributions; provider setup remains one instruction per holding. Custom or unmapped contributions remain visible separately. Your plan shows purpose amounts beneath shared vehicles without a goal breakdown accordion.
+
+Withdrawal previews use the selected goal before unassigned money. Other-goal permission cannot consume emergency or bill reserves unless that protected goal is explicitly selected. Additional protected-goal shortfalls are flagged. No financial records or mandates change automatically.
+
+Verification: lint, TypeScript, 703 unit tests, 40 Python tests and production build passed. Isolated Home and SIP component browser checks passed at 320, 375 and 768px with no overflow or runtime errors. Signed-in end-to-end checks were not run because local Supabase is not running.
+
 ## Plan reuses what you hold, 22 Nov 2026
 
 `pickFund` and `splitForGoal` (lib/sip-plan.ts) now fall back to any suitable fund or bank account that goals don't fully use (free share above 0), instead of only ones no goal touches. With automatic coverage almost every holding is partly used, so the old rule kept suggesting a new liquid fund. A new fund is named only when everything suitable is fully used.

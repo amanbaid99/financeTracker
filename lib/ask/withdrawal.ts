@@ -17,7 +17,7 @@ export function withdrawalAnswer(opts:{text:string;amount:number;goals:TrackedGo
  const plan=planWithdrawal({amount,goalId:matched[0]?.id,goals,investments,today});
  const lines=[`Withdrawal preview for ${formatINR(amount)}${matched[0]?` for ${codeOf[matched[0].id]}`:""}:`];
  for(const line of plan.lines)lines.push(`- ${formatINR(line.amount)} from ${codeOf[line.investmentId]}, ${line.reason==="unassigned"?"not needed by a goal today":"currently covering the selected goal"}.`);
- if(plan.short>0)lines.push(`${formatINR(plan.short)} is still needed. Other goals and emergency reserves are protected. Choose the purpose in Plan a withdrawal; considering other goals requires your explicit choice there.`);
+ if(plan.short>0)lines.push(`${formatINR(plan.short)} is still needed. Other goals, emergency reserves and bill reserves are protected. Choose the purpose in Plan a withdrawal; considering other goals requires your explicit choice there.`);
  for(const impact of plan.impacts)lines.push(`- ${codeOf[impact.goalId]} would need ${formatINR(impact.extraShortfall)} more funding at its goal date.`);
  if(!plan.impacts.length&&plan.available>0)lines.push("No additional funding shortfall in the current goal model.");
  lines.push("This uses recorded balances with goal targets unchanged. Completing a goal is a separate update. Tax, exit loads, settlement and purchase-lot restrictions are not calculated. ELSS, retirement accounts, FDs, physical gold and unknown assets are excluded. Check access with your provider. Nothing is withdrawn or saved.");

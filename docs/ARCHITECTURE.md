@@ -3,6 +3,15 @@
 How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.md); product
 decisions are in [DECISIONS.md](DECISIONS.md).
 
+
+## Separate SIP purposes and quieter Home, 22 Nov 2026
+
+Home leads with net worth, followed by status, the aggregate card logging nudge, useful actions and focus goals. The upcoming EMI card is removed. Existing preferences to omit payment lists and plan steps remain intact.
+
+Monthly recommendations show Safety & essentials (emergency, bills, loan payoff), Lifestyle goals (other goals under five years or undated) and Long-term goals (five years or retirement). The same held vehicle can appear in multiple purposes. Display totals conserve the original contributions; provider setup remains one instruction per holding. Custom or unmapped contributions remain visible separately. Your plan shows purpose amounts beneath shared vehicles without a goal breakdown accordion.
+
+Withdrawal previews use the selected goal before unassigned money. Other-goal permission cannot consume emergency or bill reserves unless that protected goal is explicitly selected. Additional protected-goal shortfalls are flagged. No financial records or mandates change automatically.
+
 ## Home setup cues and next actions, 21 Nov 2026
 
 home-cues groups unfinished funding needs through the same categoryForHorizon and pooled splitForGoal suitability rules used by SIP planning. homeNextUp interleaves one setup cue with routine updates without dropping items. Home passes the merged list into UpdatesDue compact mode, which supports three rows and expansion. Existing snooze keys use category-stable vehicle prefixes. Net worth validates the category query against a four-category allowlist and passes it through PortfolioOverview/PortfolioHoldings to InvestmentSheet as a non-plan prefill. No new server action or database schema is required.

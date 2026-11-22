@@ -17,7 +17,7 @@ export const HELP: HelpTopic[] = [
     section: "Getting started",
     q: "What is on Home?",
     a: [
-      "Top to bottom: one line on how you're doing (green or amber) and how many things there are to do; from the 1st of each month, one line to log last month's card bills, which stays until every card has its bill; reminders such as a CAS upload, and a card milestone only when it's close; EMIs due in the next 30 days; your first three goals, with the emergency fund in months of costs; and Your money: what you own, what you owe, Spare (money no goal needs) and your net worth.",
+      "Your net worth leads Home, with what you own, owe and have unassigned. See a short status, one reminder to log last month’s card bills, useful monthly actions and three focus goals. Emergency progress is shown in months of costs. Upcoming EMI summaries are not shown.",
       "Tap any part to open its tab. Plan steps and paid or unpaid bills aren't on Home; Your plan has the steps.",
     ],
     tags: "overview focus dashboard",
@@ -188,7 +188,7 @@ export const HELP: HelpTopic[] = [
     q: "Can I create a SIP plan from Save & invest?",
     a: [
       "Choose Save & create SIP plan at the end of setup, or Create a SIP plan on your saved budget. The Save & invest amount prefills a separate review screen. Lower it if some money should stay as accessible savings.",
-      "Review the monthly amount by investment vehicle, with covered goals underneath. Suitable existing holdings are reused across goals; otherwise a category is shown. Every held investment type has an optional monthly minimum, starting at zero. Existing SIPs count toward its minimum. Only the extra needed for your minimums is reserved before the remaining money is recommended for goals. A minimum does not silently reduce a larger running SIP. Create plan explicitly saves the monthly amount and your minimums for Your plan; no SIP mandate, investment record or trade is created. Your budget remains unchanged. Any existing one-time planning amount is kept.",
+      "Review monthly amounts in Safety & essentials, Lifestyle goals and Long-term goals, with vehicles and covered goals underneath. A shared fund shows separate purpose amounts, counted once. Suitable existing holdings are reused across goals; otherwise a category is shown. Every held investment type has an optional monthly minimum, starting at zero. Existing SIPs count toward its minimum. Only the extra needed for your minimums is reserved before the remaining money is recommended for goals. A minimum does not silently reduce a larger running SIP. Create plan explicitly saves the monthly amount and your minimums for Your plan; no SIP mandate, investment record or trade is created. Your budget remains unchanged. Any existing one-time planning amount is kept.",
     ],
     tags: "budget sip save invest monthly allocation plan",
   },
@@ -268,7 +268,7 @@ export const HELP: HelpTopic[] = [
     section: "Net worth",
     q: "Where should I withdraw money from?",
     a: [
-      "Open +, then Plan a withdrawal, or use the link on Your plan. Enter the amount and choose its goal or Something else. The preview uses unassigned accessible money first, then money covering the selected goal. Considering other goals needs your explicit choice. Emergency reserves remain protected unless you select that goal.",
+      "Open +, then Plan a withdrawal, or use the link on Your plan. Enter the amount and choose its goal or Something else. The preview uses money covering the selected goal first, then unassigned accessible money. Considering other goals needs your explicit choice. Emergency and bill reserves remain protected unless you select that goal.",
       "It compares the lower balances with current goal targets unchanged and shows additional funding gaps. Completing a goal is a separate update. Tax, exit loads, settlement, units and lot-level locks are not calculated. ELSS, retirement accounts, FDs, physical gold and unknown assets are excluded. Confirm access with your provider, then update balances after withdrawing. Nothing is sold or saved by the preview.",
       "In Ask, an amount-based withdrawal question uses this same local calculation instead of AI arithmetic. General conversation still uses Ask consent and its normal AI settings.",
     ],
