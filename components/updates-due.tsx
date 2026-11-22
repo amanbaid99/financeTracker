@@ -12,10 +12,13 @@ export function UpdatesDue({
   items,
   today,
   compact=false,
+  title,
 }: {
   items: UpdateDue[];
   today: string;
   compact?:boolean;
+  /** Heading; defaults to "Next up" (compact) or "Updates due". */
+  title?: string;
 }) {
   const [pending, start] = useTransition();
   const [expanded,setExpanded]=useState(false);
@@ -26,12 +29,12 @@ export function UpdatesDue({
   if (!items.length) return null;
   return (
     <section
-      aria-label="Updates due"
+      aria-label={title ?? "Updates due"}
       data-guide="updates-due"
       className={compact?"rounded-xl border border-border/70 bg-card p-3 space-y-2":"rounded-2xl border bg-card p-4 space-y-2"}
     >
       <div className="flex items-center justify-between gap-3 text-sm">
-        <h2 className="font-medium">{compact?"Next up":"Updates due"}</h2>
+        <h2 className="font-medium">{title ?? (compact?"Next up":"Updates due")}</h2>
         <span className="text-muted-foreground">{items.length}</span>
       </div>
       <ul className="divide-y">{visible.map(item=><li key={item.key} className="space-y-2 py-3 first:pt-0 last:pb-0">
@@ -41,7 +44,7 @@ export function UpdatesDue({
         <Link href={item.href} className={buttonVariants({ size: "sm" })}>
           {item.actionLabel??"Update"}
         </Link>
-        <Button
+        {item.snooze !== false && <Button
           size="sm"
           variant="ghost"
           disabled={pending}
@@ -56,7 +59,7 @@ export function UpdatesDue({
           }
         >
           {compact?"Tomorrow":"Remind me tomorrow"}
-        </Button>
+        </Button>}
       </div>
       </li>)}</ul>
       {compact&&items.length>3&&<Button variant="ghost" size="sm" className="w-full" onClick={()=>setExpanded(!expanded)}>{expanded?"Show fewer":`Show ${items.length-3} more`}</Button>}

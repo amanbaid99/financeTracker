@@ -12,7 +12,7 @@ export interface TourStep {
 }
 
 export const INTRO_TOUR: TourStep[] = [
-  { path: "/today", target: "home-focus", title: "Your focus goals", text: "The first three unfinished goals in your order. Tap one for its details." },
+  { path: "/today", target: "home-focus", title: "Your focus goals", text: "Your first three goals. The emergency fund shows how many months of costs it covers. Tap one for its details." },
   {
     path: "/goals",
     target: "goal-list",

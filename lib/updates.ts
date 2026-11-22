@@ -8,6 +8,8 @@ export interface UpdateDue {
   detail: string;
   href: string;
   actionLabel?: string;
+  /** False for things that can't wait (payments, plan steps): no Tomorrow button. */
+  snooze?: boolean;
 }
 
 /** Missing information asks for an update, never implies a missed payment. */

@@ -3,6 +3,13 @@
 What's live, what's open and the known gaps. Update this at the end of every task.
 Last updated: 21 Nov 2026.
 
+
+## Calmer Home, 22 Nov 2026
+
+Home (`app/(app)/today/page.tsx`, `components/home-sections.tsx`) now reads: status line (green, amber or red from `homeStatus` in lib/home.ts: an overdue card bill, then a focus goal that's behind or short, else on track) with the count of things to do; This month (`thisMonth`: payments due within 10 days, update reminders and setup cues, plan steps from `planSteps`, and a card milestone only when within ₹10,000 or 30 days), rendered by `UpdatesDue` with a title and no Tomorrow button for payments and steps; the total going out in 30 days (`upcomingPayments`: unpaid card bills plus EMIs of loans not on a card); Focus goals with the emergency fund in months of essential costs and EMIs; and Your money (own, owe, spare, net worth). `home-balance.tsx` and `home-overview.tsx` are removed; `data-guide` targets `home-focus` and `net-worth` are kept.
+
+Verification: npm run check passes. The e2e passes through the new Home step and up to Ask. Open: the Ask part of the e2e fails from b2c1e62 (withdrawal previews answer the skin treatment question directly, while the test expects a follow-up question). That test needs updating for the new Ask behaviour.
+
 ## Home setup cues and next actions, 21 Nov 2026
 
 Home now merges missing-vehicle setup cues with card statement, loan-balance and CAS reminders under Next up. It shows three actions, keeps a setup cue visible among routine updates and offers Show more for all remaining actions. Goals needing one category share a cue; suitable owned vehicles, reached goals, EMI-completed loans and adequately funded on-track goals do not generate a new-fund prompt. Undated purchases ask for timing first. Record fund uses an allowlisted category to open the existing Net worth add form with blank amounts and no scheme name. fromPlan=false prevents the record flow from deducting one-time planning money. Closing the sheet clears the category. Tomorrow reuses existing owner-scoped snoozes. No database changes or hosted financial writes.

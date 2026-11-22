@@ -496,6 +496,18 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     fullPage: true,
   });
 
+  // Home: how you're doing first, then this month, goals and your money.
+  await page.goto("/today");
+  await expect(page.getByRole("region", { name: "How you're doing" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Your money" })).toContainText("You owe");
+  await expect(page.getByRole("heading", { name: "Focus goals" })).toBeVisible();
+  o = await page.evaluate(
+    () => document.documentElement.scrollWidth - window.innerWidth,
+  );
+  expect(o, "/today overflows at 375px").toBeLessThanOrEqual(0);
+  await page.screenshot({ path: "test-results/home-375.png", fullPage: true });
+  await page.goto("/goals");
+
   // Import a CAS statement: bad files are refused with a plain reason.
   const PP = "Parag Parikh Flexi Cap Fund - Direct Plan Growth";
   const LIQ = "Edelweiss Liquid Fund - Direct Growth";

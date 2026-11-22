@@ -17,7 +17,8 @@ export const HELP: HelpTopic[] = [
     section: "Getting started",
     q: "What is on Home?",
     a: [
-      "Home shows one net-worth card, a compact Next up list, your first three unfinished goals and the closest unfinished card milestone. Tap the net-worth card for holdings, a goal for its details, or the milestone for its card. I have extra money and SIP plan are in the + menu. Empty milestone cards are hidden; a first-goal action appears only when you have no goals.",
+      "Top to bottom: one line on how you're doing (green, amber or red) and how many things there are to do; This month, with payments due in the next 10 days, update reminders, your plan's steps and a card milestone only when it's close; the total going out in the next 30 days; your first three goals, with the emergency fund in months of costs; and Your money: what you own, what you owe, Spare (money no goal needs) and your net worth.",
+      "Tap any part to open its tab. Payments and plan steps can't be put off till tomorrow; reminders can.",
     ],
     tags: "overview focus dashboard",
   },
@@ -33,7 +34,7 @@ export const HELP: HelpTopic[] = [
   {
     id: "updates-due",
     section: "Goals",
-    q: "What appears in Next up on Home?",
+    q: "What appears in This month on Home?",
     a: [
       "Up to three actions on Home, with Show more for the rest. Missing investment-vehicle cues share the list with routine updates. Missing card statements use the statement day in Edit card. Days beyond the end of a month use its last day. Without a statement day, card reminders stay off.",
       "Loan balance updates start on the 2nd. Monthly CAS reminders start on the 5th when you hold mutual funds. Saving a relevant update clears its reminder. Goals needing the same missing fund category share one cue. Suitable held funds are reused; an undated purchase asks for a date instead of guessing its horizon. Record fund opens a category-prefilled form, without choosing a scheme or saving anything. Set up the fund with your provider, then confirm its record in Net worth. Remind me tomorrow postpones that item until the next day, across your devices.",

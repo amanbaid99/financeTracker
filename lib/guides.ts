@@ -21,13 +21,13 @@ export interface Guide {
 export const GUIDES: Record<GuideId, Guide> = {
   home: {
     title: "Your money at a glance",
-    intro: "Start here for the essentials, then open a section for details.",
+    intro: "Start here: are you okay, and what needs you this month.",
     steps: [
-      "Net worth is recorded holdings minus loan balances. Tap the balance card for holdings, or use I have extra money in + to preview an allocation.",
-      "Focus goals shows the first three unfinished goals in your Goals order.",
-      "Closest card milestone shows the unfinished target with the smallest amount left. Tap it to open the card; it is hidden when no unfinished target exists.",
-      "Next up groups missing investment-vehicle cues with statements, loan balances and CAS reminders. Show more reveals the rest; Tomorrow postpones one item.",
-      "Tap the sticky + button to add a goal, upload CAS or update amounts. Add new cards in Cards.",
+      "The top line says how you're doing: green when all is well, amber or red when a payment or goal needs you.",
+      "This month lists bills and EMIs due soon, reminders, your plan's steps and a card milestone when it's close. Tomorrow puts off a reminder.",
+      "Below it: the total going out in the next 30 days, so you know what to keep ready.",
+      "Focus goals shows your first three goals. The emergency fund shows how many months of costs it covers.",
+      "Your money shows what you own, what you owe, money no goal needs and your net worth. Tap it for holdings.",
     ],
   },
   "quick-add": {
@@ -136,6 +136,11 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-22", title: "A calmer Home", items: [
+    { title: "How you're doing, first", text: "One line at the top says if you're on track, or what needs you, and how many things there are to do this month." },
+    { title: "This month and what's coming", text: "Bills and EMIs due soon, reminders and your plan's steps in one list, then the total going out in the next 30 days." },
+    { title: "Net worth, smaller", text: "Your money sits at the bottom: what you own, what you owe and money no goal needs. The emergency fund shows months of costs." },
+  ] },
   { date: "2026-11-21", title: "Your next actions on Home", items: [
     { title: "One fund can support several goals", text: "Home suggests a missing fund category only when a goal needs funding and no suitable holding exists. Similar goals share one cue. Undated purchases ask for a date first." },
     { title: "Reminders together", text: "Next up puts setup cues alongside card statements, loan balances and CAS updates. Record fund prefills only the category; choose and set up the fund with your provider, then save its record." },
