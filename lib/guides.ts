@@ -136,7 +136,7 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   { date: "2026-11-22", title: "Choose monthly amounts by holding", items: [
-    { title: "Your actual holdings", text: "Set a monthly minimum for each named fund, stock holding, retirement account or bank account. Its existing SIP counts toward that amount. Previous category choices stay visible until you replace them." },
+    { title: "Your actual holdings", text: "Set a monthly minimum for each named fund, stock holding, retirement account or bank account. Its existing SIP counts toward that amount. Only individual holdings are shown; previous category minimums are removed." },
     { title: "Keep essentials separate", text: "Travel and other goals no longer share new contributions with the essentials holding. Near-term lifestyle goals prefer another bank account or suitable liquid fund." },
   ] },
   { date: "2026-11-22", title: "Separate purposes, simpler Home", items: [

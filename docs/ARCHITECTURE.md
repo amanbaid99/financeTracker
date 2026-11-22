@@ -5,6 +5,10 @@ decisions are in [DECISIONS.md](DECISIONS.md).
 
 
 
+## Remove retired category minimums, 22 Nov 2026
+
+The owner requested removal of all Previous category minimum inputs. Only named holding inputs remain. Preference parsing and reservation calculations discard old type keys, so these amounts do not silently consume the budget. Saving writes only holding keys to the existing preference column. No change to recorded SIPs or holdings.
+
 ## Named holding minimums and separate essentials, 22 Nov 2026
 
 Monthly minimum inputs list every named holding rather than only types. Store owner-held `inv:<holding ID>` keys in the existing plan preference JSON. Server validation checks ownership against loaded holdings. That holding’s current SIP counts once; reserve only the shortfall before goal recommendations. Add the reservation to its provider setup instruction. No automatic financial-record edits. Legacy type minimums remain editable and count named reservations toward their totals, avoiding double reservation. Deleted holding preferences are omitted when editing.
