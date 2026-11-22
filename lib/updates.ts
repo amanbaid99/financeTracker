@@ -10,8 +10,6 @@ export interface UpdateDue {
   actionLabel?: string;
   /** False for things that can't wait (payments, plan steps): no Tomorrow button. */
   snooze?: boolean;
-  /** A payment that can be marked paid from here. */
-  pay?: { billId: string } | { loanId: string; dueDate: string };
 }
 
 /** Missing information asks for an update, never implies a missed payment. */

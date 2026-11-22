@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { GuideButton } from "@/components/guides";
 import {
+  CardBillNudge,
   ComingUp,
   HomeGoals,
   HomeStatus,
@@ -15,8 +16,8 @@ import {
   loadRunway,
   loadSnapshot,
 } from "@/lib/data";
-import { formatINR } from "@/lib/format";
 import {
+  cardBillNudge,
   closeMilestone,
   emergencyMonths,
   homeStatus,
@@ -24,7 +25,6 @@ import {
   upcomingPayments,
 } from "@/lib/home";
 import { homeNextUp, missingVehicleCues } from "@/lib/home-cues";
-import { planSteps } from "@/lib/sip-plan";
 import { updatesDue } from "@/lib/updates";
 
 export const metadata: Metadata = { title: "Home" };
@@ -37,7 +37,7 @@ const DAY = new Intl.DateTimeFormat("en-IN", {
 });
 
 /**
- * Home: are you okay, what to do this month, what's going out soon, your
+ * Home: are you okay, card bills to log, reminders, EMIs coming up, your
  * goals, then your money in small numbers.
  */
 export default async function HomePage() {
@@ -71,31 +71,12 @@ export default async function HomePage() {
     today,
     snoozes,
   });
-  const payments = upcomingPayments(c.cards, loans, today);
-  const steps = g.plan
-    ? planSteps(g.plan.suggestions, g.investments, g.links).map((s) => {
-        const amounts = [
-          s.addLump ? `${formatINR(s.addLump)} now` : "",
-          s.addMonthly ? `${formatINR(s.addMonthly)} a month` : "",
-        ]
-          .filter(Boolean)
-          .join(" and ");
-        return {
-          key: s.key,
-          title: `Put ${amounts} into ${s.investment ? s.label : `a ${s.label.toLowerCase()}`}`,
-          detail: s.goals.length
-            ? `For ${s.goals.map((x) => x.name).join(", ")}`
-            : "From your plan",
-        };
-      })
-    : [];
+  const payments = upcomingPayments(loans, today);
   const todo = thisMonth({
-    payments,
     updates: homeNextUp(due, cues),
-    steps,
     milestone: closeMilestone(c.cards, loans, today),
-    today,
   });
+  const bills = cardBillNudge(c.cards, today);
   const status = homeStatus({
     payments,
     goals: g.goals,
@@ -115,7 +96,12 @@ export default async function HomePage() {
           {DAY.format(new Date(`${today}T00:00:00Z`))}
         </p>
       </header>
-      <HomeStatus tone={status.tone} text={status.text} todo={todo.length} />
+      <HomeStatus
+        tone={status.tone}
+        text={status.text}
+        todo={todo.length + (bills ? 1 : 0)}
+      />
+      {bills && <CardBillNudge missing={bills.missing} month={bills.month} />}
       <UpdatesDue items={todo} today={today} compact title="This month" />
       <ComingUp payments={payments} />
       <HomeGoals

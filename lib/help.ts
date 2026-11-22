@@ -17,8 +17,8 @@ export const HELP: HelpTopic[] = [
     section: "Getting started",
     q: "What is on Home?",
     a: [
-      "Top to bottom: one line on how you're doing (green, amber or red) and how many things there are to do; This month, with payments due in the next 10 days, update reminders, your plan's steps and a card milestone only when it's close; the total going out in the next 30 days; your first three goals, with the emergency fund in months of costs; and Your money: what you own, what you owe, Spare (money no goal needs) and your net worth.",
-      "Tap any part to open its tab. Paid a bill or EMI already? Tap Mark paid on it; Undo appears for a few seconds. Payments and plan steps can't be put off till tomorrow; reminders can.",
+      "Top to bottom: one line on how you're doing (green or amber) and how many things there are to do; from the 1st of each month, one line to log last month's card bills, which stays until every card has its bill; reminders such as a CAS upload, and a card milestone only when it's close; EMIs due in the next 30 days; your first three goals, with the emergency fund in months of costs; and Your money: what you own, what you owe, Spare (money no goal needs) and your net worth.",
+      "Tap any part to open its tab. Plan steps and paid or unpaid bills aren't on Home; Your plan has the steps.",
     ],
     tags: "overview focus dashboard",
   },

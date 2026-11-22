@@ -23,9 +23,9 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "Your money at a glance",
     intro: "Start here: are you okay, and what needs you this month.",
     steps: [
-      "The top line says how you're doing: green when all is well, amber or red when a payment or goal needs you.",
-      "This month lists bills and EMIs due soon, reminders, your plan's steps and a card milestone when it's close. Tomorrow puts off a reminder.",
-      "Below it: the total going out in the next 30 days, so you know what to keep ready.",
+      "The top line says how you're doing: green when all is well, amber when a goal needs you.",
+      "From the 1st of each month, one line reminds you to log last month's card bills until they're all in. This month lists reminders and a card milestone when it's close.",
+      "Below it: EMIs due in the next 30 days, so you know what to keep ready.",
       "Focus goals shows your first three goals. The emergency fund shows how many months of costs it covers.",
       "Your money shows what you own, what you owe, money no goal needs and your net worth. Tap it for holdings.",
     ],
@@ -138,7 +138,7 @@ export interface Release {
 export const RELEASES: Release[] = [
   { date: "2026-11-22", title: "A calmer Home", items: [
     { title: "How you're doing, first", text: "One line at the top says if you're on track, or what needs you, and how many things there are to do this month." },
-    { title: "This month and what's coming", text: "Bills and EMIs due soon, reminders and your plan's steps in one list, then the total going out in the next 30 days." },
+    { title: "Card bills and what's coming", text: "From the 1st of each month, one line to log last month's card bills until they're in. Then reminders and EMIs due in the next 30 days." },
     { title: "Net worth, smaller", text: "Your money sits at the bottom: what you own, what you owe and money no goal needs. The emergency fund shows months of costs." },
   ] },
   { date: "2026-11-21", title: "Your next actions on Home", items: [

@@ -4,6 +4,7 @@ import {
   ChevronRight,
   CircleAlert,
   CircleCheck,
+  CreditCard,
   TriangleAlert,
 } from "lucide-react";
 import { signedINR } from "@/components/net-worth-card";
@@ -58,21 +59,54 @@ export function HomeStatus({
 
 const shortDate = (iso: string) => formatDate(iso).replace(/ \d{4}$/, "");
 
-/** Money going out in the next 30 days, so you know what to keep ready. */
+/** One line from the 1st of each month until last month's card bills are logged. */
+export function CardBillNudge({
+  missing,
+  month,
+}: {
+  missing: number;
+  month: string;
+}) {
+  const name = new Intl.DateTimeFormat("en-IN", {
+    month: "long",
+    timeZone: "UTC",
+  }).format(new Date(`${month}T00:00:00Z`));
+  return (
+    <Link
+      href="/cards"
+      className="press flex min-h-12 items-center gap-3 rounded-2xl border bg-card px-4 py-3 text-sm"
+    >
+      <CreditCard className="size-4 shrink-0 text-primary" aria-hidden />
+      <span className="min-w-0 flex-1 font-medium">
+        Log your {name} card {missing === 1 ? "bill" : "bills"}
+        <span className="font-normal text-muted-foreground">
+          {" "}
+          · {missing} left
+        </span>
+      </span>
+      <ChevronRight
+        className="size-4 shrink-0 text-muted-foreground"
+        aria-hidden
+      />
+    </Link>
+  );
+}
+
+/** EMIs in the next 30 days, so you know what to keep ready. */
 export function ComingUp({ payments }: { payments: Payment[] }) {
   if (!payments.length) return null;
   const total = payments.reduce((s, p) => s + p.amount, 0);
   const biggest = [...payments].sort((a, b) => b.amount - a.amount)[0];
   return (
     <Link
-      href="/cards"
-      aria-label="Payments in the next 30 days"
+      href="/assets"
+      aria-label="EMIs in the next 30 days"
       className="press flex items-center gap-3 rounded-2xl border bg-card p-4"
     >
       <CalendarClock className="size-5 shrink-0 text-primary" aria-hidden />
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-medium">
-          <span className="tabular">{formatINR(total)}</span> going out in the
+          <span className="tabular">{formatINR(total)}</span> in EMIs over the
           next 30 days
         </span>
         <span className="block break-words text-xs text-muted-foreground">

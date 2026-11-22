@@ -1,89 +1,74 @@
 import { describe, expect, it } from "vitest";
 import {
+  cardBillNudge,
   homeStatus,
   thisMonth,
   upcomingPayments,
-  type Payment,
 } from "@/lib/home";
 import type { Card } from "@/lib/cards";
 import type { Loan } from "@/lib/loans";
 
-const today = "2026-11-22";
-const card = (bills: Card["bills"]): Card =>
+const today = "2026-12-03";
+const card = (id: string, months: string[]): Card =>
   ({
-    id: "c1",
-    label: "My card",
+    id,
+    label: id,
     annualFee: null,
     yearStart: null,
     rewards: null,
     benefits: [],
     bestFor: [],
     milestones: [],
-    bills,
+    bills: months.map((month) => ({
+      id: month,
+      month,
+      amount: 1000,
+      dueDate: null,
+      paid: false,
+      note: null,
+    })),
   }) as unknown as Card;
-const bill = (dueDate: string, paid = false) => ({
-  id: dueDate,
-  month: "2026-11-01",
-  amount: 12000,
-  dueDate,
-  paid,
-  note: null,
+
+describe("cardBillNudge", () => {
+  it("asks for last month's bills from the 1st until every card has one", () => {
+    expect(
+      cardBillNudge(
+        [card("a", ["2026-11-01"]), card("b", ["2026-10-01"])],
+        today,
+      ),
+    ).toEqual({ missing: 1, month: "2026-11-01" });
+    expect(cardBillNudge([card("a", ["2026-11-01"])], today)).toBeNull();
+    expect(cardBillNudge([card("a", ["2026-11-01"])], "2026-12-01")).toBeNull();
+  });
 });
 
-describe("upcomingPayments", () => {
-  it("lists unpaid card bills within 30 days, soonest first, and skips paid ones", () => {
-    const p = upcomingPayments(
-      [
-        card([
-          bill("2026-12-10"),
-          bill("2026-11-20"),
-          bill("2026-12-05", true),
-          bill("2027-02-01"),
-        ]),
-      ],
-      [],
-      today,
-    );
-    expect(p.map((x) => [x.date, x.overdue])).toEqual([
-      ["2026-11-20", true],
-      ["2026-12-10", false],
-    ]);
-  });
-
-  it("leaves out EMIs of loans on a card, since the card bill includes them", () => {
+describe("Home lists", () => {
+  it("counts EMIs only, never loans on a card", () => {
     const loan = { id: "l", name: "Card EMI", cardId: "c1" } as unknown as Loan;
-    expect(upcomingPayments([], [loan], today)).toEqual([]);
+    expect(upcomingPayments([loan], today)).toEqual([]);
   });
-});
 
-describe("homeStatus and thisMonth", () => {
-  const late: Payment = {
-    key: "b",
-    name: "My card bill",
-    amount: 12000,
-    date: "2026-11-20",
-    kind: "card",
-    overdue: true,
-    href: "/cards",
-  };
-  it("puts an overdue payment first, in red", () => {
-    expect(homeStatus({ payments: [late], goals: [], today })).toEqual({
-      tone: "danger",
-      text: "My card bill of ₹12,000 was due 20 Nov.",
-    });
+  it("keeps card statements out of This month, since they have their own line", () => {
     const items = thisMonth({
-      payments: [late],
-      updates: [],
-      steps: [],
+      updates: [
+        {
+          key: "statement:c1:2026-11-01",
+          title: "Log c1 statement",
+          detail: "",
+          href: "/cards",
+        },
+        {
+          key: "cas",
+          title: "Refresh your investments",
+          detail: "",
+          href: "/import",
+        },
+      ],
       milestone: null,
-      today,
     });
-    expect(items[0]).toMatchObject({
-      title: "Pay My card bill: ₹12,000",
-      detail: "Was due 20 Nov",
-      snooze: false,
-    });
+    expect(items.map((i) => i.key)).toEqual(["cas"]);
   });
+
   it("says you're on track when nothing needs you", () => {
     expect(homeStatus({ payments: [], goals: [], today }).tone).toBe("success");
   });

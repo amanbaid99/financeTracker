@@ -4,6 +4,11 @@ What's live, what's open and the known gaps. Update this at the end of every tas
 Last updated: 21 Nov 2026.
 
 
+
+## Home without payments or plan steps, 22 Nov 2026
+
+The owner is between salaries and doesn't track card bills as paid or unpaid. Home no longer shows plan steps or card bill payments (and Mark paid is gone). `cardBillNudge` (lib/home.ts) shows one line from the 1st of each month, linking to Cards, until every card has a bill for last month; per-card "Log statement" reminders are left out of This month. The coming-up row counts EMIs of loans not on a card only. Your plan still lists its steps.
+
 ## Calmer Home, 22 Nov 2026
 
 Home (`app/(app)/today/page.tsx`, `components/home-sections.tsx`) now reads: status line (green, amber or red from `homeStatus` in lib/home.ts: an overdue card bill, then a focus goal that's behind or short, else on track) with the count of things to do; This month (`thisMonth`: payments due within 10 days, update reminders and setup cues, plan steps from `planSteps`, and a card milestone only when within ₹10,000 or 30 days), rendered by `UpdatesDue` with a title and no Tomorrow button for payments and steps; the total going out in 30 days (`upcomingPayments`: unpaid card bills plus EMIs of loans not on a card); Focus goals with the emergency fund in months of essential costs and EMIs; and Your money (own, owe, spare, net worth). `home-balance.tsx` and `home-overview.tsx` are removed; `data-guide` targets `home-focus` and `net-worth` are kept.
