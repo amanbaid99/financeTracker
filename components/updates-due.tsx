@@ -7,6 +7,9 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import type { UpdateDue } from "@/lib/updates";
 import { useDayRefresh } from "@/components/use-day-refresh";
 import { snoozeUpdate } from "@/lib/updates-actions";
+import { setBillPaid } from "@/lib/cards-actions";
+import { markEmiPaid, undoEmiPaid } from "@/lib/loans-actions";
+import { useToast } from "@/components/ui/toast";
 
 export function UpdatesDue({
   items,
@@ -24,6 +27,34 @@ export function UpdatesDue({
   const [expanded,setExpanded]=useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
+  const toast = useToast();
+  // A tap is the confirmation: marks it paid, with Undo in a toast.
+  const markPaid = (item: UpdateDue) =>
+    start(async () => {
+      const p = item.pay;
+      if (!p) return;
+      setError("");
+      const res =
+        "billId" in p
+          ? await setBillPaid({ id: p.billId, paid: true })
+          : await markEmiPaid(p);
+      if (!res.ok) return setError(res.error ?? "Try again.");
+      router.refresh();
+      toast({
+        text: "Marked paid.",
+        tone: "success",
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            const r =
+              "billId" in p
+                ? await setBillPaid({ id: p.billId, paid: false })
+                : await undoEmiPaid(p);
+            if (r.ok) router.refresh();
+          },
+        },
+      });
+    });
   useDayRefresh(today);
   const visible=compact?(expanded?items:items.slice(0,3)):items.slice(0,1);
   if (!items.length) return null;
@@ -41,7 +72,17 @@ export function UpdatesDue({
       <p className={compact?"break-words text-sm font-medium":"font-semibold break-words"}>{item.title}</p>
       <p className={compact?"text-xs text-muted-foreground":"text-sm text-muted-foreground"}>{item.detail}</p>
       <div className="flex flex-wrap items-center gap-2">
-        <Link href={item.href} className={buttonVariants({ size: "sm" })}>
+        {item.pay && (
+          <Button
+            size="sm"
+            disabled={pending}
+            aria-label={`Mark paid: ${item.title}`}
+            onClick={() => markPaid(item)}
+          >
+            Mark paid
+          </Button>
+        )}
+        <Link href={item.href} className={buttonVariants({ size: "sm", variant: item.pay ? "ghost" : "default" })}>
           {item.actionLabel??"Update"}
         </Link>
         {item.snooze !== false && <Button

@@ -39,6 +39,8 @@ export interface Payment {
   kind: "card" | "emi";
   overdue: boolean;
   href: string;
+  billId?: string;
+  loanId?: string;
 }
 
 /**
@@ -50,12 +52,12 @@ export function upcomingPayments(cards: Card[], loans: Loan[], today: string, da
   for (const c of cards)
     for (const b of c.bills)
       if (!b.paid && b.dueDate && b.amount > 0 && daysUntil(today, b.dueDate) <= days)
-        out.push({ key: `bill-${b.id}`, name: `${c.label} bill`, amount: b.amount, date: b.dueDate, kind: "card", overdue: b.dueDate < today, href: `/cards?open=${encodeURIComponent(c.id)}` });
+        out.push({ key: `bill-${b.id}`, name: `${c.label} bill`, amount: b.amount, date: b.dueDate, kind: "card", overdue: b.dueDate < today, href: `/cards?open=${encodeURIComponent(c.id)}`, billId: b.id });
   for (const l of loans) {
     if (l.cardId) continue;
     const next = loanView(l, today).next;
     if (next && daysUntil(today, next.date) <= days)
-      out.push({ key: `emi-${l.id}-${next.date}`, name: `${l.name} EMI`, amount: next.amount, date: next.date, kind: "emi", overdue: false, href: "/assets" });
+      out.push({ key: `emi-${l.id}-${next.date}`, name: `${l.name} EMI`, amount: next.amount, date: next.date, kind: "emi", overdue: false, href: "/assets", loanId: l.id });
   }
   return out.sort((a, b) => a.date.localeCompare(b.date));
 }
@@ -112,6 +114,7 @@ export function thisMonth({ payments, updates, steps, milestone, today }: {
     href: p.href,
     actionLabel: "Open",
     snooze: false,
+    pay: p.billId ? { billId: p.billId } : p.loanId ? { loanId: p.loanId, dueDate: p.date } : undefined,
   });
   const soon = payments.filter((p) => p.overdue || daysUntil(today, p.date) <= 10).map(pay);
   const plan = steps.map((s): UpdateDue => ({ key: `step-${s.key}`, title: s.title, detail: s.detail, href: "/goals/plan", actionLabel: "Open plan", snooze: false }));
