@@ -4,6 +4,13 @@ How the code fits together. Rules and conventions are in [AGENTS.md](../AGENTS.m
 decisions are in [DECISIONS.md](DECISIONS.md).
 
 
+
+## Named holding minimums and separate essentials, 22 Nov 2026
+
+Monthly minimum inputs list every named holding rather than only types. Store owner-held `inv:<holding ID>` keys in the existing plan preference JSON. Server validation checks ownership against loaded holdings. That holding’s current SIP counts once; reserve only the shortfall before goal recommendations. Add the reservation to its provider setup instruction. No automatic financial-record edits. Legacy type minimums remain editable and count named reservations toward their totals, avoiding double reservation. Deleted holding preferences are omitted when editing.
+
+Pooled SIP recommendations reserve suitable essential holdings first, preferring their linked vehicle. Other goals cannot reuse those holdings. Near-term lifestyle contributions prefer an available bank account, then another suitable liquid fund. Missing essential and other vehicles have separate placeholder keys, including lump-sum setup steps. Existing recorded SIPs are not silently moved. No schema migration is needed.
+
 ## Separate SIP purposes and quieter Home, 22 Nov 2026
 
 Home leads with net worth, followed by status, the aggregate card logging nudge, useful actions and focus goals. The upcoming EMI card is removed. Existing preferences to omit payment lists and plan steps remain intact.

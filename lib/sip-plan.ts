@@ -7,7 +7,7 @@
 import type { Suggestion } from "./allocate";
 import { categoryLabel } from "./categories";
 import { asKind, etfCategory, isEtf } from "./instruments";
-import { freePercent, type Investment, type Link } from "./tracker";
+import { freePercent, type Investment, type Link, type GoalInput } from "./tracker";
 
 export interface SipPart {
   goalId: string;
@@ -18,6 +18,7 @@ export interface SipPart {
 }
 
 export interface SipLine {
+  key?: string;
   /** One of your investments, or null for a new fund of `category`. */
   investment: Investment | null;
   /** What to call it: your fund's name, or "New liquid fund". */
@@ -169,7 +170,7 @@ function noteFor(i: Investment): string | null {
     return "gold, to spread the risk. Kept to a fifth of this goal as it can swing";
   if (isEtf(i)) return "an ETF, buy units each month";
   if (kindOf(i) === "savings_account")
-    return "a savings account earns less than a liquid fund; consider one for this";
+    return "a savings account, keep this money accessible";
   return null;
 }
 
@@ -234,11 +235,13 @@ export function splitForGoal(
   investments: Investment[],
   links: Link[],
   strategy: SipStrategy = "diversified",
+  preferBank = false,
 ): FundShare[] {
-  // Share suitable vehicles across goals. Near-term money never falls back to
-  // equity, gold, locked ELSS or a savings account presented as a fund.
+  // Pick one suitable vehicle from the caller’s purpose-safe pool.
+  // Near-term lifestyle money can prefer a bank; never use equity, gold or ELSS.
   if (strategy === "pooled") {
-    const allowed=(STAND_INS[category]??[category]).filter(k=>!["gold","savings_account","elss"].includes(k));
+    const allowed=(STAND_INS[category]??[category]).filter(k=>!["gold","elss"].includes(k)&& (k!=="savings_account"||preferBank));
+    if(preferBank&&allowed.includes("savings_account")){allowed.splice(allowed.indexOf("savings_account"),1);allowed.unshift("savings_account");}
     const candidates=investments.filter(i=>allowed.includes(kindOf(i)??""));
     candidates.sort((a,b)=>allowed.indexOf(kindOf(a)!)-allowed.indexOf(kindOf(b)!) || b.monthlySip-a.monthlySip || b.value-a.value || a.id.localeCompare(b.id));
     const investment=candidates[0];
@@ -360,11 +363,28 @@ export function splitForGoal(
   }));
 }
 
+const isEssential=(g:Pick<GoalInput,"type">)=>["emergency_fund","bills_fund","loan_payoff"].includes(g.type);
+function purposePool(s:Suggestion,all:Suggestion[],investments:Investment[],links:Link[],goals:Pick<GoalInput,"id"|"type">[]){
+ const safety=new Set(goals.filter(isEssential).map(g=>g.id));
+ const protectedIds=new Set(links.filter(l=>safety.has(l.goalId)&&l.percent>0).map(l=>l.investmentId));
+ // Reserve the essentials' proposed vehicle too, even before it has a recorded balance.
+ const essentialPool=(goal:Suggestion)=>{
+   const own=new Set(links.filter(l=>l.goalId===goal.goalId&&l.percent>0).map(l=>l.investmentId));
+   const linked=investments.filter(i=>own.has(i.id)&&rank(i,goal.category)!==null);
+   return linked.length?linked:investments;
+ };
+ for(const essential of all.filter(x=>isEssential(x.after)))for(const sh of splitForGoal(essential.goalId,essential.category,essential.monthly,essential.lump,essentialPool(essential),links,"pooled"))protectedIds.add(sh.investment.id);
+ if(isEssential(s.after))return essentialPool(s);
+ return investments.filter(i=>!protectedIds.has(i.id));
+}
+function placeholderKey(s:Suggestion,strategy:SipStrategy){return `new:${s.category}${strategy==="pooled"?isEssential(s.after)?":safety":":other":""}`;}
+
 export function sipPlan(
   suggestions: Suggestion[],
   investments: Investment[] = [],
   links: Link[] = [],
   strategy: SipStrategy = "diversified",
+  goals:Pick<GoalInput,"id"|"type">[]=suggestions.map(s=>s.after),
 ): SipLine[] {
   const lines = new Map<string, SipLine>();
   const add = (
@@ -374,6 +394,7 @@ export function sipPlan(
     monthly: number,
   ) => {
     const line = lines.get(key) ?? make();
+    line.key=key;
     line.monthly += monthly;
     line.parts.push({
       goalId: s.goalId,
@@ -390,16 +411,17 @@ export function sipPlan(
       s.category,
       s.monthly,
       0,
-      investments,
+      strategy==="pooled"?purposePool(s,suggestions,investments,links,goals):investments,
       links,
       strategy,
+      strategy==="pooled"&&!isEssential(s.after)&&s.category==="liquid_fund",
     );
     if (!shares.length) {
       add(
-        `new:${s.category}`,
+        placeholderKey(s,strategy),
         () => ({
           investment: null,
-          label: strategy==="pooled"?categoryLabel(s.category):`New ${categoryLabel(s.category).toLowerCase()}`,
+          label: strategy==="pooled"?`${isEssential(s.after)?"Essentials: ":"Separate: "}${categoryLabel(s.category)}`:`New ${categoryLabel(s.category).toLowerCase()}`,
           category: s.category,
           similar: false,
           note: null,
@@ -466,13 +488,14 @@ export function planSteps(
   investments: Investment[] = [],
   links: Link[] = [],
   strategy: SipStrategy = "diversified",
+  goals:Pick<GoalInput,"id"|"type">[]=suggestions.map(s=>s.after),
 ): PlanStep[] {
   const steps = new Map<string, PlanStep>();
   const addGoal = (step: PlanStep, id: string, name: string) => {
     if (!step.goals.some((g) => g.id === id)) step.goals.push({ id, name });
   };
-  for (const l of sipPlan(suggestions, investments, links, strategy)) {
-    const key = l.investment ? `inv:${l.investment.id}` : `new:${l.category}`;
+  for (const l of sipPlan(suggestions, investments, links, strategy, goals)) {
+    const key = l.key??(l.investment ? `inv:${l.investment.id}` : `new:${l.category}`);
     const step: PlanStep = {
       key,
       investment: l.investment,
@@ -493,9 +516,10 @@ export function planSteps(
       s.category,
       0,
       s.lump,
-      investments,
+      strategy==="pooled"?purposePool(s,suggestions,investments,links,goals):investments,
       links,
       strategy,
+      strategy==="pooled"&&!isEssential(s.after)&&s.category==="liquid_fund",
     ).filter((sh) => sh.lump > 0);
     const parts = shares.length
       ? shares.map((sh) => ({
@@ -508,7 +532,7 @@ export function planSteps(
         }))
       : [
           {
-            key: `new:${s.category}`,
+            key: placeholderKey(s,strategy),
             investment: null,
             label: strategy==="pooled"?categoryLabel(s.category):`New ${categoryLabel(s.category).toLowerCase()}`,
             lump: s.lump,

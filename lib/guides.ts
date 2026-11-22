@@ -37,7 +37,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "I have extra money previews where spare cash helps your goals. Nothing is saved until you confirm. New goal adds something you want to save for.",
       "Update amounts lets you enter the latest amounts for your investments.",
       "Import statement reads a CAS. You review the results before saving.",
-      "SIP plan separates safety, lifestyle and long-term amounts, then groups vehicles within each purpose. A fund can be shared without mixing its purpose amounts. Plan a withdrawal previews which holdings you could use without moving money.",
+      "SIP plan separates safety, lifestyle and long-term amounts, then groups vehicles within each purpose. Essentials use a separate holding from lifestyle goals. Set monthly minimums for your named holdings. Plan a withdrawal previews which holdings you could use without moving money.",
       "Log a card bill records a statement for an existing card. Add a new card in the Cards tab.",
       "You can reopen this guide from the info button inside the + menu.",
     ],
@@ -135,6 +135,10 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-22", title: "Choose monthly amounts by holding", items: [
+    { title: "Your actual holdings", text: "Set a monthly minimum for each named fund, stock holding, retirement account or bank account. Its existing SIP counts toward that amount. Previous category choices stay visible until you replace them." },
+    { title: "Keep essentials separate", text: "Travel and other goals no longer share new contributions with the essentials holding. Near-term lifestyle goals prefer another bank account or suitable liquid fund." },
+  ] },
   { date: "2026-11-22", title: "Separate purposes, simpler Home", items: [
     { title: "Travel stays separate", text: "Monthly recommendations separate safety and essentials, lifestyle goals and long-term goals. Shared funds show separate amounts without counting contributions twice." },
     { title: "Your money at a glance", text: "Net worth now leads Home. Upcoming EMI summaries are removed; card logging, useful updates and focus goals stay." },

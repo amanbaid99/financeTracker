@@ -1,4 +1,5 @@
 "use client";
+import { minimumReservations } from "@/lib/sip-minimums";
 
 import { Check, ChevronDown, Plus, Sparkles } from "lucide-react";
 import { VehicleCoverage } from "@/components/investment-vehicles";
@@ -420,9 +421,16 @@ export function MoneyPlanCard({
     .filter((g) => g.status !== "reached" && !g.emisCloseFirst)
     .reduce((s, g) => s + g.extraSipNeeded, 0);
   const suggestions = plan?.suggestions ?? [];
-  const sips = sipPlan(suggestions, investments, links, strategy);
-  const steps = planSteps(suggestions, investments, links, strategy);
-  const extraMonthly = sips.reduce((sum, line) => sum + line.monthly, 0);
+  const sips = sipPlan(suggestions, investments, links, strategy, goals);
+  const steps = planSteps(suggestions, investments, links, strategy, goals);
+  for(const r of minimumReservations(plan?.minimums??{},investments)){
+    if(!r.investmentId||r.extra<=0)continue;
+    const investment=investments.find(i=>i.id===r.investmentId)!;
+    const key=`inv:${investment.id}`, existing=steps.find(s=>s.key===key);
+    if(existing)existing.addMonthly+=r.extra;
+    else steps.push({key,investment,label:r.label,category:investment.category??"other",addMonthly:r.extra,addLump:0,goals:[],note:"Your chosen monthly minimum"});
+  }
+  const extraMonthly = sips.reduce((sum, line) => sum + line.monthly, 0)+(plan?.reservedMonthly??0);
   if (variant === "summary")
     return (
       <>

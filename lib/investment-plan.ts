@@ -29,14 +29,22 @@ export function monthlyVehicles(plan:MoneyPlan, investments:Investment[], links:
     }
     rows.set(`inv:${inv.id}`,{key:`inv:${inv.id}`,label:inv.name?.trim()||categoryLabel(inv.category),current:total,extra:0,total,parts});
   }
-  for(const line of sipPlan(plan.suggestions,investments,links,"pooled")){
-    const key=line.investment?`inv:${line.investment.id}`:`new:${line.category}`;
+  for(const line of sipPlan(plan.suggestions,investments,links,"pooled",goals)){
+    const key=line.key??(line.investment?`inv:${line.investment.id}`:`new:${line.category}`);
     const row=rows.get(key)??{key,label:line.label,current:0,extra:0,total:0,parts:[]};
     row.extra+=line.monthly;row.total+=line.monthly;
     for(const part of line.parts){const old=row.parts.find(p=>p.goalId===part.goalId);if(old)old.monthly+=part.monthly;else {const goal=goals.find(g=>g.id===part.goalId);row.parts.push({...part,purpose:goal?investmentPurpose(goal):"unassigned"});}}
     rows.set(key,row);
   }
   for(const reserved of minimumReservations(plan.minimums??{},investments)){
+    if(reserved.investmentId){
+      const inv=investments.find(i=>i.id===reserved.investmentId)!;
+      const key=`inv:${inv.id}`;
+      const row=rows.get(key)??{key,label:reserved.label,current:0,extra:0,total:0,parts:[]};
+      row.extra+=reserved.extra;row.total+=reserved.extra;
+      if(row.total>0)rows.set(key,row);
+      continue;
+    }
     if(reserved.extra===0)continue; // Already fulfilled by the named running holdings.
     const partRows=[...rows.values()].filter(r=>investments.some(i=>r.key===`inv:${i.id}`&&asKind(i.kind)===reserved.kind));
     // Existing contributions within a chosen type count once. Keep generated
