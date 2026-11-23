@@ -139,6 +139,8 @@ export interface HybridInput {
   reservedOutsideGoals?: number;
   overrides?: Record<string, number>;
   allowOverfunding?: boolean;
+  /** Skip unused deadline-extension searches in live previews; confirmations stay complete. */
+  includeAlternatives?: boolean;
   policy?: Partial<HybridPolicy>;
 }
 const integer = (n: Decimal | number | string) => {
@@ -943,6 +945,7 @@ export function calculateHybrid(input: HybridInput): HybridResult {
           : row.projectedCorpus,
     };
     if (
+      input.includeAlternatives !== false &&
       row.monthlyShortfall > 0 &&
       row.recommendedMonthly > 0 &&
       !bill &&

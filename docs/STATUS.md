@@ -1,5 +1,13 @@
 # Status
 
+## SIP totals are read-only; estimate option removed, 23 Nov 2026
+
+Removed the emergency-cover disclosure, cost input and prior-value restoration from the active SIP page. Confirmation uses zero monthlyEssentials for standalone SIP plans, so hidden old estimate values cannot affect new plans. Emergency priority uses the goal's existing monthly requirement. Historical snapshots remain unchanged.
+
+Goal headers now show a read-only monthly total. Only vehicles have editable amount boxes, and vehicle edits still update the total and remaining goals. Goal-level restore actions remain available. The top monthly SIP amount stays editable and independent of Budget. The shared MoneyInput now keeps a local focused draft, so clearing a value remains blank while editing even when its parent normalises empty input to zero. Focusing zero selects it for replacement, typing keeps Indian grouping, and blur restores the controlled value. Focus alone does not change stored values. SIP editing now defers projections behind immediate text updates and reuses unchanged baseline recommendations. Vehicle selection reuses one prepared money plan rather than rebuilding full projections per goal. Live previews skip unused deadline-extension searches; server confirmation still calculates complete results. Save is disabled while calculations are catching up, and live displayed projections match full calculations in regression tests. No holding, transaction or budget changes.
+
+Verification: lint, TypeScript, 847 unit tests, 40 Python tests and production build pass. Real-component browser checks at 320/375/768px cover zero clearing, typing and blur, read-only goal totals, removed estimate controls, save/reopen and overflow. With a large retirement target and 4x CPU throttling, input-to-frame samples were 30–54 ms. No hosted financial records changed; full signed-in E2E remains unverified.
+
 ## Goal and vehicle SIP worksheet, 23 Nov 2026
 
 The standalone SIP screen now leads with a large editable monthly total. Each priority-ordered goal has its own total, projected coverage colour/bar and every linked monthly vehicle, including zero suggestions. Existing suitability sorting is extracted as goalFirstCandidates and reused. Goal edits resplit that goal's vehicles; vehicle edits adjust the parent goal total and redistribute the remaining capacity across unfixed goals. Dotted restore links release individual choices, while Reset amounts clears all choices. Invalid/over-budget edits remain visible and cannot be saved; their projections are neutral until corrected.

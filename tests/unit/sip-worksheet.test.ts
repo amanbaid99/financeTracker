@@ -206,3 +206,12 @@ it("allows an explicit rounded-up contribution while keeping automatic recommend
 it("never assigns new monthly money to a completed goal",()=>{
  expect(()=>sipWorksheet({...input,goals:goals.map(g=>g.id==="retirement"?{...g,completed:true}:g),overrides:{retirement:1000}})).toThrow(/Completed goals/);
 });
+it("a reused baseline produces the same worksheet and is never mutated",async()=>{
+ const {sipWorksheetBaseline}=await import("@/lib/sip-worksheet");const baseline=sipWorksheetBaseline(input);const snapshot=JSON.stringify(baseline);const edited={...input,overrides:{retirement:6800},vehicleOverrides:{retirement:{"inv:fund0":2000}}};
+ expect(sipWorksheet(edited,baseline)).toEqual(sipWorksheet(edited));expect(JSON.stringify(baseline)).toBe(snapshot);
+});
+it("fast live previews keep displayed projections identical to full confirmation",()=>{
+ const full=sipWorksheet({...input,overrides:{retirement:1000}});const quick=sipWorksheet({...input,overrides:{retirement:1000},includeAlternatives:false});
+ const displayed=(s:ReturnType<typeof sipWorksheet>)=>({goals:s.result.goals.map(g=>({...g,alternatives:{...g.alternatives,revisedDeadline:null}})),vehicles:s.result.vehicles,rows:s.rows});
+ expect(displayed(quick)).toEqual(displayed(full));
+});

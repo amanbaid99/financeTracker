@@ -184,7 +184,12 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Add investment" }).click();
   await page.getByLabel("Fund category").selectOption("flexi_cap");
   await page.getByLabel("Nickname (optional)").fill("Index SIP");
-  await page.getByLabel("Value today").fill("300000");
+  await page.getByLabel("Value today").fill("0");
+  await page.getByLabel("Value today").click();
+  await page.getByLabel("Value today").press("Backspace");
+  await expect(page.getByLabel("Value today")).toHaveValue("");
+  await page.getByLabel("Value today").pressSequentially("300000");
+  await expect(page.getByLabel("Value today")).toHaveValue("3,00,000");
   await page.getByLabel("Monthly SIP").fill("10000");
   await page.getByText(/^More options/).click();
   await expect(page.getByLabel("Expected return, % a year")).toHaveAttribute(
@@ -343,10 +348,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // No saved budget is required: enter an explicit available monthly amount.
   await expect(page.getByRole("heading",{name:"Your monthly SIPs"})).toBeVisible();
   await page.getByLabel("How much can you invest each month?",{exact:true}).fill("50000");
-  await expect(page.getByLabel("House a month")).toBeVisible();
+  const houseSip=page.locator("section[data-goal-id]").filter({has:page.getByRole("heading",{name:"House",exact:true})});
+  await expect(houseSip.getByRole("textbox").first()).toBeVisible();
   await expect(page.getByLabel("Bank FD a month")).toHaveCount(0);
-  await page.getByLabel("House a month").fill("12000");
-  await expect(page.getByLabel("House a month")).toHaveValue("12,000");
+  await houseSip.getByRole("textbox").first().fill("12000");
+  await expect(houseSip.getByRole("textbox").first()).toHaveValue("12,000");
   await page.screenshot({path:"test-results/sip-plan-375.png",fullPage:true});
   await page.getByRole("button",{name:"Save this plan",exact:true}).click();
   await expect(page).toHaveURL(/\/goals$/);

@@ -84,9 +84,11 @@ export async function confirmHybridPlan(
         error:
           "This plan exceeds your available monthly savings. Update your budget or lower the amounts.",
       };
-    const monthlyEssentials = configured
-      ? b!.budget.costs + b!.budget.emis
-      : (v.monthlyEssentials ?? 0);
+    const monthlyEssentials = standalone
+      ? 0
+      : configured
+        ? b!.budget.costs + b!.budget.emis
+        : (v.monthlyEssentials ?? 0);
     if (v.allocationMode && Object.keys(v.minimums).length)
       return {
         ok: false,

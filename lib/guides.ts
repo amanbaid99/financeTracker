@@ -131,6 +131,9 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"Smoother SIP editing",items:[{title:"Type without waiting",text:"Vehicle amounts update as you type while projections catch up. Goal totals are text, and the emergency-cover estimate option is removed."}]},
+ {date:"2026-11-23",title:"Amount fields are easier to edit",items:[{title:"Type straight over zero",text:"Tap a zero amount and start typing. Clearing a field now stays empty while you edit, even where zero is the saved default."}]},
+ {date:"2026-11-23",title:"One amount box per vehicle",items:[{title:"Simpler SIP cards",text:"Goal headers show a total. Enter amounts only beside vehicles below. The emergency-cover estimate option is removed."}]},
  {date:"2026-11-23",title:"An editable SIP worksheet",items:[{title:"Goals and vehicles together",text:"Enter a large monthly total, edit goal or vehicle amounts and watch the rest recalculate. Green and red show projected funding. Dotted restore links bring suggestions back, and all linked monthly vehicles stay visible."}]},
  {date:"2026-11-23",title:"SIP planning stays separate",items:[{title:"Choose your own amount",text:"Enter a SIP planning amount without a budget limit. Saving keeps that amount when you reopen. Monthly costs for emergency cover are optional."}]},
  {date:"2026-11-23",title:"Simpler investment access",items:[{title:"Available by default",text:"Access and valuation inputs are removed. All holdings are assumed withdrawable for goal planning and withdrawal previews, including existing ELSS holdings."}]},

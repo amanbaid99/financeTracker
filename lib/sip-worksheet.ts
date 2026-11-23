@@ -1,10 +1,11 @@
 // Editable goal/vehicle allocations share the same funding calculation as confirmation.
 import {
   hybridPlan,
+  hybridMoneyPlan,
   hybridVehicles,
   type HybridPlanInput,
 } from "./hybrid-plan";
-import { goalFirstCandidates } from "./sip-plan";
+import { goalFirstCandidates, sipPlan } from "./sip-plan";
 import { categoryLabel } from "./categories";
 import type { MonthlyVehicle } from "./investment-plan";
 export type VehicleOverrides = Record<string, Record<string, number>>;
@@ -19,7 +20,7 @@ export interface WorksheetVehicle {
   manual: boolean;
   held: boolean;
 }
-export function sipWorksheet(input: SipWorksheetInput) {
+export function sipWorksheetBaseline(input: SipWorksheetInput) {
   const baselineInput = {
     ...input,
     overrides: {},
@@ -30,6 +31,13 @@ export function sipWorksheet(input: SipWorksheetInput) {
   };
   const baseline = hybridPlan(baselineInput);
   baseline.vehicles = hybridVehicles(baselineInput, baseline);
+  return baseline;
+}
+export function sipWorksheet(
+  input: SipWorksheetInput,
+  cachedBaseline?: ReturnType<typeof sipWorksheetBaseline>,
+) {
+  const baseline = cachedBaseline ?? sipWorksheetBaseline(input);
   const fixedByGoal = Object.fromEntries(
     Object.entries(input.vehicleOverrides ?? {}).map(([id, pins]) => [
       id,
@@ -69,6 +77,10 @@ export function sipWorksheet(input: SipWorksheetInput) {
         throw Error("Use whole-rupee vehicle amounts.");
     }
   }
+  const suggestions = hybridMoneyPlan(
+    { ...input, minimums: {} },
+    result,
+  ).suggestions;
   for (const goal of result.goals) {
     const original = input.goals.find((g) => g.id === goal.goalId)!;
     const pins = input.vehicleOverrides?.[goal.goalId] ?? {};
@@ -77,24 +89,16 @@ export function sipWorksheet(input: SipWorksheetInput) {
       throw Error(
         `Vehicle amounts exceed ${goal.goalName}’s monthly total. Increase the goal amount or lower a vehicle.`,
       );
-    const residual = {
-      ...result,
-      goals: result.goals.map((g) =>
-        g.goalId === goal.goalId
-          ? { ...g, recommendedMonthly: g.recommendedMonthly - pinnedTotal }
-          : g,
+    const automatic = sipPlan(
+      suggestions.map((s) =>
+        s.goalId === goal.goalId
+          ? { ...s, monthly: s.monthly - pinnedTotal }
+          : s,
       ),
-    };
-    const automatic = hybridVehicles(
-      {
-        ...input,
-        minimums: {},
-        exactHoldings: false,
-        investments: input.investments.filter(
-          (i) => !Object.hasOwn(pins, `inv:${i.id}`),
-        ),
-      },
-      residual,
+      input.investments.filter((i) => !Object.hasOwn(pins, `inv:${i.id}`)),
+      result.links,
+      "goal_first",
+      input.goals,
     );
     const own = new Map<string, WorksheetVehicle>();
     const add = (key: string, label: string, amount: number, held: boolean) => {
@@ -112,7 +116,7 @@ export function sipWorksheet(input: SipWorksheetInput) {
       for (const p of v.parts.filter(
         (p) => p.goalId === goal.goalId && p.monthly > 0,
       ))
-        add(v.key, v.label, p.monthly, v.key.startsWith("inv:"));
+        add(v.key!, v.label, p.monthly, v.key!.startsWith("inv:"));
     for (const [key, n] of Object.entries(pins)) {
       const inv = input.investments.find((i) => `inv:${i.id}` === key)!;
       add(key, inv.name || categoryLabel(inv.category), n, true);

@@ -25,8 +25,10 @@ export function MoneyInput({
   required?: boolean;
   "aria-label"?: string;
 }) {
-  const display =
-    value === null || value === undefined ? "" : fmt.format(value);
+  // Keep the editing text separate so parents that normalise null to 0 do not
+  // immediately refill a cleared field. The controlled value wins on blur.
+  const [draft, setDraft] = React.useState<string | null>(null);
+  const display = draft ?? (value == null ? "" : fmt.format(value));
   return (
     <div className={cn("relative", className)}>
       <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
@@ -42,9 +44,16 @@ export function MoneyInput({
         placeholder={placeholder}
         className="tabular h-10 w-full min-w-0 rounded-lg border border-input bg-card pl-7 pr-3 text-base sm:text-sm placeholder:text-muted-foreground"
         value={display}
+        onFocus={(e) => {
+          setDraft(value == null ? "" : fmt.format(value));
+          if (value === 0) e.currentTarget.select();
+        }}
+        onBlur={() => setDraft(null)}
         onChange={(e) => {
           const digits = e.target.value.replace(/[^\d]/g, "");
-          onChange(digits === "" ? null : Math.min(Number(digits), 1e13));
+          const amount = digits === "" ? null : Math.min(Number(digits), 1e13);
+          setDraft(amount === null ? "" : fmt.format(amount));
+          onChange(amount);
         }}
       />
     </div>

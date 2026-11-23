@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition, useDeferredValue } from "react";
 import { useRouter } from "next/navigation";
 import { MoneyInput } from "./money-input";
 import { useToast } from "./ui/toast";
@@ -8,6 +8,7 @@ import { Progress } from "./ui/progress";
 import { GoalIcon } from "./goal-icon";
 import {
   sipWorksheet,
+  sipWorksheetBaseline,
   type VehicleOverrides,
   type WorksheetVehicle,
 } from "@/lib/sip-worksheet";
@@ -22,7 +23,6 @@ export function SimpleSipPlanner({
   links: currentLinks,
   today,
   initialMonthly,
-  monthlyEssentials,
   initialOverrides = {},
   initialVehicleOverrides = {},
   revision,
@@ -33,7 +33,6 @@ export function SimpleSipPlanner({
   links: Link[];
   today: string;
   initialMonthly: number | null;
-  monthlyEssentials: number | null;
   initialOverrides?: Record<string, number>;
   initialVehicleOverrides?: VehicleOverrides;
   revision: string;
@@ -42,7 +41,6 @@ export function SimpleSipPlanner({
   const router = useRouter(),
     toast = useToast();
   const [monthly, setMonthly] = useState(initialMonthly);
-  const [essentials, setEssentials] = useState(monthlyEssentials);
   const [overrides, setOverrides] = useState(initialOverrides);
   const [vehicleOverrides, setVehicleOverrides] = useState(
     initialVehicleOverrides,
@@ -54,8 +52,6 @@ export function SimpleSipPlanner({
     Number.isSafeInteger(monthly) &&
     monthly >= 0 &&
     monthly <= 1e9;
-  const costs = essentials ?? 0;
-  const costsValid = Number.isSafeInteger(costs) && costs >= 0 && costs <= 1e9;
   const links = useMemo(
     () =>
       proposeGoalMapping(goals, investments, currentLinks, today, {
@@ -64,31 +60,63 @@ export function SimpleSipPlanner({
       }),
     [goals, investments, currentLinks, today, riskTolerance],
   );
-  const preview = useMemo(() => {
-    if (!valid || !costsValid) return null;
-    const input = {
+  const edits = useMemo(
+    () => ({ monthly, overrides, vehicleOverrides }),
+    [monthly, overrides, vehicleOverrides],
+  );
+  const deferred = useDeferredValue(edits);
+  const recalculating = deferred !== edits;
+  const calculationInput = useMemo(
+    () => ({
       goals,
       investments,
       links,
       today,
       riskTolerance,
-      monthlySavings: monthly!,
-      monthlyPlanLimit: monthly!,
-      monthlyEssentials: costs,
+      monthlySavings: deferred.monthly ?? 0,
+      monthlyPlanLimit: deferred.monthly ?? 0,
+      monthlyEssentials: 0,
+      includeAlternatives: false,
       allocationMode: "safety_deadline" as const,
-      overrides,
-      vehicleOverrides,
+    }),
+    [goals, investments, links, today, riskTolerance, deferred.monthly],
+  );
+  const recommendation = useMemo(() => {
+    if (
+      deferred.monthly === null ||
+      !Number.isSafeInteger(deferred.monthly) ||
+      deferred.monthly < 0 ||
+      deferred.monthly > 1e9
+    )
+      return null;
+    try {
+      return { baseline: sipWorksheetBaseline(calculationInput), error: "" };
+    } catch (e) {
+      return {
+        baseline: null,
+        error:
+          e instanceof Error ? e.message : "Could not calculate this plan.",
+      };
+    }
+  }, [calculationInput, deferred.monthly]);
+  const preview = useMemo(() => {
+    if (!recommendation) return null;
+    if (!recommendation.baseline)
+      return { sheet: null, error: recommendation.error };
+    const input = {
+      ...calculationInput,
+      overrides: deferred.overrides,
+      vehicleOverrides: deferred.vehicleOverrides,
     };
     try {
-      return { sheet: sipWorksheet(input), error: "" };
+      return { sheet: sipWorksheet(input, recommendation.baseline), error: "" };
     } catch (e) {
       try {
         return {
-          sheet: sipWorksheet({
-            ...input,
-            overrides: {},
-            vehicleOverrides: {},
-          }),
+          sheet: sipWorksheet(
+            { ...input, overrides: {}, vehicleOverrides: {} },
+            recommendation.baseline,
+          ),
           error: e instanceof Error ? e.message : "Review your amounts.",
         };
       } catch {
@@ -100,17 +128,10 @@ export function SimpleSipPlanner({
       }
     }
   }, [
-    valid,
-    costsValid,
-    goals,
-    investments,
-    links,
-    today,
-    riskTolerance,
-    monthly,
-    costs,
-    overrides,
-    vehicleOverrides,
+    recommendation,
+    calculationInput,
+    deferred.overrides,
+    deferred.vehicleOverrides,
   ]);
   const sheet = preview?.sheet,
     result = sheet?.result;
@@ -124,15 +145,6 @@ export function SimpleSipPlanner({
   const edited =
     Object.keys(overrides).length > 0 ||
     Object.keys(vehicleOverrides).length > 0;
-  function changeGoal(id: string, value: number | null) {
-    setError("");
-    setOverrides((old) => ({ ...old, [id]: value ?? 0 }));
-    setVehicleOverrides((old) => {
-      const next = { ...old };
-      delete next[id];
-      return next;
-    });
-  }
   function changeVehicle(
     id: string,
     row: WorksheetVehicle,
@@ -194,7 +206,7 @@ export function SimpleSipPlanner({
     setVehicleOverrides({});
   }
   function save() {
-    if (!valid || !result || preview?.error) return;
+    if (!valid || !result || preview?.error || recalculating) return;
     setError("");
     start(async () => {
       try {
@@ -204,7 +216,7 @@ export function SimpleSipPlanner({
           monthly: monthly!,
           manualSavings: monthly!,
           allocationMode: "safety_deadline",
-          monthlyEssentials: costs,
+          monthlyEssentials: 0,
           lump: 0,
           cashBuffer: 0,
           refreshMapping: false,
@@ -224,7 +236,7 @@ export function SimpleSipPlanner({
     });
   }
   return (
-    <div className="space-y-5">
+    <div className="space-y-5" data-sip-calculating={recalculating}>
       <section className="surface-card overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-br from-primary/5 via-card to-card p-5 sm:p-6">
         <label
           htmlFor="goal-sip-monthly"
@@ -243,48 +255,35 @@ export function SimpleSipPlanner({
           className="[&_input]:h-20 [&_input]:rounded-none [&_input]:border-0 [&_input]:bg-transparent [&_input]:pl-9 [&_input]:pr-0 [&_input]:text-4xl [&_input]:font-semibold [&_span]:left-0 [&_span]:text-3xl sm:[&_input]:text-5xl"
         />
         <p className="text-xs text-muted-foreground">
-          Set a total. Adjust any goal or vehicle below; the rest recalculates.
-          Budget stays separate.
+          Set a total. Adjust a vehicle below; its goal total and the rest
+          recalculate. Budget stays separate.
         </p>
         {result && !preview?.error && (
-          <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 border-t pt-3 text-sm">
-            <span>
-              <b className="tabular">
-                {formatINR(result.totalMonthlyAllocated)}
-              </b>{" "}
-              allocated
-            </span>
-            <span className="text-muted-foreground">
-              <b className="tabular">
-                {formatINR(
-                  Math.max(0, monthly! - result.totalMonthlyAllocated),
-                )}
-              </b>{" "}
-              left
-            </span>
+          <div className="mt-4 flex min-h-9 flex-wrap gap-x-4 gap-y-1 border-t pt-3 text-sm">
+            {recalculating ? (
+              <span className="text-muted-foreground" role="status">
+                Updating allocations…
+              </span>
+            ) : (
+              <>
+                {" "}
+                <span>
+                  <b className="tabular">
+                    {formatINR(result.totalMonthlyAllocated)}
+                  </b>{" "}
+                  allocated
+                </span>
+                <span className="text-muted-foreground">
+                  <b className="tabular">
+                    {formatINR(
+                      Math.max(0, monthly! - result.totalMonthlyAllocated),
+                    )}
+                  </b>{" "}
+                  left
+                </span>
+              </>
+            )}
           </div>
-        )}
-        {goals.some(
-          (g) => g.type === "emergency_fund" || (g.emergencyReserve ?? 0) > 0,
-        ) && (
-          <details className="mt-3 text-xs text-muted-foreground">
-            <summary className="min-h-9 cursor-pointer py-2 underline decoration-dotted underline-offset-4">
-              Emergency cover estimate (optional)
-            </summary>
-            <label className="mb-2 block" htmlFor="goal-sip-costs">
-              Monthly essential costs and EMIs
-            </label>
-            <MoneyInput
-              id="goal-sip-costs"
-              aria-label="Monthly essential costs and EMIs"
-              value={essentials}
-              onChange={setEssentials}
-            />
-            <p className="mt-2">
-              Enables one- and three-month cover estimates. Otherwise the
-              emergency goal’s own requirement comes first.
-            </p>
-          </details>
         )}
       </section>
       {sheet && (
@@ -308,13 +307,14 @@ export function SimpleSipPlanner({
                 const dated = !g.needsDate;
                 const met =
                   g.projectedShortfall === 0 && g.immediateShortfall === 0;
-                const tone = preview?.error
-                  ? "neutral"
-                  : !dated
+                const tone =
+                  recalculating || preview?.error
                     ? "neutral"
-                    : met
-                      ? "success"
-                      : "danger";
+                    : !dated
+                      ? "neutral"
+                      : met
+                        ? "success"
+                        : "danger";
                 const baseline = sheet.baseline.goals.find(
                   (x) => x.goalId === g.goalId,
                 )!;
@@ -356,14 +356,15 @@ export function SimpleSipPlanner({
                           </p>
                         </div>
                         <div className="w-32 shrink-0">
-                          <label className="mb-1 block text-right text-xs text-muted-foreground">
-                            Goal total / month
-                          </label>
-                          <MoneyInput
-                            aria-label={`${g.goalName} a month`}
-                            value={raw}
-                            onChange={(v) => changeGoal(g.goalId, v)}
-                          />
+                          <p className="mb-1 text-right text-xs text-muted-foreground">
+                            Monthly total
+                          </p>
+                          <p
+                            className="tabular break-words text-right text-xl font-semibold"
+                            aria-label={`${g.goalName} monthly total`}
+                          >
+                            {formatINR(raw)}
+                          </p>
                           {(Object.hasOwn(overrides, g.goalId) ||
                             Object.keys(vehicleOverrides[g.goalId] ?? {})
                               .length > 0) && (
@@ -400,7 +401,8 @@ export function SimpleSipPlanner({
                                   : `${formatINR(g.projectedShortfall)} projected shortfall`}
                           </span>
                           <span className="text-muted-foreground">
-                            {!preview?.error &&
+                            {!recalculating &&
+                              !preview?.error &&
                               `${g.targetCorpus > 0 ? Math.min(100, Math.round((g.projectedCorpus / g.targetCorpus) * 100)) : 100}% projected`}
                           </span>
                         </div>
@@ -512,7 +514,7 @@ export function SimpleSipPlanner({
           </div>
         </>
       )}
-      {(error || preview?.error) && (
+      {(error || (!recalculating && preview?.error)) && (
         <div
           role="alert"
           className="rounded-xl bg-danger-soft p-3 text-sm text-danger"
@@ -529,10 +531,16 @@ export function SimpleSipPlanner({
       )}
       <Button
         className="w-full"
-        disabled={pending || !valid || !result || !!preview?.error}
+        disabled={
+          pending || recalculating || !valid || !result || !!preview?.error
+        }
         onClick={save}
       >
-        {pending ? "Saving…" : "Save this plan"}
+        {pending
+          ? "Saving…"
+          : recalculating
+            ? "Updating amounts…"
+            : "Save this plan"}
       </Button>
       <p className="text-xs text-muted-foreground">
         Saving confirms a plan only. No money moves or provider SIPs change.

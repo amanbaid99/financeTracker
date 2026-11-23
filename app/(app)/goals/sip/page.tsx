@@ -12,7 +12,6 @@ export default async function BudgetSipPage() {
         budgetSource?: string;
         monthlySavings?: number;
         allocationMode?: "safety_deadline";
-        monthlyEssentials?: number;
         monthlyPlanLimit?: number;
         overrides?: Record<string, number>;
         vehicleOverrides?: import("@/lib/sip-worksheet").VehicleOverrides;
@@ -40,7 +39,6 @@ export default async function BudgetSipPage() {
             ? (prior.monthlyPlanLimit ?? initialMonthly)
             : initialMonthly
         }
-        monthlyEssentials={prior?.monthlyEssentials ?? null}
         initialOverrides={
           prior?.allocationMode === "safety_deadline"
             ? (prior.overrides ?? {})
