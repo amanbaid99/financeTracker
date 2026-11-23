@@ -32,7 +32,7 @@ export default async function BudgetSipPage() {
           : null;
   return (
     <main className="space-y-4">
-      <BackLink fallback="/goals/plan" label="Your plan" />
+      <BackLink fallback="/goals" label="Goals" />
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold">Your monthly SIPs</h1>
         <p className="text-sm text-muted-foreground">

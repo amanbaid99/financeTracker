@@ -3,6 +3,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MoneyInput } from "./money-input";
+import {useToast} from "./ui/toast";
 import { Button } from "./ui/button";
 import { hybridPlan, hybridVehicles } from "@/lib/hybrid-plan";
 import { proposeGoalMapping } from "@/lib/hybrid-mapping";
@@ -36,6 +37,7 @@ export function SimpleSipPlanner({
   riskTolerance: "conservative" | "moderate" | "aggressive" | null;
 }) {
   const router = useRouter();
+  const toast=useToast();
   const [monthly, setMonthly] = useState<number | null>(initialMonthly);
   const [essentials, setEssentials] = useState<number | null>(
     monthlyEssentials,
@@ -182,7 +184,8 @@ export function SimpleSipPlanner({
           overrides,
         });
         if (!res.ok) return setError(res.error);
-        router.replace("/goals/plan");
+        toast({text:"SIP plan saved."});
+        router.replace("/goals");
         router.refresh();
       } catch {
         setError(

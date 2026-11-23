@@ -1,5 +1,9 @@
 # Status
 
+## Removed plan and essential-order pages, 23 Nov 2026
+
+Removed the Your plan header button, Order essentials control, monthly-plan detail link, both pages and their unused order editor/action and saved-summary renderer. SIP planning stays in +. Saving now confirms with a toast and returns to Goals; remaining legacy entry points use the SIP planner or Goals. Old /goals/plan, /goals/order and /goals/roadmap bookmarks redirect to Goals. Guides and Help no longer direct users to those pages. Historical allocation snapshots, goal ranks, holdings and actual contributions are retained; no hosted financial data is rewritten. Verification: lint, TypeScript, 825 unit tests, 40 Python tests and production build pass. Real-component mobile checks verify SIP save confirmation and return to Goals at 320/375/768px; built-server HTTP checks verify all three retired URLs redirect to Goals. Full signed-in E2E remains unverified.
+
 ## Goal-first SIP planning, 23 Nov 2026
 
 The SIP route now uses a goal-first SimpleSipPlanner: monthly savings, essential monthly costs if no saved budget, then editable goal totals with automatic vehicle splits. Existing models, mapping, funding maths and atomic confirmation are reused. safety_deadline is an explicit versioned allocation mode: first reach one month and then three months of emergency runway from accessible recorded cash/liquid/overnight holdings, capped by user targets; then fill requirements by next bill date or goal deadline. Combined safety/bills ownership is counted once. Safety requirements can accelerate this month's reserve building. Goal edits consume capacity before automatic allocation and show a warning. Recalculate after confirmed emergency balance updates rather than assuming planned SIPs happened.

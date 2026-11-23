@@ -575,7 +575,7 @@ export function HybridPlanner(props: HybridPlannerProps) {
                     return;
                   }
                   setSuccess(true);
-                  router.replace("/goals/plan");
+                  router.replace("/goals");
                   router.refresh();
                   setEditing(false);
                 } catch {

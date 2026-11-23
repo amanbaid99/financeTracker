@@ -59,8 +59,8 @@ function PlanForm({
       const res = await savePlan(input);
       if (!res.ok) return setError(res.error);
       onClose();
-      // A saved plan opens on its own page.
-      if (input) router.push("/goals/plan");
+      // Review monthly amounts in the SIP planner.
+      if (input) router.push("/goals/sip");
       router.refresh();
     });
 

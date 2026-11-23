@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
-import NextLink from "next/link";
 import { useState } from "react";
 import {
   DeleteGoalButton,
@@ -288,12 +287,6 @@ export function GoalList({
                       projected · {formatINR(g.funding.projectedShortfall)}{" "}
                       short.
                     </p>
-                    <NextLink
-                      href="/goals/plan"
-                      className="inline-flex min-h-10 items-center font-medium text-primary"
-                    >
-                      View monthly plan
-                    </NextLink>
                   </div>
                 )}
                 {g.loanState ? (
@@ -349,12 +342,6 @@ export function GoalList({
             <h2 id="goals-top-h" className="font-semibold">
               Focus goals
             </h2>
-            <NextLink
-              href="/goals/order"
-              className="inline-flex min-h-10 items-center text-xs font-medium text-primary"
-            >
-              Order essentials
-            </NextLink>
           </div>
           {renderGoals(top)}
         </section>

@@ -18,7 +18,7 @@ export const HELP: HelpTopic[] = [
     q: "What is on Home?",
     a: [
       "Your net worth leads Home, with what you own, owe and have unassigned. See a short status, one reminder to log last month’s card bills, useful monthly actions and three focus goals. Emergency progress is shown in months of costs. Upcoming EMI summaries are not shown.",
-      "Tap any part to open its tab. Plan steps and paid or unpaid bills aren't on Home; Your plan has the steps.",
+      "Tap any part to open its tab. Open +, then SIP plan to review monthly contributions.",
     ],
     tags: "overview focus dashboard",
   },
@@ -63,7 +63,7 @@ export const HELP: HelpTopic[] = [
       "The planner proposes percentage ownership of your existing investments. Confirming a plan saves that mapping. Confirmed shares stay in place until you approve a new plan; only unassigned ownership is available for extra mapping.",
       "An investment can support several goals, but its total assigned share cannot exceed 100%. Current allocated values follow its recorded balance. Deleting or completing a goal releases ownership without deleting the investment.",
       "Essentials and flexible goals use separate holdings for new planning. Travel prefers a suitable separate bank account or another liquid fund. Missing suitable vehicles are shown as categories, never invented products.",
-      "Only assigned, accessible investments count toward coverage. Check missing valuation dates, restricted assets and risk warnings under Goal coverage and calculations on Your plan. No live prices or automatic trades are used.",
+      "Only assigned, accessible investments count toward coverage. Check valuation dates and restrictions on holdings in Net worth. No live prices or automatic trades are used.",
     ],
     tags: "auto allocate link map which fund covers goal priority emergency sinking",
   },
@@ -93,7 +93,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "What order are my goals in?",
     a: [
-      "Essentials come first, with bills funds at the top and your saved essential order respected. Flexible goals follow by nearest deadline; old flexible rankings do not hide nearer goals. Undated goals follow dated ones. A goal on hold keeps its place. Loans the EMIs already close come after the rest unless placed in your essential order. Covered goals stay at the bottom. Order essentials changes essential funding priorities, not flexible goal order.",
+      "Essentials come first, with bills funds at the top and your saved essential order respected. Flexible goals follow by nearest deadline; old flexible rankings do not hide nearer goals. Undated goals follow dated ones. A goal on hold keeps its place. Loans the EMIs already close come after the rest unless placed in your essential order. Covered goals stay at the bottom.",
       "The first three unfinished goals are under Focus goals, followed by Other goals. Reached goals have their own Covered section at the bottom. Every goal stays visible. Open a goal for its plan and investments; Show details reveals exact totals and calculations.",
     ],
     tags: "order priority top three list focus",
@@ -120,22 +120,12 @@ export const HELP: HelpTopic[] = [
     tags: "money plan priority split sip allocate emergency floor fifth",
   },
   {
-    id: "your-order",
-    section: "Goals",
-    q: "Can I choose which goal comes first?",
-    a: [
-      "Open Goal coverage and calculations on Your plan, then Change essential order to rank essential goals, including bills. Minimums are addressed before remaining essential requirements. Flexible goals use priority, urgency and need rather than this ranking.",
-      "An undated emergency fund uses a visible 12-month build assumption. Other undated goals require a date for projections and receive money only through an explicit monthly preference. Saving a ranking updates the recommendation, not your confirmed historical plan or actual investments.",
-    ],
-    tags: "priority rank order first emergency",
-  },
-  {
     id: "plan-steps",
     section: "Goals",
     q: "What happens when I confirm my plan?",
     a: [
       "A saved plan remains in place across calendar days. Changed financial inputs or calculation rules can request a review; simply opening the app tomorrow does not. Loan and CAS reminders are optional quarterly checks. Monthly card logging stays unchanged.",
-      "Your plan now separates the recommendation, the plan you confirm and your recorded investments. Save this plan saves a new immutable version and coverage mapping. It does not start a SIP, move money or increase a balance.",
+      "The SIP planner separates the recommendation, the plan you confirm and your recorded investments. Save this plan saves a new immutable version and coverage mapping. It does not start a SIP, move money or increase a balance.",
       "After actually setting up a provider SIP or making a transaction, record the resulting SIP or balance in Net worth, or review and confirm a CAS import. Existing recorded SIPs are never silently cut to fit a new recommendation.",
     ],
     tags: "this month checklist tick sip",
@@ -285,7 +275,7 @@ export const HELP: HelpTopic[] = [
     section: "Net worth",
     q: "Where should I withdraw money from?",
     a: [
-      "Open +, then Plan a withdrawal, or use the link on Your plan. Enter the amount and choose its goal or Something else. The preview uses money covering the selected goal first, then unassigned accessible money. Considering other goals needs your explicit choice. Emergency and bill reserves remain protected unless you select that goal.",
+      "Open +, then Plan a withdrawal. Enter the amount and choose its goal or Something else. The preview uses money covering the selected goal first, then unassigned accessible money. Considering other goals needs your explicit choice. Emergency and bill reserves remain protected unless you select that goal.",
       "It compares the lower balances with current goal targets unchanged and shows additional funding gaps. Completing a goal is a separate update. Tax, exit loads, settlement, units and lot-level locks are not calculated. ELSS, retirement accounts, FDs, physical gold and unknown assets are excluded. Confirm access with your provider, then update balances after withdrawing. Nothing is sold or saved by the preview.",
       "In Ask, an amount-based withdrawal question uses this same local calculation instead of AI arithmetic. General conversation still uses Ask consent and its normal AI settings.",
     ],

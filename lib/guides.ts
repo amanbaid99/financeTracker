@@ -50,13 +50,13 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap Add a goal and pick a type: a purchase, a trip, an emergency fund, a bills fund or paying off a loan.",
       "Add your mutual funds, stocks, savings and deposits. The app works out which goal each one covers, and why.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
-      "Focus goals shows the first three unfinished goals, followed by Other goals and then Covered. Essentials come first, then other goals by deadline. Order essentials changes essential priorities. A goal on hold keeps its place.",
+      "Focus goals shows the first three unfinished goals, followed by Other goals and then Covered. Essentials come first, then other goals by deadline. A goal on hold keeps its place.",
       "Loans can have payoff goals. Manage any loan in Net worth, even if its goal was deleted. Each shows what's left, the EMI and when it ends. Confirm the outstanding amount from your lender each month. Once confirmed, it stays until your next update. Older schedule-based balances and future payoff figures are estimates.",
       "Tap +, then Update amounts to enter new amounts, or Import statement to update funds from a CAS.",
-      "Your plan shows your confirmed monthly investments. Edit plan opens one list of holdings and amounts, within what your budget makes available.",
+      "Open +, then SIP plan to review goal amounts and their investment vehicles. Saving returns to Goals.",
       "Open a goal to see what covers it and its remaining gap. Change what covers this goal is optional and never reduces another goal's share.",
       "Essential goals come first. Other goals use priority, deadline and need, with no automatic contribution to every goal.",
-      "Goal coverage and calculations, and previous plans, are secondary details. Saving a plan never starts a SIP or changes investment balances.",
+      "Saving a SIP plan never starts a SIP or changes investment balances.",
     ],
   },
   portfolio: {
@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"Fewer pages on Goals",items:[{title:"One place to plan SIPs",text:"Your plan and Order essentials pages have been removed. Use +, then SIP plan to review monthly amounts. Saving returns to Goals. Saved plans and holdings are kept."}]},
  {date:"2026-11-23",title:"Goal-first SIP planning",items:[{title:"Build safety, then the next goal",text:"One month of emergency cover comes first, then three months. Next come payments and goals by deadline. Review one amount per goal, with suitable vehicle splits underneath and a ₹1,000 minimum per selected vehicle where possible."}]},
  {date:"2026-11-23",title:"Nearer goals come into focus",items:[{title:"Clearer goal order",text:"Essentials stay first. Other goals follow by deadline, so an old ranking cannot hide a nearer goal. Covered goals stay at the bottom. Your saved investment plan is unchanged."}]},
  {date:"2026-11-23",title:"Add an investment directly to a goal",items:[{title:"Linked when you save",text:"Add investment inside a goal now saves its coverage link too. Choose a new investment or one you already have, and review the share before saving."}]},
@@ -314,11 +315,6 @@ export const RELEASES: Release[] = [
       {
         title: "On hold, not behind",
         text: "While you're between jobs, savings goals show On hold till salary instead of Behind. Nothing asks for money until the salary starts.",
-      },
-      {
-        title: "Your order",
-        text: "Choose which goals come first. The plan gives each one what it needs to be on time, top first, before moving to the next.",
-        show: { path: "/goals/order", target: "order" },
       },
     ],
   },

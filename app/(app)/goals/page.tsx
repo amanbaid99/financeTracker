@@ -49,15 +49,6 @@ export default async function GoalsPage({
               <h1 className="text-2xl font-semibold tracking-tight">Goals</h1>
               <GuideButton id="goals" />
             </div>
-            {goals.length > 0 && plan && (
-              <Link
-                href="/goals/plan"
-                data-guide="plan-link"
-                className={buttonVariants({ variant: "outline", size: "sm" })}
-              >
-                Your plan
-              </Link>
-            )}
           </div>
 
         </div>

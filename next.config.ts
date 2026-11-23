@@ -45,7 +45,7 @@ const nextConfig: NextConfig = {
         destination: "/goals/salary",
         permanent: false,
       },
-      { source: "/goals/roadmap", destination: "/goals/plan", permanent: false },
+      ...["/goals/plan", "/goals/order", "/goals/roadmap"].map(source=>({source,destination:"/goals",permanent:false})),
       // Home returned on 18 Nov 2026 at /today.
       ...[...old, "/home", "/overview"].flatMap((p) => [
         { source: p, destination: ["/home", "/overview", "/dashboard"].includes(p) ? "/today" : "/goals", permanent: false },

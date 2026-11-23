@@ -366,8 +366,8 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByLabel("House a month")).toHaveValue("12,000");
   await page.screenshot({path:"test-results/sip-plan-375.png",fullPage:true});
   await page.getByRole("button",{name:"Save this plan",exact:true}).click();
-  await expect(page).toHaveURL(/\/goals\/plan$/);
-  await expect(page.getByText("Your confirmed plan",{exact:true})).toBeVisible();
+  await expect(page).toHaveURL(/\/goals$/);
+  await expect(page.getByText("SIP plan saved.",{exact:true})).toBeVisible();
   await expect(page.getByRole("link",{name:"Plan a withdrawal",exact:true})).toBeVisible();
   await expect(page.getByRole("checkbox")).toHaveCount(0);
   await page.screenshot({path:"test-results/plan-375.png",fullPage:true});
@@ -990,21 +990,13 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByRole("link", { name: /for Your plan$/ })).toHaveCount(0);
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
 
-  // Your plan: the monthly split, with Edit order.
-  await page.getByRole("link", { name: "Your plan", exact: true }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "Your plan" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Plan a withdrawal", exact: true })).toBeVisible();
-  await page.getByRole("link", { name: "Edit order" }).click();
-  await expect(page.getByRole("heading", { level: 1, name: "Essential goal order" })).toBeVisible();
-  await expect(page.getByRole("list", { name: "Your order" })).toBeVisible();
-  await page.getByRole("button", { name: "Save this order" }).click();
-  await expect(page.getByText("Your order is saved.")).toBeVisible();
-  await page.goto("/goals/order");
-  await page.getByRole("button", { name: "Use the app's order instead" }).click();
-  await expect(page.getByText("Back to the app's order.")).toBeVisible();
-  // Old links still land in the right place.
-  await page.goto("/goals/roadmap");
-  await expect(page).toHaveURL(/\/goals\/plan$/);
+  // Removed pages and old bookmarks return to Goals.
+  await expect(page.getByRole("link",{name:"Your plan",exact:true})).toHaveCount(0);
+  await expect(page.getByRole("link",{name:"Order essentials",exact:true})).toHaveCount(0);
+  for(const old of ["/goals/plan","/goals/order","/goals/roadmap"]){
+    await page.goto(old);
+    await expect(page).toHaveURL(/\/goals$/);
+  }
   await page.goto("/liabilities/cards");
   await expect(page).toHaveURL(/\/cards$/);
   await page.goto("/liabilities");
