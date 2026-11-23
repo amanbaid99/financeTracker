@@ -188,7 +188,7 @@ export const HELP: HelpTopic[] = [
     section: "Budget",
     q: "How do I plan my monthly SIPs?",
     a: [
-      "Enter How much can you invest each month? This is a standalone planning amount: Budget is not read, used as a limit or changed. Your monthly SIPs lists goals and their investment destinations. There is no separate emergency-cover estimate input.",
+      "Enter How much can you invest each month? This is a standalone planning amount: Budget is not read, used as a limit or changed. Your monthly SIPs lists goals and their investment destinations. There is no emergency-cover estimate input or Plan details section.",
       "The emergency goal’s saved requirement comes first, followed by payments and goals in deadline order. Current recorded balances count toward runway under the all-holdings-available assumption, not future market growth or future SIPs. After recording emergency deposits, review the plan so new money can move to the next goals. A zero SIP planning amount creates no contributions. ",
       "Goals follow emergency and deadline priority. Vehicles inside each goal are sorted by suitability and existing SIPs. All linked monthly vehicles stay visible, including ₹0 suggestions. Change a vehicle to update its read-only goal total and the remaining goals. Your fixed choices stay within the monthly total. Dotted Use suggested amount and Use suggestion buttons restore automatic planning; Reset amounts clears all edits.",
       "Green means the projected corpus meets the goal; red shows a projected shortfall. These use the saved return and inflation assumptions, not guaranteed returns. Goal and vehicle choices are restored when you reopen the saved plan. No provider SIP or actual balance changes.",

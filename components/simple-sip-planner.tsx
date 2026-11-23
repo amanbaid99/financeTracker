@@ -464,50 +464,6 @@ export function SimpleSipPlanner({
                         </div>
                       ))}
                     </div>
-                    <details className="border-t px-4 text-xs text-muted-foreground">
-                      <summary className="min-h-10 cursor-pointer py-3">
-                        Plan details
-                      </summary>
-                      <dl className="space-y-1">
-                        {[
-                          [
-                            g.assumptions.runway
-                              ? "Needed this month"
-                              : "Needed each month",
-                            g.requiredMonthly,
-                          ],
-                          ["Already saved", g.existingCoverage],
-                          ["Monthly gap", g.monthlyShortfall],
-                          ["Target at deadline", g.targetCorpus],
-                          ["Projected at deadline", g.projectedCorpus],
-                          [
-                            "Suggested monthly amount",
-                            baseline.recommendedMonthly,
-                          ],
-                        ].map(([label, value]) => (
-                          <div
-                            key={label}
-                            className="flex justify-between gap-3"
-                          >
-                            <dt>{label}</dt>
-                            <dd className="tabular shrink-0">
-                              {formatINR(value as number)}
-                            </dd>
-                          </div>
-                        ))}
-                      </dl>
-                      <p className="mt-2">{g.explanation}</p>
-                      <p className="mb-3 mt-1">
-                        Return {g.assumptions.annualReturnPct}% · Inflation{" "}
-                        {g.assumptions.inflationPct}%. These are projections.
-                      </p>
-                      {g.immediateShortfall > 0 && (
-                        <p className="pb-3 text-warning">
-                          {formatINR(g.immediateShortfall)} is needed before the
-                          next monthly contribution.
-                        </p>
-                      )}
-                    </details>
                   </section>
                 );
               })}

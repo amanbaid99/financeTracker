@@ -1,5 +1,9 @@
 # Status
 
+## Removed SIP Plan details, 23 Nov 2026
+
+Removed the entire Plan details disclosure from every goal in the monthly SIP planner, including its breakdown, assumptions and explanatory paragraphs. Goal totals, coverage colours, vehicle amount inputs and saving remain unchanged. No financial calculations or stored records changed. Verification: lint, TypeScript, 847 unit tests, 40 Python tests and production build pass. Browser checks at 320/375/768px confirm the section and breakdown are absent.
+
 ## SIP totals are read-only; estimate option removed, 23 Nov 2026
 
 Removed the emergency-cover disclosure, cost input and prior-value restoration from the active SIP page. Confirmation uses zero monthlyEssentials for standalone SIP plans, so hidden old estimate values cannot affect new plans. Emergency priority uses the goal's existing monthly requirement. Historical snapshots remain unchanged.
