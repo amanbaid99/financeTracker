@@ -165,7 +165,7 @@ export const HELP: HelpTopic[] = [
     a: [
       "Tap Plan my budget. Three steps: your take-home income (or tick No salary right now), your monthly costs, then a suggested split.",
       "Your costs come filled in from your records and loans, groceries and day-to-day spending included. Untick anything you don't pay, fix amounts, or add a common cost with one tap.",
-      "With a salary, the setup suggests one Save & invest amount, rounded to ₹500. It includes the SIPs you already have, so they aren't counted twice. Personal spending gets what's left, including your day-to-day costs. Change anything before you save.",
+      "With a salary, choose how much to keep for Personal spending, including your day-to-day costs and personal costs already listed. Save & invest is exactly what remains after essentials and that personal amount. Existing SIPs count inside Save & invest. If this is less than your running SIPs, review them with your provider; the app does not change them.",
       "With no salary right now, the budget is just your monthly costs. Covered till salary uses it to show how long your money lasts.",
       "After saving, tap any row to change its amount, rename it, move it between Essentials and Personal spending, or remove it. Tap your income to change it. Each change saves when you tap Save. Use for Your plan opens the SIP planner with your Save & invest amount.",
       "Budget options has Run setup again and Reset budget. No actual spending is tracked.",

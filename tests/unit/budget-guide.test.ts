@@ -4,6 +4,7 @@ import {
   costTotal,
   guideCosts,
   recommendBudget,
+  personalBudget,
 } from "@/lib/budget-guide";
 import {
   applyBudgetRules,
@@ -169,4 +170,17 @@ describe("budget setup", () => {
       rowAmount(next.rows.find((r) => r.id === "rule-savings")!, 100000),
     ).toBe(30000);
   });
+});
+
+it("personal spending is the user's choice and saving is the exact remainder",()=>{
+ const rows=[row("rent","fixed",68015)];
+ expect(personalBudget(170000,rows,40000)).toMatchObject({future:61985,valid:true});
+ expect(personalBudget(170000,rows,50000)).toMatchObject({future:51985,valid:true});
+ expect(personalBudget(170000,rows,110000).valid).toBe(false);
+});
+it("personal costs are included once and cannot silently be cut",()=>{
+ const rows=[row("rent","fixed",40000),row("commute","personal",10000)];
+ expect(personalBudget(100000,rows,20000)).toMatchObject({future:40000,valid:true});
+ expect(personalBudget(100000,rows,5000).valid).toBe(false);
+ expect(personalBudget(100000,[],0)).toMatchObject({future:100000,valid:true});
 });

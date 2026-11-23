@@ -971,10 +971,10 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Groceries", exact: true }).click();
   await page.getByLabel("Groceries monthly amount").fill("12000");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
-  const future = page.getByLabel("Save & invest a month", { exact: true });
+  const future = page.getByLabel("Personal spending a month", { exact: true });
   await expect(future).toBeVisible();
   await expect(page.getByText(/^Includes the ₹[\d,]+ already going into your SIPs\.$/)).toBeVisible();
-  expect(Number((await future.inputValue()).replace(/,/g, "")) % 500).toBe(0);
+  await future.fill("40000");
   await page.getByRole("button", { name: "Save this budget", exact: true }).click();
   await expect(page.getByText("Budget saved.", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Edit Groceries" }).click();

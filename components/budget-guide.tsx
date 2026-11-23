@@ -12,6 +12,7 @@ import {
   costTotal,
   guideCosts,
   recommendBudget,
+  personalBudget,
 } from "@/lib/budget-guide";
 import {
   budgetSheetSchema,
@@ -56,7 +57,7 @@ export function BudgetGuide({
   );
   const [newName, setNewName] = useState("");
   const [newAmount, setNewAmount] = useState<number | null>(null);
-  const [future, setFuture] = useState<number | null>(null);
+  const [personalChoice, setPersonalChoice] = useState<number | null>(null);
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
@@ -68,13 +69,13 @@ export function BudgetGuide({
 
   const rows = items.filter((i) => i.included).map((i) => i.row);
   const rec = recommendBudget(salary, rows, sips);
-  const futureAmount = noSalary ? 0 : (future ?? rec.future);
+  const chosenPersonal = personalChoice ?? rec.personal;
+  const personalPlan = personalBudget(salary, rows, chosenPersonal);
+  const futureAmount = noSalary ? 0 : personalPlan.future;
   const plan = composeGuidedBudget(salary, rows, loans, futureAmount, noSalary);
-  const personal = plan.rows
-    .filter((r) => r.category === "personal")
-    .reduce((s, r) => s + rowAmount(r, plan.salary), 0);
+
   const over = noSalary ? 0 : -sheetTotals(plan).remaining;
-  const valid = budgetSheetSchema.safeParse(plan).success && over <= 0;
+  const valid = budgetSheetSchema.safeParse(plan).success && over <= 0 && (noSalary || personalPlan.valid);
   const monthlyCosts = costTotal(rows, salary);
 
   const setItem = (id: string, patch: Partial<Item>) =>
@@ -97,7 +98,7 @@ export function BudgetGuide({
         source: "Added now",
       },
     ]);
-    setFuture(null);
+    setPersonalChoice(null);
   };
   const listed = new Set(items.map((i) => i.row.name.toLowerCase()));
 
@@ -122,7 +123,7 @@ export function BudgetGuide({
         ? "Your monthly costs"
         : noSalary
           ? "Your monthly costs, in one number"
-          : "Here's a starting plan";
+          : "How much would you like for yourself?";
 
   return (
     <section
@@ -178,7 +179,7 @@ export function BudgetGuide({
                     value={salary || null}
                     onChange={(v) => {
                       setSalary(v ?? 0);
-                      setFuture(null);
+                      setPersonalChoice(null);
                     }}
                   />
                 </Field>
@@ -220,7 +221,7 @@ export function BudgetGuide({
                         checked={item.included}
                         onChange={(e) => {
                           setItem(item.row.id, { included: e.target.checked });
-                          setFuture(null);
+                          setPersonalChoice(null);
                         }}
                       />
                       <span className="min-w-0 flex-1 break-words">
@@ -241,7 +242,7 @@ export function BudgetGuide({
                           setItem(item.row.id, {
                             row: { ...item.row, value: v ?? 0 },
                           });
-                          setFuture(null);
+                          setPersonalChoice(null);
                         }}
                       />
                     )}
@@ -341,52 +342,23 @@ export function BudgetGuide({
                   </dd>
                 </div>
               </dl>
-              <Field
-                label="Save & invest a month"
-                htmlFor="guide-future"
-                hint={
-                  sips > 0
-                    ? `Includes the ${formatINR(sips)} already going into your SIPs.`
-                    : undefined
-                }
-              >
-                <MoneyInput
-                  id="guide-future"
-                  value={futureAmount}
-                  onChange={(v) => setFuture(v ?? 0)}
-                />
+              <Field label="Personal spending a month" htmlFor="guide-personal" hint="Your day-to-day spending, personal transport and fun money, including the personal costs already listed.">
+                <MoneyInput id="guide-personal" value={chosenPersonal} onChange={v=>setPersonalChoice(v??0)}/>
               </Field>
-              <div className="rounded-xl bg-primary-soft p-3">
-                <p className="text-sm">Personal spending</p>
-                <p className="tabular text-2xl font-semibold">
-                  {formatINR(personal)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  What&apos;s left after essentials and Save & invest, including
-                  your day-to-day costs.
-                </p>
+              <div className="rounded-xl bg-primary-soft p-3" aria-live="polite">
+                <p className="text-sm">Save & invest a month</p>
+                <p className="tabular text-2xl font-semibold">{formatINR(futureAmount)}</p>
+                <p className="text-xs text-muted-foreground">What&apos;s left after essentials and your personal spending. Nothing extra to split.</p>
               </div>
-              {over > 0 && (
-                <p role="alert" className="text-sm text-danger">
-                  That&apos;s {formatINR(over)} more than you earn. Lower Save
-                  & invest or go back to your costs.
-                </p>
-              )}
-              {future !== null && future !== rec.future && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setFuture(null)}
-                >
-                  Use the suggestion ({formatINR(rec.future)})
-                </Button>
-              )}
+              {!personalPlan.valid&&<p role="alert" className="text-sm text-danger">{personalPlan.error}</p>}
+              {sips>0&&<p className="text-xs text-muted-foreground">Includes the {formatINR(sips)} already going into your SIPs.{futureAmount<sips?" This is less than your recorded SIPs. Review them with your provider; saving this budget does not change them.":""}</p>}
+              {personalChoice!==null&&personalChoice!==rec.personal&&<Button variant="ghost" size="sm" onClick={()=>setPersonalChoice(null)}>Use the starting amount ({formatINR(rec.personal)})</Button>}
               <details className="text-sm">
                 <summary className="min-h-10 cursor-pointer text-primary">
                   How this was worked out
                 </summary>
                 <ul className="list-disc space-y-2 pl-5 text-xs text-muted-foreground">
-                  {rec.reasons.map((r) => (
+                  {["Essentials are counted first. Your personal amount includes the personal costs listed in setup, not an extra amount on top.","Save & invest is the exact remainder after essentials and your chosen personal spending. Your existing SIPs are part of this amount, not an additional expense."].map((r) => (
                     <li key={r}>{r}</li>
                   ))}
                 </ul>

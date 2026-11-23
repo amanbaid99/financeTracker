@@ -1,3 +1,4 @@
+import {formatINR} from "./format";
 // The budget setup: income (or none right now), one list of monthly costs
 // prefilled from your records, then a suggested split to review. Pure; the
 // component saves only when you tap Save.
@@ -74,4 +75,13 @@ export function composeGuidedBudget(salary: number, rows: BudgetSheetRow[], loan
     excludedLoanIds: loans.flatMap(l=>l.id&&!includedLoans.has(l.id)?[l.id]:[]),
     rules: { savings:{mode:"amount",value:0}, investing:{mode:"amount",value:0}, future:{mode:"amount",value: noSalary ? 0 : future} },
   });
+}
+
+/** User chooses Personal; every remaining rupee goes to Save & invest. */
+export function personalBudget(salary:number,rows:BudgetSheetRow[],personal:number){
+ const essentials=expenseTotal(rows,salary),minimum=personalMinimum(rows,salary);
+ const room=Math.max(0,salary-essentials);
+ const valid=Number.isSafeInteger(personal)&&personal>=minimum&&personal<=room&&essentials<=salary;
+ const error=personal<minimum?`Your listed personal costs already total ${formatINR(minimum)}. Keep at least that amount, or go back and change those costs.`:essentials+personal>salary?`Essentials and personal spending exceed your income by ${formatINR(essentials+personal-salary)}. Lower personal spending or change your costs.`:"Enter a non-negative whole-rupee amount.";
+ return {future:Math.max(0,room-personal),valid,error:valid?null:error};
 }
