@@ -137,22 +137,27 @@ export function GoalList({
   // Every goal in one list, in the plan's order. The first three are the
   // ones to focus on; nothing is folded away.
   const ordered = orderGoals(filtered, today);
-  const active=ordered.filter(g=>g.status!=="reached");
-  const covered=ordered.filter(g=>g.status==="reached");
-  const top=active.slice(0,3);
-  const rest=active.slice(3);
+  const active = ordered.filter((g) => g.status !== "reached");
+  const covered = ordered.filter((g) => g.status === "reached");
+  const top = active.slice(0, 3);
+  const rest = active.slice(3);
   const renderGoals = (items: TrackedGoal[]) => (
     <ul className="space-y-3">
       {items.map((g) => {
         const suggestion = suggestions.find((x) => x.goalId === g.id);
         const st = goalStatus(g, today, between);
-        const sub = g.loanState ? (g.targetDate?`Close by ${monthYear(g.targetDate)}`:"") : goalSubline(g);
+        const sub = g.loanState
+          ? g.targetDate
+            ? `Close by ${monthYear(g.targetDate)}`
+            : ""
+          : goalSubline(g);
         const hint = goalHint(g, today, suggestion, between);
         const held = onHold(g, between);
         // Still behind after the plan: offer ways to close the gap.
-        const gap = held
-          ? null
-          : gapOptions(g, today, suggestion?.monthly ?? 0);
+        const gap =
+          held || g.funding
+            ? null
+            : gapOptions(g, today, suggestion?.monthly ?? 0);
         const isOpen = open === g.id;
         const panelId = `goal-${g.id}`;
         return (
@@ -240,28 +245,30 @@ export function GoalList({
                   <EditGoalButton goal={g} today={today} />
                 </div>
 
-                {details&&<div className="space-y-1 rounded-xl bg-muted/40 p-3">
-                  <div>
-                    <p className="tabular text-2xl font-semibold tracking-tight">
-                      {formatINR(g.current)}
-                    </p>
-                    <p className="tabular text-xs text-muted-foreground">
-                      {g.billsFund
-                        ? `in the fund · should hold ${formatINR(g.futureTarget)} today`
-                        : `saved of ${formatINR(g.emisCloseFirst ? 0 : g.futureTarget)} ${needLabel(g)}`}
-                    </p>
-                    {!g.loanState &&
-                      !g.billsFund &&
-                      g.futureTarget !== g.target && (
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {formatINR(g.target)} today, grown at {g.inflationPct}
-                          % a year for rising prices.
-                        </p>
-                      )}
+                {details && (
+                  <div className="space-y-1 rounded-xl bg-muted/40 p-3">
+                    <div>
+                      <p className="tabular text-2xl font-semibold tracking-tight">
+                        {formatINR(g.current)}
+                      </p>
+                      <p className="tabular text-xs text-muted-foreground">
+                        {g.billsFund
+                          ? `in the fund · should hold ${formatINR(g.futureTarget)} today`
+                          : `saved of ${formatINR(g.emisCloseFirst ? 0 : g.futureTarget)} ${needLabel(g)}`}
+                      </p>
+                      {!g.loanState &&
+                        !g.billsFund &&
+                        g.futureTarget !== g.target && (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {formatINR(g.target)} today, grown at{" "}
+                            {g.inflationPct}% a year for rising prices.
+                          </p>
+                        )}
+                    </div>
                   </div>
-                </div>}
+                )}
 
-                {suggestion && (
+                {suggestion && !g.funding && (
                   <SuggestionBox
                     strategy={strategy}
                     goal={g}
@@ -274,11 +281,26 @@ export function GoalList({
                   </SuggestionBox>
                 )}
 
+                {g.funding && (
+                  <div className="space-y-2 rounded-xl bg-muted/40 p-3 text-sm">
+                    <p>
+                      With your plan: {formatINR(g.funding.projectedCorpus)}{" "}
+                      projected · {formatINR(g.funding.projectedShortfall)}{" "}
+                      short.
+                    </p>
+                    <NextLink
+                      href="/goals/plan"
+                      className="inline-flex min-h-10 items-center font-medium text-primary"
+                    >
+                      Review allocation and assumptions
+                    </NextLink>
+                  </div>
+                )}
                 {g.loanState ? (
                   <LoanPlan g={g} details={details} verdict={!suggestion} />
                 ) : g.billsFund ? (
                   <BillsPlan g={g} details={details} verdict={!suggestion} />
-                ) : (
+                ) : !g.funding ? (
                   <SavingsPlan
                     g={g}
                     onHold={held}
@@ -286,7 +308,7 @@ export function GoalList({
                     verdict={!suggestion}
                     extra={gap && <GapChoices options={gap} />}
                   />
-                )}
+                ) : null}
 
                 <GoalInvestments
                   goal={g}
@@ -348,7 +370,17 @@ export function GoalList({
           {renderGoals(rest)}
         </section>
       )}
-      {covered.length>0&&<section aria-labelledby="goals-covered-h" className="space-y-3"><h2 id="goals-covered-h" className="px-0.5 font-semibold">Covered <span className="text-sm font-normal text-muted-foreground">{covered.length}</span></h2>{renderGoals(covered)}</section>}
+      {covered.length > 0 && (
+        <section aria-labelledby="goals-covered-h" className="space-y-3">
+          <h2 id="goals-covered-h" className="px-0.5 font-semibold">
+            Covered{" "}
+            <span className="text-sm font-normal text-muted-foreground">
+              {covered.length}
+            </span>
+          </h2>
+          {renderGoals(covered)}
+        </section>
+      )}
     </div>
   );
 }

@@ -2,6 +2,10 @@
 
 Accounts, secret names (never values) and CI. For running the app locally, see AGENTS.md.
 
+## Hybrid plan history
+
+Apply 20261122161904_hybrid_goal_allocation and 20261122163637_hybrid_risk_revision before deploying hybrid planner code. Both are applied to sbkpirchaaljlwzgntrf. No new environment variables are needed. Profiles retain existing plan preferences; new confirmations append allocation_plans and replace only the owner’s goal ownership shares in one invoker-rights RPC. Do not bypass RLS or seed hosted finance records for tests.
+
 ## SIP minimum preferences
 
 Applied 20261121142356_sip_monthly_minimums to project sbkpirchaaljlwzgntrf on 21 Nov 2026. profiles.plan_sip_minimums stores a JSON object of held investment kinds and integer monthly minimums. It defaults to an empty object; existing owner-only profile policies remain in force. The object/size constraint and RLS state were verified after applying. No holding balances or SIP records were changed.

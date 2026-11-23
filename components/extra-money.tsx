@@ -1,14 +1,14 @@
 "use client";
+import {hybridMoneyPlan} from "@/lib/hybrid-plan";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useState } from "react";
 import { MoneyInput } from "@/components/money-input";
 import { useQuickAction } from "@/components/quick-add";
 import { Sheet } from "@/components/sheet";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/forms/field";
-import { savePlan } from "@/lib/actions";
-import { planMoney, type MoneyPlan } from "@/lib/allocate";
+import { type MoneyPlan } from "@/lib/allocate";
 import { clearParam } from "@/lib/clear-param";
 import { formatINR } from "@/lib/format";
 import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
@@ -22,8 +22,6 @@ export function ExtraMoney({
   investments,
   links,
   today,
-  plan,
-  sipsNow,
   autoOpen = false,
 }: {
   goals: TrackedGoal[];
@@ -37,8 +35,6 @@ export function ExtraMoney({
   const router = useRouter();
   const [open, setOpen] = useState(autoOpen);
   const [amount, setAmount] = useState<number | null>(null);
-  const [error, setError] = useState("");
-  const [pending, start] = useTransition();
   useQuickAction(
     "extra",
     useCallback(() => setOpen(true), []),
@@ -50,14 +46,14 @@ export function ExtraMoney({
   };
   if (!open) return null;
   const split =
-    amount && amount > 0
-      ? planMoney({
+    amount && Number.isSafeInteger(amount) && amount > 0 && amount<=1e13
+      ? hybridMoneyPlan({
           goals,
           investments,
           links,
-          lump: amount,
-          monthlyTotal: sipsNow,
-          todayISO: today,
+          oneTime:amount,
+          monthlySavings:0,
+          today,
         })
       : null;
   const parts = split?.suggestions.filter((s) => s.lump > 0) ?? [];
@@ -65,7 +61,7 @@ export function ExtraMoney({
     <Sheet title="Put extra money to work" onClose={close}>
       <div className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          A bonus, a gift or savings sitting idle. See where it helps most.
+          Preview a bonus or gift as separate one-time money. This does not count as monthly income. Record received money in Net worth before reviewing your plan.
         </p>
         <Field label="How much?" htmlFor="extra-amount">
           <MoneyInput
@@ -110,38 +106,17 @@ export function ExtraMoney({
               </p>
             )}
             <p className="text-xs text-muted-foreground">
-              Bills and your emergency cushion come first, then the nearest
-              goals. Not investment advice.
+              Essentials come first in this one-time preview. Nothing is saved or invested. Not investment advice.
             </p>
           </div>
-        )}
-        {error && (
-          <p
-            role="alert"
-            className="rounded-lg bg-danger-soft p-2 text-sm text-danger"
-          >
-            {error}
-          </p>
         )}
         <Button
           type="button"
           className="w-full"
-          disabled={pending || parts.length === 0}
-          onClick={() =>
-            start(async () => {
-              setError("");
-              const res = await savePlan({
-                lump: (plan?.lump ?? 0) + (amount ?? 0),
-                monthly: plan?.monthlyTotal ?? sipsNow,
-              });
-              if (!res.ok) return setError(res.error);
-              close();
-              router.push("/goals/plan");
-              router.refresh();
-            })
-          }
+          disabled={parts.length===0}
+          onClick={()=>{close();router.push("/assets?do=update");}}
         >
-          {pending ? "Adding…" : "Add to my plan"}
+          Record received money
         </Button>
       </div>
     </Sheet>

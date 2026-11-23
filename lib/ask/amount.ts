@@ -2,7 +2,7 @@
 // not by the AI's arithmetic. The AI only explains the split. This file finds
 // such questions, works out the split, and checks the AI's numbers after.
 
-import { planMoney } from "@/lib/allocate";
+import {hybridMoneyPlan} from "@/lib/hybrid-plan";
 import { formatINR } from "@/lib/format";
 import { monthYear } from "@/lib/goal-summary";
 import { planSteps } from "@/lib/sip-plan";
@@ -95,24 +95,17 @@ export function splitFacts(opts: {
   todayISO: string;
   codeOf: Record<string, string>;
   essentialsMonthly?: number;
+  availableMonthlySavings?:number;
 }): Split {
   const { q, goals, investments, links, todayISO, codeOf } = opts;
-  const sipsNow = investments.reduce((s, i) => s + i.monthlySip, 0);
-  const plan = planMoney({
-    goals,
-    investments,
-    links,
-    lump: q.frequency === "once" ? q.amount : 0,
-    monthlyTotal: sipsNow + (q.frequency === "monthly" ? q.amount : 0),
-    todayISO,
-    essentialsMonthly: opts.essentialsMonthly,
-  });
+  const plan=hybridMoneyPlan({today:todayISO,goals,investments,links,oneTime:q.frequency==="once"?q.amount:0,monthlySavings:q.frequency==="monthly"?Math.min(q.amount,opts.availableMonthlySavings??q.amount):0});
   const steps = planSteps(plan.suggestions, investments, links, "pooled");
   const what = q.frequency === "once" ? "one-time amount" : "a month";
   const lines = [
     `The app's split for ${formatINR(q.amount)} ${q.frequency === "once" ? "as a one-time amount" : "a month"} (worked out by the app; explain it, don't change it):`,
   ];
   const numbers = [q.amount];
+  if(q.frequency==="monthly"&&opts.availableMonthlySavings!==undefined&&q.amount>opts.availableMonthlySavings){numbers.push(opts.availableMonthlySavings);lines.push(`Only ${formatINR(opts.availableMonthlySavings)} is available within the current budget. The requested amount is capped; update the budget before planning more.`);}
   for (const st of steps) {
     const amount = q.frequency === "once" ? st.addLump : st.addMonthly;
     if (!amount) continue;
@@ -153,6 +146,7 @@ export function splitFacts(opts: {
 
 /** Where a goal stands after the split, without any names the user typed. */
 function afterLine(g: TrackedGoal): { text: string; numbers: number[] } {
+  if(g.funding)return {text:`${g.funding.status.replace(/_/g," ")} in this hypothetical plan; projected ${formatINR(g.funding.projectedCorpus)}, gap ${formatINR(g.funding.projectedShortfall)}`,numbers:[g.funding.projectedCorpus,g.funding.projectedShortfall]};
   if (g.billsFund) {
     const short = g.billsFund.short;
     return short

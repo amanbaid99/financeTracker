@@ -6,6 +6,7 @@ import { investedAfterWithdrawal } from "@/lib/withdrawal";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import {goalPlanningSchema,holdingPlanningSchema} from "./hybrid-settings";
 import { addMonths, lastEmiOnOrBefore, todayIST } from "@/lib/dates";
 import { GOAL_TYPES, type GoalType } from "@/lib/goal-types";
 import { PRIVACY_VERSION } from "@/lib/legal";
@@ -68,6 +69,7 @@ const goalSchema = z
     targetDate: isoDate.nullable(),
     inflationPct: z.number().min(0).max(20).nullable(),
     niceToHave: z.boolean().optional(),
+    planningSettings:goalPlanningSchema.optional(),
     loan: z
       .object({
         outstanding: money.min(1, "add what you still owe"),
@@ -132,6 +134,7 @@ export async function saveGoal(
     const loan = v.type === "loan_payoff" ? v.loan : null;
     const row = {
       name: v.name,
+      ...(v.planningSettings?{planning_settings:v.planningSettings}:{}),
       type: v.type,
       target_today: loan
         ? loan.outstanding
@@ -155,7 +158,7 @@ export async function saveGoal(
         : null,
       loan_emi_day: loan?.emiDay ?? null,
       loan_first_emi: loan?.firstEmi ?? null,
-      priority: v.niceToHave ? 4 : 3,
+      priority: v.planningSettings?.priorityLevel?({high:1,medium:3,low:5})[v.planningSettings.priorityLevel]:v.niceToHave ? 4 : 3,
     };
     const res = v.id
       ? await supabase
@@ -172,6 +175,7 @@ export async function saveGoal(
           .single();
     if (res.error) throw new Error(res.error.message);
     const goalId = res.data.id;
+    if(v.planningSettings?.completed){const released=await supabase.from("goal_allocations").delete().eq("goal_id",goalId).eq("user_id",userId);if(released.error)throw new Error(released.error.message);}
     if (loan) {
       // Keep the tracked loan in step with the goal's loan details.
       const loanRow = {
@@ -274,6 +278,7 @@ const investmentSchema = z.object({
   value: money,
   monthlySip: money,
   returnPct: z.number().min(0).max(30).nullable(),
+  planningDetails:holdingPlanningSchema.optional(),
   /** Amount put in, if the user knows it. */
   invested: money.nullable().optional(),
   /** Units held, so the value can follow the latest price. */
@@ -326,6 +331,7 @@ export async function saveInvestment(
       current_value: v.value,
       monthly_sip: v.monthlySip || null,
       expected_return_pct: v.returnPct,
+      ...(v.planningDetails?{planning_details:v.planningDetails}:{}),
       ...(v.invested !== undefined ? { invested: v.invested } : {}),
       ...(v.units !== undefined ? { units: v.units } : {}),
       ...(v.isin !== undefined ? { isin: v.isin } : {}),
@@ -398,14 +404,8 @@ export async function savePlan(
   try {
     const v = input === null ? null : planSchema.parse(input);
     const { supabase, userId } = await session();
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        plan_lump_sum: v?.lump ?? null,
-        plan_monthly: v?.monthly ?? null,
-        ...(v === null ? {plan_sip_minimums:{}} : {}),
-      })
-      .eq("user_id", userId);
+    if(v)return {ok:false,error:"Reload and review this amount in the SIP planner before confirming a new plan."};
+    const {error}=await supabase.from("profiles").update({plan_lump_sum:null,plan_monthly:null,plan_sip_minimums:{}}).eq("user_id",userId);
     if (error) throw new Error(error.message);
     return done();
   } catch (e) {

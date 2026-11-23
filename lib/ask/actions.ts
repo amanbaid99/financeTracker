@@ -155,6 +155,7 @@ export async function askQuestion(history: AskTurn[]): Promise<AskResult> {
       todayISO: today,
       codeOf: ctx.codeOf,
       essentialsMonthly: b.costs + b.emis,
+      availableMonthlySavings:b.planMonthly,
     });
     facts += `\n\n${split.facts}`;
     known.push(...split.numbers);
@@ -229,19 +230,6 @@ export async function addToPlan(
 ): Promise<{ ok: boolean; error?: string }> {
   const v = addSchema.safeParse(input);
   if (!v.success) return { ok: false, error: "That amount didn't look right." };
-  const { supabase, userId } = await session();
-  const { investments, plan } = await loadGoals();
-  const sipsNow = investments.reduce((s, i) => s + i.monthlySip, 0);
-  const lump =
-    (plan?.lump ?? 0) + (v.data.frequency === "once" ? v.data.amount : 0);
-  const monthly =
-    (plan?.monthly ?? sipsNow) +
-    (v.data.frequency === "monthly" ? v.data.amount : 0);
-  const { error } = await supabase
-    .from("profiles")
-    .update({ plan_lump_sum: lump, plan_monthly: monthly })
-    .eq("user_id", userId);
-  if (error) return { ok: false, error: error.message };
-  revalidatePath("/", "layout");
-  return { ok: true };
+  await session();
+  return {ok:false,error:"Review this amount in the SIP planner and confirm a new plan there. No changes have been saved."};
 }

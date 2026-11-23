@@ -36,6 +36,8 @@ export function goalStatus(
 ): GoalStatus {
   if (onHold(g, between))
     return { label: "On hold till salary", tone: "muted" };
+  if(g.loanState&&g.emisCloseFirst)return {label:"EMIs cover it",tone:"success"};
+  if(g.funding){const f=g.funding;if(g.completed)return {label:"Completed",tone:"success"};if(f.needsDate)return {label:"Needs a date",tone:"muted"};return {label:({fully_funded:"Fully funded",on_track:"On track with plan",at_risk:"At risk",underfunded:"Underfunded"})[f.status],tone:f.status==="fully_funded"||f.status==="on_track"?"success":f.status==="at_risk"?"warning":"danger"};}
   if (g.status === "reached") return { label: "Reached", tone: "success" };
   if (g.status === "overdue") return { label: "Date passed", tone: "danger" };
   const bf = g.billsFund;
@@ -137,6 +139,7 @@ export function goalHint(
   between = false,
 ): string {
   if (onHold(g, between)) return "starts after salary";
+  if(g.funding)return g.funding.needsDate?"Add a date to project this goal":g.funding.monthlyShortfall>0?`${formatINR(g.funding.monthlyShortfall)}/mo short`:`${formatINR(g.funding.recommendedMonthly)}/mo in your plan`;
   const st = goalStatus(g, today);
   const bf = g.billsFund;
   if (bf) {

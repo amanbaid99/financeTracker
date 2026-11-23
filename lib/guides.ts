@@ -135,6 +135,11 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  {date:"2026-11-22",title:"A plan that puts essentials first",items:[
+    {title:"Hybrid monthly allocation",text:"Essential minimums and needs come first. Flexible goals share the remainder by priority, deadline and need. The budget is always the limit."},
+    {title:"A plan you confirm",text:"Review vehicles and open Why this plan? for coverage, projections, assumptions and editable goal amounts. Saving keeps a new version; your actual SIPs and balances stay unchanged."},
+    {title:"Stable coverage and history",text:"Confirmed investment shares stay pinned. Changed inputs prompt a review, while previous plan snapshots remain unchanged. Future-value targets avoid double inflation."},
+  ]},
   { date: "2026-11-22", title: "Choose monthly amounts by holding", items: [
     { title: "Your actual holdings", text: "Set a monthly minimum for each named fund, stock holding, retirement account or bank account. Its existing SIP counts toward that amount. Only individual holdings are shown; previous category minimums are removed." },
     { title: "Keep essentials separate", text: "Travel and other goals no longer share new contributions with the essentials holding. Near-term lifestyle goals prefer another bank account or suitable liquid fund." },

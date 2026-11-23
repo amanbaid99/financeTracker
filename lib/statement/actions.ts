@@ -4,6 +4,8 @@ import { schedulePortfolioReview } from "@/lib/portfolio-review/service";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { readHoldingPlanning } from "@/lib/hybrid-settings";
+import type { Json } from "@/lib/supabase/database.types";
 import { investedAfterWithdrawal } from "@/lib/withdrawal";
 import { FUND_CATEGORIES, KINDS } from "@/lib/instruments";
 import { createClient } from "@/lib/supabase/server";
@@ -84,7 +86,12 @@ export async function prepareImport(
   }));
 
   let rows = buildReview(statement, existing);
-  if (!rows.length) return { ok: false, error: "No active holdings or matching redeemed holdings were found in this statement." };
+  if (!rows.length)
+    return {
+      ok: false,
+      error:
+        "No active holdings or matching redeemed holdings were found in this statement.",
+    };
   const unplaced = rows.filter((r) => !r.category);
   const settings = aiSettings();
   const verdicts = await aiCategories(
@@ -134,6 +141,7 @@ const choiceSchema = z
     kind: z.enum(KINDS),
     category: z.string().max(40).nullable(),
     value: money,
+    valuationDate: z.iso.date().nullable().optional(),
     invested: money.nullable().optional(),
     units: z.number().finite().nonnegative().max(1e12).nullable().optional(),
     sip: money.nullable(),
@@ -179,6 +187,15 @@ export async function applyImport(
     .from("goal_allocations")
     .select("goal_id, holding_id, percent");
   if (links.error) return { ok: false, error: links.error.message };
+  const details = await supabase
+    .from("holdings")
+    .select("id,planning_details")
+    .eq("user_id", userId);
+  if (details.error)
+    return {
+      ok: false,
+      error: "Could not load holding details. Reload before importing.",
+    };
   const current = links.data.map((l) => ({
     goalId: l.goal_id,
     investmentId: l.holding_id,
@@ -203,11 +220,23 @@ export async function applyImport(
           current_value: number;
           isin: string | null;
           updated_at: string;
+          planning_details?: Json;
           monthly_sip?: number | null;
           category?: string | null;
           invested?: number;
           units?: number;
-        } = { current_value: c.value, isin: c.isin, updated_at: now };
+        } = {
+          current_value: c.value,
+          isin: c.isin,
+          updated_at: now,
+          planning_details: {
+            ...readHoldingPlanning(
+              details.data.find((h) => h.id === c.investmentId)
+                ?.planning_details,
+            ),
+            valuationDate: c.valuationDate ?? null,
+          },
+        };
         if (c.units != null) patch.units = c.units;
         if (c.invested != null) patch.invested = c.invested;
         else if (c.withdrew) {
@@ -250,6 +279,7 @@ export async function applyImport(
             units: c.units ?? null,
             isin: c.isin,
             source: "cas",
+            planning_details: { valuationDate: c.valuationDate ?? null },
           })
           .select("id")
           .single();

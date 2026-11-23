@@ -71,9 +71,9 @@ export function budget(opts: {
     emis: opts.emis,
     sips: opts.sips,
     free,
-    planMonthly: opts.sips + Math.max(0, free),
+    planMonthly: Math.max(0,income-costs-opts.emis),
     rateNow: rate(opts.sips),
-    rateWithPlan: rate(opts.sips + Math.max(0, free)),
+    rateWithPlan: rate(Math.max(0,income-costs-opts.emis)),
   };
 }
 

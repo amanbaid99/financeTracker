@@ -20,7 +20,9 @@ export function OrderEditor({
   pinned,
   goals,
   custom,
+  essentialOnly=false,
 }: {
+  essentialOnly?:boolean;
   /** Bills funds: always first. */
   pinned: OrderGoal[];
   goals: OrderGoal[];
@@ -41,7 +43,7 @@ export function OrderEditor({
   };
   const save = (ids: string[] | null, text: string) =>
     start(async () => {
-      const res = await savePlanOrder(ids);
+      const res = await savePlanOrder(ids,essentialOnly);
       if (!res.ok) {
         toast({ text: res.error, tone: "danger" });
         return;

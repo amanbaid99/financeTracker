@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  addToPlan,
   askQuestion,
   setAskEnabled,
   type AskTurn,
@@ -33,39 +32,8 @@ interface Message {
 }
 
 /** Adds an answer's split to the money plan, so This month shows the steps. */
-function AddToPlan({ plan }: { plan: NonNullable<Message["plan"]> }) {
-  const [state, setState] = useState<"idle" | "busy" | "done" | string>("idle");
-  if (state === "done")
-    return (
-      <p className="mt-2 text-xs">
-        Added to your plan.{" "}
-        <Link
-          href="/goals"
-          className="font-medium text-primary underline underline-offset-2"
-        >
-          See This month
-        </Link>
-      </p>
-    );
-  return (
-    <div className="mt-2 space-y-1">
-      <Button
-        type="button"
-        size="sm"
-        disabled={state === "busy"}
-        onClick={async () => {
-          setState("busy");
-          const res = await addToPlan(plan);
-          setState(res.ok ? "done" : (res.error ?? "Couldn't add it."));
-        }}
-      >
-        {state === "busy" ? "Adding…" : "Add to This month"}
-      </Button>
-      {state !== "idle" && state !== "busy" && (
-        <p className="text-xs text-danger">{state}</p>
-      )}
-    </div>
-  );
+function AddToPlan({plan}:{plan:NonNullable<Message["plan"]>}){
+ return <Link href={plan.frequency==="monthly"?`/goals/sip?monthly=${plan.amount}`:"/goals?do=extra"} className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary">Review in planner</Link>;
 }
 
 /** **bold** inside a line. */

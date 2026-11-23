@@ -22,7 +22,7 @@ describe("budget", () => {
   it("doesn't plan to invest money that isn't there", () => {
     const b = budget({ incomes: [inc(50000)], costs: [cost("Rent", 40000)], emis: 15000, sips: 5000 });
     expect(b.free).toBe(-10000);
-    expect(b.planMonthly).toBe(5000);
+    expect(b.planMonthly).toBe(0);
   });
 
   it("explains the savings rate against the 20% guide", () => {

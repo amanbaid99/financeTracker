@@ -1,3 +1,4 @@
+import {redirect} from "next/navigation";
 import { Plus } from "lucide-react";
 import { GuideButton } from "@/components/guides";
 import type { Metadata } from "next";
@@ -17,6 +18,7 @@ export default async function GoalsPage({
   searchParams: Promise<{ open?: string; do?: string }>;
 }) {
   const { open, do: action } = await searchParams;
+  if(action==="plan")redirect("/goals/sip");
   const {
     goals,
     investments,

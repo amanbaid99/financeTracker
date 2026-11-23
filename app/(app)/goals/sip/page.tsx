@@ -1,3 +1,7 @@
+import {sameGoalMapping} from "@/lib/hybrid-mapping";
+import {loadHybridContext} from "@/lib/hybrid-data";
+import {HYBRID_VERSION} from "@/lib/hybrid-engine";
+import {snapshotCompatible} from "@/lib/hybrid-plan";
 import type { Metadata } from "next";
 import { BackLink } from "@/components/back-link";
 import { BudgetSipPlanner } from "@/components/budget-sip-planner";
@@ -8,12 +12,13 @@ import { loadSipMinimums } from "@/lib/sip-minimums-data";
 import { parseSipMonthly } from "@/lib/budget-sip";
 export const metadata:Metadata={title:"Create a SIP plan"};
 export default async function BudgetSipPage({searchParams}:{searchParams:Promise<{monthly?:string}>}){
- const [d,b,params,minimums]=await Promise.all([loadMoneyPlan(),loadBudget(),searchParams,loadSipMinimums()]);
+ const [d,b,params,minimums,c]=await Promise.all([loadMoneyPlan(),loadBudget(),searchParams,loadSipMinimums(),loadHybridContext()]);
+ const latest=c.plans[0],confirmed=latest&&snapshotCompatible(latest.result)?{createdAt:latest.created_at,result:latest.result,inputs:latest.inputs,stale:latest.input_revision!==c.sourceRevision||latest.result.calculatedOn!==d.today||latest.engine_version!==HYBRID_VERSION||!sameGoalMapping(latest.result.links,d.links)}:null;
  let initialMonthly=parseSipMonthly(params.monthly);
  if(initialMonthly===null){
   const sheet=await loadBudgetSheet(b.recordIncome,b.loanEmis);
   if(sheet.saved&&sheet.plan){const plan=applyBudgetRules(sheet.plan);const amount=plan.rows.filter(r=>r.category==="savings"||r.category==="investing").reduce((sum,r)=>sum+rowAmount(r,plan.salary),0);initialMonthly=amount>0&&amount<=1e9?amount:null;}
  }
 
- return <main className="space-y-5"><BackLink fallback="/goals/budget" label="Budget" /><h1 className="text-2xl font-semibold">Create a SIP plan</h1><BudgetSipPlanner savedMonthly={params.monthly?undefined:d.planInput?.monthly} initialMinimums={minimums} initialMonthly={initialMonthly} goals={d.goals} investments={d.investments} links={d.links} today={d.today} lump={d.planInput?.lump??0} essentialsMonthly={d.budget.costs+d.budget.emis} /></main>;
+ return <main className="space-y-5"><BackLink fallback="/goals/budget" label="Budget" /><h1 className="text-2xl font-semibold">Create a SIP plan</h1><BudgetSipPlanner riskTolerance={c.riskTolerance} revision={c.revision} confirmed={confirmed} budgetDeficit={Math.max(0,b.budget.costs+b.budget.emis-b.budget.income)} savedMonthly={params.monthly?initialMonthly:(d.planInput?.monthly??initialMonthly)} initialMinimums={minimums} initialMonthly={b.budget.planMonthly} goals={d.goals} investments={d.investments} links={d.links} today={d.today} lump={d.planInput?.lump??0} essentialsMonthly={d.budget.costs+d.budget.emis} /></main>;
 }

@@ -31,7 +31,7 @@ export function GoalsOverview(props: {
   between?: boolean;
 }) {
   useDayRefresh(props.today);
-  const [strategy, setStrategy] = useState<SipStrategy>("diversified");
+  const [strategy, setStrategy] = useState<SipStrategy>("pooled");
   return (
     <>
       <ExtraMoney

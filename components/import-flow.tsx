@@ -183,6 +183,7 @@ export function ImportFlow({
         kind: r.kind,
         category: s.category,
         value: r.value,
+        valuationDate: r.valuationDate ?? ready.statementDate,
         invested: r.invested,
         units: r.units,
         sip: s.sip,
@@ -379,13 +380,10 @@ export function ImportFlow({
                 type="button"
                 onClick={save}
                 disabled={
-                  pending ||
-                  updates.length + adds.length + same.length === 0
+                  pending || updates.length + adds.length + same.length === 0
                 }
               >
-                {pending
-                  ? "Saving…"
-                  : "Yes, save"}
+                {pending ? "Saving…" : "Yes, save"}
               </Button>
             </div>
           </div>

@@ -1,3 +1,4 @@
+import {futureValueDecimal,requiredMonthlyDecimal} from "./funding-math";
 // Goal tracking: how much each goal has, where it's heading and what it needs.
 // Pure functions; callers pass "today" in.
 
@@ -13,6 +14,9 @@ import {
 } from "./loan";
 
 export interface Investment {
+  availability?: "available"|"locked"|"pledged"|"unavailable";
+  accessibleOn?: string|null;
+  valuationDate?: string|null;
   id: string;
   kind: string;
   name: string | null;
@@ -32,6 +36,12 @@ export interface Investment {
 }
 
 export interface GoalInput {
+  targetType?: "today"|"future";
+  priorityLevel?: "high"|"medium"|"low";
+  goalCategory?: "essential"|"flexible";
+  minimumMonthly?: number;
+  expectedReturnPct?: number|null;
+  completed?: boolean;
   id: string;
   name: string;
   type: string;
@@ -76,6 +86,8 @@ export interface GoalLine {
 }
 
 export interface TrackedGoal extends GoalInput {
+  confirmedMapping?:boolean;
+  funding?:import("./hybrid-engine").HybridGoal;
   lines: GoalLine[];
   current: number;
   monthlySip: number;
@@ -118,11 +130,7 @@ export function projectedValue(
   annualPct: number,
   months: number,
 ): number {
-  if (months <= 0) return saved;
-  const r = annualPct / 100 / 12;
-  if (r === 0) return saved + sip * months;
-  const g = Math.pow(1 + r, months);
-  return saved * g + (sip * (g - 1) * (1 + r)) / r;
+  return futureValueDecimal(saved,sip,annualPct,months).toNumber();
 }
 
 /** Monthly SIP needed to reach `target` in `months` from `saved`. Zero if already enough. */
@@ -132,12 +140,7 @@ export function requiredSip(
   annualPct: number,
   months: number,
 ): number {
-  if (months <= 0) return Math.max(0, target - saved);
-  const r = annualPct / 100 / 12;
-  const g = Math.pow(1 + r, months);
-  const gap = target - saved * g;
-  if (gap <= 0) return 0;
-  return r === 0 ? gap / months : (gap * r) / ((g - 1) * (1 + r));
+  return requiredMonthlyDecimal(target,saved,annualPct,months).toNumber();
 }
 
 /** Months until `target` is reached, or null if not within 50 years. */
@@ -208,7 +211,7 @@ export function trackGoal(
     return trackBills(base, goal.bills ?? [], todayISO);
 
   const futureTarget =
-    months !== null && goal.inflationPct
+    months !== null && goal.targetType!=="future" && goal.inflationPct
       ? Math.round(
           goal.target * Math.pow(1 + goal.inflationPct / 100, months / 12),
         )

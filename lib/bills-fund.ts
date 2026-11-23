@@ -214,3 +214,17 @@ export function billsFundState(
       : null,
   };
 }
+
+/** Hybrid planner: reuse rolled bill dates, with contributions after each full month.
+ * The minimum for later bills assumes any first-cycle cash gap is addressed separately.
+ * Nothing is added to the recorded balance by this forecast.
+ */
+export function hybridBillsForecast(input:Bill[],balance:number,monthly:number,today:string){
+ const state=billsFundState(input,balance,0,today);
+ let cumulative=0,immediateShortfall=0;
+ for(const event of state.upcoming){cumulative+=event.amount;if(monthsBetween(today,event.date)===0)immediateShortfall=Math.max(immediateShortfall,cumulative-balance);}
+ let required=0,paid=0,cashflowShortfall=0;
+ for(const event of state.upcoming){paid+=event.amount;const months=monthsBetween(today,event.date);if(months>0)required=Math.max(required,Math.ceil((paid-balance-immediateShortfall)/months));cashflowShortfall=Math.max(cashflowShortfall,paid-balance-monthly*months);}
+ const recurring=Math.ceil(input.filter(b=>b.everyMonths>0).reduce((sum,b)=>sum+b.amount/b.everyMonths,0));
+ return {target:state.upcoming.reduce((sum,event)=>sum+event.amount,0),requiredMonthly:Math.max(0,required,recurring),immediateShortfall:Math.max(0,immediateShortfall),cashflowShortfall:Math.max(0,cashflowShortfall)};
+}

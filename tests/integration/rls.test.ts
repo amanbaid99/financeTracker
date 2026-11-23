@@ -64,6 +64,17 @@ afterAll(async () => {
   await admin.from("allowed_emails").delete().in("email", [emailA, emailB]);
 });
 
+describe("allocation plan history",()=>{
+ it("keeps history owner-scoped and immutable",async()=>{
+  const insert=await a.from("allocation_plans").insert({engine_version:"test",input_revision:"test",inputs:{},result:{}}).select("id").single();
+  expect(insert.error).toBeNull();
+  const other=await b.from("allocation_plans").select("id").eq("id",insert.data!.id);expect(other.data).toEqual([]);
+  const spoof=await b.from("allocation_plans").insert({user_id:idA,engine_version:"test",input_revision:"test",inputs:{},result:{}});expect(spoof.error).toBeTruthy();
+  expect((await a.from("allocation_plans").update({result:{changed:true}}).eq("id",insert.data!.id)).error).toBeTruthy();
+  expect((await a.from("allocation_plans").delete().eq("id",insert.data!.id)).error).toBeTruthy();
+ });
+});
+
 describe("invite list", () => {
   it("rejects signup for an email not on the list", async () => {
     const { error } = await admin.auth.admin.createUser({

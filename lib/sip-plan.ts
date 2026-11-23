@@ -240,9 +240,11 @@ export function splitForGoal(
   // Pick one suitable vehicle from the caller’s purpose-safe pool.
   // Near-term lifestyle money can prefer a bank; never use equity, gold or ELSS.
   if (strategy === "pooled") {
-    const allowed=(STAND_INS[category]??[category]).filter(k=>!["gold","elss"].includes(k)&& (k!=="savings_account"||preferBank));
+    const allowed=[...(STAND_INS[category]??[category]),...(preferBank&&category==="short_debt_fund"?["savings_account"]:[])].filter(k=>!["gold","elss"].includes(k));
     if(preferBank&&allowed.includes("savings_account")){allowed.splice(allowed.indexOf("savings_account"),1);allowed.unshift("savings_account");}
-    const candidates=investments.filter(i=>allowed.includes(kindOf(i)??""));
+    let candidates=investments.filter(i=>(!i.availability||i.availability==="available")&&allowed.includes(kindOf(i)??""));
+    const linkedIds=new Set(links.filter(l=>l.goalId===goalId&&l.percent>0).map(l=>l.investmentId));
+    const own=candidates.filter(i=>linkedIds.has(i.id));if(own.length)candidates=own;
     candidates.sort((a,b)=>allowed.indexOf(kindOf(a)!)-allowed.indexOf(kindOf(b)!) || b.monthlySip-a.monthlySip || b.value-a.value || a.id.localeCompare(b.id));
     const investment=candidates[0];
     return investment?[{investment,monthly,lump,similar:kindOf(investment)!==category,percent:100,note:noteFor(investment)}]:[];
@@ -363,7 +365,7 @@ export function splitForGoal(
   }));
 }
 
-const isEssential=(g:Pick<GoalInput,"type">)=>["emergency_fund","bills_fund","loan_payoff"].includes(g.type);
+const isEssential=(g:Pick<GoalInput,"type"|"goalCategory">)=>g.goalCategory?g.goalCategory==="essential":["emergency_fund","bills_fund","loan_payoff"].includes(g.type);
 function purposePool(s:Suggestion,all:Suggestion[],investments:Investment[],links:Link[],goals:Pick<GoalInput,"id"|"type">[]){
  const safety=new Set(goals.filter(isEssential).map(g=>g.id));
  const protectedIds=new Set(links.filter(l=>safety.has(l.goalId)&&l.percent>0).map(l=>l.investmentId));
@@ -414,7 +416,7 @@ export function sipPlan(
       strategy==="pooled"?purposePool(s,suggestions,investments,links,goals):investments,
       links,
       strategy,
-      strategy==="pooled"&&!isEssential(s.after)&&s.category==="liquid_fund",
+      strategy==="pooled"&&!isEssential(s.after)&&["liquid_fund","short_debt_fund"].includes(s.category),
     );
     if (!shares.length) {
       add(
@@ -519,7 +521,7 @@ export function planSteps(
       strategy==="pooled"?purposePool(s,suggestions,investments,links,goals):investments,
       links,
       strategy,
-      strategy==="pooled"&&!isEssential(s.after)&&s.category==="liquid_fund",
+      strategy==="pooled"&&!isEssential(s.after)&&["liquid_fund","short_debt_fund"].includes(s.category),
     ).filter((sh) => sh.lump > 0);
     const parts = shares.length
       ? shares.map((sh) => ({

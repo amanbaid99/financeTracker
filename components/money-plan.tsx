@@ -403,7 +403,7 @@ export function MoneyPlanCard({
   }, []);
   useQuickAction(
     "plan",
-    useCallback(() => setOpen(true), []),
+    useCallback(() => {if(variant==="form")router.push("/goals/sip");else setOpen(true);}, [variant,router]),
   );
   const form = open && (
     <PlanForm

@@ -43,6 +43,7 @@ export type PlanStage =
   | "open";
 
 export interface MoneyPlan {
+  hybrid?: import("./hybrid-engine").HybridResult;
   minimums?: import("./sip-minimums").SipMinimums;
   reservedMonthly?: number;
   lump: number;

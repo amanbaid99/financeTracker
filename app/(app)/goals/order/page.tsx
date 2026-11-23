@@ -3,40 +3,35 @@ import { BackLink } from "@/components/back-link";
 import { OrderEditor, type OrderGoal } from "@/components/order-editor";
 import { loadGoals } from "@/lib/data";
 import { goalSubline } from "@/lib/goal-status";
-import { planOrder } from "@/lib/goal-order";
 import type { TrackedGoal } from "@/lib/tracker";
 
 export const metadata: Metadata = { title: "Your order" };
 
 export default async function OrderPage() {
-  const { goals, today } = await loadGoals();
+  const { goals } = await loadGoals();
   // Every goal not reached yet, loans the EMIs close included, so you can
   // place them too.
-  const active = goals.filter((g) => g.status !== "reached");
+  const active = goals.filter((g) => g.status !== "reached"&&!g.completed&&(g.goalCategory??(["emergency_fund","bills_fund","loan_payoff"].includes(g.type)?"essential":"flexible"))==="essential");
   const view = (g: TrackedGoal): OrderGoal => ({
     id: g.id,
     name: g.name,
     type: g.type,
     sub: goalSubline(g),
   });
-  const pinned = active.filter((g) => g.billsFund);
-  const rest = active.filter((g) => !g.billsFund);
-  const custom = rest.some((g) => g.planRank != null);
-  // Your saved order, or the app's (see lib/goal-order.ts).
-  const sorted = planOrder(rest, today);
+  const custom=active.some(g=>g.planRank!=null);
+  const sorted=[...active].sort((a,b)=>(a.planRank??999)-(b.planRank??999)||(a.targetDate??"9999").localeCompare(b.targetDate??"9999")||a.id.localeCompare(b.id));
   return (
     <main className="space-y-4">
       <BackLink fallback="/goals/plan" label="Your plan" />
       <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight">Your order</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Essential goal order</h1>
         <p className="text-sm text-muted-foreground">
-          Put the goals that matter most at the top. The plan gives each one
-          what it needs to be on time before moving to the next. A goal without
-          a date is built over two years.
+          Essentials are funded in this order, starting with their minimums. Flexible goals share what remains by priority, deadline and need. Undated goals need an explicit monthly amount; emergency funds use a visible build assumption.
         </p>
       </div>
       <OrderEditor
-        pinned={pinned.map(view)}
+        essentialOnly
+        pinned={[]}
         goals={sorted.map(view)}
         custom={custom}
       />

@@ -7,157 +7,13 @@ export type Json =
   | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json;
-          operationName?: string;
-          query?: string;
-          variables?: Json;
-        };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.18";
   };
   public: {
     Tables: {
-      budget_ratio_plans: {
-        Row: { user_id: string; plan: Json; updated_at: string };
-        Insert: { user_id?: string; plan: Json; updated_at?: string };
-        Update: { user_id?: string; plan?: Json; updated_at?: string };
-        Relationships: [];
-      };
-
-      radar_access: {
-        Row: {
-          user_id: string;
-        };
-        Insert: {
-          user_id: string;
-        };
-        Update: {
-          user_id?: string;
-        };
-        Relationships: [];
-      };
-
-      radar_watchlist: {
-        Row: {
-          holding_review: Json | null;
-          rules_enabled: boolean;
-          holding_confirmed: boolean;
-          sell_above: number | null;
-          sell_below: number | null;
-          rules_updated_at: string | null;
-
-          id: string;
-          user_id: string;
-          exchange: string;
-          security_id: string;
-          symbol: string;
-          name: string;
-          isin: string | null;
-          asset_type: string;
-          price_below: number | null;
-          drawdown_pct: number | null;
-          created_at: string;
-        };
-        Insert: {
-          holding_review?: Json | null;
-          rules_enabled?: boolean;
-          holding_confirmed?: boolean;
-          sell_above?: number | null;
-          sell_below?: number | null;
-          rules_updated_at?: string | null;
-
-          id?: string;
-          user_id: string;
-          exchange: string;
-          security_id: string;
-          symbol: string;
-          name: string;
-          isin?: string | null;
-          asset_type: string;
-          price_below?: number | null;
-          drawdown_pct?: number | null;
-          created_at?: string;
-        };
-        Update: {
-          holding_review?: Json | null;
-          rules_enabled?: boolean;
-          holding_confirmed?: boolean;
-          sell_above?: number | null;
-          sell_below?: number | null;
-          rules_updated_at?: string | null;
-
-          id?: string;
-          user_id?: string;
-          exchange?: string;
-          security_id?: string;
-          symbol?: string;
-          name?: string;
-          isin?: string | null;
-          asset_type?: string;
-          price_below?: number | null;
-          drawdown_pct?: number | null;
-          created_at?: string;
-        };
-        Relationships: [];
-      };
-
-      radar_snapshots: {
-        Row: {
-          id: string;
-          user_id: string;
-          watch_id: string;
-          source: string;
-          fetched_at: string;
-          session_date: string | null;
-          engine_version: string;
-          input_hash: string;
-          candles: Json;
-          analysis: Json;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          watch_id: string;
-          source: string;
-          fetched_at?: string;
-          session_date?: string | null;
-          engine_version: string;
-          input_hash: string;
-          candles: Json;
-          analysis: Json;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          watch_id?: string;
-          source?: string;
-          fetched_at?: string;
-          session_date?: string | null;
-          engine_version?: string;
-          input_hash?: string;
-          candles?: Json;
-          analysis?: Json;
-        };
-        Relationships: [];
-      };
-
       ai_requests: {
         Row: {
           created_at: string;
@@ -168,7 +24,6 @@ export type Database = {
           tier: string;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           created_at?: string;
           feature: string;
@@ -189,13 +44,42 @@ export type Database = {
         };
         Relationships: [];
       };
+      allocation_plans: {
+        Row: {
+          created_at: string;
+          engine_version: string;
+          id: string;
+          input_revision: string;
+          inputs: Json;
+          result: Json;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          engine_version: string;
+          id?: string;
+          input_revision: string;
+          inputs: Json;
+          result: Json;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          engine_version?: string;
+          id?: string;
+          input_revision?: string;
+          inputs?: Json;
+          result?: Json;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       allowed_emails: {
         Row: {
           added_at: string;
           email: string;
           note: string | null;
         };
-        ComputedFields: never;
         Insert: {
           added_at?: string;
           email: string;
@@ -213,7 +97,6 @@ export type Database = {
           added_at: string;
           email: string;
         };
-        ComputedFields: never;
         Insert: {
           added_at?: string;
           email: string;
@@ -233,7 +116,6 @@ export type Database = {
           updated_at: string;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           bill_key: string;
           id?: string;
@@ -252,6 +134,24 @@ export type Database = {
         };
         Relationships: [];
       };
+      budget_ratio_plans: {
+        Row: {
+          plan: Json;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          plan: Json;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          plan?: Json;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       card_bills: {
         Row: {
           amount: number;
@@ -264,7 +164,6 @@ export type Database = {
           paid: boolean;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           amount: number;
           card_id: string;
@@ -309,7 +208,6 @@ export type Database = {
           target: number;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           card_id: string;
           created_at?: string;
@@ -351,7 +249,6 @@ export type Database = {
           user_id: string;
           version: string;
         };
-        ComputedFields: never;
         Insert: {
           created_at?: string;
           granted?: boolean;
@@ -387,7 +284,6 @@ export type Database = {
           user_id: string;
           year_start: string | null;
         };
-        ComputedFields: never;
         Insert: {
           annual_fee?: number | null;
           benefits?: string[];
@@ -430,7 +326,6 @@ export type Database = {
           is_essential: boolean;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           amount_monthly: number;
           category: string;
@@ -455,7 +350,6 @@ export type Database = {
           percent: number;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           goal_id: string;
           holding_id: string;
@@ -498,7 +392,6 @@ export type Database = {
           next_due: string;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           amount: number;
           created_at?: string;
@@ -546,6 +439,7 @@ export type Database = {
           loan_rate: number | null;
           name: string;
           plan_rank: number | null;
+          planning_settings: Json;
           priority: number;
           saved_amount: number;
           status: string | null;
@@ -554,7 +448,6 @@ export type Database = {
           type: Database["public"]["Enums"]["goal_type"];
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           created_at?: string;
           id?: string;
@@ -571,6 +464,7 @@ export type Database = {
           loan_rate?: number | null;
           name: string;
           plan_rank?: number | null;
+          planning_settings?: Json;
           priority?: number;
           saved_amount?: number;
           status?: string | null;
@@ -595,6 +489,7 @@ export type Database = {
           loan_rate?: number | null;
           name?: string;
           plan_rank?: number | null;
+          planning_settings?: Json;
           priority?: number;
           saved_amount?: number;
           status?: string | null;
@@ -624,6 +519,7 @@ export type Database = {
           kind: Database["public"]["Enums"]["holding_kind"];
           monthly_sip: number | null;
           name: string | null;
+          planning_details: Json;
           purpose: string | null;
           sip_step_up_pct: number | null;
           source: Database["public"]["Enums"]["holding_source"];
@@ -632,7 +528,6 @@ export type Database = {
           updated_at: string;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           category?: string | null;
           current_value?: number;
@@ -643,6 +538,7 @@ export type Database = {
           kind: Database["public"]["Enums"]["holding_kind"];
           monthly_sip?: number | null;
           name?: string | null;
+          planning_details?: Json;
           purpose?: string | null;
           sip_step_up_pct?: number | null;
           source?: Database["public"]["Enums"]["holding_source"];
@@ -661,6 +557,7 @@ export type Database = {
           kind?: Database["public"]["Enums"]["holding_kind"];
           monthly_sip?: number | null;
           name?: string | null;
+          planning_details?: Json;
           purpose?: string | null;
           sip_step_up_pct?: number | null;
           source?: Database["public"]["Enums"]["holding_source"];
@@ -679,7 +576,6 @@ export type Database = {
           stream_id: string;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           amount: number;
           id?: string;
@@ -717,7 +613,6 @@ export type Database = {
           type: Database["public"]["Enums"]["income_type"];
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           active?: boolean;
           amount_monthly?: number;
@@ -759,7 +654,6 @@ export type Database = {
           source: Database["public"]["Enums"]["insurance_source"];
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           cover_amount?: number;
           covers?: string;
@@ -800,7 +694,6 @@ export type Database = {
           outstanding: number;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           emi?: number | null;
           id?: string;
@@ -833,7 +726,6 @@ export type Database = {
           prev_outstanding: number;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           amount: number;
           created_at?: string;
@@ -889,7 +781,6 @@ export type Database = {
           type: string;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           balance_confirmed_on?: string | null;
           bill_day?: number | null;
@@ -957,7 +848,6 @@ export type Database = {
           series_id: string;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           amount?: number | null;
           card_id?: string | null;
@@ -1001,7 +891,6 @@ export type Database = {
           updated_at: string;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           assets: number;
           card_bills?: number;
@@ -1031,7 +920,6 @@ export type Database = {
           next_due: string | null;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           amount: number;
           created_at?: string;
@@ -1066,7 +954,6 @@ export type Database = {
           state: string;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           baseline?: Json | null;
           checked_at?: string | null;
@@ -1109,7 +996,7 @@ export type Database = {
           plan_monthly: number | null;
           plan_sip_minimums: Json;
           risk_profile: Database["public"]["Enums"]["risk_profile"] | null;
-          runway_choices: NonNullable<Json>;
+          runway_choices: Json;
           salary_best: string | null;
           salary_worst: string | null;
           sole_earner: boolean | null;
@@ -1117,7 +1004,6 @@ export type Database = {
           updated_at: string;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           accent?: string;
           age?: number | null;
@@ -1135,7 +1021,7 @@ export type Database = {
           plan_monthly?: number | null;
           plan_sip_minimums?: Json;
           risk_profile?: Database["public"]["Enums"]["risk_profile"] | null;
-          runway_choices?: NonNullable<Json>;
+          runway_choices?: Json;
           salary_best?: string | null;
           salary_worst?: string | null;
           sole_earner?: boolean | null;
@@ -1160,7 +1046,7 @@ export type Database = {
           plan_monthly?: number | null;
           plan_sip_minimums?: Json;
           risk_profile?: Database["public"]["Enums"]["risk_profile"] | null;
-          runway_choices?: NonNullable<Json>;
+          runway_choices?: Json;
           salary_best?: string | null;
           salary_worst?: string | null;
           sole_earner?: boolean | null;
@@ -1169,6 +1055,140 @@ export type Database = {
           user_id?: string;
         };
         Relationships: [];
+      };
+      radar_access: {
+        Row: {
+          user_id: string;
+        };
+        Insert: {
+          user_id: string;
+        };
+        Update: {
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      radar_snapshots: {
+        Row: {
+          analysis: Json;
+          candles: Json;
+          engine_version: string;
+          fetched_at: string;
+          id: string;
+          input_hash: string;
+          session_date: string | null;
+          source: string;
+          user_id: string;
+          watch_id: string;
+        };
+        Insert: {
+          analysis: Json;
+          candles: Json;
+          engine_version: string;
+          fetched_at?: string;
+          id?: string;
+          input_hash: string;
+          session_date?: string | null;
+          source: string;
+          user_id: string;
+          watch_id: string;
+        };
+        Update: {
+          analysis?: Json;
+          candles?: Json;
+          engine_version?: string;
+          fetched_at?: string;
+          id?: string;
+          input_hash?: string;
+          session_date?: string | null;
+          source?: string;
+          user_id?: string;
+          watch_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "radar_snapshots_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "radar_access";
+            referencedColumns: ["user_id"];
+          },
+          {
+            foreignKeyName: "radar_snapshots_watch_id_user_id_fkey";
+            columns: ["watch_id", "user_id"];
+            isOneToOne: false;
+            referencedRelation: "radar_watchlist";
+            referencedColumns: ["id", "user_id"];
+          },
+        ];
+      };
+      radar_watchlist: {
+        Row: {
+          asset_type: string;
+          created_at: string;
+          drawdown_pct: number | null;
+          exchange: string;
+          holding_confirmed: boolean;
+          holding_review: Json | null;
+          id: string;
+          isin: string | null;
+          name: string;
+          price_below: number | null;
+          rules_enabled: boolean;
+          rules_updated_at: string | null;
+          security_id: string;
+          sell_above: number | null;
+          sell_below: number | null;
+          symbol: string;
+          user_id: string;
+        };
+        Insert: {
+          asset_type: string;
+          created_at?: string;
+          drawdown_pct?: number | null;
+          exchange: string;
+          holding_confirmed?: boolean;
+          holding_review?: Json | null;
+          id?: string;
+          isin?: string | null;
+          name: string;
+          price_below?: number | null;
+          rules_enabled?: boolean;
+          rules_updated_at?: string | null;
+          security_id: string;
+          sell_above?: number | null;
+          sell_below?: number | null;
+          symbol: string;
+          user_id: string;
+        };
+        Update: {
+          asset_type?: string;
+          created_at?: string;
+          drawdown_pct?: number | null;
+          exchange?: string;
+          holding_confirmed?: boolean;
+          holding_review?: Json | null;
+          id?: string;
+          isin?: string | null;
+          name?: string;
+          price_below?: number | null;
+          rules_enabled?: boolean;
+          rules_updated_at?: string | null;
+          security_id?: string;
+          sell_above?: number | null;
+          sell_below?: number | null;
+          symbol?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "radar_watchlist_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "radar_access";
+            referencedColumns: ["user_id"];
+          },
+        ];
       };
       runway_items: {
         Row: {
@@ -1181,7 +1201,6 @@ export type Database = {
           label: string;
           user_id: string;
         };
-        ComputedFields: never;
         Insert: {
           amount: number;
           created_at?: string;
@@ -1206,29 +1225,28 @@ export type Database = {
       };
       settings: {
         Row: {
-          update_snoozes: Json;
-          config_overrides: NonNullable<Json>;
+          config_overrides: Json;
           last_cas_import_at: string | null;
           seen_guides: string[];
+          update_snoozes: Json;
           updated_at: string;
           user_id: string;
           whats_new_seen: string | null;
         };
-        ComputedFields: never;
         Insert: {
-          update_snoozes?: Json;
-          config_overrides?: NonNullable<Json>;
+          config_overrides?: Json;
           last_cas_import_at?: string | null;
           seen_guides?: string[];
+          update_snoozes?: Json;
           updated_at?: string;
           user_id: string;
           whats_new_seen?: string | null;
         };
         Update: {
-          update_snoozes?: Json;
-          config_overrides?: NonNullable<Json>;
+          config_overrides?: Json;
           last_cas_import_at?: string | null;
           seen_guides?: string[];
+          update_snoozes?: Json;
           updated_at?: string;
           user_id?: string;
           whats_new_seen?: string | null;
@@ -1240,27 +1258,30 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      radar_latest_snapshots: {
-        Args: Record<PropertyKey, never>;
-        Returns: Database["public"]["Tables"]["radar_snapshots"]["Row"][];
-      };
-      snooze_update: {
-        Args: { update_key: string; until_day: string };
-        Returns: undefined;
-      };
       add_invite: {
         Args: { p_email: string; p_note?: string };
         Returns: undefined;
       };
       app_snapshot: { Args: { privacy_version: string }; Returns: Json };
-      caller_email: { Args: Record<PropertyKey, never>; Returns: string };
-      delete_my_account: {
-        Args: Record<PropertyKey, never>;
-        Returns: undefined;
+      caller_email: { Args: never; Returns: string };
+      confirm_hybrid_plan: {
+        Args: {
+          p_inputs: Json;
+          p_links: Json;
+          p_lump: number;
+          p_minimums: Json;
+          p_monthly: number;
+          p_result: Json;
+          p_revision: string;
+        };
+        Returns: string;
       };
-      is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      delete_my_account: { Args: never; Returns: undefined };
+      hybrid_input_revision: { Args: never; Returns: string };
+      hybrid_source_revision: { Args: never; Returns: string };
+      is_admin: { Args: never; Returns: boolean };
       list_invites: {
-        Args: Record<PropertyKey, never>;
+        Args: never;
         Returns: {
           added_at: string;
           email: string;
@@ -1268,8 +1289,57 @@ export type Database = {
           note: string;
         }[];
       };
+      radar_latest_snapshots: {
+        Args: never;
+        Returns: {
+          analysis: Json;
+          candles: Json;
+          engine_version: string;
+          fetched_at: string;
+          id: string;
+          input_hash: string;
+          session_date: string | null;
+          source: string;
+          user_id: string;
+          watch_id: string;
+        }[];
+        SetofOptions: {
+          from: "*";
+          to: "radar_snapshots";
+          isOneToOne: false;
+          isSetofReturn: true;
+        };
+      };
       record_net_worth: { Args: { uid: string }; Returns: undefined };
       remove_invite: { Args: { p_email: string }; Returns: undefined };
+      snooze_update: {
+        Args: { until_day: string; update_key: string };
+        Returns: undefined;
+      };
+      wardrobe_bootstrap: { Args: never; Returns: Json };
+      wardrobe_clear_data: { Args: never; Returns: undefined };
+      wardrobe_delete_item: { Args: { target_id: string }; Returns: undefined };
+      wardrobe_export_data: { Args: never; Returns: Json };
+      wardrobe_rate_recommendation: {
+        Args: { rating_value: number; reason_text: string; target_id: string };
+        Returns: undefined;
+      };
+      wardrobe_record_recommendation: {
+        Args: {
+          explanation: string;
+          missing_slots: string[];
+          owned_ids: string[];
+          request_id: string;
+          selected_occasion: string;
+        };
+        Returns: Json;
+      };
+      wardrobe_reserve_capture: { Args: never; Returns: undefined };
+      wardrobe_save_item: { Args: { payload: Json }; Returns: Json };
+      wardrobe_save_preferences: {
+        Args: { payload: Json };
+        Returns: undefined;
+      };
     };
     Enums: {
       city_tier: "metro" | "tier2" | "tier3";
@@ -1442,9 +1512,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       city_tier: ["metro", "tier2", "tier3"],

@@ -114,6 +114,15 @@ export function InvestmentSheet({
       ? investment.monthlySip + (topUp?.sip ?? 0) || null
       : prefill?.monthlySip || null,
   );
+  const [availability, setAvailability] = useState<
+    "available" | "locked" | "pledged" | "unavailable"
+  >(investment?.availability ?? "available");
+  const [accessibleOn, setAccessibleOn] = useState(
+    investment?.accessibleOn ?? "",
+  );
+  const [valuationDate, setValuationDate] = useState(
+    investment?.valuationDate ?? "",
+  );
   const [ret, setRet] = useState(investment?.returnPct?.toString() ?? "");
   const [percent, setPercent] = useState(
     String(
@@ -178,6 +187,11 @@ export function InvestmentSheet({
         value: value ?? 0,
         monthlySip: sip ?? 0,
         returnPct: ret.trim() === "" ? null : Number(ret),
+        planningDetails: {
+          availability,
+          accessibleOn: accessibleOn || null,
+          valuationDate: valuationDate || null,
+        },
         percent: pct,
         fromPlan,
         // Money added to one of your funds from the plan's savings.
@@ -329,6 +343,50 @@ export function InvestmentSheet({
                 </Field>
               )}
             </div>
+            <details className="rounded-xl border px-3">
+              <summary className="min-h-11 cursor-pointer text-sm">
+                Access and valuation details
+              </summary>
+              <div className="space-y-3 pb-3">
+                <Field label="Availability" htmlFor="holding-availability">
+                  <Select
+                    id="holding-availability"
+                    value={availability}
+                    onChange={(e) =>
+                      setAvailability(e.target.value as typeof availability)
+                    }
+                  >
+                    <option value="available">Available</option>
+                    <option value="locked">Locked</option>
+                    <option value="pledged">Pledged</option>
+                    <option value="unavailable">Unavailable</option>
+                  </Select>
+                </Field>
+                <Field
+                  label="Accessible from (if restricted)"
+                  htmlFor="holding-access"
+                >
+                  <Input
+                    id="holding-access"
+                    type="date"
+                    value={accessibleOn}
+                    onChange={(e) => setAccessibleOn(e.target.value)}
+                  />
+                </Field>
+                <Field
+                  label="Balance valuation date"
+                  htmlFor="holding-valuation"
+                  hint="When this balance was valued, not when you edited the record."
+                >
+                  <Input
+                    id="holding-valuation"
+                    type="date"
+                    value={valuationDate}
+                    onChange={(e) => setValuationDate(e.target.value)}
+                  />
+                </Field>
+              </div>
+            </details>
             <Field label="Nickname (optional)" htmlFor="i-name">
               <Input
                 id="i-name"

@@ -1,4 +1,17 @@
-import { applyBudgetRules, budgetSheetSchema, rowAmount, type BudgetSheet } from "./budget-sheet";
+import { loadHybridContext } from "./hybrid-data";
+import { readGoalPlanning, readHoldingPlanning } from "./hybrid-settings";
+import { hybridMoneyPlan } from "./hybrid-plan";
+import {
+  monthlyCapacity,
+  calculateHybrid,
+  unallocatedLiquidValue,
+} from "./hybrid-engine";
+import {
+  applyBudgetRules,
+  budgetSheetSchema,
+  rowAmount,
+  type BudgetSheet,
+} from "./budget-sheet";
 import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -21,7 +34,6 @@ import {
   type TrackedGoal,
 } from "@/lib/tracker";
 import { loadSipMinimums } from "./sip-minimums-data";
-import { planWithMinimums } from "./sip-minimums";
 import { autoAllocate, type AutoAllocation } from "@/lib/auto-allocate";
 
 /**
@@ -220,7 +232,7 @@ function check<T>(res: {
 }
 
 export async function readGoals(): Promise<GoalsData> {
-  const [snap, loans] = await Promise.all([loadSnapshot(), loadLoans()]);
+  const [snap, loans,hybridContext] = await Promise.all([loadSnapshot(), loadLoans(),loadHybridContext()]);
   const goals = { data: snap.goals, error: null };
   const holdings = { data: snap.holdings, error: null };
   const allocations = { data: snap.allocations, error: null };
@@ -243,63 +255,116 @@ export async function readGoals(): Promise<GoalsData> {
     // Older snapshots (before the units migration) don't carry these.
     isin: h.isin ?? null,
     units: h.units == null ? null : Number(h.units),
+    ...readHoldingPlanning(
+      hybridContext.holdingDetails.find((d) => d.id === h.id)?.planning_details,
+    ),
   }));
   // Old hand-made links (goal_allocations) are no longer used: which money
   // covers which goal is worked out automatically (lib/auto-allocate.ts).
   void allocations;
-  const inputs: GoalInput[] = check(goals).map(
-    (g): GoalInput => ({
-        id: g.id,
-        name: g.name,
-        type: g.type,
-        target: g.target_today,
-        targetDate: g.target_date,
-        inflationPct:
-          g.inflation_rate === null ? null : Number(g.inflation_rate),
-        loanId: g.loan_id,
-        niceToHave: (g.priority ?? 3) >= 4,
-        planRank: g.plan_rank ?? null,
-        // A linked loan is the source of truth; older goals kept their own copy.
-        loan:
-          g.type === "loan_payoff" && g.loan_id && loanById.has(g.loan_id)
-            ? loanInput(loanById.get(g.loan_id)!)
-            : g.type === "loan_payoff" && g.loan_outstanding !== null
-              ? {
-                  outstanding: g.loan_outstanding,
-                  emi: g.loan_emi,
-                  ratePct: Number(g.loan_rate ?? 0),
-                  monthsLeft: g.loan_months_left,
-                  asOf: g.loan_as_of ?? g.created_at.slice(0, 10),
-                  foreclosurePct:
-                    g.loan_foreclosure_pct === null
-                      ? null
-                      : Number(g.loan_foreclosure_pct),
-                  foreclosureGst: g.loan_foreclosure_gst,
-                  emiDay: g.loan_emi_day,
-                  firstEmi: g.loan_first_emi,
-                }
-              : null,
-        bills:
-          g.type === "bills_fund"
-            ? billRows
-                .filter((b) => b.goal_id === g.id)
-                .map((b) => ({
-                  id: b.id,
-                  name: b.name,
-                  amount: b.amount,
-                  everyMonths: b.every_months,
-                  nextDue: b.next_due,
-                }))
-            : null,
-    }),
-  );
+  const inputs: GoalInput[] = check(goals).map((g): GoalInput => ({
+    id: g.id,
+    name: g.name,
+    type: g.type,
+    target: g.target_today,
+    targetDate: g.target_date,
+    inflationPct: g.inflation_rate === null ? null : Number(g.inflation_rate),
+    loanId: g.loan_id,
+    niceToHave: (g.priority ?? 3) >= 4,
+    planRank: g.plan_rank ?? null,
+    priorityLevel:
+      (g.priority ?? 3) <= 2
+        ? "high"
+        : (g.priority ?? 3) >= 4
+          ? "low"
+          : "medium",
+    completed:
+      hybridContext.goalSettings.find((d) => d.id === g.id)?.status ===
+      "completed",
+    ...readGoalPlanning(
+      hybridContext.goalSettings.find((d) => d.id === g.id)?.planning_settings,
+    ),
+    // A linked loan is the source of truth; older goals kept their own copy.
+    loan:
+      g.type === "loan_payoff" && g.loan_id && loanById.has(g.loan_id)
+        ? loanInput(loanById.get(g.loan_id)!)
+        : g.type === "loan_payoff" && g.loan_outstanding !== null
+          ? {
+              outstanding: g.loan_outstanding,
+              emi: g.loan_emi,
+              ratePct: Number(g.loan_rate ?? 0),
+              monthsLeft: g.loan_months_left,
+              asOf: g.loan_as_of ?? g.created_at.slice(0, 10),
+              foreclosurePct:
+                g.loan_foreclosure_pct === null
+                  ? null
+                  : Number(g.loan_foreclosure_pct),
+              foreclosureGst: g.loan_foreclosure_gst,
+              emiDay: g.loan_emi_day,
+              firstEmi: g.loan_first_emi,
+            }
+          : null,
+    bills:
+      g.type === "bills_fund"
+        ? billRows
+            .filter((b) => b.goal_id === g.id)
+            .map((b) => ({
+              id: b.id,
+              name: b.name,
+              amount: b.amount,
+              everyMonths: b.every_months,
+              nextDue: b.next_due,
+            }))
+        : null,
+  }));
   const bare = inputs.map((g) => trackGoal(g, investments, [], today));
-  const allocation = autoAllocate(bare, investments, today);
-  const links = allocation.links;
+  let allocation = autoAllocate(bare, investments, today);
+  const links = hybridContext.plans.length
+    ? check(allocations)
+        .map((a) => ({
+          goalId: a.goal_id,
+          investmentId: a.holding_id,
+          percent: Number(a.percent),
+        }))
+        .filter((l) => inputs.some((g) => g.id === l.goalId && !g.completed))
+    : allocation.links
+        .map((l) => ({ ...l, percent: Math.floor(l.percent * 100) / 100 }))
+        .filter((l) => l.percent > 0);
+  if (hybridContext.plans.length) {
+    const coverage = calculateHybrid({
+      today,
+      goals: inputs,
+      investments,
+      links,
+      monthlySavings: 0,
+    });
+    allocation = {
+      ...allocation,
+      links,
+      covers: Object.fromEntries(
+        coverage.goals.map((g) => [
+          g.goalId,
+          {
+            goalId: g.goalId,
+            taken: g.existingCoverage,
+            short: g.fundingGap,
+            byPool: {},
+            why: "Your confirmed proportional ownership.",
+          },
+        ]),
+      ),
+      spare: {},
+      spareTotal: coverage.unallocatedInvestments.reduce(
+        (sum, i) => sum + i.value,
+        0,
+      ),
+    };
+  }
   const tracked = inputs.map((g) => {
     const c = allocation.covers[g.id];
     return {
       ...trackGoal(g, investments, links, today),
+      confirmedMapping: hybridContext.plans.length > 0,
       cover: c && { taken: c.taken, short: c.short, why: c.why },
     };
   });
@@ -449,7 +514,9 @@ const loadSavedSheet = cache(async (): Promise<BudgetSheet | null> => {
     .maybeSingle();
   if (error || !data) return null;
   const parsed = budgetSheetSchema.safeParse(data.plan);
-  return parsed.success && !parsed.data.standalone ? applyBudgetRules(parsed.data) : null;
+  return parsed.success && !parsed.data.standalone
+    ? applyBudgetRules(parsed.data)
+    : null;
 });
 
 export const loadBudget = cache(async () => {
@@ -496,7 +563,9 @@ export const loadBudget = cache(async () => {
         costs: sheet.rows
           .filter(
             (r) =>
-              !r.loanId && r.category !== "savings" && r.category !== "investing",
+              !r.loanId &&
+              r.category !== "savings" &&
+              r.category !== "investing",
           )
           .map((r) => ({
             id: r.id,
@@ -527,7 +596,11 @@ export const loadBudget = cache(async () => {
 
 /** The money plan as Goals and the plan page show it, worked out once. */
 export const loadMoneyPlan = cache(async () => {
-  const [g, b, minimums] = await Promise.all([loadGoals(), loadBudget(), loadSipMinimums()]);
+  const [g, b, minimums] = await Promise.all([
+    loadGoals(),
+    loadBudget(),
+    loadSipMinimums(),
+  ]);
   const { goals, investments, links, today, plan: input } = g;
   const sipsNow = investments.reduce((s, i) => s + i.monthlySip, 0);
   const unassigned = Math.round(
@@ -536,19 +609,57 @@ export const loadMoneyPlan = cache(async () => {
       0,
     ),
   );
+  const context = await loadHybridContext();
+  const priorBuffer = (
+    context.plans[0]?.inputs as { cashBuffer?: number } | undefined
+  )?.cashBuffer;
+  const capacity = monthlyCapacity(
+    b.budget.income,
+    b.budget.costs,
+    b.budget.emis,
+    Number.isSafeInteger(priorBuffer) && priorBuffer! >= 0 ? priorBuffer : 0,
+  );
   const plan = input
-    ? planWithMinimums({
+    ? hybridMoneyPlan({
         goals,
         investments,
         links,
-        lump: input.lump,
-        monthlyTotal: input.monthly,
-        todayISO: today,
-        essentialsMonthly: b.budget.costs + b.budget.emis,
-      }, minimums)
+        riskTolerance: context.riskTolerance,
+        oneTime: Math.min(
+          input.lump,
+          unallocatedLiquidValue(investments, links, today),
+        ),
+        monthlySavings: capacity.availableSavings,
+        monthlyPlanLimit: Math.min(input.monthly, capacity.availableSavings),
+        budgetDeficit: capacity.budgetDeficit,
+        today,
+        minimums,
+      })
     : null;
   return {
     ...g,
+    goals: goals.map((goal) => {
+      const funding = plan?.hybrid?.goals.find((f) => f.goalId === goal.id);
+      return funding
+        ? {
+            ...goal,
+            funding,
+            current: funding.existingCoverage,
+            futureTarget: funding.targetCorpus,
+            progress: funding.targetCorpus
+              ? Math.min(1, funding.existingCoverage / funding.targetCorpus)
+              : 1,
+            projected: funding.projectedCorpus,
+            extraSipNeeded: funding.monthlyShortfall,
+            status:
+              goal.completed || funding.status === "fully_funded"
+                ? ("reached" as const)
+                : funding.status === "on_track"
+                  ? ("on_track" as const)
+                  : ("behind" as const),
+          }
+        : goal;
+    }),
     budget: b.budget,
     plan,
     planInput: input,
@@ -563,7 +674,12 @@ export const loadCurrentNetWorth = cache(async () => {
   const [g, loans] = await Promise.all([loadGoals(), loadLoans()]);
   return {
     assets: Math.round(g.investments.reduce((sum, i) => sum + i.value, 0)),
-    liabilities: Math.round(loans.reduce((sum, l) => sum + Math.max(0, loanView(l, g.today).state.balance), 0)),
+    liabilities: Math.round(
+      loans.reduce(
+        (sum, l) => sum + Math.max(0, loanView(l, g.today).state.balance),
+        0,
+      ),
+    ),
   };
 });
 

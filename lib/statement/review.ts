@@ -45,9 +45,15 @@ export type Question =
   | { kind: "sip_stopped"; text: string; previousSip: number }
   | { kind: "category"; text: string };
 
-export type CategoryHow = "yours" | "from its name" | "two models agreed" | "checked by a third model" | "ask";
+export type CategoryHow =
+  | "yours"
+  | "from its name"
+  | "two models agreed"
+  | "checked by a third model"
+  | "ask";
 
 export interface ReviewRow {
+  valuationDate?: string | null;
   key: string;
   name: string;
   isin: string | null;
@@ -65,7 +71,13 @@ export interface ReviewRow {
   /** True when the SIP comes from the statement's transactions. */
   sipFromStatement: boolean;
   issues: string[];
-  match: { id: string; name: string; value: number; sip: number; how: "isin" | "name" } | null;
+  match: {
+    id: string;
+    name: string;
+    value: number;
+    sip: number;
+    how: "isin" | "name";
+  } | null;
   /** Other existing investments it might be, best first (for name matches). */
   candidates: { id: string; name: string }[];
   /** Questions the user must answer before saving. */
@@ -73,8 +85,22 @@ export interface ReviewRow {
 }
 
 const STOP = new Set([
-  "direct", "regular", "plan", "growth", "option", "fund", "idcw", "dividend", "reinvestment",
-  "payout", "the", "of", "scheme", "g", "dir", "gr",
+  "direct",
+  "regular",
+  "plan",
+  "growth",
+  "option",
+  "fund",
+  "idcw",
+  "dividend",
+  "reinvestment",
+  "payout",
+  "the",
+  "of",
+  "scheme",
+  "g",
+  "dir",
+  "gr",
 ]);
 
 function tokens(s: string): Set<string> {
@@ -98,31 +124,55 @@ export function nameSimilarity(a: string, b: string): number {
 }
 
 const label = (i: Investment) => i.name?.trim() || "Unnamed investment";
-const sameFamily = (a: Kind, b: string) => (a === "mutual_fund") === (asKind(b) === "mutual_fund");
+const sameFamily = (a: Kind, b: string) =>
+  (a === "mutual_fund") === (asKind(b) === "mutual_fund");
 
-export function buildReview(statement: ParsedStatement, existing: ExistingInvestment[]): ReviewRow[] {
+export function buildReview(
+  statement: ParsedStatement,
+  existing: ExistingInvestment[],
+): ReviewRow[] {
   const used = new Set<string>();
   const rows: ReviewRow[] = [];
 
   // Exact matches first so a name match never takes an investment an ISIN owns.
-  const byIsin = new Map(existing.filter((e) => e.isin).map((e) => [e.isin!.toUpperCase(), e]));
+  const byIsin = new Map(
+    existing.filter((e) => e.isin).map((e) => [e.isin!.toUpperCase(), e]),
+  );
   // A zero-balance fund can clear a matched holding, never create a new one.
-  const candidates = statement.holdings.filter((h) => h.kind !== "mutual_fund" || h.units !== 0 || h.value !== 0 ||
-    byIsin.has(h.key.toUpperCase()) || (!!h.isin && byIsin.has(h.isin.toUpperCase())));
+  const candidates = statement.holdings.filter(
+    (h) =>
+      h.kind !== "mutual_fund" ||
+      h.units !== 0 ||
+      h.value !== 0 ||
+      byIsin.has(h.key.toUpperCase()) ||
+      (!!h.isin && byIsin.has(h.isin.toUpperCase())),
+  );
   const order = [...candidates].sort(
-    (a, b) => Number(!byIsin.has(a.key.toUpperCase())) - Number(!byIsin.has(b.key.toUpperCase())),
+    (a, b) =>
+      Number(!byIsin.has(a.key.toUpperCase())) -
+      Number(!byIsin.has(b.key.toUpperCase())),
   );
 
   for (const h of order) {
     const fixed = placeFromKey(h.key);
-    const kind: Kind = fixed?.kind ?? (h.kind === "mutual_fund" ? "mutual_fund" : asKind(h.kind));
+    const kind: Kind =
+      fixed?.kind ??
+      (h.kind === "mutual_fund" ? "mutual_fund" : asKind(h.kind));
     const questions: Question[] = [];
     let match: ReviewRow["match"] = null;
     let candidates: ReviewRow["candidates"] = [];
 
-    const exact = byIsin.get(h.key.toUpperCase()) ?? (h.isin ? byIsin.get(h.isin.toUpperCase()) : undefined);
+    const exact =
+      byIsin.get(h.key.toUpperCase()) ??
+      (h.isin ? byIsin.get(h.isin.toUpperCase()) : undefined);
     if (exact && !used.has(exact.id)) {
-      match = { id: exact.id, name: label(exact), value: exact.value, sip: exact.monthlySip, how: "isin" };
+      match = {
+        id: exact.id,
+        name: label(exact),
+        value: exact.value,
+        sip: exact.monthlySip,
+        how: "isin",
+      };
       used.add(exact.id);
     } else {
       const scored = existing
@@ -132,25 +182,40 @@ export function buildReview(statement: ParsedStatement, existing: ExistingInvest
         .sort((a, b) => b.score - a.score);
       if (scored.length) {
         const best = scored[0].e;
-        match = { id: best.id, name: label(best), value: best.value, sip: best.monthlySip, how: "name" };
+        match = {
+          id: best.id,
+          name: label(best),
+          value: best.value,
+          sip: best.monthlySip,
+          how: "name",
+        };
         candidates = scored.map((x) => ({ id: x.e.id, name: label(x.e) }));
         used.add(best.id);
         questions.push(
           scored.length > 1 && scored[1].score >= scored[0].score - 0.1
-            ? { kind: "which_match", text: "Which of your investments is this?" }
+            ? {
+                kind: "which_match",
+                text: "Which of your investments is this?",
+              }
             : { kind: "confirm_match", text: `Is this your “${label(best)}”?` },
         );
       }
     }
 
     // Category: keep yours, else from the name, else ask (AI fills some later).
-    const matched = match ? existing.find((e) => e.id === match!.id) : undefined;
+    const matched = match
+      ? existing.find((e) => e.id === match!.id)
+      : undefined;
     let category: string | null = null;
     let categoryHow: CategoryHow = "ask";
     if (fixed) {
       category = fixed.category;
       categoryHow = "from its name";
-    } else if (matched?.category && matched.category !== "other" && matched.kind === kind) {
+    } else if (
+      matched?.category &&
+      matched.category !== "other" &&
+      matched.kind === kind
+    ) {
       category = matched.category;
       categoryHow = "yours";
     } else {
@@ -177,6 +242,10 @@ export function buildReview(statement: ParsedStatement, existing: ExistingInvest
     }
 
     rows.push({
+      valuationDate:
+        z.iso.date().safeParse(h.navDate).data ??
+        z.iso.date().safeParse(statement.statementDate).data ??
+        null,
       key: h.key,
       name: h.name,
       isin: h.isin ?? (fixed ? h.key : null),
@@ -185,7 +254,11 @@ export function buildReview(statement: ParsedStatement, existing: ExistingInvest
       categoryHow,
       value: h.value,
       invested: h.invested ?? null,
-      units: Number.isFinite(h.units) && (h.units > 0 || (h.units === 0 && h.value === 0 && !!h.isin)) ? h.units : null,
+      units:
+        Number.isFinite(h.units) &&
+        (h.units > 0 || (h.units === 0 && h.value === 0 && !!h.isin))
+          ? h.units
+          : null,
       sip,
       sipFromStatement,
       issues: h.issues,
@@ -202,12 +275,27 @@ export function buildReview(statement: ParsedStatement, existing: ExistingInvest
 /** Fills categories the AI settled; anything left gets a question. */
 export function applyAiCategories(
   rows: ReviewRow[],
-  verdicts: Map<string, { category: string; how: "two models agreed" | "checked by a third model" }>,
+  verdicts: Map<
+    string,
+    { category: string; how: "two models agreed" | "checked by a third model" }
+  >,
 ): ReviewRow[] {
   return rows.map((r) => {
     if (r.category) return r;
     const v = verdicts.get(r.key);
-    if (v) return { ...r, category: v.category, kind: v.category === "gold" ? "gold" : r.kind, categoryHow: v.how };
-    return { ...r, questions: [...r.questions, { kind: "category", text: "What kind of fund is this?" }] };
+    if (v)
+      return {
+        ...r,
+        category: v.category,
+        kind: v.category === "gold" ? "gold" : r.kind,
+        categoryHow: v.how,
+      };
+    return {
+      ...r,
+      questions: [
+        ...r.questions,
+        { kind: "category", text: "What kind of fund is this?" },
+      ],
+    };
   });
 }

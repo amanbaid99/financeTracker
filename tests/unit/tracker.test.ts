@@ -34,7 +34,7 @@ const goal = (over: Partial<GoalInput> = {}): GoalInput => ({
 
 describe("goal math", () => {
   it("projects savings plus SIP and finds the SIP needed", () => {
-    expect(projectedValue(100_000, 0, 12, 12)).toBeCloseTo(112_682.5, 0);
+    expect(projectedValue(100_000, 0, 12, 12)).toBeCloseTo(112_000, 0);
     expect(projectedValue(0, 1000, 0, 10)).toBe(10_000);
     const sip = requiredSip(1_000_000, 100_000, 12, 60);
     expect(projectedValue(100_000, sip, 12, 60)).toBeCloseTo(1_000_000, 0);
