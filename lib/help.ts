@@ -81,7 +81,8 @@ export const HELP: HelpTopic[] = [
     section: "Net worth",
     q: "What is Simplify your portfolio?",
     a: [
-      "Up to three ideas for having fewer things to track: extra bank accounts, several funds of the same type, tiny holdings with no SIP, or money no goal needs right now. Bank-account reviews include salary credits, EMIs, UPI, autopay and minimum balances. A small balance alone does not mean an account is unused. It only names funds you already hold.",
+      "Up to three ideas for having fewer things to track: extra bank accounts, several funds of the same type, tiny holdings with no SIP, with a separate Money not assigned to goals card. Bank-account reviews include salary credits, EMIs, UPI, autopay and minimum balances. A small balance alone does not mean an account is unused. It only names funds you already hold.",
+      "Money not assigned to goals names each holding and its free amount. Assign to a goal lets you choose a goal and amount, then confirm. Plan a withdrawal opens a preview for that holding, not an order to sell. Restricted assets remain visible but are not treated as withdrawable cash. Update balances only after an actual withdrawal.",
       "Nothing is sold or moved. Check exit loads and tax before you sell anything. Not investment advice.",
     ],
     tags: "simplify merge consolidate liquid funds small holdings spare",

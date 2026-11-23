@@ -2,8 +2,7 @@
 // holdings, and money no goal needs. Read-only hints; nothing is sold or
 // moved. Names only your own holdings, never new funds.
 
-import type { AutoAllocation, Pool } from "./auto-allocate";
-import { POOL_LABEL } from "./auto-allocate";
+import type { AutoAllocation } from "./auto-allocate";
 import { categoryLabel } from "./categories";
 import { formatINR } from "./format";
 import { asKind, KIND_LABELS } from "./instruments";
@@ -87,20 +86,10 @@ export function simplifyHints(
 
   // Money no goal needs right now.
   if (allocation.spareTotal > 0) {
-    const pools = (Object.keys(allocation.spare) as Pool[])
-      .filter((p) => (allocation.spare[p] ?? 0) > 0)
-      .sort((a, b) => (allocation.spare[b] ?? 0) - (allocation.spare[a] ?? 0));
-    const cash = allocation.spare.cash ?? 0;
     hints.push({
       id: "spare",
-      title: `${formatINR(allocation.spareTotal)} not needed by any goal`,
-      text:
-        cash >= 50000 && cash >= allocation.spareTotal * 0.95
-          ? "It's all safe money that no goal due soon needs. It's free for a new goal; for goals 3 or more years away, equity usually suits better."
-          : `${POOL_LABEL[pools[0]] ? `Mostly ${POOL_LABEL[pools[0]]}. ` : ""}It's free for a new goal, or to give a goal more room.` +
-            (cash >= 50000
-              ? ` ${formatINR(cash)} of it is safe money no goal due soon needs; for goals 3 or more years away, equity usually suits better.`
-              : ""),
+      title: `${formatINR(allocation.spareTotal)} not assigned to goals`,
+      text: "Review the unassigned amount in each holding. It may still be needed for spending, reserves or another purpose; it is not necessarily available to withdraw.",
     });
   }
   return hints.slice(0, 3);

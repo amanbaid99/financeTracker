@@ -367,7 +367,7 @@ export async function readGoals(): Promise<GoalsData> {
     const c = allocation.covers[g.id];
     return {
       ...trackGoal(g, investments, links, today),
-      confirmedMapping: hybridContext.plans.length > 0,
+      confirmedMapping: useSaved,
       cover: c && { taken: c.taken, short: c.short, why: c.why },
     };
   });

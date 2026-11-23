@@ -37,6 +37,7 @@ export function withdrawalEligible(i: Investment): boolean {
 }
 export function planWithdrawal(opts: {
   amount: number;
+  investmentId?: string | null;
   goalId?: string | null;
   allowOtherGoals?: boolean;
   goals: TrackedGoal[];
@@ -84,7 +85,7 @@ export function planWithdrawal(opts: {
     reason: WithdrawalLine["reason"];
   };
   const slices: Slice[] = [];
-  for (const inv of investments.filter(withdrawalEligible)) {
+  for (const inv of investments.filter(i=>withdrawalEligible(i)&&(!i.accessibleOn||i.accessibleOn<=today)&&(!opts.investmentId||i.id===opts.investmentId))) {
     const allocations = before.links
       .filter((l) => l.investmentId === inv.id)
       .map((l) => ({

@@ -14,6 +14,7 @@ import { OweList } from "@/components/owe-list";
 import { NetWorthCard } from "@/components/net-worth-card";
 // import { AI_CONSENT_VERSION } from "@/lib/legal";
 import { buildPortfolio } from "@/lib/portfolio";
+import {UnallocatedMoney} from "@/components/unallocated-money";
 import { SimplifyCard } from "@/components/simplify-card";
 import { cueCategory } from "@/lib/home-cues";
 import { simplifyHints } from "@/lib/simplify";
@@ -137,7 +138,8 @@ export default async function PortfolioPage({
           initialCategory={initialCategory}
       />
       </section>
-      <SimplifyCard hints={simplifyHints(investments, allocation)} />
+      <UnallocatedMoney investments={investments} links={links} goals={goals} today={today}/>
+      <SimplifyCard hints={simplifyHints(investments, allocation).filter(h=>h.id!=="spare")} />
     </main>
   );
 }

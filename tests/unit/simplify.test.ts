@@ -38,7 +38,7 @@ describe("simplifyHints", () => {
       { spare: { equity: 900000 }, spareTotal: 900000 },
     );
     expect(hints.map((h) => h.id)).toEqual(["tiny", "spare"]);
-    expect(hints[1].title).toBe("₹9,00,000 not needed by any goal");
+    expect(hints[1].title).toBe("₹9,00,000 not assigned to goals");
   });
 });
 

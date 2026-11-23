@@ -1,5 +1,10 @@
 # Status
 
+## Named unassigned money and actions, 23 Nov 2026
+
+Net worth replaces the vague spare-money simplification hint with a separate per-holding list, derived from current ownership with decimal arithmetic. Each row shows the unassigned value/share and holding total. Assign to a goal reviews a goal, amount and rounded proportional share, then uses the existing transactional coverage save without reducing other goals. Unconfirmed calculated coverage must first be reviewed in the monthly plan. Saved manual mappings now count as confirmed ownership for withdrawal previews, even before a monthly plan exists. Restricted assets are visible but not called cash. Plan a withdrawal prefills that holding and amount; a source selector restricts the preview to the chosen holding with no silent substitution. It never trades or updates balances. No schema changes. Verification: lint, TypeScript, 765 unit tests, 40 Python tests and production build pass. Isolated browser checks at 320/375/768px pass for named holding values, goal/amount confirmation payload, targeted withdrawal links and source selection without overflow or runtime errors. Full signed-in E2E remains unverified because the local database image download is blocked, as recorded in the previous entry.
+
+
 ## One monthly planning flow, 23 Nov 2026
 
 Your monthly SIPs uses hybridPlan/hybridVehicles, exactly as confirmation and goal projections do. Removed the separate step-allocation engine and automatic ₹500 per goal. Zero savings means zero new contributions. Both UI and server reject monthly totals above available savings; capacity is never inflated to fit a proposed plan. Budget is the source of available money, not URL parameters.

@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"Unassigned money you can act on",items:[{title:"See the holding and choose",text:"Net worth names each unassigned amount. Assign it to a goal after review, or open a withdrawal preview for that holding. No money is moved."}]},
   {date:"2026-11-23",title:"One simple monthly plan",items:[
     {title:"Review once",text:"Choose monthly amounts by holding and save once. Suggestions and goal outcomes use the same calculation, within your budget."},
     {title:"Coverage stays in the background",text:"Open a goal to see what covers it or change it. No separate mapping approval list. Emergency and lifestyle money stay separate."},

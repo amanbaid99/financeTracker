@@ -19,3 +19,9 @@ describe("withdrawal previews",()=>{
  it("answers withdrawal questions locally using codes and exact figures",()=>{expect(withdrawalAmount("Where can ₹10,000 come from?")).toBe(10000);expect(withdrawalAmount("Where should I invest ₹10,000?")).toBe(null);expect(withdrawalAmount("Withdraw -₹10,000")).toBe(null);const answer=withdrawalAnswer({text:"Withdraw ₹10,000",amount:10000,goals:[],investments:[inv("cash",20000)],today,codeOf:{cash:"[I1]"}});expect(answer).toContain("₹10,000 from [I1]");expect(answer).toContain("Nothing is withdrawn or saved");});
  it("codes typed names and identifiers in follow-up history",()=>{const coded=codeAskText("Travel (2027) from My account. Mail person@example.com PAN ABCDE1234F phone 9876543210",{"[G1]":"Travel (2027)","[I1]":"My account"});expect(coded).toBe("[G1] from [I1]. Mail [email] PAN [PAN] phone [phone]");});
 });
+
+it("a holding-specific preview never substitutes a different holding",()=>{
+ const investments:Investment[]=[{id:"first",name:"First account",kind:"savings",category:"savings_account",value:1000,monthlySip:0,returnPct:0},{id:"second",name:"Second account",kind:"savings",category:"savings_account",value:9000,monthlySip:0,returnPct:0}];
+ const p=planWithdrawal({amount:3000,investmentId:"first",investments,goals:[],today:"2026-11-23"});
+ expect(p.lines.map(l=>l.investmentId)).toEqual(["first"]);expect(p.short).toBe(2000);
+});
