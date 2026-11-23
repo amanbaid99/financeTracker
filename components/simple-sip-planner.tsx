@@ -116,11 +116,36 @@ export function SimpleSipPlanner({
           {formatINR(total)}
         </p>
         <p className="text-xs text-muted-foreground">
-          Your goals need about {formatINR(s.goalsNeed)} a month
-          {budgetMonthly > 0
-            ? `. Your budget sets aside ${formatINR(budgetMonthly)}.`
-            : "."}
+          The amounts you&apos;ve set below. Your goals need about{" "}
+          {formatINR(s.goalsNeed)} a month.
         </p>
+        {s.basis > 0 && (
+          <div className="mt-2 space-y-1 rounded-xl bg-muted/50 p-3 text-xs">
+            <p className="font-medium">
+              {budgetMonthly > 0
+                ? `Your budget sets aside ${formatINR(budgetMonthly)}. Suggested split of ${formatINR(s.basis)}:`
+                : `Suggested split of ${formatINR(s.basis)}:`}
+            </p>
+            <p className="flex justify-between gap-3">
+              <span>Your holdings below</span>
+              <span className="tabular">{formatINR(s.inHoldings)}</span>
+            </p>
+            {s.inNewFunds > 0 && (
+              <p className="flex justify-between gap-3">
+                <span>Funds you don&apos;t hold yet (further down)</span>
+                <span className="tabular">{formatINR(s.inNewFunds)}</span>
+              </p>
+            )}
+            {s.unplaced > 0 && (
+              <p className="flex justify-between gap-3">
+                <span>
+                  Not suggested anywhere; add it to any holding if you like
+                </span>
+                <span className="tabular">{formatINR(s.unplaced)}</span>
+              </p>
+            )}
+          </div>
+        )}
         {budgetMonthly > 0 && total > budgetMonthly && (
           <p className="text-xs text-warning">
             {formatINR(total - budgetMonthly)} more than your budget sets aside.

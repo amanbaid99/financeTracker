@@ -44,6 +44,9 @@ export function sipSuggestions(opts: {
   newFunds: NewFundRow[];
   goalsNeed: number;
   basis: number;
+  inHoldings: number;
+  inNewFunds: number;
+  unplaced: number;
 } {
   const base: HybridPlanInput = {
     today: opts.today,
@@ -110,5 +113,16 @@ export function sipSuggestions(opts: {
       suggested: v.total,
       covers: v.parts.map((p) => p.goalName),
     }));
-  return { holdings, newFunds, goalsNeed, basis };
+  const inHoldings = holdings.reduce((a, h) => a + h.suggested, 0);
+  const inNewFunds = newFunds.reduce((a, f) => a + f.suggested, 0);
+  return {
+    holdings,
+    newFunds,
+    goalsNeed,
+    basis,
+    inHoldings,
+    inNewFunds,
+    /** Part of the basis no fund was suggested for. */
+    unplaced: Math.max(0, basis - inHoldings - inNewFunds),
+  };
 }

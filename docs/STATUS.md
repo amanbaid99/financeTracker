@@ -14,6 +14,11 @@ Last updated: 23 Nov 2026.
 
 
 
+
+## SIP plan shows where the budget goes, 24 Nov 2026
+
+The top card on Your monthly SIPs now splits the suggested amount (budget Save & invest, capped at what goals need) into: your holdings, funds you don't hold yet, and any part not suggested anywhere (`inHoldings`, `inNewFunds`, `unplaced` from `sipSuggestions`). "Total a month" is labelled as the amounts you've set.
+
 ## SIP suggestions reuse your closest fund, 23 Nov 2026
 
 `splitForGoal` pooled path (lib/sip-plan.ts) falls back to a `NEARBY` list per category when nothing fits exactly, so a held flexi-cap fund takes a 3 to 5 year goal's money instead of "a new balanced advantage fund". Liquid and short-debt needs never fall back to equity. A new fund is suggested only when nothing held is close.
