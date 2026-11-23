@@ -101,11 +101,16 @@ export function SimpleSipPlanner({
     if(total>budgetMonthly)return null;
     const input={goals,investments,links,today,riskTolerance,monthlySavings:budgetMonthly,monthlyPlanLimit:total,
       minimums:Object.fromEntries(Object.entries(amounts).map(([id,n])=>[`inv:${id}`,n]))};
-    const result=hybridPlan(input);
-    return {result,vehicles:hybridVehicles(input,result)};
+    try {
+      const result=hybridPlan(input);
+      return {result,vehicles:hybridVehicles(input,result),error:""};
+    } catch(error) {
+      return {result:null,vehicles:[],error:error instanceof Error?error.message:"Could not calculate this plan. Review the amounts."};
+    }
   },[goals,investments,links,today,riskTolerance,budgetMonthly,total,amounts]);
 
   function save() {
+    if(preview?.error)return setError(preview.error);
     if (overBudget) return setError("Lower the amounts or update your budget before saving.");
     setError("");
     const minimums = Object.fromEntries(
@@ -114,6 +119,7 @@ export function SimpleSipPlanner({
         .map(([id, v]) => [`inv:${id}`, v]),
     );
     start(async () => {
+      try {
       const res = await confirmHybridPlan({
         calculatedOn: today,
         revision,
@@ -127,6 +133,9 @@ export function SimpleSipPlanner({
       if (!res.ok) return setError(res.error);
       router.replace("/goals/plan");
       router.refresh();
+      } catch {
+        setError("Connection interrupted. Reload the planner to check whether the plan saved before retrying.");
+      }
     });
   }
 
@@ -276,13 +285,15 @@ export function SimpleSipPlanner({
         </div>
       )}
 
-      {preview&&differsFromSuggested&&<p className="rounded-xl bg-muted/50 p-3 text-sm">With these amounts, your goals still need about {formatINR(preview.result.monthlyContributionShortfall)} more a month.{preview.result.goals.some(g=>g.category==="essential"&&g.monthlyShortfall>0)?" Some essential goals remain short.":""}</p>}
+      {preview?.result&&differsFromSuggested&&<p className="rounded-xl bg-muted/50 p-3 text-sm">With these amounts, your goals still need about {formatINR(preview.result.monthlyContributionShortfall)} more a month.{preview.result.goals.some(g=>g.category==="essential"&&g.monthlyShortfall>0)?" Some essential goals remain short.":""}</p>}
+      {preview?.error&&<p role="alert" className="text-sm text-danger">{preview.error}</p>}
       {error && (
         <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}
-      <Button className="w-full" disabled={pending || overBudget} onClick={save}>
+      {error&&<Button variant="outline" onClick={()=>router.refresh()}>Reload planner</Button>}
+      <Button className="w-full" disabled={pending || overBudget || !!preview?.error} onClick={save}>
         {pending ? "Saving…" : "Save this plan"}
       </Button>
       <p className="text-xs text-muted-foreground">

@@ -1,0 +1,30 @@
+import {beforeEach,it,expect,vi} from "vitest";
+vi.mock("server-only",()=>({}));
+vi.mock("next/cache",()=>({revalidatePath:vi.fn()}));
+vi.mock("next/navigation",()=>({redirect:vi.fn(()=>{throw Error("redirect");})}));
+vi.mock("@/lib/supabase/server",()=>({createClient:vi.fn()}));
+vi.mock("@/lib/hybrid-data",()=>({loadHybridContext:vi.fn()}));
+import {createClient} from "@/lib/supabase/server";
+import {loadHybridContext} from "@/lib/hybrid-data";
+import {loadBudget} from "@/lib/data";
+import {confirmHybridPlan} from "@/lib/hybrid-actions";
+import {composeGuidedBudget} from "@/lib/budget-guide";
+import {todayIST} from "@/lib/dates";
+const today=todayIST(),rev="a".repeat(32),loanId="00000000-0000-4000-8000-000000000001";
+const sheet=composeGuidedBudget(170000,[{id:"rent",name:"Rent",category:"fixed",mode:"amount",value:58015,loanId:null},{id:"emi",name:"EMI",category:"fixed",mode:"amount",value:10000,loanId}], [{id:loanId,name:"Loan",emi:10000}],61985);
+const rpc=vi.fn();
+beforeEach(()=>{
+ vi.clearAllMocks();
+ const snapshot={goals:[],holdings:[],allocations:[],goal_bills:[],loans:[{id:loanId,name:"Loan",type:"personal",card_id:null,principal:50000,taken_on:null,rate:0,emi:10000,months_left:5,total_emis:5,emi_day:10,bill_day:null,first_emi:null,outstanding:50000,outstanding_as_of:today,balance_confirmed_on:today,foreclosure_pct:0,foreclosure_gst:false}],loan_payments:[],incomes:[],expenses:[],profile:null};
+ rpc.mockImplementation(async(name:string)=>name==="app_snapshot"?{data:snapshot,error:null}:{data:"saved",error:null});
+ vi.mocked(createClient).mockResolvedValue({auth:{getClaims:async()=>({data:{claims:{sub:"owner"}}})},rpc,from:(table:string)=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:table==="budget_ratio_plans"?{plan:sheet}:{plan_sip_minimums:{}},error:null})})})})} as never);
+ vi.mocked(loadHybridContext).mockResolvedValue({plans:[],goalSettings:[],holdingDetails:[],revision:rev,sourceRevision:rev,riskTolerance:null} as never);
+});
+it("actual budget loading uses the guided budget when old income records are empty",async()=>{
+ const b=await loadBudget();expect(b.recordIncome).toBe(0);expect(b.budget).toMatchObject({income:170000,costs:98015,emis:10000,planMonthly:61985});
+});
+it("confirmation accepts the displayed savings instead of rejecting against obsolete records",async()=>{
+ expect(await confirmHybridPlan({calculatedOn:today,revision:rev,monthly:61985,lump:0,minimums:{},overrides:{}})).toEqual({ok:true});
+ const call=rpc.mock.calls.find(c=>c[0]==="confirm_hybrid_plan");expect(call).toBeDefined();expect(call![1].p_inputs.monthlySavings).toBe(61985);
+ expect((await confirmHybridPlan({calculatedOn:today,revision:rev,monthly:61986,lump:0,minimums:{},overrides:{}})).ok).toBe(false);
+});

@@ -6,12 +6,7 @@ import {
   calculateHybrid,
   unallocatedLiquidValue,
 } from "./hybrid-engine";
-import {
-  applyBudgetRules,
-  budgetSheetSchema,
-  rowAmount,
-  type BudgetSheet,
-} from "./budget-sheet";
+import {savedBudgetInputs} from "./planner-budget";
 import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -507,19 +502,16 @@ export const loadLoans = cache(async (): Promise<Loan[]> => {
 });
 
 /** Money in and money out for the budget, plus EMIs and SIPs from the app. */
-/** Only legacy linked sheets feed goal/runway calculations. Guided budgets stay independent. */
-const loadSavedSheet = cache(async (): Promise<BudgetSheet | null> => {
+/** A saved budget is the source for planning, regardless of how it was created. */
+const loadSavedSheet = cache(async () => {
   const { supabase, user } = await requireUser();
   const { data, error } = await supabase
     .from("budget_ratio_plans")
     .select("plan")
     .eq("user_id", user.id)
     .maybeSingle();
-  if (error || !data) return null;
-  const parsed = budgetSheetSchema.safeParse(data.plan);
-  return parsed.success && !parsed.data.standalone
-    ? applyBudgetRules(parsed.data)
-    : null;
+  if(error)throw Error("Your saved budget could not be loaded. Reload before planning SIPs.");
+  return data?.plan??null;
 });
 
 export const loadBudget = cache(async () => {
@@ -549,34 +541,9 @@ export const loadBudget = cache(async () => {
   }));
   const sips = goals.investments.reduce((s, i) => s + i.monthlySip, 0);
   // One source of truth: once a budget sheet is saved, its income and
-  // expenses are what Your plan and Covered till salary use. Loan EMIs still
-  // come from the loans themselves. Before that, the older records are used.
-  const sheet = await loadSavedSheet();
-  const fromSheet = sheet
-    ? {
-        incomes: [
-          {
-            id: "budget-income",
-            label: "Take-home income",
-            type: "stable_salary",
-            amount: sheet.salary,
-            active: true,
-          },
-        ] as Income[],
-        costs: sheet.rows
-          .filter(
-            (r) =>
-              !r.loanId &&
-              r.category !== "savings" &&
-              r.category !== "investing",
-          )
-          .map((r) => ({
-            id: r.id,
-            name: r.name,
-            amount: rowAmount(r, sheet.salary),
-          })) as Cost[],
-      }
-    : null;
+  // expenses are what Your plan and Covered till salary use. Loan rows count
+  // once, with the budget's confirmed inclusions. Older records are a fallback only before setup.
+  const fromSheet = savedBudgetInputs(await loadSavedSheet(),loanEmis);
   return {
     /** The income and cost records, for filling a new budget sheet. */
     recordCosts: costRows,
@@ -591,7 +558,7 @@ export const loadBudget = cache(async () => {
     budget: budget({
       incomes: fromSheet?.incomes ?? incomeRows,
       costs: fromSheet?.costs ?? costRows,
-      emis: loanEmis.reduce((s, l) => s + l.emi, 0),
+      emis: fromSheet?.emis ?? loanEmis.reduce((s, l) => s + l.emi, 0),
       sips,
     }),
   };

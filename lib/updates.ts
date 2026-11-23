@@ -30,7 +30,6 @@ export function updatesDue({
   snoozes?: Record<string, unknown>;
 }): UpdateDue[] {
   const month = today.slice(0, 7);
-  const casMonth = lastCas ? todayIST(new Date(lastCas)).slice(0, 7) : null;
   const items: UpdateDue[] = [];
   for (const c of cards) {
     if (!c.statementDay) continue;

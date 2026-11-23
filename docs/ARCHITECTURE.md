@@ -1,5 +1,10 @@
 # Architecture
 
+## SIP capacity uses the saved guided budget, 23 Nov 2026
+
+Fixed loadBudget ignoring current standalone guided budgets, which made SIP capacity fall back to old income/expense records and show zero or incorrect savings. savedBudgetInputs reads the same versioned/legacy budget format as Budget, includes its personal spending, counts included loan rows once, respects excluded loans and no-salary plans, and excludes planned investments from expenses. The same loader feeds the SIP page and server confirmation. Read failures now surface instead of silently switching financial sources. Saved investment plans remain frozen until explicitly reconfirmed; no income records, holdings or loans are overwritten. Client calculation and connection errors now remain visible with a reload action and entered amounts retained. Regression tests cover the actual data loader and confirmation boundary with empty old income records.
+
+
 ## One monthly planning flow, 23 Nov 2026
 
 Your monthly SIPs uses hybridPlan/hybridVehicles, exactly as confirmation and goal projections do. Removed the separate step-allocation engine and automatic ₹500 per goal. Zero savings means zero new contributions. Both UI and server reject monthly totals above available savings; capacity is never inflated to fit a proposed plan. Budget is the source of available money, not URL parameters.

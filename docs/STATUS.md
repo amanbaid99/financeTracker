@@ -1,5 +1,10 @@
 # Status
 
+## SIP capacity uses the saved guided budget, 23 Nov 2026
+
+Fixed loadBudget ignoring current standalone guided budgets, which made SIP capacity fall back to old income/expense records and show zero or incorrect savings. savedBudgetInputs reads the same versioned/legacy budget format as Budget, includes its personal spending, counts included loan rows once, respects excluded loans and no-salary plans, and excludes planned investments from expenses. The same loader feeds the SIP page and server confirmation. Read failures now surface instead of silently switching financial sources. Saved investment plans remain frozen until explicitly reconfirmed; no income records, holdings or loans are overwritten. Client calculation and connection errors now remain visible with a reload action and entered amounts retained. Regression tests cover the actual data loader and confirmation boundary with empty old income records. Verification: lint, TypeScript, 775 unit tests, 40 Python tests and production build pass. Mobile component checks at 320/375/768px show the saved guided budget capacity and nonzero suggestions, verify the save payload and retain entered amounts on simulated connection failure. Full signed-in E2E remains unverified because the local Supabase database image is unavailable. No hosted financial records were used for write tests.
+
+
 ## Lower-maintenance reviews and visible debt, 23 Nov 2026
 
 Saved plan review flags now depend on source inputs, mapping or engine changes, not merely a new calendar day. Date validation when confirming an open draft is retained. Monthly card-statement generation, logging and reminders are unchanged. Loan and CAS reviews become optional three-month checks after the last known balance/import, with stable reminder keys and a next-week snooze using the existing seven-day RPC limit. Optional reviews appear below focus goals on Home and do not add to its task count.
