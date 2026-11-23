@@ -165,8 +165,8 @@ export const HELP: HelpTopic[] = [
     section: "Budget",
     q: "How does the budget work?",
     a: [
-      "Tap Create budget. Three steps: your take-home income (or tick No salary right now), your monthly costs, then a suggested split.",
-      "Your fixed costs come filled in from your records and loans. Transport and day-to-day spending are not added automatically; choose one Personal spending amount instead. Untick anything you don't pay, fix amounts, or add an expense by name and amount.",
+      "Tap Create budget. Two screens: enter income, fixed costs and personal spending together, then review the allocation and save.",
+      "Known fixed costs and EMIs come from your records. Rent and Utilities stay blank when unknown. Transport and day-to-day spending are not added automatically; choose one Personal spending amount instead. Untick anything you don't pay, fix amounts, or add an expense by name and amount.",
       "With a salary, choose how much to keep for Personal spending, including your day-to-day costs and personal costs already listed. Save & invest is exactly what remains after essentials and that personal amount. Existing SIPs count inside Save & invest. If this is less than your running SIPs, review them with your provider; the app does not change them.",
       "With no salary right now, the budget is just your monthly costs. Covered till salary uses it to show how long your money lasts.",
       "After saving, expand View and edit to change an amount, rename a cost, move it between Fixed spending and Personal spending, or remove it. Tap your income to change it. Each change saves when you tap Save. Budget stays focused on fixed spending, personal spending and Save & invest.",

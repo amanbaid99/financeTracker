@@ -1,5 +1,10 @@
 # Status
 
+## Budget setup in two screens, 23 Nov 2026
+
+BudgetGuide now shows income, known EMIs and costs, blank optional Rent/Utilities prompts, and the personal spending amount together. Review allocation leads to the second screen with the three totals, then explicit Save. No separate income, cost-selection or personal-allocation screens and no SIP handoff. Editing a cost or income keeps the chosen personal amount. Blank prompts never become saved expenses. Existing personal totals are retained when rerunning setup; no-salary setup can record a personal amount without inventing income or contributions. Financial records change only when Save is pressed. Verification: lint, TypeScript, 784 unit tests, 40 Python tests and production build pass. Mobile browser checks at 320/375/768px confirm two screens, prefilled EMI, blank optional costs, no transport/day-to-day defaults, preserved personal choice on expense edits, review/back/save amounts and no-salary personal totals, without overflow or runtime errors. Full signed-in E2E remains unverified due to the previously documented local database download limitation.
+
+
 ## Stop old personal-cost imports in budget setup, 23 Nov 2026
 
 The preset buttons had been removed, but guideCosts still pulled Transport and Day-to-day spending from old expense records. New setup now excludes those record categories, including Daily commute, while preserving expenses explicitly present in an existing budget/draft. Removed the same two suggestions from the legacy cost-entry presets. No stored expense or financial record is deleted. Personal spending stays the single user-chosen amount and Save & invest remains the remainder. Regression coverage includes the actual old-record inputs and preservation of a manually entered Transport row. Verification: lint, TypeScript, 782 unit tests, 40 Python tests and production build pass. Browser checks at 320/375/768px supply old Transport and Day-to-day spending records, confirm neither is auto-added, allow a smaller personal amount, and verify the correct savings/save payload without overflow or runtime errors. No hosted expense records were deleted.

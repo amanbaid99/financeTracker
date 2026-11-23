@@ -126,8 +126,7 @@ export function BudgetExperience({
           <Sparkles className="size-7 text-primary" aria-hidden />
           <h2 className="text-xl font-semibold">Create your monthly budget</h2>
           <p className="text-sm text-muted-foreground">
-            Three quick steps: your income, your costs (filled in from your
-            records), then how much you want for yourself. The rest goes to Save & invest.
+            Add your income, fixed costs and personal spending together. Then review your allocation and save.
           </p>
           <Button
             className="w-full"

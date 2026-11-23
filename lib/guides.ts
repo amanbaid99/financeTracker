@@ -89,10 +89,10 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "Your monthly budget",
     intro: "Three quick steps, then tap any row to change it.",
     steps: [
-      "Tap Create budget. Enter your take-home income, or tick No salary right now.",
-      "Check your monthly costs. They're filled in from your records and loans; untick what you don't pay or add your own expense.",
-      "Choose how much to keep for Personal spending. Save & invest is the exact remainder after essentials and your personal amount, including existing SIPs.",
-      "After saving, you see Fixed spending, Personal spending and Save & invest. Expand View and edit to change costs, or tap income to change it.",
+      "Create budget puts income, known EMIs, fixed costs and Personal spending on one screen. Unknown Rent and Utilities are blank.",
+      "Choose how much to keep for yourself. No automatic transport or day-to-day rows are added.",
+      "Review allocation shows Fixed spending, Personal spending and Save & invest. Go back to edit or save once. No SIP-plan prompt.",
+      "After saving, use View and edit to change details. Your recorded investments and SIPs stay unchanged.",
     ],
   },
   ask: {
@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"Budget setup in two screens",items:[{title:"All your numbers together",text:"Income, EMIs, rent, utilities and personal spending share one screen. Next, review the allocation and save. Unknown costs start blank."}]},
  {date:"2026-11-23",title:"No automatic personal expense rows",items:[{title:"One personal amount",text:"Budget setup no longer imports old Transport or Day-to-day spending records. Choose your Personal spending amount yourself. Explicitly saved expenses are preserved."}]},
  {date:"2026-11-23",title:"One safety fund",items:[{title:"Emergency and planned bills together",text:"A combined goal keeps an emergency reserve and scheduled bills in one place. Planned bills use money above the reserve; withdrawals protect it unless you explicitly choose otherwise."}]},
  {date:"2026-11-23",title:"SIP budget amount fixed",items:[{title:"Use your saved budget",text:"The SIP planner now reads Save & invest from your saved guided budget, even when the old income records are empty. Loan costs count once. Your choices remain until you confirm."}]},

@@ -1,36 +1,29 @@
 "use client";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { ArrowLeft, Plus, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { MoneyInput } from "@/components/money-input";
-import { Field } from "@/components/forms/field";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { MoneyInput } from "./money-input";
+import { Field } from "./forms/field";
 import { saveBudgetSheet } from "@/lib/budget-ratio-actions";
 import {
+  budgetSetupCosts,
   composeGuidedBudget,
-  costTotal,
-  guideCosts,
-  recommendBudget,
+  expenseTotal,
   personalBudget,
 } from "@/lib/budget-guide";
+import { personalMinimum } from "@/lib/personal-budget";
 import {
   budgetSheetSchema,
   rowAmount,
-  sheetTotals,
   type BudgetSheet,
   type BudgetSheetRow,
   type SheetLoan,
 } from "@/lib/budget-sheet";
 import type { KnownBudgetCost } from "@/lib/budget-assist";
 import { formatINR } from "@/lib/format";
-import { cn } from "@/lib/utils";
 
-type Item = { row: BudgetSheetRow; included: boolean; source: string };
-
-/**
- * Three steps: income (or none right now), your monthly costs in one list
- * prefilled from your records, then a suggested split. Saves only on Save.
- */
+/** Your numbers together, then a review. Nothing saves between screens. */
 export function BudgetGuide({
   initial,
   costs,
@@ -43,7 +36,6 @@ export function BudgetGuide({
   initial: BudgetSheet;
   costs: KnownBudgetCost[];
   loans: SheetLoan[];
-  /** Monthly SIPs already going in. */
   sips: number;
   replacing: boolean;
   onCancel: () => void;
@@ -51,12 +43,18 @@ export function BudgetGuide({
 }) {
   const [salary, setSalary] = useState(initial.salary);
   const [noSalary, setNoSalary] = useState(!!initial.noSalary);
-  const [items, setItems] = useState<Item[]>(() =>
-    guideCosts(initial, costs, loans),
+  const [items, setItems] = useState(() =>
+    budgetSetupCosts(initial, costs, loans),
+  );
+  const [personal, setPersonal] = useState<number | null>(() =>
+    initial.rows.length || initial.rules
+      ? initial.rows
+          .filter((r) => r.category === "personal")
+          .reduce((sum, r) => sum + rowAmount(r, initial.salary), 0)
+      : null,
   );
   const [newName, setNewName] = useState("");
   const [newAmount, setNewAmount] = useState<number | null>(null);
-  const [personalChoice, setPersonalChoice] = useState<number | null>(null);
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
@@ -65,41 +63,43 @@ export function BudgetGuide({
     heading.current?.focus({ preventScroll: true });
     window.scrollTo({ top: 0 });
   }, [step]);
-
-  const rows = items.filter((i) => i.included).map((i) => i.row);
-  const rec = recommendBudget(salary, rows, sips);
-  const chosenPersonal = personalChoice ?? rec.personal;
-  const personalPlan = personalBudget(salary, rows, chosenPersonal);
-  const futureAmount = noSalary ? 0 : personalPlan.future;
-  const plan = composeGuidedBudget(salary, rows, loans, futureAmount, noSalary);
-
-  const over = noSalary ? 0 : -sheetTotals(plan).remaining;
-  const valid = budgetSheetSchema.safeParse(plan).success && over <= 0 && (noSalary || personalPlan.valid);
-  const monthlyCosts = costTotal(rows, salary);
-
-  const setItem = (id: string, patch: Partial<Item>) =>
-    setItems((list) =>
-      list.map((i) => (i.row.id === id ? { ...i, ...patch } : i)),
-    );
-  const add = (name: string, category: "fixed" | "personal", value = 0) => {
-    setItems((list) => [
-      ...list,
-      {
-        row: {
-          id: crypto.randomUUID(),
-          name,
-          category,
-          mode: "amount",
-          value,
-          loanId: null,
-        },
-        included: true,
-        source: "Added now",
-      },
-    ]);
-    setPersonalChoice(null);
-  };
-
+  const rows = items
+    .filter((i) => i.included && i.row.value > 0)
+    .map((i) => i.row);
+  const minimum = personalMinimum(rows, salary),
+    personalAmount = personal ?? minimum;
+  const split = personalBudget(salary, rows, personalAmount);
+  const fixed = expenseTotal(rows, salary),
+    future = noSalary ? 0 : split.future;
+  const planRows: BudgetSheetRow[] =
+    noSalary && personalAmount > minimum
+      ? [
+          ...rows,
+          {
+            id: "setup-personal",
+            name: "Personal spending",
+            category: "personal",
+            mode: "amount",
+            value: personalAmount - minimum,
+            loanId: null,
+          },
+        ]
+      : rows;
+  const plan = composeGuidedBudget(salary, planRows, loans, future, noSalary);
+  const personalValid =
+    Number.isSafeInteger(personalAmount) &&
+    personalAmount >= minimum &&
+    personalAmount <= 1e9;
+  const valid =
+    budgetSheetSchema.safeParse(plan).success &&
+    personalValid &&
+    (noSalary ||
+      (salary > 0 && salary <= 1e9 && personal !== null && split.valid));
+  const shares = [
+    { name: "Fixed spending", amount: fixed, color: "bg-slate-500" },
+    { name: "Personal spending", amount: personalAmount, color: "bg-pink-500" },
+    { name: "Save & invest", amount: future, color: "bg-primary" },
+  ];
   function save() {
     if (!valid) return;
     setError("");
@@ -113,16 +113,6 @@ export function BudgetGuide({
       }
     });
   }
-
-  const title =
-    step === 0
-      ? "What lands in your account each month?"
-      : step === 1
-        ? "Your monthly costs"
-        : noSalary
-          ? "Your monthly costs, in one number"
-          : "How much would you like for yourself?";
-
   return (
     <section
       aria-label="Budget setup"
@@ -130,19 +120,14 @@ export function BudgetGuide({
       className="space-y-4"
     >
       <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">Step {step + 1} of 3</p>
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={pending}
-          onClick={onCancel}
-        >
+        <p className="text-xs text-muted-foreground">Step {step + 1} of 2</p>
+        <Button variant="ghost" size="sm" disabled={pending} onClick={onCancel}>
           Close setup <X className="size-4" aria-hidden />
         </Button>
       </div>
       <progress
         aria-label="Budget setup progress"
-        max={3}
+        max={2}
         value={step + 1}
         className="h-1.5 w-full accent-primary"
       />
@@ -153,15 +138,12 @@ export function BudgetGuide({
           className="text-xl font-semibold"
           aria-live="polite"
         >
-          {title}
+          {step === 0 ? "Your monthly numbers" : "Your budget allocation"}
         </h2>
         <fieldset disabled={pending} className="min-w-0 space-y-4">
-          {step === 0 && (
+          {step === 0 ? (
             <>
-              <p className="text-sm text-muted-foreground">
-                Take-home pay after tax, in a normal month.
-              </p>
-              <label className="flex items-center gap-3 rounded-xl border p-3 text-sm">
+              <label className="flex min-h-10 items-center gap-3 text-sm">
                 <input
                   type="checkbox"
                   className="size-4 accent-primary"
@@ -175,182 +157,203 @@ export function BudgetGuide({
                   <MoneyInput
                     id="guide-income"
                     value={salary || null}
-                    onChange={(v) => {
-                      setSalary(v ?? 0);
-                      setPersonalChoice(null);
-                    }}
+                    onChange={(v) => setSalary(v ?? 0)}
                   />
                 </Field>
               )}
-              {noSalary && (
-                <p className="text-sm text-muted-foreground">
-                  Your budget will be just your monthly costs. Covered till
-                  salary uses it to show how long your money lasts.
-                </p>
-              )}
-              <Button
-                className="w-full"
-                disabled={!noSalary && (salary <= 0 || salary > 1e9)}
-                onClick={() => setStep(1)}
-              >
-                Continue
-              </Button>
-            </>
-          )}
-
-          {step === 1 && (
-            <>
-              <p className="text-sm text-muted-foreground">
-                Filled in from your records. Untick anything you don&apos;t pay,
-                and fix any amount.
-              </p>
-              {items.length === 0 && (
-                <p className="text-sm">
-                  No costs recorded yet. Add them below.
-                </p>
-              )}
-              <ul className="divide-y">
-                {items.map((item) => (
-                  <li key={item.row.id} className="space-y-2 py-3">
-                    <label className="flex items-start gap-3 text-sm">
-                      <input
-                        type="checkbox"
-                        className="mt-1 size-4 accent-primary"
-                        checked={item.included}
-                        onChange={(e) => {
-                          setItem(item.row.id, { included: e.target.checked });
-                          setPersonalChoice(null);
-                        }}
-                      />
-                      <span className="min-w-0 flex-1 break-words">
-                        {item.row.name}
-                        <span className="block text-xs text-muted-foreground">
-                          {item.row.category === "personal"
-                            ? "Personal spending"
-                            : "Essential"}{" "}
-                          · {item.source}
-                        </span>
-                      </span>
-                    </label>
-                    {item.included && (
-                      <MoneyInput
-                        aria-label={`${item.row.name} monthly amount`}
-                        value={item.row.value || null}
-                        onChange={(v) => {
-                          setItem(item.row.id, {
-                            row: { ...item.row, value: v ?? 0 },
-                          });
-                          setPersonalChoice(null);
-                        }}
-                      />
-                    )}
-                  </li>
-                ))}
-              </ul>
-              <div className="grid grid-cols-[1fr_8rem] items-end gap-2">
-                <Field label="Expense name" htmlFor="guide-new-name">
-                  <Input
-                    id="guide-new-name"
-                    maxLength={80}
-                    value={newName}
-                    placeholder="e.g. Family support"
-                    onChange={(e) => setNewName(e.target.value)}
-                  />
-                </Field>
-                <Field label="A month" htmlFor="guide-new-amount">
-                  <MoneyInput
-                    id="guide-new-amount"
-                    value={newAmount}
-                    onChange={setNewAmount}
-                  />
-                </Field>
-              </div>
-              <Button
-                variant="outline"
-                className="w-full"
-                disabled={!newName.trim() || !newAmount || items.length >= 95}
-                onClick={() => {
-                  add(newName.trim(), "fixed", newAmount ?? 0);
-                  setNewName("");
-                  setNewAmount(null);
-                }}
-              >
-                <Plus className="size-4" aria-hidden /> Add it
-              </Button>
-              <p className="tabular text-sm">
-                Total: <b>{formatINR(monthlyCosts)}</b> a month
-              </p>
-              <Button
-                className="w-full"
-                disabled={rows.some((r) => r.value > 1e9)}
-                onClick={() => setStep(2)}
-              >
-                Continue
-              </Button>
-            </>
-          )}
-
-          {step === 2 && noSalary && (
-            <>
-              <div className="rounded-xl bg-primary-soft p-4">
-                <p className="text-sm">You need about</p>
-                <p className="tabular text-3xl font-semibold">
-                  {formatINR(monthlyCosts)}
-                  <span className="text-base font-normal"> a month</span>
-                </p>
+              <div className="space-y-2 border-t pt-3">
+                <h3 className="text-sm font-semibold">Fixed spending</h3>
                 <p className="text-xs text-muted-foreground">
-                  until your next salary. Covered till salary uses this.
+                  Known expenses and EMIs are filled in. Leave anything you
+                  don&apos;t pay blank.
                 </p>
-              </div>
-              <CostList rows={rows} salary={salary} onChange={() => setStep(1)} />
-            </>
-          )}
-
-          {step === 2 && !noSalary && (
-            <>
-              <dl className="space-y-2 text-sm">
-                <div className="flex justify-between gap-3">
-                  <dt>Take-home income</dt>
-                  <dd className="tabular font-semibold">{formatINR(salary)}</dd>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <dt>Fixed spending</dt>
-                  <dd className="tabular font-semibold">
-                    {formatINR(rec.essentials)}
-                  </dd>
-                </div>
-              </dl>
-              <Field label="Personal spending a month" htmlFor="guide-personal" hint="The amount you want to keep for yourself, including any personal costs already listed.">
-                <MoneyInput id="guide-personal" value={chosenPersonal} onChange={v=>setPersonalChoice(v??0)}/>
-              </Field>
-              <div className="rounded-xl bg-primary-soft p-3" aria-live="polite">
-                <p className="text-sm">Save & invest a month</p>
-                <p className="tabular text-2xl font-semibold">{formatINR(futureAmount)}</p>
-                <p className="text-xs text-muted-foreground">What&apos;s left after essentials and your personal spending. Nothing extra to split.</p>
-              </div>
-              {!personalPlan.valid&&<p role="alert" className="text-sm text-danger">{personalPlan.error}</p>}
-              {sips>0&&<p className="text-xs text-muted-foreground">Includes the {formatINR(sips)} already going into your SIPs.{futureAmount<sips?" This is less than your recorded SIPs. Review them with your provider; saving this budget does not change them.":""}</p>}
-              {personalChoice!==null&&personalChoice!==rec.personal&&<Button variant="ghost" size="sm" onClick={()=>setPersonalChoice(null)}>Use the starting amount ({formatINR(rec.personal)})</Button>}
-              <details className="text-sm">
-                <summary className="min-h-10 cursor-pointer text-primary">
-                  How this was worked out
-                </summary>
-                <ul className="list-disc space-y-2 pl-5 text-xs text-muted-foreground">
-                  {["Essentials are counted first. Your personal amount includes the personal costs listed in setup, not an extra amount on top.","Save & invest is the exact remainder after essentials and your chosen personal spending. Your existing SIPs are part of this amount, not an additional expense."].map((r) => (
-                    <li key={r}>{r}</li>
+                <ul className="divide-y">
+                  {items.map((item) => (
+                    <li key={item.row.id} className="space-y-2 py-3">
+                      <label className="flex items-start gap-3 text-sm">
+                        <input
+                          type="checkbox"
+                          className="mt-1 size-4 accent-primary"
+                          checked={item.included}
+                          onChange={(e) =>
+                            setItems((list) =>
+                              list.map((i) =>
+                                i.row.id === item.row.id
+                                  ? { ...i, included: e.target.checked }
+                                  : i,
+                              ),
+                            )
+                          }
+                        />
+                        <span className="min-w-0 break-words">
+                          {item.row.name}
+                          {item.row.category === "personal" && (
+                            <span className="block text-xs text-muted-foreground">
+                              Included in Personal spending below
+                            </span>
+                          )}
+                        </span>
+                      </label>
+                      {item.included && (
+                        <MoneyInput
+                          aria-label={`${item.row.name} monthly amount`}
+                          value={item.row.value || null}
+                          onChange={(v) =>
+                            setItems((list) =>
+                              list.map((i) =>
+                                i.row.id === item.row.id
+                                  ? { ...i, row: { ...i.row, value: v ?? 0 } }
+                                  : i,
+                              ),
+                            )
+                          }
+                        />
+                      )}
+                    </li>
                   ))}
                 </ul>
-              </details>
-              <CostList rows={rows} salary={salary} onChange={() => setStep(1)} />
+                <details>
+                  <summary className="min-h-10 cursor-pointer text-sm text-primary">
+                    Add another expense
+                  </summary>
+                  <div className="space-y-3 pt-2">
+                    <Field label="Expense name" htmlFor="guide-new-name">
+                      <Input
+                        id="guide-new-name"
+                        maxLength={80}
+                        value={newName}
+                        onChange={(e) => setNewName(e.target.value)}
+                      />
+                    </Field>
+                    <Field label="A month" htmlFor="guide-new-amount">
+                      <MoneyInput
+                        id="guide-new-amount"
+                        value={newAmount}
+                        onChange={setNewAmount}
+                      />
+                    </Field>
+                    <Button
+                      variant="outline"
+                      disabled={
+                        !newName.trim() || !newAmount || items.length >= 95
+                      }
+                      onClick={() => {
+                        setItems((list) => [
+                          ...list,
+                          {
+                            row: {
+                              id: crypto.randomUUID(),
+                              name: newName.trim(),
+                              category: "fixed",
+                              mode: "amount",
+                              value: newAmount ?? 0,
+                              loanId: null,
+                            },
+                            included: true,
+                            source: "Added now",
+                          },
+                        ]);
+                        setNewName("");
+                        setNewAmount(null);
+                      }}
+                    >
+                      <Plus className="size-4" aria-hidden />
+                      Add it
+                    </Button>
+                  </div>
+                </details>
+              </div>
+              <Field
+                label="Personal spending a month"
+                htmlFor="guide-personal"
+                hint="How much you want to keep for yourself. Enter 0 if none. The rest after fixed spending goes to Save & invest."
+              >
+                <MoneyInput
+                  id="guide-personal"
+                  value={personal}
+                  onChange={setPersonal}
+                />
+              </Field>
+              {(personal !== null || minimum > 0) &&
+                (!personalValid || (!noSalary && !split.valid)) && (
+                  <p role="alert" className="text-sm text-danger">
+                    {personalAmount < minimum
+                      ? `Your listed personal costs already total ${formatINR(minimum)}. Change those costs or keep at least this amount.`
+                      : (split.error ?? "Enter a whole-rupee personal amount.")}
+                  </p>
+                )}
+              <Button
+                className="w-full"
+                disabled={!valid}
+                onClick={() => setStep(1)}
+              >
+                Review allocation
+              </Button>
             </>
-          )}
-
-          {step === 2 && (
+          ) : (
             <>
+              {!noSalary && (
+                <p className="flex justify-between gap-3 text-sm">
+                  <span>Take-home income</span>
+                  <b className="tabular">{formatINR(salary)}</b>
+                </p>
+              )}
+              <div
+                aria-hidden
+                className="flex h-2 overflow-hidden rounded-full bg-muted"
+              >
+                {shares.map((s) => (
+                  <span
+                    key={s.name}
+                    className={s.color}
+                    style={{
+                      width: `${(s.amount / Math.max(noSalary ? 0 : salary, fixed + personalAmount + future, 1)) * 100}%`,
+                    }}
+                  />
+                ))}
+              </div>
+              <dl className="divide-y">
+                {shares.map((s) => (
+                  <div
+                    key={s.name}
+                    className="flex items-center justify-between gap-3 py-3 text-sm"
+                  >
+                    <dt className="flex items-center gap-2">
+                      <span
+                        className={`size-2 shrink-0 rounded-full ${s.color}`}
+                        aria-hidden
+                      />
+                      {s.name}
+                    </dt>
+                    <dd className="tabular font-semibold">
+                      {formatINR(s.amount)}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              {noSalary ? (
+                <p className="text-sm text-muted-foreground">
+                  Your monthly costs total {formatINR(fixed + personalAmount)}.
+                  There are no new saving contributions without income.
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Save & invest is what remains after fixed spending and your
+                  personal amount.
+                </p>
+              )}
+              {sips > 0 && !noSalary && (
+                <p className="text-xs text-muted-foreground">
+                  Includes your recorded {formatINR(sips)}/mo SIPs.
+                  {future < sips
+                    ? " Review them with your provider if this budget cannot cover them. Nothing is changed automatically."
+                    : ""}
+                </p>
+              )}
               {replacing && (
                 <p className="text-xs text-muted-foreground">
-                  Saving replaces your current budget. Goals, investments and
-                  SIPs stay as they are.
+                  Saving replaces your budget. Goals, investments and SIPs stay
+                  unchanged.
                 </p>
               )}
               {error && (
@@ -366,46 +369,11 @@ export function BudgetGuide({
         </fieldset>
       </div>
       {step > 0 && (
-        <Button
-          variant="ghost"
-          disabled={pending}
-          onClick={() => setStep(step - 1)}
-        >
-          <ArrowLeft className="size-4" />
-          Back
+        <Button variant="ghost" disabled={pending} onClick={() => setStep(0)}>
+          <ArrowLeft className="size-4" aria-hidden />
+          Edit details
         </Button>
       )}
     </section>
-  );
-}
-
-function CostList({
-  rows,
-  salary,
-  onChange,
-}: {
-  rows: BudgetSheetRow[];
-  salary: number;
-  onChange: () => void;
-}) {
-  return (
-    <details className="text-sm">
-      <summary className="min-h-10 cursor-pointer text-primary">
-        Your costs ({rows.length})
-      </summary>
-      <ul className="divide-y">
-        {rows.map((r) => (
-          <li key={r.id} className="flex justify-between gap-3 py-2">
-            <span className={cn("min-w-0 break-words")}>{r.name}</span>
-            <span className="tabular shrink-0">
-              {formatINR(rowAmount(r, salary))}
-            </span>
-          </li>
-        ))}
-      </ul>
-      <Button variant="ghost" size="sm" onClick={onChange}>
-        Change costs
-      </Button>
-    </details>
   );
 }

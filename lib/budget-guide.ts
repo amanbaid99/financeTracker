@@ -78,3 +78,13 @@ export function personalBudget(salary:number,rows:BudgetSheetRow[],personal:numb
  const error=personal<minimum?`Your listed personal costs already total ${formatINR(minimum)}. Keep at least that amount, or go back and change those costs.`:essentials+personal>salary?`Essentials and personal spending exceed your income by ${formatINR(essentials+personal-salary)}. Lower personal spending or change your costs.`:"Enter a non-negative whole-rupee amount.";
  return {future:Math.max(0,room-personal),valid,error:valid?null:error};
 }
+
+/** Blank prompts for common fixed costs, never invented spending amounts. */
+export function budgetSetupCosts(plan:BudgetSheet,costs:KnownBudgetCost[],loans:SheetLoan[]):GuideCost[]{
+ const items=guideCosts(plan,costs,loans).filter(i=>i.row.id!=="setup-personal");
+ for(const name of ["Rent","Utilities"]){
+  const match=name==="Rent"?/\brent\b/i:/\butilit(?:y|ies)\b/i;
+  if(!items.some(i=>!i.row.loanId&&match.test(i.row.name)))items.push({row:{id:`prompt-${name.toLowerCase()}`,name,category:"fixed",mode:"amount",value:0,loanId:null},included:true,source:"Optional"});
+ }
+ return items;
+}

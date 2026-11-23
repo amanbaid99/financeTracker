@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   composeGuidedBudget,
+  budgetSetupCosts,
   costTotal,
   guideCosts,
   recommendBudget,
@@ -190,4 +191,15 @@ it("preserves personal expenses entered explicitly while skipping their old reco
  const result=guideCosts(p,costs,[]);
  expect(result.map(i=>i.row)).toEqual([manual]);
  expect(guideCosts(emptyBudgetSheet(100000),costs,[])).toEqual([]);
+});
+
+it("two-screen setup seeds blank rent and utilities while retaining known EMIs once",()=>{
+ const loan={id:"00000000-0000-4000-8000-000000000001",name:"Loan",emi:10000};
+ const items=budgetSetupCosts(emptyBudgetSheet(100000),[],[loan]);
+ expect(items.map(i=>[i.row.name,i.row.value])).toEqual([["Loan EMI",10000],["Rent",0],["Utilities",0]]);
+ expect(budgetSetupCosts(emptyBudgetSheet(100000),[{id:"rent",name:"Rent",amount:20000},{id:"utilities",name:"Utilities and phone",amount:5000}],[])).toHaveLength(2);
+});
+it("a saved no-salary personal total remains one editable aggregate",()=>{
+ const saved=composeGuidedBudget(0,[{...row("setup-personal","personal",5000),name:"Personal spending"}],[],0,true);
+ expect(budgetSetupCosts(saved,[],[]).some(i=>i.row.id==="setup-personal")).toBe(false);
 });
