@@ -9,6 +9,7 @@ import { GoalIcon } from "./goal-icon";
 import {
   sipWorksheet,
   sipWorksheetBaseline,
+  sipVehicleEdit,
   type VehicleOverrides,
   type WorksheetVehicle,
 } from "@/lib/sip-worksheet";
@@ -157,21 +158,11 @@ export function SimpleSipPlanner({
       result?.goals.find((g) => g.goalId === id)?.recommendedMonthly ??
       0;
     setError("");
-    setOverrides((old) => ({
-      ...old,
-      [id]: Math.max(0, goalTotal + amount - current),
-    }));
-    if (row.held)
-      setVehicleOverrides((old) => ({
-        ...old,
-        [id]: { ...old[id], [row.key]: amount },
-      }));
-    else
-      setVehicleOverrides((old) => {
-        const next = { ...old };
-        delete next[id];
-        return next;
-      });
+    const next = sipVehicleEdit(
+      id, row.key, amount, current, goalTotal, vehicleOverrides, row.held,
+    );
+    setOverrides(next.overrides);
+    setVehicleOverrides(next.vehicleOverrides);
   }
   function restoreGoal(id: string) {
     setError("");
@@ -255,8 +246,8 @@ export function SimpleSipPlanner({
           className="[&_input]:h-20 [&_input]:rounded-none [&_input]:border-0 [&_input]:bg-transparent [&_input]:pl-9 [&_input]:pr-0 [&_input]:text-4xl [&_input]:font-semibold [&_span]:left-0 [&_span]:text-3xl sm:[&_input]:text-5xl"
         />
         <p className="text-xs text-muted-foreground">
-          Set a total. Adjust a vehicle below; its goal total and the rest
-          recalculate. Budget stays separate.
+          Goals fill in priority order. Vehicle edits use the lowest-priority
+          automatic money first. Budget stays separate.
         </p>
         {result && !preview?.error && (
           <div className="mt-4 flex min-h-9 flex-wrap gap-x-4 gap-y-1 border-t pt-3 text-sm">

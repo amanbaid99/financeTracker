@@ -20,6 +20,25 @@ export interface WorksheetVehicle {
   manual: boolean;
   held: boolean;
 }
+/** Only the goal currently being edited has an exact total. Older vehicle
+ * choices remain floors, so automatic money can leave the lowest priority first. */
+export function sipVehicleEdit(
+  goalId: string,
+  key: string,
+  amount: number,
+  currentAmount: number,
+  currentGoalTotal: number,
+  vehicleOverrides: VehicleOverrides,
+  held: boolean,
+) {
+  const next = { ...vehicleOverrides };
+  if (held) next[goalId] = { ...next[goalId], [key]: amount };
+  else delete next[goalId];
+  return {
+    overrides: { [goalId]: Math.max(0, currentGoalTotal + amount - currentAmount) },
+    vehicleOverrides: next,
+  };
+}
 export function sipWorksheetBaseline(input: SipWorksheetInput) {
   const baselineInput = {
     ...input,

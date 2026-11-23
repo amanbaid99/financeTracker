@@ -1,5 +1,9 @@
 # Status
 
+## SIP priority waterfall edits, 23 Nov 2026
+
+Reused the existing emergency-first, then nearest-deadline sequential allocator. Each goal is capped at its monthly requirement before funding the next. Vehicle edits now release previous whole-goal totals while retaining explicit vehicle choices as floors. This prevents stale derived totals from shielding lower-priority automatic allocations. Only the currently edited goal total is exact; remaining automatic capacity fills in priority order. Saved explicit vehicle amounts remain choices, not actual contributions. No Budget, holding, goal or transaction changes. Regression fixture verifies a ₹71,000 plan fills emergency, upcoming payment and Travel before Marriage; a ₹5,000 later edit comes from Marriage, and a larger edit exhausts Marriage before reducing Travel. Retrieval order does not change the result. Verification: lint, TypeScript, 849 unit tests, 40 Python tests and production build pass. Mobile real-component checks at 320/375/768px cover editable vehicles, derived totals, zero entry, saving/reopening and no overflow. No hosted financial data changed for testing.
+
 ## Removed SIP Plan details, 23 Nov 2026
 
 Removed the entire Plan details disclosure from every goal in the monthly SIP planner, including its breakdown, assumptions and explanatory paragraphs. Goal totals, coverage colours, vehicle amount inputs and saving remain unchanged. No financial calculations or stored records changed. Verification: lint, TypeScript, 847 unit tests, 40 Python tests and production build pass. Browser checks at 320/375/768px confirm the section and breakdown are absent.

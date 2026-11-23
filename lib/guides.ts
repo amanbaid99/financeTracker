@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"SIP priority waterfall",items:[{title:"Fund priorities first",text:"Goals fill one at a time. Editing a later vehicle reduces the lowest-priority automatic allocation first. Earlier vehicle choices remain fixed."}]},
  {date:"2026-11-23",title:"Simpler SIP goal cards",items:[{title:"Only the essentials",text:"Removed Plan details from every SIP goal card. Your totals, vehicles and coverage colours stay visible."}]},
  {date:"2026-11-23",title:"Smoother SIP editing",items:[{title:"Type without waiting",text:"Vehicle amounts update as you type while projections catch up. Goal totals are text, and the emergency-cover estimate option is removed."}]},
  {date:"2026-11-23",title:"Amount fields are easier to edit",items:[{title:"Type straight over zero",text:"Tap a zero amount and start typing. Clearing a field now stays empty while you edit, even where zero is the saved default."}]},

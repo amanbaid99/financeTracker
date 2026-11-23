@@ -215,3 +215,33 @@ it("fast live previews keep displayed projections identical to full confirmation
  const displayed=(s:ReturnType<typeof sipWorksheet>)=>({goals:s.result.goals.map(g=>({...g,alternatives:{...g.alternatives,revisedDeadline:null}})),vehicles:s.result.vehicles,rows:s.rows});
  expect(displayed(quick)).toEqual(displayed(full));
 });
+it("fills the 71000 waterfall before later goals and takes edits from the tail", async () => {
+  const { sipVehicleEdit } = await import("@/lib/sip-worksheet");
+  const orderedGoals: GoalInput[] = [
+    {...goals[0], target:240000, targetDate:"2027-11-23"},
+    {...goals[1], id:"payment", name:"Upcoming payment", target:120000, targetDate:"2027-05-23"},
+    {...goals[1], target:99000, targetDate:"2027-08-23"},
+    {...goals[1], id:"marriage", name:"Marriage", target:480000, targetDate:"2028-11-23"},
+    goals[2],
+  ];
+  const data = {...input, goals:orderedGoals, monthlySavings:71000, monthlyEssentials:0};
+  const amounts = (s: ReturnType<typeof sipWorksheet>) => Object.fromEntries(s.result.goals.map(g=>[g.goalId,g.recommendedMonthly]));
+  const base = sipWorksheet(data);
+  expect(base.result.fundingOrder).toEqual(["safety","payment","travel","marriage","retirement"]);
+  expect(amounts(base)).toEqual({safety:20000,payment:20000,travel:11000,marriage:20000,retirement:0});
+  const edit = sipVehicleEdit("retirement","inv:fund0",5000,0,0,{},true);
+  const changed = sipWorksheet({...data,...edit});
+  expect(amounts(changed)).toEqual({safety:20000,payment:20000,travel:11000,marriage:15000,retirement:5000});
+  const larger = sipWorksheet({...data,...sipVehicleEdit("retirement","inv:fund0",23000,5000,5000,edit.vehicleOverrides,true)});
+  expect(amounts(larger)).toEqual({safety:20000,payment:20000,travel:8000,marriage:0,retirement:23000});
+  expect(larger.result.totalMonthlyAllocated).toBe(71000);
+  expect(sipWorksheet({...data,goals:[...orderedGoals].reverse(),...edit})).toEqual(changed);
+});
+it("releases previous goal totals while preserving explicit vehicle choices as floors", async()=>{
+ const {sipVehicleEdit}=await import("@/lib/sip-worksheet");
+ const previous={retirement:{"inv:fund0":1000}};
+ const edit=sipVehicleEdit("travel","new:savings_account:other",2000,10000,10000,previous,false);
+ expect(edit.overrides).toEqual({travel:2000});
+ expect(edit.vehicleOverrides).toEqual(previous);
+ expect(previous).toEqual({retirement:{"inv:fund0":1000}});
+});
