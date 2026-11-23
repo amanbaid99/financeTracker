@@ -17,7 +17,10 @@ export type GuideCost = { row: BudgetSheetRow; included: boolean; source: string
 export function guideCosts(plan: BudgetSheet, costs: KnownBudgetCost[], loans: SheetLoan[]): GuideCost[] {
   const rows = plan.rows.filter(r => !isRuleRow(r) && r.category !== "savings" && r.category !== "investing");
   const seed = { ...emptyBudgetSheet(plan.salary), rows, excludedLoanIds: plan.excludedLoanIds };
-  return knownBudgetItems(seed, costs, loans).filter(i => i.row.category !== "savings" && i.row.category !== "investing").map(item => ({
+  // These old record categories belong in the user's single Personal amount.
+  // Keep explicitly saved draft rows, but never add these records to new setup.
+  const autoCosts=costs.filter(c=>!/^(day[\s-]*to[\s-]*day spending|transport|daily commute)$/i.test(c.name.trim()));
+  return knownBudgetItems(seed, autoCosts, loans).filter(i => i.row.category !== "savings" && i.row.category !== "investing").map(item => ({
     included: item.included,
     source: item.row.loanId ? "Loan EMI" : item.source.startsWith("Current") ? "In your budget" : "From your records",
     row: { ...item.row, mode: "amount" as const, value: rowAmount(item.row, plan.salary), category: isPersonalCost(item.row) || isPersonalTransport(item.row) ? "personal" : item.row.category === "personal" ? "personal" : "fixed" },

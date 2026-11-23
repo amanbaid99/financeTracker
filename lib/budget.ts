@@ -47,10 +47,8 @@ export const COST_SUGGESTIONS = [
   "Rent",
   "Groceries",
   "Utilities and phone",
-  "Transport",
   "Family support",
   "Subscriptions",
-  "Day-to-day spending",
 ];
 
 export function budget(opts: {

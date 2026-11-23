@@ -29,7 +29,7 @@ const row = (
 });
 
 describe("budget setup", () => {
-  it("brings in every recorded cost, with everyday spending as personal", () => {
+  it("imports fixed costs and EMIs without auto-adding transport or day-to-day spending", () => {
     const items = guideCosts(
       emptyBudgetSheet(100000),
       [
@@ -50,8 +50,6 @@ describe("budget setup", () => {
       [
         ["Rent", "fixed", 30000],
         ["Groceries", "fixed", 8000],
-        ["Day-to-day spending", "personal", 5000],
-        ["Transport", "personal", 4000],
         ["Car loan EMI", "fixed", 5000],
       ],
     );
@@ -183,4 +181,13 @@ it("personal costs are included once and cannot silently be cut",()=>{
  expect(personalBudget(100000,rows,20000)).toMatchObject({future:40000,valid:true});
  expect(personalBudget(100000,rows,5000).valid).toBe(false);
  expect(personalBudget(100000,[],0)).toMatchObject({future:100000,valid:true});
+});
+
+it("preserves personal expenses entered explicitly while skipping their old record defaults",()=>{
+ const manual={...row("my-transport","personal",3500),name:"Transport"};
+ const p={...emptyBudgetSheet(100000),rows:[manual]};
+ const costs=[{id:"old-transport",name:"Transport",amount:5000},{id:"old-daily",name:"Day to day spending",amount:10000}];
+ const result=guideCosts(p,costs,[]);
+ expect(result.map(i=>i.row)).toEqual([manual]);
+ expect(guideCosts(emptyBudgetSheet(100000),costs,[])).toEqual([]);
 });

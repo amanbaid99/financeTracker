@@ -1,5 +1,10 @@
 # Status
 
+## Stop old personal-cost imports in budget setup, 23 Nov 2026
+
+The preset buttons had been removed, but guideCosts still pulled Transport and Day-to-day spending from old expense records. New setup now excludes those record categories, including Daily commute, while preserving expenses explicitly present in an existing budget/draft. Removed the same two suggestions from the legacy cost-entry presets. No stored expense or financial record is deleted. Personal spending stays the single user-chosen amount and Save & invest remains the remainder. Regression coverage includes the actual old-record inputs and preservation of a manually entered Transport row. Verification: lint, TypeScript, 782 unit tests, 40 Python tests and production build pass. Browser checks at 320/375/768px supply old Transport and Day-to-day spending records, confirm neither is auto-added, allow a smaller personal amount, and verify the correct savings/save payload without overflow or runtime errors. No hosted expense records were deleted.
+
+
 ## One emergency and sinking goal, 23 Nov 2026
 
 Supports one bills_fund goal with emergencyReserve and emergencyReserveDate in existing planning_settings. No competing goal type or new tables. Bills keep their amounts, cycles and due dates. The shared corpus is counted once; scheduled bills use only the balance above the reserve. Monthly funding builds a missing reserve by the earlier of its original deadline and 12 months, alongside bill funding. Reserve assumptions exclude projected investment returns. The existing goal editor preserves and edits both reserve fields, and saving includes the reserve in the stored target.

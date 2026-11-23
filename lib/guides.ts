@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"No automatic personal expense rows",items:[{title:"One personal amount",text:"Budget setup no longer imports old Transport or Day-to-day spending records. Choose your Personal spending amount yourself. Explicitly saved expenses are preserved."}]},
  {date:"2026-11-23",title:"One safety fund",items:[{title:"Emergency and planned bills together",text:"A combined goal keeps an emergency reserve and scheduled bills in one place. Planned bills use money above the reserve; withdrawals protect it unless you explicitly choose otherwise."}]},
  {date:"2026-11-23",title:"SIP budget amount fixed",items:[{title:"Use your saved budget",text:"The SIP planner now reads Save & invest from your saved guided budget, even when the old income records are empty. Loan costs count once. Your choices remain until you confirm."}]},
  {date:"2026-11-23",title:"Less upkeep, more clarity",items:[{title:"Let your plan run",text:"A new day no longer asks you to review a saved plan. Monthly card logging stays. Loan and CAS reviews are optional quarterly checks, with next-week snooze."},{title:"Debt at a glance",text:"Home shows expected repayment progress and payoff timing, clearly separate from your recorded balance. No payments are marked automatically."}]},
