@@ -590,7 +590,7 @@ export const loadMoneyPlan = cache(async () => {
     b.budget.emis,
     Number.isSafeInteger(priorBuffer) && priorBuffer! >= 0 ? priorBuffer : 0,
   );
-  const capacity = b.budgetConfigured?sipCapacity(true,computedCapacity.availableSavings,computedCapacity.budgetDeficit):prior?.budgetSource==="manual"?sipCapacity(false,0,0,prior.declaredMonthlySavings??prior.monthlySavings):computedCapacity;
+  const capacity = prior?.budgetSource==="standalone"?sipCapacity(false,0,0,prior.declaredMonthlySavings??prior.monthlySavings):b.budgetConfigured?sipCapacity(true,computedCapacity.availableSavings,computedCapacity.budgetDeficit):prior?.budgetSource==="manual"?sipCapacity(false,0,0,prior.declaredMonthlySavings??prior.monthlySavings):computedCapacity;
   const plan = input
     ? hybridMoneyPlan({
         goals,
@@ -608,7 +608,7 @@ export const loadMoneyPlan = cache(async () => {
         minimums,
         exactHoldings:prior?.exactHoldings,
         allocationMode:prior?.allocationMode,
-        monthlyEssentials:b.budgetConfigured?b.budget.costs+b.budget.emis:prior?.monthlyEssentials??0,
+        monthlyEssentials:prior?.budgetSource==="standalone"?prior.monthlyEssentials??0:b.budgetConfigured?b.budget.costs+b.budget.emis:prior?.monthlyEssentials??0,
       })
     : null;
   return {

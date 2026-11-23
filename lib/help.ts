@@ -188,8 +188,8 @@ export const HELP: HelpTopic[] = [
     section: "Budget",
     q: "How do I plan my monthly SIPs?",
     a: [
-      "Enter How much can you invest each month? Your monthly SIPs now lists goals, with destinations underneath. A saved budget supplies the default and ceiling. Without one, enter available savings after expenses and EMIs, plus monthly essential costs for the emergency runway calculation.",
-      "Emergency cover reaches one month first, then three months, followed by payments and goals in deadline order. Current recorded balances count toward runway under the all-holdings-available assumption, not future market growth or future SIPs. After recording emergency deposits, review the plan so new money can move to the next goals. Zero surplus creates no contributions.",
+      "Enter How much can you invest each month? This is a standalone planning amount: Budget is not read, used as a limit or changed. Your monthly SIPs lists goals and their investment destinations. Monthly essential costs are optional for emergency-cover estimates.",
+      "Emergency cover reaches one month first, then three months, followed by payments and goals in deadline order. Current recorded balances count toward runway under the all-holdings-available assumption, not future market growth or future SIPs. After recording emergency deposits, review the plan so new money can move to the next goals. A zero SIP planning amount creates no contributions. Without optional monthly costs, the emergency goal’s own monthly requirement is funded first.",
       "Suitable linked holdings come first. The app keeps safety and lifestyle money separate. If no suitable holding exists, it names a broad investment class, never a new product. Edit a goal amount to keep it fixed while others recalculate. Reset amounts restores recommendations. Your edits can delay emergency cover or nearer goals; the screen warns about this.",
       "Save this plan keeps it in the app. No SIP is started or changed with your provider.",
     ],

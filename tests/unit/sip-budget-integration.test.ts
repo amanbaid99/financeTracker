@@ -35,3 +35,9 @@ it("reopening a confirmed manual plan keeps its declared capacity when no budget
  vi.mocked(loadHybridContext).mockResolvedValue({plans:[{inputs:{budgetSource:"manual",declaredMonthlySavings:50000,monthlySavings:50000}}],goalSettings:[],holdingDetails:[],revision:rev,sourceRevision:rev,riskTolerance:null} as never);
  const p=await loadMoneyPlan();expect(p.budget.income).toBe(0);expect(p.plan!.hybrid!.availableMonthlySavings).toBe(50000);expect(p.plan!.hybrid!.monthlyPlanLimit).toBe(20000);
 });
+it("retains standalone SIP capacity even when a saved budget has a lower surplus",async()=>{
+ const snapshot={goals:[],holdings:[],allocations:[],goal_bills:[],loans:[],loan_payments:[],incomes:[],expenses:[],profile:{plan_monthly:71000,plan_lump_sum:0}};
+ vi.mocked(createClient).mockResolvedValue({auth:{getClaims:async()=>({data:{claims:{sub:"owner"}}})},rpc:async()=>({data:snapshot,error:null}),from:(table:string)=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:table==="budget_ratio_plans"?{plan:sheet}:{plan_sip_minimums:{}},error:null})})})})} as never);
+ vi.mocked(loadHybridContext).mockResolvedValue({plans:[{inputs:{budgetSource:"standalone",declaredMonthlySavings:71000,monthlySavings:71000,allocationMode:"safety_deadline",monthlyEssentials:0}}],goalSettings:[],holdingDetails:[],revision:rev,sourceRevision:rev,riskTolerance:null} as never);
+ const p=await loadMoneyPlan();expect(p.plan!.hybrid!.availableMonthlySavings).toBe(71000);expect(p.plan!.hybrid!.monthlyPlanLimit).toBe(71000);
+});

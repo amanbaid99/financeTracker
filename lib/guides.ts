@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"SIP planning stays separate",items:[{title:"Choose your own amount",text:"Enter a SIP planning amount without a budget limit. Saving keeps that amount when you reopen. Monthly costs for emergency cover are optional."}]},
  {date:"2026-11-23",title:"Simpler investment access",items:[{title:"Available by default",text:"Access and valuation inputs are removed. All holdings are assumed withdrawable for goal planning and withdrawal previews, including existing ELSS holdings."}]},
  {date:"2026-11-23",title:"Budget amounts line up",items:[{title:"Clearer monthly allocation",text:"Fixed, Personal and Save & invest now use aligned rows with percentages and edit icons, without cramped tiles."}]},
  {date:"2026-11-23",title:"Cleaner goals and Budget",items:[{title:"Less analysis, clearer controls",text:"Goal details focus on investments and scheduled payments. Budget shows three clear totals, direct personal and saving edits, and fixed costs without nested menus."}]},

@@ -1,7 +1,6 @@
 "use client";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { MoneyInput } from "./money-input";
 import { useToast } from "./ui/toast";
 import { Button } from "./ui/button";
@@ -16,8 +15,6 @@ export function SimpleSipPlanner({
   investments,
   links: currentLinks,
   today,
-  budgetMonthly,
-  budgetConfigured,
   initialMonthly,
   monthlyEssentials,
   initialOverrides = {},
@@ -28,8 +25,6 @@ export function SimpleSipPlanner({
   investments: Investment[];
   links: GoalLink[];
   today: string;
-  budgetMonthly: number;
-  budgetConfigured: boolean;
   initialMonthly: number | null;
   monthlyEssentials: number | null;
   initialOverrides?: Record<string, number>;
@@ -55,13 +50,8 @@ export function SimpleSipPlanner({
       !g.completed &&
       (g.type === "emergency_fund" || (g.emergencyReserve ?? 0) > 0),
   );
-  const costs = budgetConfigured ? (monthlyEssentials ?? 0) : (essentials ?? 0);
-  const costsValid =
-    Number.isSafeInteger(costs) &&
-    costs >= 0 &&
-    costs <= 1e9 &&
-    (!hasSafety || monthly === 0 || budgetConfigured || essentials !== null);
-  const overBudget = budgetConfigured && valid && monthly > budgetMonthly;
+  const costs = essentials ?? 0;
+  const costsValid = Number.isSafeInteger(costs) && costs >= 0 && costs <= 1e9;
   const links = useMemo(
     () =>
       proposeGoalMapping(goals, investments, currentLinks, today, {
@@ -71,7 +61,7 @@ export function SimpleSipPlanner({
     [goals, investments, currentLinks, today, riskTolerance],
   );
   const preview = useMemo(() => {
-    if (!valid || !costsValid || overBudget) return null;
+    if (!valid || !costsValid) return null;
     try {
       const input = {
         goals,
@@ -79,7 +69,7 @@ export function SimpleSipPlanner({
         links,
         today,
         riskTolerance,
-        monthlySavings: budgetConfigured ? budgetMonthly : monthly!,
+        monthlySavings: monthly!,
         monthlyPlanLimit: monthly!,
         allocationMode: "safety_deadline" as const,
         monthlyEssentials: costs,
@@ -97,7 +87,7 @@ export function SimpleSipPlanner({
           links,
           today,
           riskTolerance,
-          monthlySavings: budgetConfigured ? budgetMonthly : monthly!,
+          monthlySavings: monthly!,
           monthlyPlanLimit: monthly!,
           allocationMode: "safety_deadline",
           monthlyEssentials: costs,
@@ -134,14 +124,11 @@ export function SimpleSipPlanner({
   }, [
     valid,
     costsValid,
-    overBudget,
     goals,
     investments,
     links,
     today,
     riskTolerance,
-    budgetConfigured,
-    budgetMonthly,
     monthly,
     costs,
     overrides,
@@ -166,7 +153,7 @@ export function SimpleSipPlanner({
     0,
   );
   function save() {
-    if (!valid || !result || overBudget || preview?.error) return;
+    if (!valid || !result || preview?.error) return;
     setError("");
     start(async () => {
       try {
@@ -174,7 +161,7 @@ export function SimpleSipPlanner({
           calculatedOn: today,
           revision,
           monthly: monthly!,
-          ...(!budgetConfigured ? { manualSavings: monthly! } : {}),
+          manualSavings: monthly!,
           allocationMode: "safety_deadline",
           monthlyEssentials: costs,
           lump: 0,
@@ -214,23 +201,13 @@ export function SimpleSipPlanner({
           and goals by nearest deadline. Amounts include any SIPs already
           running.
         </p>
-        {budgetConfigured ? (
-          <p className="text-xs text-muted-foreground">
-            Available from Budget: {formatINR(budgetMonthly)}/mo.{" "}
-            <Link className="text-primary" href="/goals/budget">
-              Edit budget
-            </Link>
-          </p>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            Enter what is left after expenses and EMIs. This does not change
-            your budget.
-          </p>
-        )}
-        {hasSafety && !budgetConfigured && (
+        <p className="text-xs text-muted-foreground">
+          This amount is for SIP planning only. Your budget stays separate.
+        </p>
+        {hasSafety && (
           <div className="space-y-2">
             <label htmlFor="goal-sip-costs" className="text-sm font-medium">
-              Monthly essential costs and EMIs
+              Monthly essential costs and EMIs (optional)
             </label>
             <MoneyInput
               id="goal-sip-costs"
@@ -239,15 +216,10 @@ export function SimpleSipPlanner({
               onChange={setEssentials}
             />
             <p className="text-xs text-muted-foreground">
-              Used only to calculate how many months your emergency money
-              covers.
+              Optional: use this for one- and three-month emergency cover. Leave
+              blank to use the emergency goal’s own requirement.
             </p>
           </div>
-        )}
-        {overBudget && (
-          <p role="alert" className="text-sm text-danger">
-            This exceeds your saved budget. Lower it or update Budget.
-          </p>
         )}
       </section>
       {result && (
@@ -444,9 +416,7 @@ export function SimpleSipPlanner({
       )}
       <Button
         className="w-full"
-        disabled={
-          pending || !valid || !result || overBudget || !!preview?.error
-        }
+        disabled={pending || !valid || !result || !!preview?.error}
         onClick={save}
       >
         {pending ? "Saving…" : "Save this plan"}

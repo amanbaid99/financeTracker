@@ -1,5 +1,11 @@
 # Architecture
 
+## Standalone SIP planning, 23 Nov 2026
+
+The active goal-first SIP workflow is independent of Budget. The route loads goals and confirmed planning inputs only. The client uses the entered monthly amount as capacity; no budget default, ceiling, warning or edit link remains. Confirmation skips loadBudget for safety_deadline plans and records budgetSource standalone, declared capacity and null budget metadata. Existing non-SIP hybrid workflows retain their previous budget validation. loadMoneyPlan preserves standalone capacity after reopening even if the saved budget has zero or lower surplus. No budget, income, holding or actual contribution records are overwritten.
+
+Monthly essential costs are optional and independent inputs. If present, the one- and three-month safety stages apply; if omitted, the emergency goal’s existing monthly requirement is funded before dated goals. No expense amount or runway estimate is invented. Historical plans remain immutable, and goal overrides still cannot exceed the chosen total or required contribution.
+
 ## Goal-first SIP planning, 23 Nov 2026
 
 The SIP route now uses a goal-first SimpleSipPlanner: monthly savings, essential monthly costs if no saved budget, then editable goal totals with automatic vehicle splits. Existing models, mapping, funding maths and atomic confirmation are reused. safety_deadline is an explicit versioned allocation mode: first reach one month and then three months of emergency runway from accessible recorded cash/liquid/overnight holdings, capped by user targets; then fill requirements by next bill date or goal deadline. Combined safety/bills ownership is counted once. Safety requirements can accelerate this month's reserve building. Goal edits consume capacity before automatic allocation and show a warning. Recalculate after confirmed emergency balance updates rather than assuming planned SIPs happened.

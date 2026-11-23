@@ -75,7 +75,9 @@ export function prepareSafetyStages(
       threeMonthTarget: Math.min(target, monthlyEssentials * 3),
     };
     row.explanation =
-      "Build one month of emergency cover, then three months, before funding goals by deadline. This is an accelerated safety contribution, not an extra goal.";
+      monthlyEssentials > 0
+        ? "Build one month of emergency cover, then three months, before funding goals by deadline. This is an accelerated safety contribution, not an extra goal."
+        : "The emergency goal’s monthly requirement comes first. Optional monthly costs enable one- and three-month cover estimates.";
     if (
       !ASSUME_HOLDINGS_WITHDRAWABLE &&
       accessible < Math.min(row.existingCoverage, target)

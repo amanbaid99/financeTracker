@@ -31,9 +31,10 @@ export async function confirmHybridPlan(
   try {
     const v = schema.parse(input),
       { supabase } = await requireUser();
+    const standalone = v.allocationMode === "safety_deadline";
     const [g, b, c] = await Promise.all([
       loadGoals(),
-      loadBudget(),
+      standalone ? Promise.resolve(null) : loadBudget(),
       loadHybridContext(),
     ]);
     if (g.today !== v.calculatedOn)
@@ -46,21 +47,27 @@ export async function confirmHybridPlan(
       return {
         ok: false,
         error:
-          "Your goals, budget or balances changed. Reload and review the updated recommendation.",
+          "Your goals or recorded data changed. Reload and review the updated recommendation.",
       };
-    const capacity = monthlyCapacity(
-      b.budget.income,
-      b.budget.costs,
-      b.budget.emis,
-      v.cashBuffer,
-    );
-    const configured = b.budgetConfigured ?? b.budget.income > 0;
-    const availableSavings = sipCapacity(
-      configured,
-      capacity.availableSavings,
-      capacity.budgetDeficit,
-      v.manualSavings,
-    ).availableSavings;
+    const capacity = standalone
+      ? { availableSavings: v.monthly, budgetDeficit: 0 }
+      : monthlyCapacity(
+          b!.budget.income,
+          b!.budget.costs,
+          b!.budget.emis,
+          v.cashBuffer,
+        );
+    const configured = standalone
+      ? false
+      : (b!.budgetConfigured ?? b!.budget.income > 0);
+    const availableSavings = standalone
+      ? v.monthly
+      : sipCapacity(
+          configured,
+          capacity.availableSavings,
+          capacity.budgetDeficit,
+          v.manualSavings,
+        ).availableSavings;
     if (v.monthly > availableSavings)
       return {
         ok: false,
@@ -68,23 +75,8 @@ export async function confirmHybridPlan(
           "This plan exceeds your available monthly savings. Update your budget or lower the amounts.",
       };
     const monthlyEssentials = configured
-      ? b.budget.costs + b.budget.emis
+      ? b!.budget.costs + b!.budget.emis
       : (v.monthlyEssentials ?? 0);
-    if (
-      v.allocationMode &&
-      v.monthly > 0 &&
-      g.goals.some(
-        (g) =>
-          !g.completed &&
-          (g.type === "emergency_fund" || (g.emergencyReserve ?? 0) > 0),
-      ) &&
-      !configured &&
-      v.monthlyEssentials === undefined
-    )
-      return {
-        ok: false,
-        error: "Enter monthly essential costs to calculate emergency runway.",
-      };
     if (v.allocationMode && Object.keys(v.minimums).length)
       return {
         ok: false,
@@ -122,7 +114,11 @@ export async function confirmHybridPlan(
       investments: g.investments,
       links,
       monthlySavings: availableSavings,
-      budgetSource: configured ? "budget" : "manual",
+      budgetSource: standalone
+        ? "standalone"
+        : configured
+          ? "budget"
+          : "manual",
       declaredMonthlySavings: configured ? null : availableSavings,
       monthlyPlanLimit: v.monthly,
       budgetDeficit: configured ? capacity.budgetDeficit : 0,
@@ -133,13 +129,15 @@ export async function confirmHybridPlan(
       monthlyEssentials,
       overrides: v.overrides,
       cashBuffer: v.cashBuffer,
-      budget: b.budget,
+      budget: b?.budget ?? null,
     };
     const result = hybridPlan(inputs);
     result.vehicles = hybridVehicles(inputs, result);
     if (!configured)
       result.warnings.push(
-        "Monthly savings entered by you after expenses and EMIs. Income and costs are not verified by a saved budget.",
+        standalone
+          ? "SIP planning amount entered independently. This plan does not use or change your budget."
+          : "Monthly savings entered by you after expenses and EMIs. Income and costs are not verified by a saved budget.",
       );
     const { error } = await supabase.rpc("confirm_hybrid_plan", {
       p_revision: v.revision,

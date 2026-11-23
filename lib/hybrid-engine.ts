@@ -20,7 +20,7 @@ import {
   futureValueDecimal,
   requiredMonthlyDecimal,
 } from "./funding-math";
-export const HYBRID_VERSION = "hybrid-1.2.0";
+export const HYBRID_VERSION = "hybrid-1.3.0";
 export interface HybridPolicy {
   priority: Record<"high" | "medium" | "low", number>;
   urgency: [number, number, number];
@@ -806,6 +806,10 @@ export function calculateHybrid(input: HybridInput): HybridResult {
     distribute(true);
     distribute(false);
   } else {
+    // Without expense inputs, use the goal's existing requirement, not an invented runway.
+    if (!(input.monthlyEssentials ?? 0))
+      for (const stage of safety.stages)
+        if (adjustable(stage.row)) give(stage.row, stage.row.requiredMonthly);
     for (const months of [1, 3]) {
       const stageTarget = Math.min(
         safety.target,

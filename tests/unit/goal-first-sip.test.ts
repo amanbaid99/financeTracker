@@ -84,3 +84,6 @@ it("splits nearby suitable retirement funds and keeps safety/lifestyle separate"
 it("records the same funding order for the saved goal summary",()=>{
  const r=hybridPlan(input());expect(r.fundingOrder).toEqual(["safety","near","far"]);expect(r.allocationMode).toBe("safety_deadline");
 });
+it("still prioritizes emergency requirements when optional monthly costs are omitted",()=>{
+ const data=input(0,5000);delete data.monthlyEssentials;const r=hybridPlan(data);expect(amount(r,"safety")).toBe(5000);expect(amount(r,"near")).toBe(0);
+});
