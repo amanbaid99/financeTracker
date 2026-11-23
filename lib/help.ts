@@ -36,7 +36,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "What appears in This month on Home?",
     a: [
-      "Up to three actions on Home, with Show more for the rest. Missing investment-vehicle cues share the list with routine updates. Missing card statements use the statement day in Edit card. Days beyond the end of a month use its last day. Without a statement day, card reminders stay off.",
+      "Up to three reminders on Home, with Show more for the rest: a CAS upload, loan balances to confirm, and goals that need a date. Remind me tomorrow hides one until the next day. Home doesn't suggest opening new funds. Missing card statements use the statement day in Edit card. Days beyond the end of a month use its last day. Without a statement day, card reminders stay off.",
       "Loan balance updates start on the 2nd. Monthly CAS reminders start on the 5th when you hold mutual funds. Saving a relevant update clears its reminder. Goals needing the same missing fund category share one cue. Suitable held funds are reused; an undated purchase asks for a date instead of guessing its horizon. Record fund opens a category-prefilled form, without choosing a scheme or saving anything. Set up the fund with your provider, then confirm its record in Net worth. Remind me tomorrow postpones that item until the next day, across your devices.",
       "A missing statement or balance update never means you missed a payment. Card statements count only for milestones; the app does not track card payment confirmations.",
     ],

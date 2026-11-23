@@ -62,13 +62,15 @@ export default async function HomePage() {
     ),
     snoozes,
   });
+  // Only the "add dates" cue: suggestions to open new funds don't belong on
+  // Home (they ignore bank accounts and money you may not have coming in).
   const cues = missingVehicleCues({
     goals: g.goals,
     investments: g.investments,
     links: g.links,
     today,
     snoozes,
-  });
+  }).filter((c) => c.key === "goal-dates");
   const payments = upcomingPayments(loans, today);
   const todo = thisMonth({
     updates: homeNextUp(due, cues),

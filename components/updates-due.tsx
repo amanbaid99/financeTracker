@@ -58,7 +58,7 @@ export function UpdatesDue({
             })
           }
         >
-          {compact?"Tomorrow":"Remind me tomorrow"}
+          Remind me tomorrow
         </Button>}
       </div>
       </li>)}</ul>

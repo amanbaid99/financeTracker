@@ -11,6 +11,11 @@ Last updated: 23 Nov 2026.
 
 
 
+
+## Home stops suggesting new funds, 23 Nov 2026
+
+Home's This month keeps only the "Add dates to plan your goals" cue from `missingVehicleCues`; "Set up a liquid fund" style cues are left out (they ignore bank accounts and don't suit the owner with no salary). The snooze button reads "Remind me tomorrow" everywhere.
+
 ## SIP planner with nothing to invest, 23 Nov 2026
 
 `components/hybrid-planner.tsx`: when the budget leaves ₹0 a month (no salary or a deficit), the ₹0 / ₹0 figures, deficit line, recorded SIPs line and the Monthly plan amount field are replaced by "Nothing to invest each month right now" with a link to Budget. The starting monthly amount is capped at what the budget allows, so a stale saved amount no longer shows a red error. Validation copy is plain. After Confirm plan, Your plan replaces the planner in history, so Back no longer returns to the planner.
