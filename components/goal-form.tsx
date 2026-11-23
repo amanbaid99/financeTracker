@@ -96,7 +96,7 @@ export function GoalForm({
   const [date, setDate] = useState(
     initial?.targetDate ?? goal?.targetDate ?? "",
   );
-  const [inflate, setInflate] = useState(goal ? !!goal.inflationPct : true);
+  const [inflate, setInflate] = useState(goal ? goal.targetType !== "future" && !!goal.inflationPct : true);
   const [planning, setPlanning] = useState({
     targetType: goal?.targetType ?? "today",
     priorityLevel: goal?.priorityLevel ?? "medium",
@@ -659,12 +659,12 @@ export function GoalForm({
         </div>
       )}
 
-      {!isLoan && !isBills && !noDate && planning.targetType !== "future" && (
+      {!isLoan && !isBills && !noDate && (
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-sm">
             <Checkbox
               checked={inflate}
-              onChange={(e) => setInflate(e.target.checked)}
+              onChange={(e) => {setInflate(e.target.checked);setPlanning(p=>({...p,targetType:e.target.checked?"today":"future"}));}}
             />
             Prices will rise: grow the target with inflation
           </label>
@@ -687,114 +687,12 @@ export function GoalForm({
         </div>
       )}
 
-      <details className="rounded-xl border px-3">
-        <summary className="min-h-11 cursor-pointer text-sm font-medium">
-          Planning preferences
-        </summary>
-        <div className="space-y-3 pb-3">
-          {!isLoan && !isBills && (
-            <Field label="Target amount means" htmlFor="g-target-type">
-              <Select
-                id="g-target-type"
-                value={planning.targetType}
-                onChange={(e) =>
-                  setPlanning((p) => ({
-                    ...p,
-                    targetType: e.target.value as "today" | "future",
-                  }))
-                }
-              >
-                <option value="today">
-                  Today’s value, allow for inflation
-                </option>
-                <option value="future">
-                  Final future amount, no extra inflation
-                </option>
-              </Select>
-            </Field>
-          )}
-          <Field label="Priority" htmlFor="g-plan-priority">
-            <Select
-              id="g-plan-priority"
-              value={planning.priorityLevel}
-              onChange={(e) =>
-                setPlanning((p) => ({
-                  ...p,
-                  priorityLevel: e.target.value as "high" | "medium" | "low",
-                }))
-              }
-            >
-              <option value="high">High</option>
-              <option value="medium">Medium</option>
-              <option value="low">Low</option>
-            </Select>
-          </Field>
-          {
-            <Field label="Funding category" htmlFor="g-plan-category">
-              <Select
-                id="g-plan-category"
-                value={planning.goalCategory}
-                onChange={(e) =>
-                  setPlanning((p) => ({
-                    ...p,
-                    goalCategory: e.target.value as "essential" | "flexible",
-                  }))
-                }
-              >
-                <option value="essential">Essential</option>
-                <option value="flexible">Flexible</option>
-              </Select>
-            </Field>
-          }
-          <Field
-            label="Minimum monthly amount"
-            htmlFor="g-plan-minimum"
-            hint="Essential minimums come first. Flexible minimums are preferences. Never more than the goal needs."
-          >
-            <MoneyInput
-              id="g-plan-minimum"
-              value={planning.minimumMonthly}
-              onChange={(v) =>
-                setPlanning((p) => ({ ...p, minimumMonthly: v ?? 0 }))
-              }
-            />
-          </Field>
-          <Field
-            label="Future contribution return, % yearly"
-            htmlFor="g-plan-return"
-            hint="Leave blank for a visible conservative assumption based on the deadline."
-          >
-            <Input
-              id="g-plan-return"
-              type="number"
-              min={-99.99}
-              max={100}
-              step={0.1}
-              value={planning.expectedReturnPct ?? ""}
-              onChange={(e) =>
-                setPlanning((p) => ({
-                  ...p,
-                  expectedReturnPct:
-                    e.target.value === "" ? null : Number(e.target.value),
-                }))
-              }
-            />
-          </Field>
-          <label className="flex min-h-11 items-center gap-2 text-sm">
-            <Checkbox
-              checked={planning.completed}
-              onChange={(e) =>
-                setPlanning((p) => ({ ...p, completed: e.target.checked }))
-              }
-            />
-            Goal completed, stop planning new contributions
-          </label>
-          <p className="text-xs text-muted-foreground">
-            Use Edit order on Your plan to rank essential goals. These
-            preferences do not change your target amount or investments.
-          </p>
-        </div>
-      </details>
+      {goal && (
+        <label className="flex min-h-11 items-center gap-2 text-sm">
+          <Checkbox checked={planning.completed} onChange={(e)=>setPlanning(p=>({...p,completed:e.target.checked}))}/>
+          Goal completed, stop planning new contributions
+        </label>
+      )}
       {error && (
         <p
           role="alert"
@@ -819,6 +717,7 @@ export function GoalForm({
               setDate(r.targetDate);
             } else setNoDate(true);
             setInflate(r.inflationPct > 0);
+            setPlanning(p=>({...p,targetType:r.inflationPct>0?"today":"future"}));
             if (r.inflationPct > 0) setInflation(String(r.inflationPct));
             setCalc(false);
           }}

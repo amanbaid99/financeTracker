@@ -103,7 +103,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "Why is a goal's target bigger than what I typed?",
     a: [
-      "In a goal’s Planning preferences, choose today’s value or the final future amount. Today’s values grow using the inflation you entered; future amounts are not inflated again. Existing goal targets are not overwritten.",
+      "In the goal form, Prices will rise adds the inflation rate you enter. Leave it off for an exact future amount. Existing future-value goals start with inflation off, so the target is not inflated twice. Saved targets and custom assumptions are preserved.",
       "Funding projections use effective monthly returns and month-end contributions. Existing assigned investments grow separately at their own stated or conservative assumed returns. Planned SIPs are not counted as existing corpus. Bills also check payment dates so an early cash gap cannot be hidden by a later monthly contribution.",
     ],
     tags: "inflation target future value",

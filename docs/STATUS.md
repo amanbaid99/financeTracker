@@ -1,5 +1,9 @@
 # Status
 
+## Removed goal Planning preferences panel, 23 Nov 2026
+
+Removed the priority, funding category, minimum monthly contribution and return-assumption controls from GoalForm. The emergency-first/deadline SIP planner does not need those manual allocation preferences. Existing stored values remain in form state and save payloads; new goals keep existing defaults. Completion remains directly accessible when editing a goal. The existing inflation toggle now selects today/future target basis, and future-value goals initialize it off to avoid double inflation. No target, holding or historical plan is migrated or reset. Verification: lint, TypeScript, 825 unit tests, 40 Python tests and production build pass. Real-component browser checks at 320/375/768px verify the removed controls, direct completion, future-target inflation behavior and preservation of existing priority, minimum and return settings in save payloads. No hosted financial records were changed for tests.
+
 ## Removed plan and essential-order pages, 23 Nov 2026
 
 Removed the Your plan header button, Order essentials control, monthly-plan detail link, both pages and their unused order editor/action and saved-summary renderer. SIP planning stays in +. Saving now confirms with a toast and returns to Goals; remaining legacy entry points use the SIP planner or Goals. Old /goals/plan, /goals/order and /goals/roadmap bookmarks redirect to Goals. Guides and Help no longer direct users to those pages. Historical allocation snapshots, goal ranks, holdings and actual contributions are retained; no hosted financial data is rewritten. Verification: lint, TypeScript, 825 unit tests, 40 Python tests and production build pass. Real-component mobile checks verify SIP save confirmation and return to Goals at 320/375/768px; built-server HTTP checks verify all three retired URLs redirect to Goals. Full signed-in E2E remains unverified.
