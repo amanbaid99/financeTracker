@@ -245,3 +245,27 @@ it("releases previous goal totals while preserving explicit vehicle choices as f
  expect(edit.vehicleOverrides).toEqual(previous);
  expect(previous).toEqual({retirement:{"inv:fund0":1000}});
 });
+it("a vehicle edit uses its own goal's automatic money before earlier goals", async()=>{
+ const {sipVehicleEdit}=await import("@/lib/sip-worksheet");
+ const data={...input,monthlySavings:65000,monthlyEssentials:0};
+ const before=sipWorksheet(data);
+ const total=before.result.goals.find(g=>g.goalId==="retirement")!.recommendedMonthly;
+ const row=before.rows.retirement.find(v=>v.key==="inv:fund4")!;
+ const edit=sipVehicleEdit("retirement",row.key,1000,row.amount,total,{},true);
+ const after=sipWorksheet({...data,...edit});
+ expect(after.result.goals.map(g=>[g.goalId,g.recommendedMonthly])).toEqual(before.result.goals.map(g=>[g.goalId,g.recommendedMonthly]));
+ expect(after.rows.retirement.find(v=>v.key===row.key)!.amount).toBe(1000);
+ expect(after.rows.retirement.reduce((s,v)=>s+v.amount,0)).toBe(total);
+});
+it("25000 in a goal becomes 24000 automatic plus 1000 chosen without taking Travel money", async()=>{
+ const {sipVehicleEdit}=await import("@/lib/sip-worksheet");
+ const data={...input,monthlySavings:45000,monthlyEssentials:0,goals:goals.map(g=>g.id==="retirement"?{...g,target:6000000}:g),investments:investments.slice(0,3)};
+ const before=sipWorksheet(data);
+ expect(before.result.goals.find(g=>g.goalId==="retirement")!.recommendedMonthly).toBe(25000);
+ const edit=sipVehicleEdit("retirement","inv:fund1",1000,12500,25000,{},true);
+ const after=sipWorksheet({...data,...edit});
+ expect(after.rows.retirement.find(v=>v.key==="inv:fund0")!.amount).toBe(24000);
+ expect(after.rows.retirement.find(v=>v.key==="inv:fund1")!.amount).toBe(1000);
+ expect(after.result.goals.find(g=>g.goalId==="travel")!.recommendedMonthly).toBe(10000);
+ expect(after.result.totalMonthlyAllocated).toBe(45000);
+});
