@@ -582,7 +582,7 @@ export const loadMoneyPlan = cache(async () => {
     ),
   );
   const context = await loadHybridContext();
-  const prior=context.plans[0]?.inputs as {cashBuffer?:number;budgetSource?:string;declaredMonthlySavings?:number;monthlySavings?:number}|undefined;
+  const prior=context.plans[0]?.inputs as {cashBuffer?:number;budgetSource?:string;declaredMonthlySavings?:number;monthlySavings?:number;exactHoldings?:boolean}|undefined;
   const priorBuffer=prior?.cashBuffer;
   const computedCapacity = monthlyCapacity(
     b.budget.income,
@@ -606,6 +606,7 @@ export const loadMoneyPlan = cache(async () => {
         budgetDeficit: capacity.budgetDeficit,
         today,
         minimums,
+        exactHoldings:prior?.exactHoldings,
       })
     : null;
   return {

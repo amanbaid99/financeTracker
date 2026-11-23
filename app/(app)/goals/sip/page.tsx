@@ -13,7 +13,11 @@ export default async function BudgetSipPage() {
     loadSipMinimums(),
   ]);
   const prior = c.plans[0]?.inputs as
-    | { budgetSource?: string; monthlySavings?: number }
+    | {
+        budgetSource?: string;
+        monthlySavings?: number;
+        exactHoldings?: boolean;
+      }
     | undefined;
   const initialMonthly = b.budgetConfigured
     ? Math.max(0, b.budget.planMonthly)
@@ -43,6 +47,7 @@ export default async function BudgetSipPage() {
         budgetConfigured={b.budgetConfigured}
         initialMonthly={initialMonthly}
         savedAmounts={minimums}
+        savedExactHoldings={prior?.exactHoldings ?? false}
         hasConfirmed={c.plans.length > 0}
         revision={c.revision}
         riskTolerance={c.riskTolerance}

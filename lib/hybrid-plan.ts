@@ -11,6 +11,7 @@ import type { MoneyPlan } from "./allocate";
 import type { MonthlyVehicle } from "./investment-plan";
 export interface HybridPlanInput extends HybridInput {
   minimums?: SipMinimums;
+  exactHoldings?: boolean;
 }
 export function hybridPlan(input: HybridPlanInput): HybridResult {
   const minimums = readSipMinimums(input.minimums);
@@ -101,6 +102,8 @@ export function hybridVehicles(
   input: HybridPlanInput,
   calculated?: HybridResult,
 ): MonthlyVehicle[] {
+  if (input.exactHoldings)
+    return exactVehicles(input, calculated ?? hybridPlan(input));
   const plan = hybridMoneyPlan(input, calculated),
     result = plan.hybrid!,
     rows: MonthlyVehicle[] = [],
@@ -224,4 +227,88 @@ export function snapshotCompatible(raw: unknown): raw is HybridResult {
         ),
     )
   );
+}
+
+/** User-edited destinations are exact; automatic contributions use other vehicles. */
+function exactVehicles(
+  input: HybridPlanInput,
+  result: HybridResult,
+): MonthlyVehicle[] {
+  const chosen = readSipMinimums(input.minimums);
+  if (
+    Object.values(chosen).reduce((sum, n) => sum + n, 0) >
+    (input.monthlyPlanLimit ?? input.monthlySavings)
+  )
+    throw new Error("Your chosen holding amounts exceed the monthly plan.");
+  const pinned = new Set(Object.keys(chosen).map((k) => k.slice(4)));
+  const fixedByGoal: Record<string, number> = {};
+  const manual: MonthlyVehicle[] = [];
+  for (const inv of [...input.investments].sort((a, b) =>
+    a.id.localeCompare(b.id),
+  )) {
+    if (!pinned.has(inv.id)) continue;
+    const total = chosen[`inv:${inv.id}`];
+    const parts: MonthlyVehicle["parts"] = [];
+    for (const link of result.links.filter((l) => l.investmentId === inv.id)) {
+      const goal = result.goals.find((g) => g.goalId === link.goalId)!;
+      const monthly = Math.min(
+        Math.floor((total * link.percent) / 100),
+        Math.max(0, goal.requiredMonthly - (fixedByGoal[goal.goalId] ?? 0)),
+      );
+      fixedByGoal[goal.goalId] = (fixedByGoal[goal.goalId] ?? 0) + monthly;
+      if (monthly > 0)
+        parts.push({
+          goalId: goal.goalId,
+          goalName: goal.goalName,
+          monthly,
+          until: goal.targetDate,
+          purpose:
+            goal.category === "essential"
+              ? "safety"
+              : (goal.months ?? 0) >= 60
+                ? "long_term"
+                : "lifestyle",
+        });
+    }
+    if (total > 0)
+      manual.push({
+        key: `inv:${inv.id}`,
+        label: inv.name || categoryLabel(inv.category),
+        current: inv.monthlySip,
+        extra: 0,
+        total,
+        parts,
+        fixed: true,
+      });
+  }
+  const plan = hybridMoneyPlan(input, result);
+  const suggestions = plan.suggestions
+    .map((s) => ({
+      ...s,
+      monthly: Math.max(0, s.monthly - (fixedByGoal[s.goalId] ?? 0)),
+    }))
+    .filter((s) => s.monthly > 0 || s.lump > 0);
+  const automatic = sipPlan(
+    suggestions,
+    input.investments.filter((i) => !pinned.has(i.id)),
+    result.links,
+    "pooled",
+    input.goals,
+  ).map((line) => ({
+    key: line.key ?? `new:${line.category}`,
+    label: line.label,
+    current: line.investment?.monthlySip ?? 0,
+    extra: 0,
+    total: line.monthly,
+    parts: line.parts.map((p) => ({
+      ...p,
+      purpose: (result.goals.find((g) => g.goalId === p.goalId)?.category ===
+      "essential"
+        ? "safety"
+        : (result.goals.find((g) => g.goalId === p.goalId)?.months ?? 0) >= 60
+          ? "long_term"
+          : "lifestyle") as "safety" | "long_term" | "lifestyle",
+    })),
+  }));
+  return [...automatic, ...manual].filter((r) => r.total > 0);
 }

@@ -1,5 +1,9 @@
 # Status
 
+## Live SIP holding choices, 23 Nov 2026
+
+Explicit holding edits are exact monthly choices, including zero. The remaining monthly capacity is recalculated using the existing hybrid engine and vehicle picker; edited holdings are excluded from automatic contribution destinations without removing their existing goal coverage. Confirmation stores only explicit choices with exactHoldings and the full monthly limit in immutable plan inputs. Legacy minimum-only plans retain their existing semantics. Reset clears choices; overcommitted plans cannot be saved. No holdings, provider SIPs or actual contributions are changed. Verification: full check passed (795 unit tests and 40 Python tests), with the additional coverage regression and server cases passing targeted checks. Lint, TypeScript and production build pass. Real-component browser checks at 320/375/768px cover live redistribution, exact-choice save payloads, reopen, reset and overcommit prevention without overflow or page errors. Full signed-in hosted E2E remains unverified.
+
 ## Editable SIP capacity without mandatory budget setup, 23 Nov 2026
 
 SimpleSipPlanner now leads with an editable How much can you invest each month? field. A missing saved budget is distinct from a budget with zero surplus. Without a saved budget, users explicitly enter available monthly savings after expenses/EMIs; changing the amount refreshes suggestions and each destination stays editable. Before an amount is entered, the planner shows an input prompt rather than a wall of zero recommendations. A saved budget supplies the default and remains an enforced ceiling.

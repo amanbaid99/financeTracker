@@ -35,6 +35,8 @@ export function sipSuggestions(opts: {
   today: string;
   /** Your budget's Save & invest a month, or 0 when it has none. */
   budgetMonthly: number;
+  minimums?: import("./sip-minimums").SipMinimums;
+  exactHoldings?: boolean;
   /** Fixed costs and EMIs a month, for the emergency fund floor. */
   essentialsMonthly?: number;
   riskTolerance?: "conservative" | "moderate" | "aggressive" | null;
@@ -50,19 +52,26 @@ export function sipSuggestions(opts: {
   byGoal: { goalId: string; goalName: string; monthly: number; why: string }[];
 } {
   const input = {
-    goals: opts.goals, investments: opts.investments, links: opts.links,
-    today: opts.today, riskTolerance: opts.riskTolerance,
+    goals: opts.goals,
+    investments: opts.investments,
+    links: opts.links,
+    today: opts.today,
+    riskTolerance: opts.riskTolerance,
     monthlySavings: Math.max(0, opts.budgetMonthly),
+    minimums: opts.minimums,
+    exactHoldings: opts.exactHoldings,
   };
   const plan = hybridPlan(input);
   const lines = hybridVehicles(input, plan);
-  const byInvestment = new Map(lines.map(l => [l.key, l]));
+  const byInvestment = new Map(lines.map((l) => [l.key, l]));
   const holdings = opts.investments
     .filter((i) => !NOT_MONTHLY.has(asKind(i.kind)))
     .map((i) => {
       const line = byInvestment.get(`inv:${i.id}`);
       const kindLabel =
-        i.kind === "mutual_fund" ? categoryLabel(i.category) : KIND_LABELS[asKind(i.kind)];
+        i.kind === "mutual_fund"
+          ? categoryLabel(i.category)
+          : KIND_LABELS[asKind(i.kind)];
       return {
         investment: i,
         label: i.name?.trim() || kindLabel,
@@ -82,7 +91,9 @@ export function sipSuggestions(opts: {
     .map((l) => ({
       key: l.key,
       label: l.label,
-      category: plan.goals.find(g => l.parts.some(p => p.goalId === g.goalId))?.investmentCategory ?? "liquid_fund",
+      category:
+        plan.goals.find((g) => l.parts.some((p) => p.goalId === g.goalId))
+          ?.investmentCategory ?? "liquid_fund",
       suggested: l.total,
       covers: l.parts.map((p) => p.goalName),
     }));
@@ -96,6 +107,11 @@ export function sipSuggestions(opts: {
     inHoldings,
     inNewFunds,
     unplaced: Math.max(0, plan.totalMonthlyAllocated - inHoldings - inNewFunds),
-    byGoal: plan.goals.map(g => ({goalId:g.goalId, goalName:g.goalName, monthly:g.recommendedMonthly, why:g.explanation})),
+    byGoal: plan.goals.map((g) => ({
+      goalId: g.goalId,
+      goalName: g.goalName,
+      monthly: g.recommendedMonthly,
+      why: g.explanation,
+    })),
   };
 }

@@ -27,6 +27,7 @@ export function SimpleSipPlanner({
   initialMonthly,
   essentialsMonthly = 0,
   savedAmounts,
+  savedExactHoldings = false,
   revision,
   riskTolerance,
 }: {
@@ -42,6 +43,7 @@ export function SimpleSipPlanner({
   essentialsMonthly?: number;
   /** Amounts saved last time, per holding (inv:<id>). */
   savedAmounts: SipMinimums;
+  savedExactHoldings?: boolean;
   hasConfirmed: boolean;
   revision: string;
   riskTolerance?: "conservative" | "moderate" | "aggressive" | null;
@@ -71,7 +73,7 @@ export function SimpleSipPlanner({
       }),
     [goals, investments, currentLinks, today, riskTolerance],
   );
-  const s = useMemo(
+  const baseline = useMemo(
     () =>
       sipSuggestions({
         goals,
@@ -92,48 +94,68 @@ export function SimpleSipPlanner({
       riskTolerance,
     ],
   );
-  const suggestedFor = (id: string) =>
-    s.holdings.find((h) => h.investment.id === id)?.suggested ?? 0;
-  const useSaved = Object.values(savedAmounts).some((v) => v > 0);
-  const startAmounts = () =>
+  const [fixed, setFixed] = useState<Record<string, number>>(() =>
     Object.fromEntries(
-      s.holdings.map((h) => [
-        h.investment.id,
-        useSaved ? (savedAmounts[`inv:${h.investment.id}`] ?? 0) : h.suggested,
-      ]),
-    );
-  const [amounts, setAmounts] = useState<Record<string, number>>(startAmounts);
-  const total = Object.values(amounts).reduce((a, b) => a + b, 0);
-  const differsFromSuggested = s.holdings.some(
-    (h) => (amounts[h.investment.id] ?? 0) !== h.suggested,
+      baseline.holdings.flatMap((h) => {
+        const value = savedAmounts[`inv:${h.investment.id}`];
+        return value !== undefined &&
+          (savedExactHoldings || value !== h.suggested)
+          ? [[h.investment.id, value]]
+          : [];
+      }),
+    ),
   );
-
-  const overBudget =
-    total > monthlyLimit || (budgetConfigured && monthlyLimit > budgetMonthly);
-
-  function changeMonthly(value: number | null) {
-    setMonthly(value);
-    setError("");
-    const next = sipSuggestions({
+  const fixedTotal = Object.values(fixed).reduce((sum, n) => sum + n, 0);
+  const s = useMemo(
+    () =>
+      sipSuggestions({
+        goals,
+        investments,
+        links,
+        today,
+        budgetMonthly: fixedTotal > monthlyLimit ? 0 : monthlyLimit,
+        essentialsMonthly,
+        riskTolerance,
+        minimums:
+          fixedTotal > monthlyLimit
+            ? {}
+            : Object.fromEntries(
+                Object.entries(fixed).map(([id, n]) => [`inv:${id}`, n]),
+              ),
+        exactHoldings: true,
+      }),
+    [
       goals,
       investments,
       links,
       today,
-      budgetMonthly:
-        value !== null &&
-        Number.isSafeInteger(value) &&
-        value >= 0 &&
-        value <= 1e9
-          ? value
-          : 0,
+      monthlyLimit,
       essentialsMonthly,
       riskTolerance,
-    });
-    setAmounts(
-      Object.fromEntries(
-        next.holdings.map((h) => [h.investment.id, h.suggested]),
-      ),
-    );
+      fixed,
+      fixedTotal,
+    ],
+  );
+  const displayHoldings = baseline.holdings.map(
+    (h) => s.holdings.find((l) => l.investment.id === h.investment.id) ?? h,
+  );
+  const amounts = Object.fromEntries(
+    s.holdings.map((h) => [
+      h.investment.id,
+      fixed[h.investment.id] ?? h.suggested,
+    ]),
+  );
+  const total = Object.values(amounts).reduce((sum, n) => sum + n, 0);
+  const differsFromSuggested = Object.keys(fixed).length > 0;
+  const suggestedFor = (id: string) =>
+    s.holdings.find((h) => h.investment.id === id)?.suggested ?? 0;
+  const overBudget =
+    fixedTotal > monthlyLimit ||
+    total > monthlyLimit ||
+    (budgetConfigured && monthlyLimit > budgetMonthly);
+  function changeMonthly(value: number | null) {
+    setMonthly(value);
+    setError("");
   }
   const preview = useMemo(() => {
     if (total > monthlyLimit || !validMonthly) return null;
@@ -144,9 +166,10 @@ export function SimpleSipPlanner({
       today,
       riskTolerance,
       monthlySavings: capacity,
-      monthlyPlanLimit: total,
+      monthlyPlanLimit: monthlyLimit,
+      exactHoldings: true,
       minimums: Object.fromEntries(
-        Object.entries(amounts).map(([id, n]) => [`inv:${id}`, n]),
+        Object.entries(fixed).map(([id, n]) => [`inv:${id}`, n]),
       ),
     };
     try {
@@ -172,7 +195,7 @@ export function SimpleSipPlanner({
     monthlyLimit,
     validMonthly,
     total,
-    amounts,
+    fixed,
   ]);
 
   function save() {
@@ -182,16 +205,15 @@ export function SimpleSipPlanner({
       return setError("Lower the amounts or update your budget before saving.");
     setError("");
     const minimums = Object.fromEntries(
-      Object.entries(amounts)
-        .filter(([, v]) => v > 0)
-        .map(([id, v]) => [`inv:${id}`, v]),
+      Object.entries(fixed).map(([id, v]) => [`inv:${id}`, v]),
     );
     start(async () => {
       try {
         const res = await confirmHybridPlan({
           calculatedOn: today,
           revision,
-          monthly: total,
+          monthly: monthlyLimit,
+          exactHoldings: true,
           ...(!budgetConfigured ? { manualSavings: monthlyLimit } : {}),
           lump: 0,
           cashBuffer: 0,
@@ -228,7 +250,8 @@ export function SimpleSipPlanner({
           {budgetConfigured
             ? `Your budget allows ${formatINR(budgetMonthly)}/mo.`
             : "No budget is saved. Enter what you can set aside after expenses and EMIs. You can create a budget later."}{" "}
-          Changing this amount refreshes the suggested split.
+          Your chosen holding amounts stay fixed. Other suggestions update
+          automatically.
         </p>
         {monthly !== null && !validMonthly && (
           <p role="alert" className="text-sm text-danger">
@@ -303,17 +326,7 @@ export function SimpleSipPlanner({
             <div className="flex items-center justify-between gap-3">
               <h2 className="font-semibold">Your holdings</h2>
               {differsFromSuggested && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() =>
-                    setAmounts(
-                      Object.fromEntries(
-                        s.holdings.map((h) => [h.investment.id, h.suggested]),
-                      ),
-                    )
-                  }
-                >
+                <Button variant="ghost" size="sm" onClick={() => setFixed({})}>
                   Use suggestions
                 </Button>
               )}
@@ -324,7 +337,7 @@ export function SimpleSipPlanner({
               </p>
             ) : (
               <ul className="divide-y">
-                {s.holdings.map((h) => {
+                {displayHoldings.map((h) => {
                   const id = h.investment.id;
                   const suggested = suggestedFor(id);
                   return (
@@ -341,9 +354,11 @@ export function SimpleSipPlanner({
                               : ""}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {suggested > 0
-                              ? `Suggested ${formatINR(suggested)}${h.covers.length ? ` for ${h.covers.join(", ")}` : ""}`
-                              : "Nothing suggested"}
+                            {Object.hasOwn(fixed, id)
+                              ? "Chosen by you"
+                              : suggested > 0
+                                ? `Suggested ${formatINR(suggested)}${h.covers.length ? ` for ${h.covers.join(", ")}` : ""}`
+                                : "Nothing suggested"}
                           </p>
                         </div>
                         <div className="w-28 shrink-0">
@@ -351,7 +366,7 @@ export function SimpleSipPlanner({
                             aria-label={`${h.label} a month`}
                             value={amounts[id] ?? 0}
                             onChange={(v) =>
-                              setAmounts((a) => ({ ...a, [id]: v ?? 0 }))
+                              setFixed((a) => ({ ...a, [id]: v ?? 0 }))
                             }
                           />
                         </div>

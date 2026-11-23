@@ -96,3 +96,18 @@ it("a manual declaration cannot bypass a saved budget's available amount",async(
  vi.mocked(loadBudget).mockResolvedValue({budgetConfigured:true,budget:{income:10000,costs:10000,emis:0}} as never);
  expect((await confirmHybridPlan({...input,monthly:10000,manualSavings:10000})).ok).toBe(false);expect(rpc).not.toHaveBeenCalled();
 });
+
+it("persists exact choices separately from the full monthly allowance",async()=>{
+ vi.mocked(loadGoals).mockResolvedValue({today:"2026-11-22",goals:[],links:[],investments:[{id:"holding",name:"Retirement account",kind:"nps",category:null,value:10000,monthlySip:0,returnPct:0}]} as never);
+ expect(await confirmHybridPlan({...input,exactHoldings:true,minimums:{"inv:holding":1000}})).toEqual({ok:true});
+ const args=rpc.mock.calls[0][1];
+ expect(args.p_inputs.exactHoldings).toBe(true);
+ expect(args.p_monthly).toBe(10000);
+ expect(args.p_minimums).toEqual({"inv:holding":1000});
+ expect(args.p_result.vehicles).toEqual(expect.arrayContaining([expect.objectContaining({key:"inv:holding",total:1000})]));
+});
+it("rejects exact holding choices above the monthly allowance",async()=>{
+ vi.mocked(loadGoals).mockResolvedValue({today:"2026-11-22",goals:[],links:[],investments:[{id:"holding",name:"Retirement account",kind:"nps",value:0,monthlySip:0}]} as never);
+ expect((await confirmHybridPlan({...input,exactHoldings:true,minimums:{"inv:holding":10001}})).ok).toBe(false);
+ expect(rpc).not.toHaveBeenCalled();
+});
