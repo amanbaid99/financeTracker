@@ -1,5 +1,9 @@
 # Status
 
+## Holdings assumed withdrawable, 23 Nov 2026
+
+At the owner's request, ASSUME_HOLDINGS_WITHDRAWABLE enables one explicit planning assumption across coverage, emergency runway, unassigned money, mapping candidates, SIP access checks and withdrawal previews. Historical availability/access metadata is retained but no longer blocks use of a holding. ELSS existing value can cover a linked wedding goal without entering an unlock date. Removed Access and valuation details from InvestmentSheet; saved valuation metadata remains intact. Risk-based future contribution classes, goal ownership limits and reserve protection remain separate. Preview copy states the availability assumption, without claiming a provider has confirmed redemption. No trades, balance updates, unlock claims or schema changes. Verification: lint, TypeScript, 828 unit tests, 40 Python tests and production build pass. Regression cases verify ELSS coverage for a 2028 wedding, withdrawal preview eligibility, unassigned-share accounting and unchanged input holdings. Real-component browser checks verify removed controls, saving ELSS to its parent goal, and new/existing/edit link flows at 320/375/768px. No hosted financial records changed for testing.
+
 ## Aligned Budget allocation rows, 23 Nov 2026
 
 Replaced the cramped three-column allocation tiles with three compact rows. Labels, amounts, percentages and edit icons have consistent columns; percentages no longer repeat or wrap “of income”, and icons have their own space. Income editing, fixed-cost editing and allocation calculations are unchanged. Verification: lint, TypeScript, 825 unit tests, 40 Python tests and production build pass. Mobile checks using the screenshot values at 320/375/430/768px verify aligned amount edges, non-overlapping percentages/edit icons and no horizontal overflow; existing Budget edits and no-salary checks pass.

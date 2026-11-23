@@ -1,3 +1,4 @@
+import { ASSUME_HOLDINGS_WITHDRAWABLE } from "./holding-access";
 // One deterministic funding and allocation calculation. Decimal arithmetic, integer INR outputs.
 // No database, clock, AI or mutation of supplied goals/holdings.
 import Decimal from "decimal.js-light";
@@ -19,7 +20,7 @@ import {
   futureValueDecimal,
   requiredMonthlyDecimal,
 } from "./funding-math";
-export const HYBRID_VERSION = "hybrid-1.1.0";
+export const HYBRID_VERSION = "hybrid-1.2.0";
 export interface HybridPolicy {
   priority: Record<"high" | "medium" | "low", number>;
   urgency: [number, number, number];
@@ -231,16 +232,17 @@ export function unallocatedLiquidValue(
   return investments
     .filter(
       (i) =>
-        (!i.availability || i.availability === "available") &&
-        (!i.accessibleOn || i.accessibleOn <= today) &&
-        (i.kind === "savings" ||
-          (i.kind === "mutual_fund" &&
-            [
-              "liquid_fund",
-              "overnight_fund",
-              "money_market",
-              "arbitrage",
-            ].includes(i.category ?? ""))),
+        ASSUME_HOLDINGS_WITHDRAWABLE ||
+        ((!i.availability || i.availability === "available") &&
+          (!i.accessibleOn || i.accessibleOn <= today) &&
+          (i.kind === "savings" ||
+            (i.kind === "mutual_fund" &&
+              [
+                "liquid_fund",
+                "overnight_fund",
+                "money_market",
+                "arbitrage",
+              ].includes(i.category ?? "")))),
     )
     .reduce((sum, i) => {
       const used = links
@@ -252,6 +254,7 @@ export function unallocatedLiquidValue(
     }, 0);
 }
 function accessible(i: Investment, g: GoalInput, today: string) {
+  if (ASSUME_HOLDINGS_WITHDRAWABLE) return true;
   if (i.availability === "pledged" || i.availability === "unavailable")
     return false;
   if (i.accessibleOn && (!g.targetDate || i.accessibleOn > g.targetDate))
@@ -457,7 +460,11 @@ export function calculateHybrid(input: HybridInput): HybridResult {
       currentMonthly = currentMonthly.plus(
         new D(inv.monthlySip).times(l.percent).div(100),
       );
-      if (["ppf", "epf", "nps"].includes(inv.kind) && !inv.accessibleOn)
+      if (
+        !ASSUME_HOLDINGS_WITHDRAWABLE &&
+        ["ppf", "epf", "nps"].includes(inv.kind) &&
+        !inv.accessibleOn
+      )
         warnings.push(
           `Confirm retirement access eligibility before the deadline: ${inv.id}.`,
         );
@@ -486,7 +493,11 @@ export function calculateHybrid(input: HybridInput): HybridResult {
         ["equity", "gold"].includes(assetClassOf(inv))
       )
         warnings.push(`Risk may conflict with the deadline: ${inv.id}.`);
-      if (inv.kind === "fd" && !inv.accessibleOn)
+      if (
+        !ASSUME_HOLDINGS_WITHDRAWABLE &&
+        inv.kind === "fd" &&
+        !inv.accessibleOn
+      )
         warnings.push(`Confirm maturity or early access: ${inv.id}.`);
     }
     let required =

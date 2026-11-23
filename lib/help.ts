@@ -63,7 +63,7 @@ export const HELP: HelpTopic[] = [
       "The planner proposes percentage ownership of your existing investments. Confirming a plan saves that mapping. Confirmed shares stay in place until you approve a new plan; only unassigned ownership is available for extra mapping.",
       "An investment can support several goals, but its total assigned share cannot exceed 100%. Current allocated values follow its recorded balance. Deleting or completing a goal releases ownership without deleting the investment.",
       "Essentials and flexible goals use separate holdings for new planning. Travel prefers a suitable separate bank account or another liquid fund. Missing suitable vehicles are shown as categories, never invented products.",
-      "Only assigned, accessible investments count toward coverage. Check valuation dates and restrictions on holdings in Net worth. No live prices or automatic trades are used.",
+      "Assigned holdings count toward coverage. For now, the app assumes all holdings are withdrawable. No live prices or automatic trades are used.",
     ],
     tags: "auto allocate link map which fund covers goal priority emergency sinking",
   },
@@ -83,7 +83,7 @@ export const HELP: HelpTopic[] = [
     q: "What is Simplify your portfolio?",
     a: [
       "Up to three ideas for having fewer things to track: extra bank accounts, several funds of the same type, tiny holdings with no SIP, with a separate Money not assigned to goals card. Bank-account reviews include salary credits, EMIs, UPI, autopay and minimum balances. A small balance alone does not mean an account is unused. It only names funds you already hold.",
-      "Money not assigned to goals names each holding and its free amount. Assign to a goal lets you choose a goal and amount, then confirm. Plan a withdrawal opens a preview for that holding, not an order to sell. Restricted assets remain visible but are not treated as withdrawable cash. Update balances only after an actual withdrawal.",
+      "Money not assigned to goals names each holding and its free amount. Assign to a goal lets you choose a goal and amount, then confirm. Plan a withdrawal opens a preview for that holding, not an order to sell. All holdings are assumed withdrawable for planning. Update balances only after an actual withdrawal.",
       "Nothing is sold or moved. Check exit loads and tax before you sell anything. Not investment advice.",
     ],
     tags: "simplify merge consolidate liquid funds small holdings spare",
@@ -189,7 +189,7 @@ export const HELP: HelpTopic[] = [
     q: "How do I plan my monthly SIPs?",
     a: [
       "Enter How much can you invest each month? Your monthly SIPs now lists goals, with destinations underneath. A saved budget supplies the default and ceiling. Without one, enter available savings after expenses and EMIs, plus monthly essential costs for the emergency runway calculation.",
-      "Emergency cover reaches one month first, then three months, followed by payments and goals in deadline order. Existing accessible bank, liquid and overnight balances count toward runway, not future market growth or future SIPs. After recording emergency deposits, review the plan so new money can move to the next goals. Zero surplus creates no contributions.",
+      "Emergency cover reaches one month first, then three months, followed by payments and goals in deadline order. Current recorded balances count toward runway under the all-holdings-available assumption, not future market growth or future SIPs. After recording emergency deposits, review the plan so new money can move to the next goals. Zero surplus creates no contributions.",
       "Suitable linked holdings come first. The app keeps safety and lifestyle money separate. If no suitable holding exists, it names a broad investment class, never a new product. Edit a goal amount to keep it fixed while others recalculate. Reset amounts restores recommendations. Your edits can delay emergency cover or nearer goals; the screen warns about this.",
       "Save this plan keeps it in the app. No SIP is started or changed with your provider.",
     ],
@@ -276,7 +276,7 @@ export const HELP: HelpTopic[] = [
     q: "Where should I withdraw money from?",
     a: [
       "Open +, then Plan a withdrawal. Enter the amount and choose its goal or Something else. The preview uses money covering the selected goal first, then unassigned accessible money. Considering other goals needs your explicit choice. Emergency and bill reserves remain protected unless you select that goal.",
-      "It compares the lower balances with current goal targets unchanged and shows additional funding gaps. Completing a goal is a separate update. Tax, exit loads, settlement, units and lot-level locks are not calculated. ELSS, retirement accounts, FDs, physical gold and unknown assets are excluded. Confirm access with your provider, then update balances after withdrawing. Nothing is sold or saved by the preview.",
+      "It compares the lower balances with current goal targets unchanged and shows additional funding gaps. Completing a goal is a separate update. Tax, exit loads, settlement, units and lot-level locks are not calculated. All holdings are included under the current availability assumption. Confirm access with your provider, then update balances after withdrawing. Nothing is sold or saved by the preview.",
       "In Ask, an amount-based withdrawal question uses this same local calculation instead of AI arithmetic. General conversation still uses Ask consent and its normal AI settings.",
     ],
     tags: "withdraw redeem spend source money impact goals",

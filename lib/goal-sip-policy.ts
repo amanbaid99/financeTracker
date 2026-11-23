@@ -1,3 +1,4 @@
+import { ASSUME_HOLDINGS_WITHDRAWABLE } from "./holding-access";
 // Safety stages use recorded accessible cash, never projected market growth.
 import { rollForward } from "./bills-fund";
 import { FinancialDecimal as D } from "./funding-math";
@@ -39,13 +40,18 @@ export function prepareSafetyStages(
       .reduce((sum, l) => {
         const inv = investments.find((i) => i.id === l.investmentId)!;
         const liquid =
+          ASSUME_HOLDINGS_WITHDRAWABLE ||
           inv.kind === "savings" ||
           ["liquid_fund", "overnight_fund", "savings_account"].includes(
             inv.category ?? "",
           );
         return liquid &&
-          (!inv.availability || inv.availability === "available") &&
-          (!inv.accessibleOn || inv.accessibleOn <= today)
+          (ASSUME_HOLDINGS_WITHDRAWABLE ||
+            !inv.availability ||
+            inv.availability === "available") &&
+          (ASSUME_HOLDINGS_WITHDRAWABLE ||
+            !inv.accessibleOn ||
+            inv.accessibleOn <= today)
           ? sum.plus(new D(inv.value).times(l.percent).div(100))
           : sum;
       }, new D(0))
@@ -70,7 +76,10 @@ export function prepareSafetyStages(
     };
     row.explanation =
       "Build one month of emergency cover, then three months, before funding goals by deadline. This is an accelerated safety contribution, not an extra goal.";
-    if (accessible < Math.min(row.existingCoverage, target))
+    if (
+      !ASSUME_HOLDINGS_WITHDRAWABLE &&
+      accessible < Math.min(row.existingCoverage, target)
+    )
       row.warnings.push(
         "Only accessible bank, liquid and overnight balances count as emergency runway. Review other linked holdings before relying on them in an emergency.",
       );

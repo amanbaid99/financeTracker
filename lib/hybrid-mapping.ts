@@ -1,3 +1,4 @@
+import { ASSUME_HOLDINGS_WITHDRAWABLE } from "./holding-access";
 import { sipPlan } from "./sip-plan";
 import { categoryLabel } from "./categories";
 import { autoAllocate } from "./auto-allocate";
@@ -38,9 +39,11 @@ export function proposeGoalMapping(
       .map((l) => {
         const goal = existing.goals.find((g) => g.goalId === l.goalId)!;
         const share =
-          goal.targetCorpus===0?0:goal.projectedExistingCorpus > 0
-            ? Math.min(1, goal.targetCorpus / goal.projectedExistingCorpus)
-            : 1;
+          goal.targetCorpus === 0
+            ? 0
+            : goal.projectedExistingCorpus > 0
+              ? Math.min(1, goal.targetCorpus / goal.projectedExistingCorpus)
+              : 1;
         return {
           ...l,
           percent: Math.min(
@@ -53,7 +56,12 @@ export function proposeGoalMapping(
   }
 
   const free = investments
-    .filter((i) => !i.availability || i.availability === "available")
+    .filter(
+      (i) =>
+        ASSUME_HOLDINGS_WITHDRAWABLE ||
+        !i.availability ||
+        i.availability === "available",
+    )
     .map((i) => {
       const used = base
         .filter((l) => l.investmentId === i.id)
@@ -130,7 +138,10 @@ export function proposeGoalMapping(
         goals.some(
           (g) =>
             g.id === l.goalId &&
-            ((g.goalCategory??(["emergency_fund", "bills_fund", "loan_payoff"].includes(g.type)?"essential":"flexible"))==="essential"),
+            (g.goalCategory ??
+              (["emergency_fund", "bills_fund", "loan_payoff"].includes(g.type)
+                ? "essential"
+                : "flexible")) === "essential",
         ),
       ),
     ].map((l) => l.investmentId),
@@ -164,7 +175,12 @@ export function proposeGoalMapping(
 }
 
 /** Compare ownership, not database row IDs or retrieval order. */
-export function sameGoalMapping(a:Link[],b:Link[]){
- const canonical=(links:Link[])=>JSON.stringify(links.map(l=>[l.goalId,l.investmentId,Math.round(l.percent*100)]).sort((x,y)=>JSON.stringify(x).localeCompare(JSON.stringify(y))));
- return canonical(a)===canonical(b);
+export function sameGoalMapping(a: Link[], b: Link[]) {
+  const canonical = (links: Link[]) =>
+    JSON.stringify(
+      links
+        .map((l) => [l.goalId, l.investmentId, Math.round(l.percent * 100)])
+        .sort((x, y) => JSON.stringify(x).localeCompare(JSON.stringify(y))),
+    );
+  return canonical(a) === canonical(b);
 }

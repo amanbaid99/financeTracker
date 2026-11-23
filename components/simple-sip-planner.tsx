@@ -258,7 +258,7 @@ export function SimpleSipPlanner({
                 Emergency cover: {(runway / costs).toFixed(1)} months
               </p>
               <p className="mt-1 text-muted-foreground">
-                {formatINR(runway)} accessible now. One month:{" "}
+                {formatINR(runway)} saved. One month:{" "}
                 {formatINR(
                   Math.min(
                     safety.reduce(

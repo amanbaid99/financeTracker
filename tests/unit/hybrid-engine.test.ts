@@ -194,7 +194,7 @@ describe("hybrid funding calculator", () => {
     expect(p.goals[0].requiredMonthly).toBe(9000);
     expect(JSON.stringify(investments)).toBe(original);
   });
-  it("reports stale, missing, risk and restricted holding data", () => {
+  it("reports valuations and risk while assuming holdings are available", () => {
     const holdings = [
       inv("stale", 10000, { valuationDate: "2020-01-01" }),
       inv("missing", 10000, { valuationDate: null }),
@@ -210,7 +210,7 @@ describe("hybrid funding calculator", () => {
         percent: 100,
       })),
     });
-    expect(p.goals[0].existingCoverage).toBe(30000);
+    expect(p.goals[0].existingCoverage).toBe(50000);
     expect(p.goals[0].warnings.join(" ")).toMatch(/valuation|Valuation/);
     expect(p.goals[0].warnings.join(" ")).toContain("Risk");
   });

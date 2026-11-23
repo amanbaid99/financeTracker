@@ -1,4 +1,5 @@
 "use client";
+import {ASSUME_HOLDINGS_WITHDRAWABLE} from "@/lib/holding-access";
 import {useState,useTransition} from "react";
 import {useRouter} from "next/navigation";
 import Link from "next/link";
@@ -24,7 +25,7 @@ export function UnallocatedMoney({investments,links,goals,today}:{investments:In
   <div><h2 id="unallocated-h" className="font-semibold">Money not assigned to goals</h2><p className="tabular mt-1 text-2xl font-semibold">{formatINR(rows.reduce((s,r)=>s+r.value,0))}</p></div>
   <p className="text-sm text-muted-foreground">These parts of your holdings don&apos;t currently cover a goal. Unassigned doesn&apos;t mean available to withdraw.</p>
   {!canAssign&&<p className="text-xs text-muted-foreground">Confirm your existing goal coverage in the monthly plan before assigning more money. This keeps other goals covered.</p>}
-  <ul className="divide-y">{rows.map(r=>{const i=r.investment;const accessible=(!i.availability||i.availability==="available")&&(!i.accessibleOn||i.accessibleOn<=today);const canWithdraw=accessible&&withdrawalEligible(i);return <li key={i.id} className="space-y-2 py-3">
+  <ul className="divide-y">{rows.map(r=>{const i=r.investment;const accessible=ASSUME_HOLDINGS_WITHDRAWABLE||(!i.availability||i.availability==="available")&&(!i.accessibleOn||i.accessibleOn<=today);const canWithdraw=accessible&&withdrawalEligible(i);return <li key={i.id} className="space-y-2 py-3">
    <div className="flex items-start justify-between gap-3 text-sm"><span className="min-w-0 break-words font-medium">{holdingLabel(i)}</span><b className="tabular shrink-0">{formatINR(r.value)}</b></div>
    <p className="text-xs text-muted-foreground">{r.freePercent}% unassigned · Holding total {formatINR(i.value)}{!accessible?" · Access restricted":""}</p>
    <div className="flex flex-wrap gap-2">{canAssign?<Button variant="outline" size="sm" onClick={()=>setSelected(i.id)}>Assign to a goal</Button>:<Link href="/goals/sip" className={buttonVariants({variant:"outline",size:"sm"})}>Review goal coverage first</Link>}

@@ -40,9 +40,9 @@ it("handles zero surplus, completed goals and excess savings without exceeding r
  }
  const data=input(120000);data.goals[1]={...safety,completed:true};expect(amount(hybridPlan(data),"safety")).toBe(0);
 });
-it("does not count locked or volatile balances as emergency runway",()=>{
+it("uses recorded balances despite legacy access flags under the availability assumption",()=>{
  const data=input(20000);data.investments[0]={...cash(20000),availability:"pledged"};
- const r=hybridPlan(data);expect(r.goals.find(g=>g.goalId==="safety")!.assumptions.runway!.accessibleCorpus).toBe(0);
+ const r=hybridPlan(data);expect(r.goals.find(g=>g.goalId==="safety")!.assumptions.runway!.accessibleCorpus).toBe(20000);
 });
 it("does not count the same three-month safety target once per emergency goal",()=>{
  const data=input(0,40000);data.goals.push({...safety,id:"safety2",name:"Other safety"});const r=hybridPlan(data);
@@ -65,9 +65,9 @@ it("keeps overrides exact and rejects a total beyond the available monthly amoun
  expect(amount(r,"near")).toBe(5000);expect(amount(r,"safety")).toBe(30000);expect(r.totalMonthlyAllocated).toBe(40000);
  expect(()=>hybridPlan({...data,overrides:{near:10000,far:10000,safety:30000}})).toThrow(/exceed/);
 });
-it("uses no projected equity value as cash runway",()=>{
+it("uses current equity value without adding projected growth under the availability assumption",()=>{
  const data=input(20000);data.investments=[{...cash(20000),kind:"mutual_fund",category:"equity_index",returnPct:12}];
- expect(hybridPlan(data).goals.find(g=>g.goalId==="safety")!.assumptions.runway!.accessibleCorpus).toBe(0);
+ expect(hybridPlan(data).goals.find(g=>g.goalId==="safety")!.assumptions.runway!.accessibleCorpus).toBe(20000);
 });
 it("leaves expired deadlines and fully funded goals safe without adding fictitious contributions",()=>{
  const data=input(120000,50000);data.goals.push({...near,id:"past",targetDate:"2025-01-01"});

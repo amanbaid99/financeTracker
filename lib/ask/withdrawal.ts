@@ -20,6 +20,6 @@ export function withdrawalAnswer(opts:{text:string;amount:number;goals:TrackedGo
  if(plan.short>0)lines.push(`${formatINR(plan.short)} is still needed. Other goals, emergency reserves and bill reserves are protected. Choose the purpose in Plan a withdrawal; considering other goals requires your explicit choice there.`);
  for(const impact of plan.impacts)lines.push(`- ${codeOf[impact.goalId]} would need ${formatINR(impact.extraShortfall)} more funding at its goal date.`);
  if(!plan.impacts.length&&plan.available>0)lines.push("No additional funding shortfall in the current goal model.");
- lines.push("This uses recorded balances with goal targets unchanged. Completing a goal is a separate update. Tax, exit loads, settlement and purchase-lot restrictions are not calculated. ELSS, retirement accounts, FDs, physical gold and unknown assets are excluded. Check access with your provider. Nothing is withdrawn or saved.");
+ lines.push("This uses recorded balances with goal targets unchanged. Completing a goal is a separate update. Tax, exit loads, settlement and purchase-lot restrictions are not calculated. All holdings are assumed withdrawable for planning. Check actual availability with your provider. Nothing is withdrawn or saved.");
  return lines.join("\n\n");
 }

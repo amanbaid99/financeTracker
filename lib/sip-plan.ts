@@ -1,3 +1,4 @@
+import { ASSUME_HOLDINGS_WITHDRAWABLE } from "./holding-access";
 // The money plan as SIPs to start. Each goal's monthly amount goes into a
 // fund or bank account you already hold where one suits it: first one
 // already saving for that goal, then one goals don't fully use. Only when
@@ -296,17 +297,21 @@ export function splitForGoal(
     let candidates = investments.filter(
       (i) =>
         linked.has(i.id) &&
-        (!i.availability || i.availability === "available") &&
+        (ASSUME_HOLDINGS_WITHDRAWABLE ||
+          !i.availability ||
+          i.availability === "available") &&
         i.kind !== "fd" &&
         i.kind !== "epf" &&
-        (!i.accessibleOn ||
+        (ASSUME_HOLDINGS_WITHDRAWABLE ||
+          !i.accessibleOn ||
           !goal?.targetDate ||
           i.accessibleOn <= goal.targetDate) &&
         (fit(i) !== null ||
           (goal?.type === "retirement" &&
             ["nps", "ppf", "stock"].includes(i.kind) &&
             ["equity_index", "balanced_advantage"].includes(category))) &&
-        (i.category !== "elss" ||
+        (ASSUME_HOLDINGS_WITHDRAWABLE ||
+          i.category !== "elss" ||
           (i.accessibleOn &&
             goal?.targetDate &&
             i.accessibleOn <= goal.targetDate)),
@@ -358,7 +363,7 @@ export function splitForGoal(
     // 3 years, a debt or arbitrage fund you hold comes first; a bank account
     // is the last resort (see NEARBY).
     const allowed = [...(STAND_INS[category] ?? [category])].filter(
-      (k) => !["gold", "elss"].includes(k),
+      (k) => k !== "gold" && (ASSUME_HOLDINGS_WITHDRAWABLE || k !== "elss"),
     );
     if (preferBank && allowed.includes("savings_account")) {
       allowed.splice(allowed.indexOf("savings_account"), 1);
@@ -366,7 +371,9 @@ export function splitForGoal(
     }
     let candidates = investments.filter(
       (i) =>
-        (!i.availability || i.availability === "available") &&
+        (ASSUME_HOLDINGS_WITHDRAWABLE ||
+          !i.availability ||
+          i.availability === "available") &&
         allowed.includes(kindOf(i) ?? ""),
     );
     const linkedIds = new Set(
@@ -391,7 +398,9 @@ export function splitForGoal(
       investment = investments
         .filter(
           (i) =>
-            (!i.availability || i.availability === "available") &&
+            (ASSUME_HOLDINGS_WITHDRAWABLE ||
+              !i.availability ||
+              i.availability === "available") &&
             near.includes(kindOf(i) ?? ""),
         )
         .sort(
