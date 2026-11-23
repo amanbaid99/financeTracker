@@ -1,5 +1,9 @@
 # Status
 
+## Investments added inside a goal stay linked, 23 Nov 2026
+
+GoalInvestments had opened InvestmentSheet with goalId null, so saving created a portfolio holding without a goal allocation. It now passes the goal ID/name, existing linked IDs and the current share when editing. New and existing holding saves reuse saveInvestment's allocation persistence and 100% ownership validation. Portfolio-only entry points and pooled plan recording are unchanged. New component-context and save-action regressions pass. Full lint, TypeScript, unit/Python checks and production build pass. Real-component browser checks at 320/375/768px verify new-holding and existing-holding goal IDs in save payloads and retention of a 35% share when editing. No hosted financial data was changed for testing. Full signed-in E2E remains unverified.
+
 ## Live SIP holding choices, 23 Nov 2026
 
 Explicit holding edits are exact monthly choices, including zero. The remaining monthly capacity is recalculated using the existing hybrid engine and vehicle picker; edited holdings are excluded from automatic contribution destinations without removing their existing goal coverage. Confirmation stores only explicit choices with exactHoldings and the full monthly limit in immutable plan inputs. Legacy minimum-only plans retain their existing semantics. Reset clears choices; overcommitted plans cannot be saved. No holdings, provider SIPs or actual contributions are changed. Verification: full check passed (795 unit tests and 40 Python tests), with the additional coverage regression and server cases passing targeted checks. Lint, TypeScript and production build pass. Real-component browser checks at 320/375/768px cover live redistribution, exact-choice save payloads, reopen, reset and overcommit prevention without overflow or page errors. Full signed-in hosted E2E remains unverified.

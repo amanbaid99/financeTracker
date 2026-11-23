@@ -187,7 +187,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByLabel("Fund category")).toHaveValue("equity_index");
   await page.getByRole("button", { name: "Close", exact: true }).click();
 
-  // A mutual fund: the app works out which goal it covers.
+  // A mutual fund added inside a goal is linked to that goal on save.
   await page.getByRole("button", { name: "Add investment" }).click();
   await page.getByLabel("Fund category").selectOption("flexi_cap");
   await page.getByLabel("Nickname (optional)").fill("Index SIP");
@@ -198,7 +198,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     "placeholder",
     "11.5",
   );
-  await expect(page.getByLabel("Share for this goal, %")).toHaveCount(0);
+  await expect(page.getByLabel("Share for this goal, %")).toHaveValue("100");
   await page.getByRole("button", { name: "Add investment" }).last().click();
   await expect(
     page.getByRole("button", { name: "Edit Index SIP" }),
@@ -211,9 +211,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Nickname (optional)").fill("Bank FD");
   await page.getByLabel("Value today").fill("100000");
   await page.getByRole("button", { name: "Add investment" }).last().click();
-  // A far goal doesn't use safe money like an FD, so House keeps the fund only.
-  await expect(page.getByRole("button", { name: "Edit Bank FD" })).toHaveCount(0);
-  await expect(page.getByText("₹3,00,000", { exact: true }).first()).toBeVisible();
+  // Explicitly adding the FD links it too, regardless of the automatic picker.
+  await expect(page.getByRole("button", { name: "Edit Bank FD" })).toBeVisible();
+  await expect(page.getByText("₹4,00,000", { exact: true }).first()).toBeVisible();
   await expect(
     page.getByText(/Put ₹[\d,]+ a month into it to be on time/),
   ).toBeVisible();

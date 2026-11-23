@@ -73,7 +73,7 @@ export const HELP: HelpTopic[] = [
     q: "How do I change which investments cover a goal?",
     a: [
       "Open a goal to see Covered by. The app proposes suitable existing investments in the background when you create your monthly plan. Review and save once; there is no separate mapping approval list.",
-      "For a manual change, tap Change what covers this goal inside its details. Other goals keep their allocations. If your chosen share is already used, the edit is rejected without changing your previous coverage.",
+      "Adding an investment from a goal links it to that goal when you save. You can create a new investment or choose one you already have, with a share of the holding for this goal. For a manual change, tap Change what covers this goal inside its details. Other goals keep their allocations. If your chosen share is already used, the edit is rejected without changing your previous coverage.",
     ],
     tags: "suggestions accept change mapping merge move sell simplify",
   },

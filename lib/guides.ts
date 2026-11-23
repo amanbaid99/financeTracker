@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"Add an investment directly to a goal",items:[{title:"Linked when you save",text:"Add investment inside a goal now saves its coverage link too. Choose a new investment or one you already have, and review the share before saving."}]},
  {date:"2026-11-23",title:"SIP suggestions adjust around your choices",items:[{title:"One monthly total",text:"Enter an amount for any holding and the other suggestions update automatically. Your choices stay fixed when you save and reopen. Use suggestions resets your edits."}]},
  {date:"2026-11-23",title:"Enter your SIP amount directly",items:[{title:"Budget setup is optional",text:"Enter how much you can invest monthly at the top of the SIP planner. Suggestions update immediately. Your confirmed amount stays available when you reopen it."}]},
  {date:"2026-11-23",title:"Budget setup in two screens",items:[{title:"All your numbers together",text:"Income, EMIs, rent, utilities and personal spending share one screen. Next, review the allocation and save. Unknown costs start blank."}]},

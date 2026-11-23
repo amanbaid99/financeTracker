@@ -197,8 +197,8 @@ export function GoalInvestments({
         ) : (
           !goal.cover?.why && (
             <p className="text-sm text-muted-foreground">
-              Nothing yet. Add the mutual funds, stocks or deposits you have,
-              and the app works out which goals they cover.
+              Nothing yet. Add an investment to cover this goal, or choose one
+              you already have.
             </p>
           )
         )
@@ -211,7 +211,7 @@ export function GoalInvestments({
               value={l.value}
               sip={l.monthlySip}
               percent={l.percent}
-              onClick={() => setOpen({ investment: l.investment, percent: null })}
+              onClick={() => setOpen({ investment: l.investment, percent: l.percent })}
             />
           ))}
         </ul>
@@ -228,10 +228,11 @@ export function GoalInvestments({
         holdings={investments.map(i=>({id:i.id,label:holdingLabel(i),value:i.value}))} />
       {open && (
         <InvestmentSheet
-          goalId={null}
-          linkedIds={[]}
+          goalId={goal.id}
+          goalName={goal.name}
+          linkedIds={goal.lines.map((line) => line.investment.id)}
           investment={open.investment}
-          percent={null}
+          percent={open.percent}
           investments={investments}
           links={links}
           onClose={close}
