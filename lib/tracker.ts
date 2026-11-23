@@ -36,6 +36,8 @@ export interface Investment {
 }
 
 export interface GoalInput {
+  emergencyReserve?:number;
+  emergencyReserveDate?:string|null;
   targetType?: "today"|"future";
   priorityLevel?: "high"|"medium"|"low";
   goalCategory?: "essential"|"flexible";
@@ -415,7 +417,13 @@ function trackBills(
   bills: Bill[],
   todayISO: string,
 ): TrackedGoal {
-  const state = billsFundState(bills, base.current, base.monthlySip, todayISO);
+  const reserve=base.emergencyReserve??0;
+  const reserveGap=Math.max(0,reserve-base.current);
+  const reserveMonths=Math.max(1,Math.min(12,base.emergencyReserveDate?monthsBetween(todayISO,base.emergencyReserveDate):12));
+  const reserveMonthly=Math.ceil(reserveGap/reserveMonths);
+  const raw=billsFundState(bills,Math.max(0,base.current-reserve),Math.max(0,base.monthlySip-reserveMonthly),todayISO);
+  const state={...raw,monthlyNeed:raw.monthlyNeed+reserveMonthly,needsToday:raw.needsToday+reserve,shouldHold:raw.shouldHold+reserve,topUpNow:raw.topUpNow+reserveGap,
+    short:reserveGap>0&&(!raw.short||reserveGap>raw.short.amount)?{amount:reserveGap,by:base.emergencyReserveDate??addMonths(todayISO,12)}:raw.short};
   const status: GoalStatus = !bills.length
     ? "no_investments"
     : state.short

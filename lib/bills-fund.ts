@@ -219,7 +219,16 @@ export function billsFundState(
  * The minimum for later bills assumes any first-cycle cash gap is addressed separately.
  * Nothing is added to the recorded balance by this forecast.
  */
-export function hybridBillsForecast(input:Bill[],balance:number,monthly:number,today:string){
+export function hybridBillsForecast(input:Bill[],balance:number,monthly:number,today:string,reserve=0,reserveMonths=12):{target:number;requiredMonthly:number;immediateShortfall:number;cashflowShortfall:number}{
+ if(reserve>0){
+  const gap=Math.max(0,reserve-balance);
+  const reserveMonthly=reserveMonths>0?Math.ceil(gap/reserveMonths):0;
+  const reservedMonthly=Math.min(monthly,reserveMonthly);
+  const bill=hybridBillsForecast(input,Math.max(0,balance-reserve),Math.max(0,monthly-reservedMonthly),today);
+  return {...bill,target:bill.target+reserve,requiredMonthly:bill.requiredMonthly+reserveMonthly,
+    immediateShortfall:bill.immediateShortfall+(reserveMonths<=0?gap:0),
+    cashflowShortfall:Math.max(bill.cashflowShortfall,gap-reservedMonthly*Math.max(0,reserveMonths))};
+ }
  const state=billsFundState(input,balance,0,today);
  let cumulative=0,immediateShortfall=0;
  for(const event of state.upcoming){cumulative+=event.amount;if(monthsBetween(today,event.date)===0)immediateShortfall=Math.max(immediateShortfall,cumulative-balance);}

@@ -40,6 +40,7 @@ export function planWithdrawal(opts: {
   investmentId?: string | null;
   goalId?: string | null;
   allowOtherGoals?: boolean;
+  allowEmergencyReserve?: boolean;
   goals: TrackedGoal[];
   investments: Investment[];
   today: string;
@@ -101,9 +102,16 @@ export function planWithdrawal(opts: {
         tier: 1,
         reason: "unassigned",
       });
-    const selected = allocations
+    let selected = allocations
       .filter((a) => a.goal?.id === opts.goalId)
       .reduce((sum, a) => sum + a.amount, 0);
+    const selectedGoal=goals.find(g=>g.id===opts.goalId);
+    if(selectedGoal?.emergencyReserve&&!opts.allowEmergencyReserve){
+      const eligibleIds=new Set(investments.filter(i=>withdrawalEligible(i)&&(!i.accessibleOn||i.accessibleOn<=today)).map(i=>i.id));
+      const total=before.links.filter(l=>l.goalId===selectedGoal.id&&eligibleIds.has(l.investmentId)).reduce((sum,l)=>sum+(investments.find(i=>i.id===l.investmentId)!.value*l.percent/100),0);
+      const protectedShare=total>0?Math.ceil(Math.min(total,selectedGoal.emergencyReserve)*selected/total):0;
+      selected=Math.max(0,selected-protectedShare);
+    }
     if (selected >= 1)
       slices.push({
         investment: inv,

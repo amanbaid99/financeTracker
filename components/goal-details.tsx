@@ -332,6 +332,7 @@ export function BillsPlan({
   const upcoming = details ? b.upcoming.slice(0, 12) : b.upcoming.slice(0, 3);
   return (
     <div className="space-y-4">
+      {(g.emergencyReserve??0)>0&&<p className="rounded-xl bg-muted/40 p-3 text-sm">Emergency reserve: <b>{formatINR(g.emergencyReserve!)}</b>{g.emergencyReserveDate?` by ${formatDate(g.emergencyReserveDate)}`:""}. Planned bills below are funded in addition to this reserve.</p>}
       {!verdict ? null : b.short ? (
         <p className="rounded-lg bg-warning-soft p-3 text-sm text-warning">
           At {formatINR(g.monthlySip)} a month you&apos;ll be{" "}

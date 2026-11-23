@@ -139,7 +139,7 @@ export async function saveGoal(
       target_today: loan
         ? loan.outstanding
         : v.type === "bills_fund"
-          ? (v.bills ?? []).reduce((t, b) => t + b.amount, 0)
+          ? (v.bills ?? []).reduce((t, b) => t + b.amount, 0)+(v.planningSettings?.emergencyReserve??0)
           : v.target,
       target_date: v.targetDate,
       inflation_rate: loan ? null : v.inflationPct,

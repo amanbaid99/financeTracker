@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"One safety fund",items:[{title:"Emergency and planned bills together",text:"A combined goal keeps an emergency reserve and scheduled bills in one place. Planned bills use money above the reserve; withdrawals protect it unless you explicitly choose otherwise."}]},
  {date:"2026-11-23",title:"SIP budget amount fixed",items:[{title:"Use your saved budget",text:"The SIP planner now reads Save & invest from your saved guided budget, even when the old income records are empty. Loan costs count once. Your choices remain until you confirm."}]},
  {date:"2026-11-23",title:"Less upkeep, more clarity",items:[{title:"Let your plan run",text:"A new day no longer asks you to review a saved plan. Monthly card logging stays. Loan and CAS reviews are optional quarterly checks, with next-week snooze."},{title:"Debt at a glance",text:"Home shows expected repayment progress and payoff timing, clearly separate from your recorded balance. No payments are marked automatically."}]},
  {date:"2026-11-23",title:"Just your budget",items:[{title:"Three clear totals",text:"Create a budget with your own expenses and personal amount. No preset expense buttons or SIP-plan prompt. The summary shows Fixed spending, Personal spending and Save & invest."}]},

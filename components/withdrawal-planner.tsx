@@ -10,13 +10,15 @@ import { planWithdrawal } from "@/lib/withdrawal-plan";
 import type { Investment,TrackedGoal } from "@/lib/tracker";
 export function WithdrawalPlanner({goals,investments,today,initialAmount=null,initialHolding=null}:{goals:TrackedGoal[];investments:Investment[];today:string;initialAmount?:number|null;initialHolding?:string|null}){
  const [amount,setAmount]=useState<number|null>(initialAmount),[goalId,setGoalId]=useState(""),[allowOther,setAllowOther]=useState(false);
+ const [allowReserve,setAllowReserve]=useState(false);
  const [investmentId,setInvestmentId]=useState(initialHolding??"");
  const valid=amount!==null&&Number.isSafeInteger(amount)&&amount>0&&amount<=1e9;
- const plan=valid?planWithdrawal({amount,investmentId:investmentId||null,goalId:goalId||null,allowOtherGoals:allowOther,goals,investments,today}):null;
+ const plan=valid?planWithdrawal({amount,investmentId:investmentId||null,goalId:goalId||null,allowOtherGoals:allowOther,allowEmergencyReserve:allowReserve,goals,investments,today}):null;
  return <section className="surface-card space-y-4 rounded-2xl border bg-card p-4"><p className="text-sm text-muted-foreground">Preview where money could come from and what it would mean for your goals. Nothing is withdrawn or saved.</p>
  <Field label="Withdraw from" htmlFor="withdraw-holding"><Select id="withdraw-holding" value={investmentId} onChange={e=>setInvestmentId(e.target.value)}><option value="">Any eligible holding</option>{investments.map(i=><option key={i.id} value={i.id}>{i.name||categoryLabel(i.category)}</option>)}</Select></Field>
  <Field label="Amount needed" htmlFor="withdraw-amount"><MoneyInput id="withdraw-amount" value={amount} onChange={setAmount}/></Field>
- <Field label="What is it for?" htmlFor="withdraw-goal"><Select id="withdraw-goal" value={goalId} onChange={e=>{setGoalId(e.target.value);setAllowOther(false);}}><option value="">Something else</option>{goals.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</Select></Field>
+ <Field label="What is it for?" htmlFor="withdraw-goal"><Select id="withdraw-goal" value={goalId} onChange={e=>{setGoalId(e.target.value);setAllowOther(false);setAllowReserve(false);}}><option value="">Something else</option>{goals.map(g=><option key={g.id} value={g.id}>{g.name}</option>)}</Select></Field>
+ {goals.some(g=>g.id===goalId&&(g.emergencyReserve??0)>0)&&<label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-4 accent-primary" checked={allowReserve} onChange={e=>setAllowReserve(e.target.checked)}/>Use the emergency reserve too</label>}
  <label className="flex min-h-11 items-center gap-3 text-sm"><input type="checkbox" className="size-4 accent-primary" checked={allowOther} onChange={e=>setAllowOther(e.target.checked)}/>Also consider money covering other goals</label>
  <p className="text-xs text-muted-foreground">Money covering your selected goal first, then unassigned money. Emergency and bill reserves stay protected unless you select that goal.</p>
  {amount!==null&&!valid&&<p role="alert" className="text-sm text-danger">Enter a positive whole-rupee amount up to {formatINR(1e9)}.</p>}

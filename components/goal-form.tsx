@@ -110,6 +110,8 @@ export function GoalForm({
     minimumMonthly: goal?.minimumMonthly ?? 0,
     expectedReturnPct: goal?.expectedReturnPct ?? null,
     completed: goal?.completed ?? false,
+    emergencyReserve:goal?.emergencyReserve??0,
+    emergencyReserveDate:goal?.emergencyReserveDate??null,
   });
 
   const [inflation, setInflation] = useState(
@@ -598,7 +600,13 @@ export function GoalForm({
           )}
         </>
       ) : isBills ? (
+        <>
+        {(goal?.emergencyReserve??0)>0&&<div className="space-y-3">
+         <Field label="Emergency reserve" htmlFor="g-reserve"><MoneyInput id="g-reserve" value={planning.emergencyReserve} onChange={v=>setPlanning(p=>({...p,emergencyReserve:v??0}))}/></Field>
+         <Field label="Build reserve by" htmlFor="g-reserve-date"><Input id="g-reserve-date" type="date" value={planning.emergencyReserveDate??""} onChange={e=>setPlanning(p=>({...p,emergencyReserveDate:e.target.value||null}))}/></Field>
+        </div>}
         <BillsEditor rows={bills} onChange={setBills} />
+        </>
       ) : (
         <Field
           label="How much do you need?"

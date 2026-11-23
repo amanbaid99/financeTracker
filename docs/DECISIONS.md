@@ -1,5 +1,12 @@
 # Product decisions
 
+## One emergency and sinking goal, 23 Nov 2026
+
+Supports one bills_fund goal with emergencyReserve and emergencyReserveDate in existing planning_settings. No competing goal type or new tables. Bills keep their amounts, cycles and due dates. The shared corpus is counted once; scheduled bills use only the balance above the reserve. Monthly funding builds a missing reserve by the earlier of its original deadline and 12 months, alongside bill funding. Reserve assumptions exclude projected investment returns. The existing goal editor preserves and edits both reserve fields, and saving includes the reserve in the stored target.
+
+Withdrawal previews protect the reserve when the combined goal is selected, unless Use the emergency reserve too is explicitly selected. Home still derives emergency coverage from the combined goal, capped at the reserve target. A parameterized owner-requested maintenance script atomically keeps the sinking goal ID, groups ownership shares by holding, reassigns any bills, preserves the emergency deadline, then removes the redundant emergency goal. Immutable plan history, holding balances and provider SIPs remain unchanged. A private pre-merge backup is outside the repository.
+
+
 ## SIP capacity uses the saved guided budget, 23 Nov 2026
 
 Fixed loadBudget ignoring current standalone guided budgets, which made SIP capacity fall back to old income/expense records and show zero or incorrect savings. savedBudgetInputs reads the same versioned/legacy budget format as Budget, includes its personal spending, counts included loan rows once, respects excluded loans and no-salary plans, and excludes planned investments from expenses. The same loader feeds the SIP page and server confirmation. Read failures now surface instead of silently switching financial sources. Saved investment plans remain frozen until explicitly reconfirmed; no income records, holdings or loans are overwritten. Client calculation and connection errors now remain visible with a reload action and entered amounts retained. Regression tests cover the actual data loader and confirmation boundary with empty old income records.

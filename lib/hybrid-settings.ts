@@ -1,5 +1,7 @@
 import { z } from "zod";
 export const goalPlanningSchema = z.object({
+  emergencyReserve:z.number().int().min(0).max(1e13).optional(),
+  emergencyReserveDate:z.iso.date().nullable().optional(),
   targetType: z.enum(["today", "future"]).optional(),
   priorityLevel: z.enum(["high", "medium", "low"]).optional(),
   goalCategory: z.enum(["essential", "flexible"]).optional(),

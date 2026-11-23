@@ -205,6 +205,10 @@ export const HELP: HelpTopic[] = [
     ],
     tags: "budget sip save invest monthly allocation plan",
   },
+  {
+    id:"combined-safety",section:"Goals",q:"How does Emergency / sinking fund work?",
+    a:["It is one goal and one pool of investment ownership. Its target includes an emergency reserve plus planned bills. Bill amounts and dates stay intact; their funding is calculated in addition to building the reserve.","Edit the goal to change the reserve or its deadline. The reserve is built by the earlier of that deadline and twelve months. A planned withdrawal from this goal protects the reserve unless you select Use the emergency reserve too. Nothing is withdrawn automatically."],tags:"emergency sinking reserve bills combined safety"
+  },
   // Assets
   {
     id: "net-worth",

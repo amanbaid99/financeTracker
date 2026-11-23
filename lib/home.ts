@@ -130,9 +130,9 @@ export function emergencyMonths(
   goals: TrackedGoal[],
   essentialsMonthly: number,
 ): number | null {
-  const g = goals.find((x) => x.type === "emergency_fund");
+  const g = goals.find((x) => x.type === "emergency_fund"||(x.emergencyReserve??0)>0);
   if (!g || essentialsMonthly <= 0) return null;
-  return Math.floor((g.current / essentialsMonthly) * 10) / 10;
+  return Math.floor(((g.emergencyReserve?Math.min(g.current,g.emergencyReserve):g.current) / essentialsMonthly) * 10) / 10;
 }
 
 /** The milestone, but only when it's close: little left or ending soon. */

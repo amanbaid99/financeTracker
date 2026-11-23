@@ -492,7 +492,7 @@ export function calculateHybrid(input: HybridInput): HybridResult {
         g.bills ?? [],
         integer(coverage),
         0,
-        input.today,
+        input.today,g.emergencyReserve??0,safetyReserveMonths(g,input.today),
       );
       target = bill.target;
       existing = integer(coverage);
@@ -543,7 +543,7 @@ export function calculateHybrid(input: HybridInput): HybridResult {
     const funded =
       g.type === "bills_fund"
         ? required === 0 &&
-          hybridBillsForecast(g.bills ?? [], integer(coverage), 0, input.today)
+          hybridBillsForecast(g.bills ?? [], integer(coverage), 0, input.today,g.emergencyReserve??0,safetyReserveMonths(g,input.today))
             .cashflowShortfall === 0
         : existing >= target;
     let { category: investmentCategory } = hybridCategory(months, g.type);
@@ -664,7 +664,7 @@ export function calculateHybrid(input: HybridInput): HybridResult {
         source.find((g) => g.id === row.goalId)!.bills ?? [],
         row.existingCoverage + take,
         0,
-        input.today,
+        input.today,source.find(g=>g.id===row.goalId)?.emergencyReserve??0,safetyReserveMonths(source.find(g=>g.id===row.goalId)!,input.today),
       ).requiredMonthly;
     row.effectiveMinimumMonthly = Math.min(
       row.minimumMonthly,
@@ -792,7 +792,7 @@ export function calculateHybrid(input: HybridInput): HybridResult {
         source.find((g) => g.id === row.goalId)!.bills ?? [],
         row.existingCoverage + row.oneTimeAllocated,
         row.recommendedMonthly,
-        input.today,
+        input.today,source.find(g=>g.id===row.goalId)?.emergencyReserve??0,safetyReserveMonths(source.find(g=>g.id===row.goalId)!,input.today),
       );
       row.projectedShortfall = Math.max(
         0,
@@ -949,3 +949,5 @@ export function calculateHybrid(input: HybridInput): HybridResult {
     warnings,
   };
 }
+
+function safetyReserveMonths(g:GoalInput,today:string){return g.emergencyReserveDate?Math.max(0,Math.min(12,monthsBetween(today,g.emergencyReserveDate))):12;}
