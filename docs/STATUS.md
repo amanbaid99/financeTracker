@@ -1,5 +1,9 @@
 # Status
 
+## Saved SIP summary on Budget, 23 Nov 2026
+
+SIP confirmation now redirects to /goals/budget. Budget loads the owner’s latest confirmed safety_deadline snapshot and shows its allocated monthly total, priority-ordered goals and per-vehicle amounts with Edit plan. No new recommendation is calculated and nothing is written on page load. Zero plans remain editable; read errors are visible without blocking Budget. Budget and SIP fetching start independently. The existing budget summary has tighter spacing and a no-salary grid without the unused percentage gap; fixed costs have tighter rows without duplicate EMI labels. SIP planning stays independent of Budget and all actual balances/contributions remain unchanged. No schema changes. Verification: lint, TypeScript, 853 unit tests, 40 Python tests and production build pass. Browser checks at 320/375/768px cover salary/no-salary layouts, confirmed plan rendering, Budget edits, no overflow and the SIP save destination. Full signed-in E2E remains unverified; no hosted financial data changed for tests.
+
 ## Reallocate within SIP goals first, 23 Nov 2026
 
 Held-vehicle edits retain the current goal total and use its unpinned automatic capacity first. Only when the sum of explicit vehicle choices exceeds that total does the goal grow and use lower-priority automatic goal capacity. Decreasing a vehicle also leaves room for automatic redistribution inside the same goal. Previous explicit vehicle choices remain exact. Class-only rows still directly edit the goal amount. Regression verifies a ₹25,000 goal becomes ₹24,000 automatic plus ₹1,000 chosen while Travel remains funded. No actual contributions, holdings or Budget changes. Verification: lint, TypeScript, 851 unit tests, 40 Python tests and production build pass. Browser checks at 320/375/768px verify within-goal redistribution, unchanged other goal totals and save/reopen.

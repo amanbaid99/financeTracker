@@ -355,9 +355,10 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(houseSip.getByRole("textbox").first()).toHaveValue("12,000");
   await page.screenshot({path:"test-results/sip-plan-375.png",fullPage:true});
   await page.getByRole("button",{name:"Save this plan",exact:true}).click();
-  await expect(page).toHaveURL(/\/goals$/);
+  await expect(page).toHaveURL(/\/goals\/budget$/);
+  await expect(page.getByRole("region",{name:"Saved SIP plan"})).toBeVisible();
   await expect(page.getByText("SIP plan saved.",{exact:true})).toBeVisible();
-  await expect(page.getByRole("link",{name:"Plan a withdrawal",exact:true})).toBeVisible();
+
   await expect(page.getByRole("checkbox")).toHaveCount(0);
   await page.screenshot({path:"test-results/plan-375.png",fullPage:true});
   await page.getByRole("link",{name:"Goals",exact:true}).first().click();
@@ -383,7 +384,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByRole("region", {name:"Suggestions"})).toHaveCount(0);
   await page.goto("/goals/sip");
   await page.getByRole("button",{name:"Save this plan",exact:true}).click();
-  await expect(page).toHaveURL(/\/goals\/plan$/);
+  await expect(page).toHaveURL(/\/goals\/budget$/);
   // Extra money: where a one-time amount would go, without saving anything.
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
   await page.goto("/goals?do=extra");
@@ -439,7 +440,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.goto("/goals/sip");
   await page.getByRole("button",{name:"Save this plan",exact:true}).click();
-  await expect(page).toHaveURL(/\/goals\/plan$/);
+  await expect(page).toHaveURL(/\/goals\/budget$/);
   await page.goto("/goals");
   await billsCard.click();
   // Nothing is folded away: a covered bills fund stays in the one list.

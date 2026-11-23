@@ -54,3 +54,17 @@ export const loadHybridHistory=cache(async()=>{
  if(error)throw Error("Could not load your previous plans. Try again.");
  return data??[];
 });
+
+/** Budget displays the confirmed SIP snapshot, never a fresh recommendation. */
+export const loadSavedSipPlan = cache(async () => {
+  const { supabase, user } = await requireUser();
+  const { data, error } = await supabase.from("allocation_plans")
+    .select("id,created_at,result")
+    .eq("user_id", user.id)
+    .eq("inputs->>allocationMode", "safety_deadline")
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(1).maybeSingle();
+  if (error) throw Error("Could not load your saved SIP plan.");
+  return data;
+});

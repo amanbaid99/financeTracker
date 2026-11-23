@@ -217,7 +217,7 @@ export function SimpleSipPlanner({
         });
         if (!res.ok) return setError(res.error);
         toast({ text: "SIP plan saved." });
-        router.replace("/goals");
+        router.replace("/goals/budget");
         router.refresh();
       } catch {
         setError(

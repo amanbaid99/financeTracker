@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"Your SIP plan on Budget",items:[{title:"Save, then see the plan",text:"Saving SIPs opens Budget with your confirmed monthly total and each goal’s vehicles. Edit plan brings you back. Budget spacing and no-salary amount alignment are tidier."}]},
  {date:"2026-11-23",title:"Adjust within a goal first",items:[{title:"Keep other goals steady",text:"Entering a vehicle amount reallocates automatic money within that goal first. Other goals only change if the chosen amounts need more than the goal total."}]},
  {date:"2026-11-23",title:"SIP priority waterfall",items:[{title:"Fund priorities first",text:"Goals fill one at a time. Editing a later vehicle reduces the lowest-priority automatic allocation first. Earlier vehicle choices remain fixed."}]},
  {date:"2026-11-23",title:"Simpler SIP goal cards",items:[{title:"Only the essentials",text:"Removed Plan details from every SIP goal card. Your totals, vehicles and coverage colours stay visible."}]},

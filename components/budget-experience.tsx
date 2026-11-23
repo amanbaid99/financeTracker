@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronRight,
@@ -60,6 +60,7 @@ export function BudgetExperience({
   knownCosts,
   sips,
   loadError,
+  sipSummary,
 }: {
   initial: BudgetSheet | null;
   saved: boolean;
@@ -69,6 +70,7 @@ export function BudgetExperience({
   /** Monthly SIPs already going in. */
   sips: number;
   loadError: string | null;
+  sipSummary?: ReactNode;
 }) {
   const [plan, setPlan] = useState<BudgetSheet | null>(
     hasSaved && initial ? groupPersonalCosts(initial) : null,
@@ -155,6 +157,7 @@ export function BudgetExperience({
             Nothing is saved until you confirm.
           </p>
         </div>
+        {sipSummary}
         {message && (
           <p role="status" className="text-sm text-primary">
             {message}
@@ -194,7 +197,7 @@ export function BudgetExperience({
         </p>
       )}
       <div className="surface-card overflow-hidden rounded-3xl border border-primary/15 bg-card">
-        <div className="space-y-5 bg-gradient-to-br from-primary/5 to-transparent p-5">
+        <div className="space-y-3 bg-gradient-to-br from-primary/5 to-transparent p-5">
           <button
             type="button"
             aria-label="Edit income"
@@ -271,7 +274,7 @@ export function BudgetExperience({
                 </>
               );
               const rowClass =
-                "grid min-h-12 w-full grid-cols-[minmax(0,1fr)_5.5rem_2.25rem_1rem] items-center gap-2 py-3 text-left";
+                cn("grid min-h-12 w-full items-center gap-2 py-3 text-left", noSalary ? "grid-cols-[minmax(0,1fr)_auto_0px_1rem]" : "grid-cols-[minmax(0,1fr)_5.5rem_2.25rem_1rem]");
               return b.id === "essentials" ? (
                 <div key={b.id} className={rowClass}>
                   {content}
@@ -306,12 +309,13 @@ export function BudgetExperience({
           )}
         </div>
       </div>
+      {sipSummary}
       <div className="surface-card rounded-2xl border bg-card p-4">
         <div className="mb-2 flex items-center justify-between gap-3">
           <div>
             <h3 className="font-semibold">Fixed spending</h3>
             <p className="text-xs text-muted-foreground">
-              Your recurring monthly costs
+              Rent, bills and EMIs
             </p>
           </div>
           <Button
@@ -349,11 +353,11 @@ export function BudgetExperience({
                   aria-label={`Edit ${r.name}`}
                   disabled={!!loadError}
                   onClick={() => edit({ kind: "row", row: r, isNew: false })}
-                  className="press flex min-h-14 w-full items-center justify-between gap-3 py-3 text-left text-sm"
+                  className="press flex min-h-12 w-full items-center justify-between gap-3 py-3 text-left text-sm"
                 >
                   <span className="min-w-0 break-words">
                     {r.name}
-                    {r.loanId && (
+                    {r.loanId && !/emi/i.test(r.name) && (
                       <span className="mt-0.5 block text-xs text-muted-foreground">
                         EMI
                       </span>
