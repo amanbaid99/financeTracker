@@ -82,6 +82,17 @@ const STAND_INS: Record<string, string[]> = {
   ],
 };
 
+/**
+ * Your closest fund when nothing fits exactly, best first, so the plan reuses
+ * what you hold before suggesting a new fund. Short-term money stays safe.
+ */
+const NEARBY: Record<string, string[]> = {
+  liquid_fund: ["short_debt_fund", "corporate_bond", "debt_fund", "gilt", "conservative_hybrid", "savings_account"],
+  short_debt_fund: ["overnight_fund", "savings_account", "gilt", "conservative_hybrid"],
+  balanced_advantage: ["large_cap", "equity_index", "flexi_cap", "short_debt_fund", "corporate_bond", "mid_small_cap", "international", "liquid_fund"],
+  equity_index: ["aggressive_hybrid", "balanced_advantage", "multi_asset", "sectoral_thematic", "conservative_hybrid"],
+};
+
 /** Gold spreads the risk but can swing, so it gets at most this share of a goal. */
 const GOLD_CAP = 0.2;
 
@@ -246,7 +257,13 @@ export function splitForGoal(
     const linkedIds=new Set(links.filter(l=>l.goalId===goalId&&l.percent>0).map(l=>l.investmentId));
     const own=candidates.filter(i=>linkedIds.has(i.id));if(own.length)candidates=own;
     candidates.sort((a,b)=>allowed.indexOf(kindOf(a)!)-allowed.indexOf(kindOf(b)!) || b.monthlySip-a.monthlySip || b.value-a.value || a.id.localeCompare(b.id));
-    const investment=candidates[0];
+    let investment=candidates[0];
+    // Nothing that fits exactly: use your closest fund before suggesting a new
+    // one. Money needed soon never falls back to equity.
+    if(!investment){
+      const near=NEARBY[category]??[];
+      investment=investments.filter(i=>(!i.availability||i.availability==="available")&&near.includes(kindOf(i)??"")).sort((a,b)=>near.indexOf(kindOf(a)!)-near.indexOf(kindOf(b)!) || b.monthlySip-a.monthlySip || b.value-a.value || a.id.localeCompare(b.id))[0];
+    }
     return investment?[{investment,monthly,lump,similar:kindOf(investment)!==category,percent:100,note:noteFor(investment)}]:[];
   }
   const pctOf = new Map(

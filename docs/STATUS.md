@@ -13,6 +13,11 @@ Last updated: 23 Nov 2026.
 
 
 
+
+## SIP suggestions reuse your closest fund, 23 Nov 2026
+
+`splitForGoal` pooled path (lib/sip-plan.ts) falls back to a `NEARBY` list per category when nothing fits exactly, so a held flexi-cap fund takes a 3 to 5 year goal's money instead of "a new balanced advantage fund". Liquid and short-debt needs never fall back to equity. A new fund is suggested only when nothing held is close.
+
 ## SIP plan as one list, 23 Nov 2026
 
 `/goals/sip` now renders `components/simple-sip-planner.tsx`: every holding you can add monthly money to (not FDs or EPF), each with a suggested amount from `sipSuggestions` (lib/simple-sip.ts, built on hybridPlan/hybridVehicles; basis is what goals need, capped at the budget's Save & invest when it has one) and an editable amount, plus "Suggested, but you don't hold one" kinds of fund. Save writes a confirmed hybrid plan with the typed amounts as per-holding minimums and monthly = their total. `confirmHybridPlan` no longer rejects plans above the budget (monthlySavings = max(capacity, monthly)); the screen shows a note instead. HybridPlanner stays for the Your plan view.

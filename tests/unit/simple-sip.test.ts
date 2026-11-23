@@ -78,3 +78,47 @@ describe("sipSuggestions", () => {
     expect(s.holdings.every((h) => h.suggested === 0)).toBe(true);
   });
 });
+
+describe("reusing what you hold", () => {
+  it("puts a 3 to 5 year goal's money into your flexi-cap fund instead of a new fund", () => {
+    const funds = [inv("flexi", "mutual_fund", "flexi_cap", 300000, 10000)];
+    const house: GoalInput = {
+      id: "house",
+      name: "House",
+      type: "custom",
+      target: 2000000,
+      targetDate: "2030-11-23",
+      inflationPct: null,
+    };
+    const s = sipSuggestions({
+      goals: [trackGoal(house, funds, [], today)],
+      investments: funds,
+      links: [],
+      today,
+      budgetMonthly: 0,
+    });
+    expect(s.newFunds).toEqual([]);
+    expect(s.holdings[0].suggested).toBeGreaterThan(0);
+  });
+
+  it("never uses equity for money needed within a year", () => {
+    const funds = [inv("flexi", "mutual_fund", "flexi_cap", 300000)];
+    const trip: GoalInput = {
+      id: "trip",
+      name: "Trip",
+      type: "travel",
+      target: 200000,
+      targetDate: "2027-06-01",
+      inflationPct: null,
+    };
+    const s = sipSuggestions({
+      goals: [trackGoal(trip, funds, [], today)],
+      investments: funds,
+      links: [],
+      today,
+      budgetMonthly: 0,
+    });
+    expect(s.holdings[0].suggested).toBe(0);
+    expect(s.newFunds.length).toBeGreaterThan(0);
+  });
+});
