@@ -89,14 +89,13 @@ export const GUIDES: Record<GuideId, Guide> = {
     ],
   },
   budget: {
-    title: "A simpler plan for your money",
-    intro: "A few questions first, a compact monthly plan after.",
+    title: "Your monthly budget",
+    intro: "Three quick steps, then tap any row to change it.",
     steps: [
-      "Tap Plan my budget. Confirm income and recorded commitments first. Groceries and everyday costs are asked later, with up to two expense questions per screen. Personal transport stays in the Personal spending step. Annual contributions stay in Goals.",
-      "Enter a preferred Personal spending amount or let the guide suggest one. There is no savings-versus-investing split to choose.",
-      "Review one Save & invest amount and Personal spending in rupees. Change anything before Save this budget. Create a SIP plan can then reserve optional monthly minimums by investment type.",
-      "Your saved view has three totals. Itemised buckets expand into a breakdown; Edit beside income opens monthly amounts. Edit includes Personal spending and Save & invest; changing one adjusts the other. Budget options holds reset.",
-      "The budget stays independent unless you choose Create a SIP plan and explicitly save its monthly allocation. Investment records and SIP mandates are not created automatically.",
+      "Tap Plan my budget. Enter your take-home income, or tick No salary right now.",
+      "Check your monthly costs. They're filled in from your records and loans; untick what you don't pay or add a common cost.",
+      "Review the split. Save & invest includes your existing SIPs and is rounded to ₹500; Personal spending gets the rest.",
+      "After saving, tap any row or your income to change it. Use for Your plan opens the SIP planner with your Save & invest amount.",
     ],
   },
   ask: {
@@ -135,6 +134,11 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-23", title: "An easier budget", items: [
+    { title: "Three steps", text: "Income, your costs (filled in from your records, groceries and day-to-day spending included), then a rounded split that counts the SIPs you already have." },
+    { title: "No salary right now", text: "Tick it and the budget becomes your monthly costs, which Covered till salary uses." },
+    { title: "Tap to change", text: "Tap any row or your income to edit it. Use for Your plan sends your Save & invest amount to the SIP planner." },
+  ] },
   {date:"2026-11-22",title:"A plan that puts essentials first",items:[
     {title:"Hybrid monthly allocation",text:"Essential minimums and needs come first. Flexible goals share the remainder by priority, deadline and need. The budget is always the limit."},
     {title:"A plan you confirm",text:"Review vehicles and open Why this plan? for coverage, projections, assumptions and editable goal amounts. Saving keeps a new version; your actual SIPs and balances stay unchanged."},

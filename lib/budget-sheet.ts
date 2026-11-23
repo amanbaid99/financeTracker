@@ -31,12 +31,15 @@ const targetSchema = z.object({ mode: z.enum(["amount", "percent"]), value: z.nu
 });
 export const budgetRulesSchema = z.object({ savings: targetSchema, investing: targetSchema, future: targetSchema.optional() });
 export const budgetSheetSchema = z.object({
-  version: z.literal(2), salary: z.number().int().positive("Enter your monthly take-home income.").max(1e9),
+  version: z.literal(2), salary: z.number().int().min(0).max(1e9),
   rows: z.array(budgetRowSchema).max(100), excludedLoanIds: z.array(z.string().uuid()).max(100).default([]),
   rules: budgetRulesSchema.optional(),
   standalone: z.boolean().optional(),
   personalGrouping: z.boolean().optional(),
+  /** Between jobs: no take-home income, so the budget is just monthly costs. */
+  noSalary: z.boolean().optional(),
 }).superRefine((plan, ctx) => {
+  if (plan.salary <= 0 && !plan.noSalary) ctx.addIssue({ code: "custom", message: "Enter your monthly take-home income." });
   if (new TextEncoder().encode(JSON.stringify(plan)).byteLength > 50000) ctx.addIssue({ code: "custom", message: "This budget is too large. Shorten item names or remove some rows." });
   const ids = new Set<string>(), loans = new Set<string>();
   for (const row of plan.rows) {

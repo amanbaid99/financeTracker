@@ -951,23 +951,35 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Back is named after the screen you came from, not always "Your goals".
   await page.getByRole("main").getByRole("link").first().click();
 
-  // Guided budget: review each answer, save a standalone plan, then see three compact buckets.
+  // Budget: income, one prefilled list of costs, then a rounded split that
+  // counts existing SIPs. Saved rows open on tap.
   await tab("Budget").click();
   await expect(page.getByRole("heading", { name: "Budget", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Plan my budget", exact: true }).click();
   await page.getByLabel("Monthly take-home income", { exact: true }).fill("200000");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
-  await page.getByRole("button", { name: "Use selected costs", exact: true }).click();
-  while (await page.getByRole("heading", { name: "A couple of monthly costs", exact: true }).count()) {
-    await page.getByRole("button", { name: "Continue", exact: true }).click();
-  }
-  await page.getByRole("button", { name: "That is everything", exact: true }).click();
-  await page.getByRole("button", { name: "Show my recommended plan", exact: true }).click();
-  await expect(page.getByLabel("Monthly save & invest", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Your monthly costs" })).toBeVisible();
+  await page.getByRole("button", { name: "Groceries", exact: true }).click();
+  await page.getByLabel("Groceries monthly amount").fill("12000");
+  await page.getByRole("button", { name: "Continue", exact: true }).click();
+  const future = page.getByLabel("Save & invest a month", { exact: true });
+  await expect(future).toBeVisible();
+  await expect(page.getByText(/^Includes the ₹[\d,]+ already going into your SIPs\.$/)).toBeVisible();
+  expect(Number((await future.inputValue()).replace(/,/g, "")) % 500).toBe(0);
   await page.getByRole("button", { name: "Save this budget", exact: true }).click();
   await expect(page.getByText("Budget saved.", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Edit monthly amounts", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Edit Groceries" }).click();
+  await page.getByLabel("Monthly amount").fill("15000");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Edit Groceries" })).toContainText("₹15,000");
+  await expect(page.getByRole("link", { name: /^Use ₹[\d,]+ for Your plan$/ })).toBeVisible();
   await page.screenshot({ path: "test-results/budget-375.png", fullPage: true });
+  // Between jobs: no salary makes the budget just monthly costs.
+  await page.getByRole("button", { name: "Edit income" }).click();
+  await page.getByText("No salary right now").click();
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.getByText("needed each month until your next salary")).toBeVisible();
+  await expect(page.getByRole("link", { name: /for Your plan$/ })).toHaveCount(0);
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
 
   // Your plan: the monthly split, with Edit order.

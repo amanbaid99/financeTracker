@@ -8,7 +8,7 @@ export const metadata: Metadata = { title: "Budget" };
 
 /** The Budget tab: money in and out each month, and, between jobs, whether you're covered till salary. */
 export default async function BudgetPage() {
-  const { loanEmis, recordCosts, recordIncome, budget } = await loadBudget();
+  const { loanEmis, recordCosts, recordIncome, budget, sips } = await loadBudget();
   // A new budget starts at your recorded income; a saved one keeps its own.
   const sheet = await loadBudgetSheet(budget.income || recordIncome, loanEmis);
   return (
@@ -19,7 +19,7 @@ export default async function BudgetPage() {
           <GuideButton id="budget" />
         </div>
       </div>
-      <BudgetExperience initial={sheet.plan} saved={sheet.saved} salary={recordIncome} loans={loanEmis} knownCosts={recordCosts} loadError={sheet.error} />
+      <BudgetExperience initial={sheet.plan} saved={sheet.saved} salary={recordIncome} loans={loanEmis} knownCosts={recordCosts} sips={sips} loadError={sheet.error} />
     </main>
   );
 }

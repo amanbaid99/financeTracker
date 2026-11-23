@@ -1,42 +1,77 @@
+// The budget setup: income (or none right now), one list of monthly costs
+// prefilled from your records, then a suggested split to review. Pure; the
+// component saves only when you tap Save.
+
 import { isPersonalTransport, personalMinimum } from "./personal-budget";
 import { knownBudgetItems, type KnownBudgetCost } from "./budget-assist";
 import { applyBudgetRules, emptyBudgetSheet, isRuleRow, rowAmount, type BudgetSheet, type BudgetSheetRow, type SheetLoan } from "./budget-sheet";
 
-export const COST_QUESTIONS = [
-  { id: "housing", name: "Rent or home EMI", question: "Do you pay rent or a home EMI?", hint: "Only add housing costs not already confirmed.", match: /\b(rent|home|housing|mortgage)\b/i },
-  { id: "utilities", name: "Utilities", question: "What do utilities cost each month?", hint: "Electricity, water, internet and phone bills.", match: /utilit|electric|internet|broadband|phone|water/i },
-  { id: "groceries", name: "Groceries", question: "How much goes toward groceries?", hint: "Use a normal month, not your most expensive one.", match: /grocer|household|food/i },
-  { id: "insurance", name: "Monthly insurance", question: "Any monthly insurance payments?", hint: "Only payments you make monthly. Annual contributions stay in Goals.", match: /insuran|premium/i },
-  { id: "other", name: "Other essentials", question: "Any other regular essentials?", hint: "Family support, subscriptions, school fees or another commitment. Add separate items if helpful.", match: /$^/ },
-] as const;
-export const isDeferredGuideCost = (row: BudgetSheetRow) => !row.loanId && (row.category === "personal" || /grocer|day[ -]*to[ -]*day|everyday|daily (spend|expense)|transport|commut|fuel|petrol|personal spend|guilt[ -]*free/i.test(row.name));
-export type GuideCost = { row: BudgetSheetRow; included: boolean; source: string };
-export function guideCosts(plan: BudgetSheet, costs: KnownBudgetCost[], loans: SheetLoan[]): GuideCost[] {
-  // Savings, investments and discretionary envelopes are not imported into this independent setup.
-  const rows = plan.rows.filter(r => !isRuleRow(r) && (r.category === "fixed" || r.category === "variable" || r.category === "debt" || (r.category === "personal" && /commut|transport|fuel/i.test(r.name))));
-  const seed = { ...emptyBudgetSheet(plan.salary), rows, excludedLoanIds: plan.excludedLoanIds };
-  return knownBudgetItems(seed, costs, loans).filter(item=>!isDeferredGuideCost(item.row)).map(item => ({ ...item, source: item.row.loanId ? (plan.excludedLoanIds.includes(item.row.loanId) ? "Loan EMI, previously excluded" : "Recorded loan EMI") : item.source, row: { ...item.row, category: isPersonalTransport(item.row) ? "personal" : item.row.category } }));
-}
-export const expenseTotal = (rows: BudgetSheetRow[], salary: number) => rows.filter(r => r.category !== "savings" && r.category !== "investing" && r.category !== "personal").reduce((s,r) => s+rowAmount(r,salary),0);
+/** Everyday and fun money: counted inside Personal spending, not Essentials. */
+const PERSONAL = /day[ -]*to[ -]*day|everyday|daily (spend|expense)|transport|commut|fuel|petrol|personal|guilt[ -]*free|eating out|shopping|entertainment|fun/i;
+export const isPersonalCost = (row: Pick<BudgetSheetRow, "name" | "loanId">) => !row.loanId && PERSONAL.test(row.name);
 
-/** Editable conscious-spending starting point, not an optimum or an investment recommendation. */
-export function recommendBudget(salary: number, rows: BudgetSheetRow[], requestedSpending: number | null) {
-  const essentials = expenseTotal(rows,salary);
-  const remaining = Math.max(0,salary-essentials);
-  const minimum = personalMinimum(rows,salary);
-  const personal = Math.min(remaining,Math.max(minimum,requestedSpending ?? Math.min(Math.round(salary*0.25),Math.round(remaining*0.5))));
+/** One tap adds a common cost you haven't listed yet. */
+export const QUICK_ADDS = [
+  { name: "Rent", category: "fixed" },
+  { name: "Groceries", category: "fixed" },
+  { name: "Utilities", category: "fixed" },
+  { name: "Insurance", category: "fixed" },
+  { name: "Day-to-day spending", category: "personal" },
+  { name: "Transport", category: "personal" },
+] as const;
+
+export type GuideCost = { row: BudgetSheetRow; included: boolean; source: string };
+
+/** Every recorded cost and loan EMI, ready to confirm. Savings rows aren't costs. */
+export function guideCosts(plan: BudgetSheet, costs: KnownBudgetCost[], loans: SheetLoan[]): GuideCost[] {
+  const rows = plan.rows.filter(r => !isRuleRow(r) && r.category !== "savings" && r.category !== "investing");
+  const seed = { ...emptyBudgetSheet(plan.salary), rows, excludedLoanIds: plan.excludedLoanIds };
+  return knownBudgetItems(seed, costs, loans).filter(i => i.row.category !== "savings" && i.row.category !== "investing").map(item => ({
+    included: item.included,
+    source: item.row.loanId ? "Loan EMI" : item.source.startsWith("Current") ? "In your budget" : "From your records",
+    row: { ...item.row, mode: "amount" as const, value: rowAmount(item.row, plan.salary), category: isPersonalCost(item.row) || isPersonalTransport(item.row) ? "personal" : item.row.category === "personal" ? "personal" : "fixed" },
+  }));
+}
+
+export const expenseTotal = (rows: BudgetSheetRow[], salary: number) => rows.filter(r => r.category !== "savings" && r.category !== "investing" && r.category !== "personal").reduce((s,r) => s+rowAmount(r,salary),0);
+export const costTotal = (rows: BudgetSheetRow[], salary: number) => rows.filter(r => r.category !== "savings" && r.category !== "investing").reduce((s,r) => s+rowAmount(r,salary),0);
+
+const STEP = 500;
+
+/**
+ * A starting split, not advice: Personal spending gets 25% of income (at most
+ * half of what's left after essentials, never less than your named personal
+ * costs). Save & invest is the rest, rounded down to ₹500, and never less than
+ * the SIPs already going in when they fit. Personal spending takes the rounding.
+ */
+export function recommendBudget(salary: number, rows: BudgetSheetRow[], sips = 0) {
+  const essentials = expenseTotal(rows, salary);
+  const named = personalMinimum(rows, salary);
+  const room = Math.max(0, salary - essentials);
+  const personalTarget = Math.min(room, Math.max(named, Math.min(Math.round(salary * 0.25), Math.round(room * 0.5))));
+  const canSave = Math.max(0, room - named);
+  let future = Math.floor((room - personalTarget) / STEP) * STEP;
+  if (sips > 0) future = Math.max(future, Math.min(sips, canSave));
   return {
-    future: remaining-personal, personal,
-    shortfall: Math.max(0,essentials-salary),
-    spendingGap: requestedSpending === null ? 0 : Math.max(0,requestedSpending-personal),
+    essentials,
+    future,
+    personal: room - future,
+    shortfall: Math.max(0, essentials + named - salary),
     reasons: [
-      requestedSpending === null ? "Personal spending starts at 25% of income, capped at half the money left after essentials. It is a starting point, not a required ratio." : "Your preferred Personal spending total is reserved first, as far as the remaining income allows.",
-      "Personal spending includes transport, everyday personal costs and guilt-free money. Named personal costs count within the total, not on top. The rest goes into one Save & invest bucket. You do not need to decide a savings-versus-investing split here.",
-      "Annual contributions stay in Goals. This budget does not add a separate yearly provision or link to goals or SIPs.",
+      "Personal spending starts at a quarter of your income, at most half of what's left after essentials. It's a starting point; change it to suit you.",
+      sips > 0 ? "Save & invest includes the SIPs you already have, so it isn't counted twice." : "Save & invest is the rest, rounded to the nearest ₹500.",
     ],
   };
 }
-export function composeGuidedBudget(salary: number, rows: BudgetSheetRow[], loans: SheetLoan[], future: number): BudgetSheet {
+
+export function composeGuidedBudget(salary: number, rows: BudgetSheetRow[], loans: SheetLoan[], future: number, noSalary = false): BudgetSheet {
   const includedLoans = new Set(rows.flatMap(r=>r.loanId ? [r.loanId] : []));
-  return applyBudgetRules({ version:2,standalone:true,personalGrouping:true,salary,rows:rows.map(r=>({...r})),excludedLoanIds:loans.flatMap(l=>l.id&&!includedLoans.has(l.id)?[l.id]:[]),rules:{savings:{mode:"amount",value:0},investing:{mode:"amount",value:0},future:{mode:"amount",value:future}} });
+  return applyBudgetRules({
+    version: 2, standalone: true, personalGrouping: true,
+    salary: noSalary ? 0 : salary,
+    ...(noSalary ? { noSalary: true } : {}),
+    rows: rows.map(r=>({...r})),
+    excludedLoanIds: loans.flatMap(l=>l.id&&!includedLoans.has(l.id)?[l.id]:[]),
+    rules: { savings:{mode:"amount",value:0}, investing:{mode:"amount",value:0}, future:{mode:"amount",value: noSalary ? 0 : future} },
+  });
 }

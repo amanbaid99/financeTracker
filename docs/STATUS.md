@@ -9,6 +9,13 @@ Last updated: 23 Nov 2026.
 
 
 
+
+## Budget setup fixed, 23 Nov 2026
+
+Walked the budget flow in the browser and fixed what lost information. `components/budget-guide.tsx` is now three steps: income with "No salary right now", one costs list prefilled from every recorded cost and loan EMI (groceries and day-to-day spending included; personal-like names count as Personal spending) with one-tap common costs, then review. `recommendBudget` (lib/budget-guide.ts) rounds Save & invest down to ₹500, gives the rounding to Personal spending, and counts existing SIPs inside Save & invest. Budget sheets can be saved with `noSalary: true` and salary 0 (schema refine), meaning monthly costs only; loadBudget then reports income 0 and the costs. `components/budget-experience.tsx`: every row is tappable (edit, move between Essentials and Personal spending, remove), income and Save & invest open their own sheets, each Save writes the budget, "Use ₹X for Your plan" links to the SIP planner, options are Run setup again and Reset. Removed unused components/budget-sheet.tsx and budget-targets.tsx.
+
+Verification: npm run check passes; the e2e budget steps pass against a fresh user. The full e2e currently stops earlier, at the hybrid plan section from d74419c (line ~370: after Confirm plan, the Goals link leads back to the SIP planner, so House isn't on screen). It fails identically without these changes.
+
 ## Hybrid goal allocation engine, 22 Nov 2026
 
 Hybrid is the default in the existing SIP planner, Your plan, goal summaries and local Ask amount calculations. funding-math shares effective annual-to-monthly conversion and end-of-month contributions with tracker. hybrid-engine uses decimal.js-light with integer INR outputs, deterministic capped water filling, essential minimums then essential needs, flexible minimums then weighted remaining needs. Policy contains priority 3/2/1, urgency 1.5/1.25/1, return defaults, a 10% of monthly capacity At Risk threshold, 45-day stale valuation checks and a visible 12-month undated emergency build period. Missing risk uses balanced long-term defaults. User assumptions remain intact and are flagged when optimistic. Expired/current-month goals report immediate cash needs, not an invented monthly requirement. The existing bills schedule supplies dates to hybridBillsForecast; it checks first-cycle cash gaps and later month-end contributions without assuming returns. Scheduled loan EMIs reduce foreclosure targets through the existing loan model and are counted once in expenses.
