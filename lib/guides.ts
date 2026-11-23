@@ -23,7 +23,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "Your money at a glance",
     intro: "Start here: are you okay, and what needs you this month.",
     steps: [
-      "Net worth leads with what you own, what you owe and money not assigned to goals. Tap it for your holdings.",
+      "Net worth shows what you own and what you owe. A negative net worth has a light red background. Tap it for your holdings.",
       "From the 1st of each month, one line reminds you to log last month's card bills until they're all in. This month lists reminders and a card milestone when it's close.",
       "A short status highlights how you are doing and what needs attention.",
       "Focus goals shows your first three goals. The emergency fund shows how many months of costs it covers.",
@@ -49,7 +49,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     steps: [
       "Tap Add a goal and pick a type: a purchase, a trip, an emergency fund, a bills fund or paying off a loan.",
       "Add your mutual funds, stocks, savings and deposits. The app works out which goal each one covers, and why.",
-      "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
+      "Tap a goal to see what covers it and to edit it. Use +, then SIP plan for monthly allocations and planning.",
       "Focus goals shows the first three unfinished goals, followed by Other goals and then Covered. Essentials come first, then other goals by deadline. A goal on hold keeps its place.",
       "Loans can have payoff goals. Manage any loan in Net worth, even if its goal was deleted. Each shows what's left, the EMI and when it ends. Confirm the outstanding amount from your lender each month. Once confirmed, it stays until your next update. Older schedule-based balances and future payoff figures are estimates.",
       "Tap +, then Update amounts to enter new amounts, or Import statement to update funds from a CAS.",
@@ -131,6 +131,8 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"Cleaner goals and Budget",items:[{title:"Less analysis, clearer controls",text:"Goal details focus on investments and scheduled payments. Budget shows three clear totals, direct personal and saving edits, and fixed costs without nested menus."}]},
+ {date:"2026-11-23",title:"A quieter Home summary",items:[{title:"Just the progress",text:"Debt repayment shows estimated progress and payoff timing. Net worth shows only what you own and owe, with a light red background when negative."}]},
  {date:"2026-11-23",title:"Simpler goal editing",items:[{title:"No planning preferences panel",text:"Goals keep the essentials: target, date and optional inflation. Mark a goal completed directly when editing it. Previous custom assumptions stay saved."}]},
  {date:"2026-11-23",title:"Fewer pages on Goals",items:[{title:"One place to plan SIPs",text:"Your plan and Order essentials pages have been removed. Use +, then SIP plan to review monthly amounts. Saving returns to Goals. Saved plans and holdings are kept."}]},
  {date:"2026-11-23",title:"Goal-first SIP planning",items:[{title:"Build safety, then the next goal",text:"One month of emergency cover comes first, then three months. Next come payments and goals by deadline. Review one amount per goal, with suitable vehicle splits underneath and a ₹1,000 minimum per selected vehicle where possible."}]},
@@ -156,7 +158,7 @@ export const RELEASES: Release[] = [
   { date: "2026-11-23", title: "An easier budget", items: [
     { title: "Three steps", text: "Income, your costs (filled in from your records, groceries and day-to-day spending included), then a rounded split that counts the SIPs you already have." },
     { title: "No salary right now", text: "Tick it and the budget becomes your monthly costs, which Covered till salary uses." },
-    { title: "Tap to change", text: "Tap any row or your income to edit it. Use for Your plan sends your Save & invest amount to the SIP planner." },
+    { title: "Tap to change", text: "Edit income, Personal or Save & invest directly from the summary. Fixed costs stay visible below. Add cost creates a new row." },
   ] },
   {date:"2026-11-22",title:"A plan that puts essentials first",items:[
     {title:"Hybrid monthly allocation",text:"Essential minimums and needs come first. Flexible goals share the remainder by priority, deadline and need. The budget is always the limit."},

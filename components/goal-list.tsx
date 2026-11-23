@@ -5,39 +5,18 @@ import { useState } from "react";
 import {
   DeleteGoalButton,
   EditGoalButton,
-  GapChoices,
   GoalInvestments,
-  SuggestionBox,
 } from "@/components/goal-actions";
 import type { SipStrategy } from "@/lib/sip-plan";
 import type { Suggestion } from "@/lib/allocate";
-import { BillsPlan, LoanPlan, SavingsPlan } from "@/components/goal-details";
 import { GoalIcon } from "@/components/goal-icon";
 import { Progress } from "@/components/ui/progress";
 import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
 import { orderGoals } from "@/lib/goal-order";
 import { monthYear } from "@/lib/goal-summary";
-import {
-  goalHint,
-  goalStatus,
-  onHold,
-  gapOptions,
-  goalSubline,
-  type GoalStatus,
-} from "@/lib/goal-status";
+import { goalStatus, goalSubline, type GoalStatus } from "@/lib/goal-status";
 import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
 import { cn } from "@/lib/utils";
-
-function needLabel(g: TrackedGoal): string {
-  if (g.loanState) {
-    return g.targetDate && !g.emisCloseFirst
-      ? `needed to close it on ${formatDate(g.targetDate)}`
-      : g.loanState.feeRate > 0
-        ? "needed to close it today"
-        : "owed today";
-  }
-  return g.targetDate ? `needed by ${formatDate(g.targetDate)}` : "needed";
-}
 
 const PILL: Record<GoalStatus["tone"], string> = {
   success: "bg-success-soft text-success",
@@ -111,8 +90,6 @@ export function GoalList({
   links,
   today,
   initialOpen,
-  suggestions = [],
-  strategy = "diversified",
   filter = null,
   between = false,
 }: {
@@ -128,7 +105,6 @@ export function GoalList({
   initialOpen: string | null;
 }) {
   const [open, setOpen] = useState<string | null>(initialOpen);
-  const [details, setDetails] = useState(false);
 
   const filtered = filter
     ? goals.filter((g) => goalStatus(g, today, between).tone === filter)
@@ -143,20 +119,12 @@ export function GoalList({
   const renderGoals = (items: TrackedGoal[]) => (
     <ul className="space-y-3">
       {items.map((g) => {
-        const suggestion = suggestions.find((x) => x.goalId === g.id);
         const st = goalStatus(g, today, between);
         const sub = g.loanState
           ? g.targetDate
             ? `Close by ${monthYear(g.targetDate)}`
             : ""
           : goalSubline(g);
-        const hint = goalHint(g, today, suggestion, between);
-        const held = onHold(g, between);
-        // Still behind after the plan: offer ways to close the gap.
-        const gap =
-          held || g.funding
-            ? null
-            : gapOptions(g, today, suggestion?.monthly ?? 0);
         const isOpen = open === g.id;
         const panelId = `goal-${g.id}`;
         return (
@@ -173,7 +141,6 @@ export function GoalList({
               aria-controls={panelId}
               onClick={() => {
                 setOpen(isOpen ? null : g.id);
-                setDetails(false);
               }}
               className="press flex w-full items-start gap-3 p-3 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
@@ -216,11 +183,9 @@ export function GoalList({
                             : ` of ${formatINRCompact(g.futureTarget)}`}
                         </span>
                       </span>
-                      {hint && (
-                        <span className="text-xs text-muted-foreground">
-                          {hint}
-                        </span>
-                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {Math.round(g.progress * 100)}% saved
+                      </span>
                     </p>
                   </>
                 )}
@@ -239,93 +204,39 @@ export function GoalList({
                 id={panelId}
                 className="expand-in space-y-5 border-t px-4 pb-4 pt-4"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-sm font-semibold">Plan & investments</h3>
+                <div className="flex justify-end">
                   <EditGoalButton goal={g} today={today} />
                 </div>
-
-                {details && (
-                  <div className="space-y-1 rounded-xl bg-muted/40 p-3">
-                    <div>
-                      <p className="tabular text-2xl font-semibold tracking-tight">
-                        {formatINR(g.current)}
-                      </p>
-                      <p className="tabular text-xs text-muted-foreground">
-                        {g.billsFund
-                          ? `in the fund · should hold ${formatINR(g.futureTarget)} today`
-                          : `saved of ${formatINR(g.emisCloseFirst ? 0 : g.futureTarget)} ${needLabel(g)}`}
-                      </p>
-                      {!g.loanState &&
-                        !g.billsFund &&
-                        g.futureTarget !== g.target && (
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {formatINR(g.target)} today, grown at{" "}
-                            {g.inflationPct}% a year for rising prices.
-                          </p>
-                        )}
-                    </div>
-                  </div>
-                )}
-
-                {suggestion && !g.funding && (
-                  <SuggestionBox
-                    strategy={strategy}
-                    goal={g}
-                    suggestion={suggestion}
-                    investments={investments}
-                    links={links}
-                    short={!!gap}
-                  >
-                    {gap && <GapChoices options={gap} afterPlan />}
-                  </SuggestionBox>
-                )}
-
-                {g.funding && (
-                  <div className="space-y-2 rounded-xl bg-muted/40 p-3 text-sm">
-                    <p>
-                      With your plan: {formatINR(g.funding.projectedCorpus)}{" "}
-                      projected · {formatINR(g.funding.projectedShortfall)}{" "}
-                      short.
-                    </p>
-                  </div>
-                )}
-                {g.loanState ? (
-                  <LoanPlan g={g} details={details} verdict={!suggestion} />
-                ) : g.billsFund ? (
-                  <BillsPlan g={g} details={details} verdict={!suggestion} />
-                ) : !g.funding ? (
-                  <SavingsPlan
-                    g={g}
-                    onHold={held}
-                    details={details}
-                    verdict={!suggestion}
-                    extra={gap && <GapChoices options={gap} />}
-                  />
-                ) : null}
-
                 <GoalInvestments
                   goal={g}
                   investments={investments}
                   links={links}
-                  hasPlanSuggestion={suggestions.some((x) => x.goalId === g.id)}
+                  simple
                 />
-
-                <button
-                  type="button"
-                  aria-expanded={details}
-                  onClick={() => setDetails(!details)}
-                  className="flex min-h-11 w-full items-center justify-center gap-1 text-sm font-medium text-primary"
-                >
-                  {details ? "Hide details" : "Show details"}
-                  <ChevronDown
-                    className={cn(
-                      "size-4 transition-transform",
-                      details && "rotate-180",
-                    )}
-                    aria-hidden
-                  />
-                </button>
-                {details && <DeleteGoalButton id={g.id} loanId={g.loanId} />}
+                {g.billsFund && g.billsFund.upcoming.length > 0 && (
+                  <section className="space-y-2">
+                    <h3 className="text-sm font-semibold">Upcoming payments</h3>
+                    <ul className="divide-y">
+                      {g.billsFund.upcoming.slice(0, 3).map((bill, index) => (
+                        <li
+                          key={`${bill.date}-${index}`}
+                          className="flex justify-between gap-3 py-2 text-sm"
+                        >
+                          <div className="min-w-0">
+                            <p className="break-words">{bill.name}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatDate(bill.date)}
+                            </p>
+                          </div>
+                          <span className="tabular shrink-0">
+                            {formatINR(bill.amount)}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </section>
+                )}
+                <DeleteGoalButton id={g.id} loanId={g.loanId} />
               </div>
             )}
           </li>

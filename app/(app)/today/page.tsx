@@ -100,7 +100,6 @@ export default async function HomePage() {
       <MoneySummary
         assets={worth.assets}
         liabilities={worth.liabilities}
-        spare={g.allocation.spareTotal}
       />
       <HomeStatus
         tone={status.tone}

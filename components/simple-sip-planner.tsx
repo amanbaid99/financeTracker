@@ -3,7 +3,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { MoneyInput } from "./money-input";
-import {useToast} from "./ui/toast";
+import { useToast } from "./ui/toast";
 import { Button } from "./ui/button";
 import { hybridPlan, hybridVehicles } from "@/lib/hybrid-plan";
 import { proposeGoalMapping } from "@/lib/hybrid-mapping";
@@ -37,7 +37,7 @@ export function SimpleSipPlanner({
   riskTolerance: "conservative" | "moderate" | "aggressive" | null;
 }) {
   const router = useRouter();
-  const toast=useToast();
+  const toast = useToast();
   const [monthly, setMonthly] = useState<number | null>(initialMonthly);
   const [essentials, setEssentials] = useState<number | null>(
     monthlyEssentials,
@@ -184,7 +184,7 @@ export function SimpleSipPlanner({
           overrides,
         });
         if (!res.ok) return setError(res.error);
-        toast({text:"SIP plan saved."});
+        toast({ text: "SIP plan saved." });
         router.replace("/goals");
         router.refresh();
       } catch {
@@ -361,6 +361,41 @@ export function SimpleSipPlanner({
                           </div>
                         )),
                     )}
+                    <details className="text-xs text-muted-foreground">
+                      <summary className="min-h-9 cursor-pointer py-2 text-primary">
+                        Plan details
+                      </summary>
+                      <dl className="space-y-1 pb-2">
+                        {[
+                          [
+                            g.assumptions.runway
+                              ? "Needed this month"
+                              : "Needed each month",
+                            g.requiredMonthly,
+                          ],
+                          ["Already saved", g.existingCoverage],
+                          ["Monthly gap", g.monthlyShortfall],
+                          ["Target at deadline", g.targetCorpus],
+                          ["Projected at deadline", g.projectedCorpus],
+                        ].map(([label, value]) => (
+                          <div
+                            key={label}
+                            className="flex justify-between gap-3"
+                          >
+                            <dt>{label}</dt>
+                            <dd className="tabular shrink-0">
+                              {formatINR(value as number)}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                      <p>{g.explanation}</p>
+                      <p className="mt-1">
+                        Return {g.assumptions.annualReturnPct}% · Inflation{" "}
+                        {g.assumptions.inflationPct}%. Future contributions are
+                        projections.
+                      </p>
+                    </details>
                     {g.immediateShortfall > 0 && (
                       <p className="text-xs text-warning">
                         {formatINR(g.immediateShortfall)} is needed before the

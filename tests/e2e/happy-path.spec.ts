@@ -174,16 +174,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     "aria-expanded",
     "true",
   );
-  // Nothing linked yet: a suggestion for what to save it in.
-  await expect(page.getByText("How to save for it")).toBeVisible();
-  await expect(
-    page.getByText(/SIP in an equity index fund \(5\+ years away/),
-  ).toBeVisible();
-  await page.screenshot({ path: "test-results/fund-suggest-375.png" });
-  await page.getByRole("button", { name: "Add it" }).click();
-  await expect(
-    page.getByText("Filled in from the suggestion."),
-  ).toBeVisible();
+  // Goal details stay focused on actual investments; planning lives in SIP planning.
+  await expect(page.getByText("How to save for it")).toHaveCount(0);
+  await page.getByRole("button", {name:"Add investment",exact:true}).click();
   await expect(page.getByLabel("Fund category")).toHaveValue("equity_index");
   await page.getByRole("button", { name: "Close", exact: true }).click();
 
@@ -203,7 +196,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: "Edit Index SIP" }),
   ).toBeVisible();
-  await expect(page.getByText(/Far away, so it uses equity/)).toBeVisible();
+  await expect(page.getByText(/Far away, so it uses equity/)).toHaveCount(0);
 
   // An FD as well.
   await page.getByRole("button", { name: "Add investment" }).click();
@@ -216,10 +209,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText("₹4,00,000", { exact: true }).first()).toBeVisible();
   await expect(
     page.getByText(/Put ₹[\d,]+ a month into it to be on time/),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Show details" }).click();
-  await expect(page.getByText("Needed each month to be on time")).toBeVisible();
-  await expect(page.getByText(/^\+₹[\d,]+\/mo$/).first()).toBeVisible();
+  ).toHaveCount(0);
+  await expect(page.getByText("Needed each month to be on time")).toHaveCount(0);
+  await expect(page.getByText(/^\+₹[\d,]+\/mo$/)).toHaveCount(0);
   await expect(page.getByText(/^Behind/).first()).toBeVisible();
   await page.screenshot({
     path: "test-results/goal-house-375.png",
@@ -281,16 +273,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     .allInnerTexts();
   expect(order[0]).toMatch(/^House/);
   expect(order[1]).toMatch(/^Close my loan/);
-  await page.getByRole("button", { name: "Show details" }).click();
-  await expect(page.getByText("Last confirmed balance", { exact: true })).toBeVisible();
-  await expect(page.getByText("This month: principal")).toBeVisible();
-  await expect(page.getByText("₹5,168", { exact: true })).toBeVisible();
-
-  // The FD covers part of the loan on its own.
-  await expect(page.getByRole("button", { name: "Edit Bank FD" })).toBeVisible();
-  await expect(page.getByText(/4% \+ GST · ₹47,200 today/)).toBeVisible();
-  await expect(page.getByText(/in foreclosure charges:/)).toBeVisible();
-  await expect(page.getByText(/^around \w{3} \d{4}$/).first()).toBeVisible();
+  await expect(page.getByText("Last confirmed balance", {exact:true})).toHaveCount(0);
+  await expect(page.getByText("This month: principal")).toHaveCount(0);
+  await expect(page.getByRole("button",{name:"Add investment",exact:true})).toBeVisible();
   let o = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,
   );
@@ -311,8 +296,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Edit", exact: true }).click();
   await page.getByLabel(/grow the target with inflation/).check();
   await page.getByRole("button", { name: "Save goal" }).click();
-  await page.getByRole("button", { name: "Show details" }).click();
-  await expect(page.getByText(/grown at 6% a year/)).toBeVisible();
+  await expect(page.getByText(/grown at 6% a year/)).toHaveCount(0);
 
   // Update amounts for everything in one go.
   await page.evaluate(() => window.scrollTo(0, 0)); // + hides while scrolling down
@@ -340,7 +324,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
 
   // Deleting a goal keeps its investments.
   await page.getByRole("button", { name: /^Close my loan/ }).click();
-  await page.getByRole("button", { name: "Show details" }).click();
   await page.getByRole("button", { name: "Delete goal" }).click();
   await page
     .getByRole("button", { name: "Tap again to delete this goal" })
@@ -431,11 +414,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(
     page.getByRole("button", { name: /^Bills fund/ }),
   ).toHaveAttribute("aria-expanded", "true");
-  await page.getByRole("button", { name: "Show details" }).click();
-  await expect(page.getByText("Needs today")).toBeVisible();
+  await expect(page.getByText("Needs today")).toHaveCount(0);
+  await expect(page.getByRole("heading",{name:"Upcoming payments"})).toBeVisible();
   // A new goal waits for the plan to be confirmed again before money covers it.
   const billsCard = page.getByRole("button", { name: /^Bills fund/ });
-  await expect(billsCard).toContainText(/short/);
+  await expect(billsCard).toContainText(/% saved/);
 
   // Add a liquid fund, confirm the plan again, and the payments are covered.
   await page.getByRole("button", { name: "Add investment" }).click();
@@ -975,7 +958,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText(/^Includes your recorded ₹[\d,]+\/mo SIPs\./)).toBeVisible();
   await page.getByRole("button", { name: "Save this budget", exact: true }).click();
   await expect(page.getByText("Budget saved.", { exact: true })).toBeVisible();
-  await page.locator("details").filter({has:page.getByRole("button",{name:"Edit Groceries"})}).getByText("View and edit",{exact:true}).click();
   await page.getByRole("button", { name: "Edit Groceries" }).click();
   await page.getByLabel("Monthly amount").fill("15000");
   await page.getByRole("button", { name: "Save", exact: true }).click();

@@ -17,7 +17,7 @@ export const HELP: HelpTopic[] = [
     section: "Getting started",
     q: "What is on Home?",
     a: [
-      "Your net worth leads Home, with what you own, owe and have unassigned. See a short status, one reminder to log last month’s card bills, useful monthly actions and three focus goals. Emergency progress is shown in months of costs. Upcoming EMI summaries are not shown.",
+      "Your net worth leads Home, with what you own and owe. See a short status, one reminder to log last month’s card bills, useful monthly actions and three focus goals. Emergency progress is shown in months of costs. Upcoming EMI summaries are not shown.",
       "Tap any part to open its tab. Open +, then SIP plan to review monthly contributions.",
     ],
     tags: "overview focus dashboard",
@@ -38,7 +38,7 @@ export const HELP: HelpTopic[] = [
     a: [
       "Monthly card logging remains on Home. Missing card statements use the statement day in Edit card. Days beyond the end of a month use its last day. Without a statement day, card reminders stay off.",
       "Loan and investment refreshes appear separately as Optional quarterly review, three months after the last known balance or CAS upload. They do not add to Home's task count. Remind me next week postpones an optional review; cards keep Remind me tomorrow. You can update values sooner whenever you choose.",
-      "Home shows scheduled debt progress and payoff timing as estimates. Recorded balances and net worth stay unchanged until you confirm a real update. A saved investment plan does not need review merely because a calendar day passed.",
+      "Home shows a debt progress bar, estimated percentage repaid and payoff timing. Home net worth uses a light red background when negative and shows only assets and liabilities. Recorded balances stay unchanged until you confirm a real update. A saved investment plan does not need review merely because a calendar day passed.",
       "A missing statement or balance update never means you missed a payment. Card statements count only for milestones; the app does not track card payment confirmations.",
     ],
     tags: "reminder nudge statement monthly CAS loan balance snooze",
@@ -94,7 +94,7 @@ export const HELP: HelpTopic[] = [
     q: "What order are my goals in?",
     a: [
       "Essentials come first, with bills funds at the top and your saved essential order respected. Flexible goals follow by nearest deadline; old flexible rankings do not hide nearer goals. Undated goals follow dated ones. A goal on hold keeps its place. Loans the EMIs already close come after the rest unless placed in your essential order. Covered goals stay at the bottom.",
-      "The first three unfinished goals are under Focus goals, followed by Other goals. Reached goals have their own Covered section at the bottom. Every goal stays visible. Open a goal for its plan and investments; Show details reveals exact totals and calculations.",
+      "The first three unfinished goals are under Focus goals, followed by Other goals. Reached goals have their own Covered section at the bottom. Every goal stays visible. Open a goal to see covering investments, edit or remove it, and see its next three scheduled bills. Monthly requirements, forecasts and planning belong in the SIP planner.",
     ],
     tags: "order priority top three list focus",
   },
@@ -159,7 +159,7 @@ export const HELP: HelpTopic[] = [
       "Known fixed costs and EMIs come from your records. Rent and Utilities stay blank when unknown. Transport and day-to-day spending are not added automatically; choose one Personal spending amount instead. Untick anything you don't pay, fix amounts, or add an expense by name and amount.",
       "With a salary, choose how much to keep for Personal spending, including your day-to-day costs and personal costs already listed. Save & invest is exactly what remains after essentials and that personal amount. Existing SIPs count inside Save & invest. If this is less than your running SIPs, review them with your provider; the app does not change them.",
       "With no salary right now, the budget is just your monthly costs. Covered till salary uses it to show how long your money lasts.",
-      "After saving, expand View and edit to change an amount, rename a cost, move it between Fixed spending and Personal spending, or remove it. Tap your income to change it. Each change saves when you tap Save. Budget stays focused on fixed spending, personal spending and Save & invest.",
+      "After saving, tap Personal or Save & invest in the summary to edit that amount. Fixed costs stay visible below: tap a row to edit or remove it, or use Add cost. Personal details appear only if you have named personal costs. Tap Edit beside income to change it. Each change saves only when you tap Save.",
       "Budget options has Run setup again and Reset budget. No actual spending is tracked.",
     ],
     tags: "income costs expenses budget free to invest plan",

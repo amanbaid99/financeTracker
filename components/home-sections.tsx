@@ -1,5 +1,5 @@
-import {debtOverview} from "@/lib/loans";
-import {monthYear} from "@/lib/goal-summary";
+import { debtOverview } from "@/lib/loans";
+import { monthYear } from "@/lib/goal-summary";
 import Link from "next/link";
 import {
   ChevronRight,
@@ -203,15 +203,13 @@ export function HomeGoals({
   );
 }
 
-/** Own, owe and spare in small numbers; net worth as one quiet line. */
+/** Home net worth with only assets and liabilities. */
 export function MoneySummary({
   assets,
   liabilities,
-  spare,
 }: {
   assets: number;
   liabilities: number;
-  spare: number;
 }) {
   const cell = (label: string, value: number) => (
     <div className="min-w-0 space-y-0.5">
@@ -226,19 +224,23 @@ export function MoneySummary({
       <Link
         href="/assets"
         aria-label="View net worth and holdings"
-        className="press relative block overflow-hidden space-y-5 rounded-3xl border border-primary/15 bg-gradient-to-br from-success-soft via-card to-card p-5"
+        className={`press relative block overflow-hidden space-y-5 rounded-3xl border bg-gradient-to-br via-card to-card p-5 ${assets < liabilities ? "border-danger/20 from-danger-soft" : "border-primary/15 from-success-soft"}`}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-2">
             <h2 className="text-sm text-muted-foreground">Net worth</h2>
-            <p className="tabular break-words text-3xl font-semibold tracking-tight sm:text-4xl">{signedINR(assets-liabilities)}</p>
+            <p className="tabular break-words text-3xl font-semibold tracking-tight sm:text-4xl">
+              {signedINR(assets - liabilities)}
+            </p>
           </div>
-          <ChevronRight className="mt-1 size-5 shrink-0 text-primary" aria-hidden />
+          <ChevronRight
+            className="mt-1 size-5 shrink-0 text-primary"
+            aria-hidden
+          />
         </div>
-        <dl className="grid grid-cols-3 gap-3">
+        <dl className="grid grid-cols-2 gap-3">
           {cell("You own", assets)}
           {cell("You owe", liabilities)}
-          {cell("Unassigned", spare)}
         </dl>
       </Link>
     </section>
@@ -246,14 +248,55 @@ export function MoneySummary({
 }
 
 /** A visual schedule projection, separate from the recorded debt used in net worth. */
-export function HomeDebt({loans,today}:{loans:import("@/lib/loans").Loan[];today:string}){
- const d=debtOverview(loans,today);
- if(!d)return null;
- return <section aria-labelledby="home-debt-h" className="surface-card space-y-3 rounded-2xl border bg-card p-4">
-  <div className="flex items-center justify-between gap-3"><h2 id="home-debt-h" className="font-semibold">Debt repayment</h2><Link href="/assets#owe-h" className="inline-flex min-h-10 items-center text-sm text-primary">View loans</Link></div>
-  <div><p className="text-xs text-muted-foreground">Expected remaining today</p><p className="tabular text-2xl font-semibold">{formatINRCompact(d.expected)}</p></div>
-  {d.progress!==null&&<div className="space-y-1"><Progress value={d.progress*100} label="Scheduled debt repayment progress" tone="neutral"/><p className="text-xs text-muted-foreground">{Math.round(d.progress*100)}% repaid on this schedule (estimate)</p></div>}
-  <p className="text-sm">{d.scheduledPayoff?"Your schedule has reached payoff. Confirm closure with your lender.":`${formatINRCompact(d.monthlyEmi)}/mo in EMIs${d.debtFree?` · Estimated debt-free ${monthYear(d.debtFree)}`:" · Payoff date needs more loan details"}`}</p>
-  <p className="text-xs text-muted-foreground">Assumes scheduled EMIs continue. Last recorded balances total {formatINRCompact(d.recorded)}. No payments or balances are updated automatically.</p>
- </section>;
+export function HomeDebt({
+  loans,
+  today,
+}: {
+  loans: import("@/lib/loans").Loan[];
+  today: string;
+}) {
+  const d = debtOverview(loans, today);
+  if (!d) return null;
+  return (
+    <section
+      aria-labelledby="home-debt-h"
+      className="surface-card space-y-3 rounded-2xl border bg-card p-4"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="home-debt-h" className="font-semibold">
+          Debt repayment
+        </h2>
+        <Link
+          href="/assets#owe-h"
+          className="inline-flex min-h-10 items-center text-sm text-primary"
+        >
+          View loans
+        </Link>
+      </div>
+      {d.progress !== null ? (
+        <div className="space-y-2">
+          <div className="flex items-baseline justify-between gap-3">
+            <p className="tabular text-2xl font-semibold">
+              {Math.round(d.progress * 100)}% repaid
+            </p>
+            <span className="text-xs text-muted-foreground">Estimated</span>
+          </div>
+          <Progress
+            value={d.progress * 100}
+            label="Estimated debt repayment progress"
+            tone="neutral"
+          />
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">Progress unavailable</p>
+      )}
+      <p className="text-xs text-muted-foreground">
+        {d.scheduledPayoff
+          ? "Estimated payoff reached"
+          : d.debtFree
+            ? `Estimated debt-free ${monthYear(d.debtFree)}`
+            : "Payoff estimate unavailable"}
+      </p>
+    </section>
+  );
 }

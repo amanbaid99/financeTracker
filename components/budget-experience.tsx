@@ -1,7 +1,13 @@
 "use client";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronRight, MoreHorizontal, Plus, Sparkles } from "lucide-react";
+import {
+  ChevronRight,
+  MoreHorizontal,
+  Plus,
+  Sparkles,
+  Pencil,
+} from "lucide-react";
 import { BudgetGuide } from "@/components/budget-guide";
 import { Sheet } from "@/components/sheet";
 import { Field } from "@/components/forms/field";
@@ -10,7 +16,8 @@ import { Button } from "@/components/ui/button";
 import { MoneyInput } from "@/components/money-input";
 import { groupPersonalCosts } from "@/lib/personal-budget";
 import { saveBudgetSheet, resetBudgetSheet } from "@/lib/budget-ratio-actions";
-import { formatINR } from "@/lib/format";
+import { personalBudget } from "@/lib/budget-guide";
+import { formatINR, formatINRCompact } from "@/lib/format";
 import {
   applyBudgetRules,
   emptyBudgetSheet,
@@ -40,6 +47,7 @@ const bucketFor = (category: string): BucketId =>
 type Editing =
   | { kind: "row"; row: BudgetSheetRow; isNew: boolean }
   | { kind: "future" }
+  | { kind: "personal" }
   | { kind: "income" }
   | null;
 
@@ -73,6 +81,10 @@ export function BudgetExperience({
   const [message, setMessage] = useState("");
   const [pending, start] = useTransition();
   const router = useRouter();
+  const edit = (next: Editing) => {
+    setError("");
+    setEditing(next);
+  };
 
   /** Saves a changed budget straight away: tapping Save is the confirmation. */
   function persist(next: BudgetSheet, note = "Saved.") {
@@ -83,7 +95,7 @@ export function BudgetExperience({
         const result = await saveBudgetSheet(normalised);
         if (!result.ok) return setError(result.error);
         setPlan(normalised);
-        setEditing(null);
+        edit(null);
         setMessage(note);
         router.refresh();
       } catch {
@@ -118,7 +130,10 @@ export function BudgetExperience({
         className="space-y-4"
       >
         {loadError && (
-          <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
+          <p
+            role="alert"
+            className="rounded-xl bg-danger-soft p-3 text-sm text-danger"
+          >
             {loadError}
           </p>
         )}
@@ -126,7 +141,8 @@ export function BudgetExperience({
           <Sparkles className="size-7 text-primary" aria-hidden />
           <h2 className="text-xl font-semibold">Create your monthly budget</h2>
           <p className="text-sm text-muted-foreground">
-            Add your income, fixed costs and personal spending together. Then review your allocation and save.
+            Add your income, fixed costs and personal spending together. Then
+            review your allocation and save.
           </p>
           <Button
             className="w-full"
@@ -152,7 +168,10 @@ export function BudgetExperience({
   const rowsIn = (id: BucketId) =>
     plan.rows.filter((r) => bucketFor(r.category) === id);
   const totals = BUCKETS.filter((b) => !noSalary || b.id !== "future").map(
-    (b) => ({ ...b, amount: rowsIn(b.id).reduce((s, r) => s + amountOf(r), 0) }),
+    (b) => ({
+      ...b,
+      amount: rowsIn(b.id).reduce((s, r) => s + amountOf(r), 0),
+    }),
   );
   const future = totals.find((b) => b.id === "future")?.amount ?? 0;
   const costs = totals
@@ -161,159 +180,233 @@ export function BudgetExperience({
   const over = noSalary ? 0 : -sheetTotals(plan).remaining;
 
   return (
-    <section aria-label="Your budget" data-guide="budget-sheet" className="space-y-4">
+    <section
+      aria-label="Your budget"
+      data-guide="budget-sheet"
+      className="space-y-4"
+    >
       {loadError && (
-        <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
+        <p
+          role="alert"
+          className="rounded-xl bg-danger-soft p-3 text-sm text-danger"
+        >
           {loadError}
         </p>
       )}
-      <div className="surface-card space-y-4 rounded-2xl border bg-card p-4">
-        <button
-          type="button"
-          aria-label="Edit income"
-          disabled={!!loadError}
-          onClick={() => setEditing({ kind: "income" })}
-          className="press flex w-full items-center justify-between gap-3 text-left"
-        >
-          <span className="space-y-1">
-            <span className="block text-xs text-muted-foreground">
-              {noSalary ? "No salary right now" : "Monthly take-home"}
-            </span>
-            <span className="tabular block text-3xl font-semibold tracking-tight">
-              {formatINR(noSalary ? costs : plan.salary)}
-            </span>
-            {noSalary && (
+      <div className="surface-card overflow-hidden rounded-3xl border border-primary/15 bg-card">
+        <div className="space-y-5 bg-gradient-to-br from-primary/5 to-transparent p-5">
+          <button
+            type="button"
+            aria-label="Edit income"
+            disabled={!!loadError}
+            onClick={() => edit({ kind: "income" })}
+            className="press flex w-full items-center justify-between gap-3 text-left"
+          >
+            <span>
               <span className="block text-xs text-muted-foreground">
-                needed each month until your next salary
+                {noSalary ? "Monthly spending" : "Monthly take-home"}
               </span>
-            )}
-          </span>
-          <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden />
-        </button>
-
-        {!noSalary && (
-          <div aria-hidden className="flex h-2 overflow-hidden rounded-full bg-muted">
-            {totals.map((b) => (
-              <span
-                key={b.id}
-                className={b.color}
-                style={{
-                  width: `${(b.amount / Math.max(plan.salary, sheetTotals(plan).allocated, 1)) * 100}%`,
-                }}
-              />
-            ))}
-          </div>
-        )}
-
-        <div className="divide-y">
-          {totals.map((b) => (
-            <div key={b.id} className="py-3">
-              <div className="flex items-center gap-3">
-                <span className={cn("size-2.5 shrink-0 rounded-full", b.color)} aria-hidden />
-                <h3 className="min-w-0 flex-1 text-sm font-semibold">{b.name}</h3>
-                <span className="shrink-0 text-right">
-                  <b className="tabular block">{formatINR(b.amount)}</b>
-                  {!noSalary && plan.salary > 0 && (
-                    <span className="text-xs text-muted-foreground">
-                      {Math.round((b.amount / plan.salary) * 100)}%
-                    </span>
-                  )}
+              <span className="tabular mt-1 block break-words text-3xl font-semibold tracking-tight">
+                {formatINR(noSalary ? costs : plan.salary)}
+              </span>
+              {noSalary && (
+                <span className="mt-1 block text-xs text-muted-foreground">
+                  No salary right now
                 </span>
-              </div>
-              <details className="mt-1 pl-5"><summary className="min-h-9 cursor-pointer py-2 text-xs text-primary">View and edit</summary>
-              <ul>
-                {rowsIn(b.id)
-                  .sort((x, y) => Number(isRuleRow(x)) - Number(isRuleRow(y)) || amountOf(y) - amountOf(x))
-                  .map((r) => {
-                    const derived = r.id === "rule-personal";
-                    const label = derived
-                      ? "Left to spend"
-                      : r.id === "rule-savings"
-                        ? sips > 0
-                          ? "Save & invest (includes your SIPs)"
-                          : "Save & invest"
-                        : r.name;
-                    const content = (
-                      <>
-                        <span className="min-w-0 flex-1 break-words">{label}</span>
-                        <span className="tabular shrink-0">{formatINR(amountOf(r))}</span>
-                      </>
-                    );
-                    return (
-                      <li key={r.id}>
-                        {derived ? (
-                          <p className="flex min-h-10 items-center gap-3 text-sm text-muted-foreground">
-                            {content}
-                          </p>
-                        ) : (
-                          <button
-                            type="button"
-                            aria-label={`Edit ${label}`}
-                            disabled={!!loadError}
-                            onClick={() =>
-                              setEditing(
-                                b.id === "future"
-                                  ? { kind: "future" }
-                                  : { kind: "row", row: r, isNew: false },
-                              )
-                            }
-                            className="flex min-h-10 w-full items-center gap-3 text-left text-sm hover:text-primary"
-                          >
-                            {content}
-                          </button>
-                        )}
-                      </li>
-                    );
-                  })}
-                {b.id === "future" && rowsIn("future").length === 0 && (
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => setEditing({ kind: "future" })}
-                      className="flex min-h-10 items-center gap-1 text-sm text-primary"
-                    >
-                      <Plus className="size-3.5" aria-hidden /> Set an amount
-                    </button>
-                  </li>
-                )}
-                {b.id !== "future" && (
-                  <li>
-                    <button
-                      type="button"
-                      disabled={!!loadError || plan.rows.length >= 97}
-                      onClick={() =>
-                        setEditing({
-                          kind: "row",
-                          isNew: true,
-                          row: {
-                            id: crypto.randomUUID(),
-                            name: "",
-                            category: b.id === "personal" ? "personal" : "fixed",
-                            mode: "amount",
-                            value: 0,
-                            loanId: null,
-                          },
-                        })
-                      }
-                      className="flex min-h-10 items-center gap-1 text-sm text-primary"
-                    >
-                      <Plus className="size-3.5" aria-hidden /> Add to {b.name}
-                    </button>
-                  </li>
-                )}
-              </ul></details>
+              )}
+            </span>
+            <span className="flex shrink-0 items-center gap-1 rounded-full border bg-card px-3 py-2 text-xs text-primary">
+              <Pencil className="size-3.5" aria-hidden /> Edit
+            </span>
+          </button>
+          {!noSalary && (
+            <div
+              aria-hidden
+              className="flex h-3 gap-0.5 overflow-hidden rounded-full bg-muted"
+            >
+              {totals.map((b) => (
+                <span
+                  key={b.id}
+                  className={b.color}
+                  style={{
+                    width: `${(b.amount / Math.max(plan.salary, sheetTotals(plan).allocated, 1)) * 100}%`,
+                  }}
+                />
+              ))}
             </div>
-          ))}
+          )}
+          <div
+            className={cn(
+              "grid gap-2",
+              noSalary ? "grid-cols-2" : "grid-cols-3",
+            )}
+            aria-label="Monthly allocation"
+          >
+            {totals.map((b) => {
+              const content = (
+                <>
+                  <span className="mb-2 flex min-h-8 items-center gap-1.5 text-xs text-muted-foreground">
+                    <span
+                      className={cn("size-2 shrink-0 rounded-full", b.color)}
+                      aria-hidden
+                    />
+                    {b.id === "essentials"
+                      ? "Fixed"
+                      : b.id === "personal"
+                        ? "Personal"
+                        : "Save & invest"}
+                  </span>
+                  <span className="tabular block text-sm font-semibold sm:text-base">
+                    {formatINRCompact(b.amount)}
+                  </span>
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    {!noSalary && plan.salary > 0
+                      ? `${Math.round((b.amount / plan.salary) * 100)}% of income`
+                      : "per month"}
+                  </span>
+                </>
+              );
+              return b.id === "essentials" ? (
+                <div
+                  key={b.id}
+                  className="rounded-xl border border-border/60 bg-card/80 p-2.5"
+                >
+                  {content}
+                </div>
+              ) : (
+                <button
+                  key={b.id}
+                  type="button"
+                  aria-label={`Edit ${b.name}`}
+                  disabled={!!loadError}
+                  onClick={() =>
+                    edit({
+                      kind: b.id === "future" ? "future" : "personal",
+                    })
+                  }
+                  className="press relative rounded-xl border border-border/60 bg-card/80 p-2.5 text-left transition-colors hover:border-primary/40"
+                >
+                  {content}
+                  <Pencil
+                    className="absolute bottom-3 right-2 size-3 text-primary"
+                    aria-hidden
+                  />
+                </button>
+              );
+            })}
+          </div>
+          {over > 0 && (
+            <p
+              role="alert"
+              className="rounded-xl bg-danger-soft p-3 text-sm text-danger"
+            >
+              {formatINR(over)} over your income. Adjust a cost, personal
+              spending or Save & invest.
+            </p>
+          )}
         </div>
-
-        {over > 0 && (
-          <p role="alert" className="text-sm text-danger">
-            This is {formatINR(over)} more than you earn. Lower Save & invest or
-            a cost.
+      </div>
+      <div className="surface-card rounded-2xl border bg-card p-4">
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="font-semibold">Fixed spending</h3>
+            <p className="text-xs text-muted-foreground">
+              Your recurring monthly costs
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!!loadError || plan.rows.length >= 97}
+            onClick={() =>
+              edit({
+                kind: "row",
+                isNew: true,
+                row: {
+                  id: crypto.randomUUID(),
+                  name: "",
+                  category: "fixed",
+                  mode: "amount",
+                  value: 0,
+                  loanId: null,
+                },
+              })
+            }
+          >
+            <Plus className="size-3.5" aria-hidden />
+            Add cost
+          </Button>
+        </div>
+        <ul className="divide-y">
+          {rowsIn("essentials")
+            .sort(
+              (a, b) => amountOf(b) - amountOf(a) || a.id.localeCompare(b.id),
+            )
+            .map((r) => (
+              <li key={r.id}>
+                <button
+                  type="button"
+                  aria-label={`Edit ${r.name}`}
+                  disabled={!!loadError}
+                  onClick={() => edit({ kind: "row", row: r, isNew: false })}
+                  className="press flex min-h-14 w-full items-center justify-between gap-3 py-3 text-left text-sm"
+                >
+                  <span className="min-w-0 break-words">
+                    {r.name}
+                    {r.loanId && (
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        EMI
+                      </span>
+                    )}
+                  </span>
+                  <span className="flex shrink-0 items-center gap-2">
+                    <span className="tabular font-medium">
+                      {formatINR(amountOf(r))}
+                    </span>
+                    <ChevronRight
+                      className="size-4 text-muted-foreground"
+                      aria-hidden
+                    />
+                  </span>
+                </button>
+              </li>
+            ))}
+        </ul>
+        {rowsIn("essentials").length === 0 && (
+          <p className="py-4 text-sm text-muted-foreground">
+            No fixed costs added. Add rent, utilities or another recurring cost.
           </p>
         )}
-
       </div>
+      {rowsIn("personal").some(
+        (r) => !isRuleRow(r) && r.id !== "setup-personal",
+      ) && (
+        <details className="surface-card rounded-2xl border bg-card px-4">
+          <summary className="min-h-12 cursor-pointer py-3 text-sm font-medium">
+            Personal spending details
+          </summary>
+          <ul className="divide-y">
+            {rowsIn("personal")
+              .filter((r) => !isRuleRow(r) && r.id !== "setup-personal")
+              .map((r) => (
+                <li key={r.id}>
+                  <button
+                    type="button"
+                    disabled={!!loadError}
+                    aria-label={`Edit ${r.name}`}
+                    onClick={() => edit({ kind: "row", row: r, isNew: false })}
+                    className="flex min-h-11 w-full justify-between gap-3 py-3 text-left text-sm"
+                  >
+                    <span>{r.name}</span>
+                    <span className="tabular shrink-0">
+                      {formatINR(amountOf(r))}
+                    </span>
+                  </button>
+                </li>
+              ))}
+          </ul>
+        </details>
+      )}
 
       {message && (
         <p role="status" className="text-sm text-primary">
@@ -341,7 +434,7 @@ export function BudgetExperience({
           salary={plan.salary}
           pending={pending}
           error={error}
-          onClose={() => !pending && setEditing(null)}
+          onClose={() => !pending && edit(null)}
           onSave={(row) =>
             persist({
               ...plan,
@@ -364,6 +457,62 @@ export function BudgetExperience({
           }
         />
       )}
+      {editing?.kind === "personal" && (
+        <AmountSheet
+          title="Personal spending"
+          label="Personal spending a month"
+          hint="Keep this for your everyday and guilt-free spending. Save & invest adjusts to what remains."
+          initial={totals.find((b) => b.id === "personal")?.amount ?? 0}
+          pending={pending}
+          error={error}
+          onClose={() => !pending && edit(null)}
+          onSave={(amount) => {
+            const rows = plan.rows.filter(
+              (r) => !isRuleRow(r) && r.id !== "setup-personal",
+            );
+            const split = personalBudget(plan.salary, rows, amount);
+            const minimum = rows
+              .filter((r) => r.category === "personal")
+              .reduce((n, r) => n + amountOf(r), 0);
+            if (noSalary) {
+              if (amount < minimum)
+                return setError(
+                  `Your listed personal costs total ${formatINR(minimum)}. Reduce those costs first.`,
+                );
+              persist({
+                ...plan,
+                rows: [
+                  ...rows,
+                  ...(amount > minimum
+                    ? [
+                        {
+                          id: "setup-personal",
+                          name: "Personal spending",
+                          category: "personal" as const,
+                          mode: "amount" as const,
+                          value: amount - minimum,
+                          loanId: null,
+                        },
+                      ]
+                    : []),
+                ],
+              });
+            } else {
+              if (!split.valid)
+                return setError(split.error ?? "Review your personal amount.");
+              persist({
+                ...plan,
+                rows,
+                rules: {
+                  savings: { mode: "amount", value: 0 },
+                  investing: { mode: "amount", value: 0 },
+                  future: { mode: "amount", value: split.future },
+                },
+              });
+            }
+          }}
+        />
+      )}
       {editing?.kind === "future" && (
         <AmountSheet
           title="Save & invest"
@@ -376,7 +525,7 @@ export function BudgetExperience({
           initial={future}
           pending={pending}
           error={error}
-          onClose={() => !pending && setEditing(null)}
+          onClose={() => !pending && edit(null)}
           onSave={(amount) =>
             persist({
               ...plan,
@@ -395,7 +544,7 @@ export function BudgetExperience({
           noSalary={noSalary}
           pending={pending}
           error={error}
-          onClose={() => !pending && setEditing(null)}
+          onClose={() => !pending && edit(null)}
           onSave={(nextSalary, none) =>
             persist({
               ...plan,
@@ -440,7 +589,10 @@ export function BudgetExperience({
         </Sheet>
       )}
       {reset && (
-        <Sheet title="Reset budget?" onClose={() => !pending && setReset(false)}>
+        <Sheet
+          title="Reset budget?"
+          onClose={() => !pending && setReset(false)}
+        >
           <div className="space-y-4">
             <p className="text-sm">
               This removes only your saved budget. It can&apos;t be undone. Your
@@ -463,7 +615,9 @@ export function BudgetExperience({
                     if (!result.ok) return setError(result.error);
                     setPlan(null);
                     setReset(false);
-                    setMessage("Budget reset. Start a new one when you're ready.");
+                    setMessage(
+                      "Budget reset. Start a new one when you're ready.",
+                    );
                     router.refresh();
                   } catch {
                     setError("Could not reset. Try again.");
@@ -526,7 +680,9 @@ function RowSheet({
             name: name.trim(),
             mode: "amount",
             value: amount,
-            category: row.loanId ? row.category : (category as "fixed" | "personal"),
+            category: row.loanId
+              ? row.category
+              : (category as "fixed" | "personal"),
           });
         }}
       >
@@ -670,7 +826,11 @@ function IncomeSheet({
           </label>
           {!none && (
             <Field label="Monthly take-home income" htmlFor="income-input">
-              <MoneyInput id="income-input" value={amount} onChange={setAmount} />
+              <MoneyInput
+                id="income-input"
+                value={amount}
+                onChange={setAmount}
+              />
             </Field>
           )}
           {error && (

@@ -155,16 +155,18 @@ export function GoalInvestments({
   investments,
   links,
   hasPlanSuggestion = false,
+  simple=false,
 }: {
   goal: TrackedGoal;
   investments: Investment[];
   links: Link[];
   /** The money plan already suggests a new investment for this goal. */
   hasPlanSuggestion?: boolean;
+  simple?:boolean;
 }) {
   const [open, setOpen] = useState<Open>(null);
   const ways =
-    goal.lines.length === 0 && !hasPlanSuggestion
+    !simple && goal.lines.length === 0 && !hasPlanSuggestion
       ? waysToFund(goal, investments, links)
       : null;
   const close = useCallback(() => setOpen(null), []);
@@ -173,7 +175,7 @@ export function GoalInvestments({
       <h2 id="inv-h" className="text-sm font-semibold">
         Covered by
       </h2>
-      {goal.cover?.why && (
+      {!simple && goal.cover?.why && (
         <p className="text-xs text-muted-foreground">{goal.cover.why}</p>
       )}
       {goal.lines.length === 0 ? (
@@ -195,7 +197,7 @@ export function GoalInvestments({
             }
           />
         ) : (
-          !goal.cover?.why && (
+          (simple || !goal.cover?.why) && (
             <p className="text-sm text-muted-foreground">
               Nothing yet. Add an investment to cover this goal, or choose one
               you already have.
