@@ -687,12 +687,6 @@ export function GoalForm({
         </div>
       )}
 
-      {goal && (
-        <label className="flex min-h-11 items-center gap-2 text-sm">
-          <Checkbox checked={planning.completed} onChange={(e)=>setPlanning(p=>({...p,completed:e.target.checked}))}/>
-          Goal completed, stop planning new contributions
-        </label>
-      )}
       {error && (
         <p
           role="alert"

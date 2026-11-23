@@ -61,7 +61,7 @@ export const HELP: HelpTopic[] = [
     q: "How does the app decide which money covers which goal?",
     a: [
       "The planner proposes percentage ownership of your existing investments. Confirming a plan saves that mapping. Confirmed shares stay in place until you approve a new plan; only unassigned ownership is available for extra mapping.",
-      "An investment can support several goals, but its total assigned share cannot exceed 100%. Current allocated values follow its recorded balance. Deleting or completing a goal releases ownership without deleting the investment.",
+      "An investment can support several goals, but its total assigned share cannot exceed 100%. Current allocated values follow its recorded balance. Deleting a goal releases its allocation without deleting the investment. When you no longer need a goal, delete it from its details.",
       "Essentials and flexible goals use separate holdings for new planning. Travel prefers a suitable separate bank account or another liquid fund. Missing suitable vehicles are shown as categories, never invented products.",
       "Assigned holdings count toward coverage. For now, the app assumes all holdings are withdrawable. No live prices or automatic trades are used.",
     ],

@@ -1,5 +1,9 @@
 # Status
 
+## Removed goal completion option, 23 Nov 2026
+
+Removed the Goal completed, stop planning new contributions checkbox from GoalForm. Delete goal remains the way to remove an unwanted goal. Existing completion values and historical plans are preserved; no hosted goals or investment balances changed. Verification: lint, TypeScript, 853 unit tests, 40 Python tests and production build pass.
+
 ## Saved SIP summary on Budget, 23 Nov 2026
 
 SIP confirmation now redirects to /goals/budget. Budget loads the owner’s latest confirmed safety_deadline snapshot and shows its allocated monthly total, priority-ordered goals and per-vehicle amounts with Edit plan. No new recommendation is calculated and nothing is written on page load. Zero plans remain editable; read errors are visible without blocking Budget. Budget and SIP fetching start independently. The existing budget summary has tighter spacing and a no-salary grid without the unused percentage gap; fixed costs have tighter rows without duplicate EMI labels. SIP planning stays independent of Budget and all actual balances/contributions remain unchanged. No schema changes. Verification: lint, TypeScript, 853 unit tests, 40 Python tests and production build pass. Browser checks at 320/375/768px cover salary/no-salary layouts, confirmed plan rendering, Budget edits, no overflow and the SIP save destination. Full signed-in E2E remains unverified; no hosted financial data changed for tests.
