@@ -10,6 +10,13 @@ Last updated: 23 Nov 2026.
 
 
 
+
+## SIP planner with nothing to invest, 23 Nov 2026
+
+`components/hybrid-planner.tsx`: when the budget leaves ₹0 a month (no salary or a deficit), the ₹0 / ₹0 figures, deficit line, recorded SIPs line and the Monthly plan amount field are replaced by "Nothing to invest each month right now" with a link to Budget. The starting monthly amount is capped at what the budget allows, so a stale saved amount no longer shows a red error. Validation copy is plain. After Confirm plan, Your plan replaces the planner in history, so Back no longer returns to the planner.
+
+Verification: npm run check and the full e2e pass. The e2e now reflects the hybrid design: after a plan is confirmed, new holdings and goals are covered once the plan is confirmed again.
+
 ## Budget setup fixed, 23 Nov 2026
 
 Walked the budget flow in the browser and fixed what lost information. `components/budget-guide.tsx` is now three steps: income with "No salary right now", one costs list prefilled from every recorded cost and loan EMI (groceries and day-to-day spending included; personal-like names count as Personal spending) with one-tap common costs, then review. `recommendBudget` (lib/budget-guide.ts) rounds Save & invest down to ₹500, gives the rounding to Personal spending, and counts existing SIPs inside Save & invest. Budget sheets can be saved with `noSalary: true` and salary 0 (schema refine), meaning monthly costs only; loadBudget then reports income 0 and the costs. `components/budget-experience.tsx`: every row is tappable (edit, move between Essentials and Personal spending, remove), income and Save & invest open their own sheets, each Save writes the budget, "Use ₹X for Your plan" links to the SIP planner, options are Run setup again and Reset. Removed unused components/budget-sheet.tsx and budget-targets.tsx.

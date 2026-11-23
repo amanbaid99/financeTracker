@@ -186,6 +186,7 @@ export const HELP: HelpTopic[] = [
     q: "What does Use for Your plan do?",
     a: [
       "Use for Your plan opens the SIP planner with your budget as the affordability limit. You can plan less, leave an extra buffer, and set optional total monthly minimums for individual holdings.",
+      "If your budget has nothing left for saving and investing (for example, no salary right now), the planner says so plainly instead of showing ₹0 figures. Your goals are still covered by money you already have. Update your income in Budget when your salary starts.",
       "Where to contribute stays grouped by investment vehicle and purpose. Why this plan? shows each goal’s coverage, required and planned amounts, status, shortfall, alternatives and assumptions. Manual overrides are retained and checked against the same budget.",
       "Confirm plan saves an immutable, timestamped version. Budget, goal, balance, ownership or risk changes prompt a fresh review without rewriting old plans. The prior category minimum inputs are removed. No provider SIP, trade or balance is changed by confirmation.",
     ],

@@ -357,9 +357,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Hybrid plan: no income is entered yet, so new monthly contributions are capped at zero.
   await page.goto("/goals?do=plan");
   await expect(page).toHaveURL(/\/goals\/sip$/);
-  await page.getByLabel("Monthly plan amount",{exact:true}).fill("40000");
-  await expect(page.getByRole("button",{name:"Confirm plan",exact:true})).toBeDisabled();
-  await page.getByLabel("Monthly plan amount",{exact:true}).fill("0");
+  // Nothing left in the budget: a plain explanation instead of ₹0 figures.
+  await expect(page.getByRole("heading",{name:"Nothing to invest each month right now"})).toBeVisible();
+  await expect(page.getByLabel("Monthly plan amount",{exact:true})).toHaveCount(0);
   await page.getByRole("button",{name:"Confirm plan",exact:true}).click();
   await expect(page).toHaveURL(/\/goals\/plan$/);
   await expect(page.getByText("Your confirmed plan",{exact:true})).toBeVisible();
@@ -382,11 +382,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     .getByRole("dialog")
     .getByRole("button", { name: "Add investment" })
     .click();
-  await expect(
-    page.getByRole("button", { name: "Edit Planned index fund" }),
-  ).toBeVisible();
+  // A confirmed plan keeps its mapping, so the new fund counts once the plan is confirmed again.
+  await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.goto("/goals/sip");
-  await page.getByLabel("Monthly plan amount",{exact:true}).fill("0");
   await page.getByRole("button",{name:"Confirm plan",exact:true}).click();
   await expect(page).toHaveURL(/\/goals\/plan$/);
   // Extra money: where a one-time amount would go, without saving anything.
@@ -427,13 +425,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   ).toHaveAttribute("aria-expanded", "true");
   await page.getByRole("button", { name: "Show details" }).click();
   await expect(page.getByText("Needs today")).toBeVisible();
-  // The spare FD is safe money, so it covers the payments straight away.
+  // A new goal waits for the plan to be confirmed again before money covers it.
   const billsCard = page.getByRole("button", { name: /^Bills fund/ });
-  await expect(billsCard).toContainText("Covered");
-  await expect(page.getByRole("button", { name: "Edit Bank FD" })).toBeVisible();
-  await expect(page.getByText(/^Covered by your safe money\. Due within a year/)).toBeVisible();
+  await expect(billsCard).toContainText(/short/);
 
-  // Add a liquid fund as well; the payments stay covered.
+  // Add a liquid fund, confirm the plan again, and the payments are covered.
   await page.getByRole("button", { name: "Add investment" }).click();
   await page.getByLabel("Fund category").selectOption("liquid_fund");
   await page.getByLabel("Nickname (optional)").fill("Bills liquid fund");
@@ -443,13 +439,17 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     .getByRole("dialog")
     .getByRole("button", { name: "Add investment" })
     .click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await page.goto("/goals/sip");
+  await page.getByRole("button",{name:"Confirm plan",exact:true}).click();
+  await expect(page).toHaveURL(/\/goals\/plan$/);
+  await page.goto("/goals");
+  await billsCard.click();
   // Nothing is folded away: a covered bills fund stays in the one list.
   await expect(page.locator("main details summary", { hasText: "Covered at your current pace" })).toHaveCount(0);
-  await expect(billsCard).toContainText("Covered");
+  await expect(billsCard).toContainText("₹30,000 of ₹48,000");
   await expect(billsCard).toContainText(/Next: Gym, \d+ \w{3}/);
-  await expect(
-    page.getByText("Covered", { exact: true }).first(),
-  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit Bills liquid fund" })).toBeVisible();
   o = await page.evaluate(
     () => document.documentElement.scrollWidth - window.innerWidth,
   );
@@ -579,10 +579,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "What changed" })).toHaveCount(0);
   await page.screenshot({ path: "test-results/import-confirmed-375.png", fullPage: true });
   await page.getByRole("button", { name: "Back to your goals" }).click();
-  // A covered bills fund is in the list with every other goal.
+  // The bills fund keeps its liquid fund, now at the statement's value.
   await page.getByRole("button", { name: /^Bills fund/ }).click();
-  // Bigger holdings are used first, so the FD still covers it.
-  await expect(page.getByRole("button", { name: "Edit Bank FD" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit Bills liquid fund" })).toContainText("₹31,000");
 
   // Importing again matches every fund by its ISIN, with the category kept.
   await quick("Import statement");

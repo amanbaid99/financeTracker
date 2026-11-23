@@ -66,7 +66,10 @@ export function HybridPlanner(props: HybridPlannerProps) {
       }
     | undefined;
   const [monthly, setMonthly] = useState<number | null>(
-      props.savedMonthly ?? initialMonthly ?? 0,
+      Math.min(
+        props.savedMonthly ?? initialMonthly ?? 0,
+        Math.max(0, initialMonthly ?? 0),
+      ),
     ),
     [buffer, setBuffer] = useState<number | null>(prior?.cashBuffer ?? 0),
     [lump, setLump] = useState<number | null>(props.lump);
@@ -170,7 +173,26 @@ export function HybridPlanner(props: HybridPlannerProps) {
           Review updated plan
         </Button>
       )}
+      {cap === 0 && editing && (
+        <div className="surface-card space-y-2 rounded-2xl border bg-card p-4">
+          <h2 className="font-semibold">Nothing to invest each month right now</h2>
+          <p className="text-sm text-muted-foreground">
+            {(props.budgetDeficit ?? 0) > 0
+              ? `Your budget shows ${formatINR(props.budgetDeficit!)} a month more going out than coming in, so there's no monthly amount to split across goals.`
+              : "Your budget has nothing left for saving and investing each month, so there's no monthly amount to split across goals."}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Your goals are still covered by the money you already have. When
+            your salary starts, update your income in Budget and come back
+            here.
+          </p>
+          <Link href="/goals/budget" className="inline-flex min-h-10 items-center text-sm font-medium text-primary">
+            Open Budget
+          </Link>
+        </div>
+      )}
       <div className="surface-card space-y-4 rounded-2xl border bg-card p-4">
+        {!(cap === 0 && editing) && <>
         <dl className="grid grid-cols-2 gap-4">
           <div>
             <dt className="text-xs text-muted-foreground">
@@ -197,6 +219,7 @@ export function HybridPlanner(props: HybridPlannerProps) {
           Recorded SIPs: {formatINR(recorded)}/month. A recorded SIP is a setup
           amount, not proof of a payment.
         </p>
+        </>}
         {recorded > cap && (
           <p role="alert" className="text-sm text-warning">
             Recorded SIPs exceed the available amount by{" "}
@@ -205,13 +228,15 @@ export function HybridPlanner(props: HybridPlannerProps) {
         )}
         {editing && (
           <>
-            <Field label="Monthly plan amount" htmlFor="hybrid-monthly">
-              <MoneyInput
-                id="hybrid-monthly"
-                value={monthly}
-                onChange={setMonthly}
-              />
-            </Field>
+            {cap > 0 && (
+              <Field label="Monthly plan amount" htmlFor="hybrid-monthly">
+                <MoneyInput
+                  id="hybrid-monthly"
+                  value={monthly}
+                  onChange={setMonthly}
+                />
+              </Field>
+            )}
             <details>
               <summary className="min-h-10 cursor-pointer text-sm font-medium">
                 Buffer and one-time money
@@ -245,9 +270,9 @@ export function HybridPlanner(props: HybridPlannerProps) {
         )}
         {editing && !valid && (
           <p role="alert" className="text-sm text-danger">
-            Use whole rupees. Your monthly plan must be between zero and{" "}
-            {formatINR(cap)}. The one-time amount cannot exceed{" "}
-            {formatINR(oneTimeAvailable)} in unallocated holdings.
+            {cap > 0 && (monthly ?? 0) > cap
+              ? `Your monthly plan can be at most ${formatINR(cap)}, what your budget has for saving and investing.`
+              : `The one-time amount can be at most ${formatINR(oneTimeAvailable)}, the savings no goal is using.`}
           </p>
         )}
         {!minimumsFit && editing && (
@@ -550,7 +575,7 @@ export function HybridPlanner(props: HybridPlannerProps) {
                     return;
                   }
                   setSuccess(true);
-                  router.push("/goals/plan");
+                  router.replace("/goals/plan");
                   router.refresh();
                   setEditing(false);
                 } catch {
