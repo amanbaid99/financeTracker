@@ -1,6 +1,5 @@
 "use client";
 import { useState, useTransition } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight, MoreHorizontal, Plus, Sparkles } from "lucide-react";
 import { BudgetGuide } from "@/components/budget-guide";
@@ -11,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { MoneyInput } from "@/components/money-input";
 import { groupPersonalCosts } from "@/lib/personal-budget";
 import { saveBudgetSheet, resetBudgetSheet } from "@/lib/budget-ratio-actions";
-import { budgetSipHref } from "@/lib/budget-sip";
 import { formatINR } from "@/lib/format";
 import {
   applyBudgetRules,
@@ -27,9 +25,9 @@ import type { KnownBudgetCost } from "@/lib/budget-assist";
 import { cn } from "@/lib/utils";
 
 const BUCKETS = [
-  { id: "essentials", name: "Essentials", color: "bg-slate-500" },
-  { id: "future", name: "Save & invest", color: "bg-primary" },
+  { id: "essentials", name: "Fixed spending", color: "bg-slate-500" },
   { id: "personal", name: "Personal spending", color: "bg-pink-500" },
+  { id: "future", name: "Save & invest", color: "bg-primary" },
 ] as const;
 type BucketId = (typeof BUCKETS)[number]["id"];
 const bucketFor = (category: string): BucketId =>
@@ -126,17 +124,17 @@ export function BudgetExperience({
         )}
         <div className="surface-card space-y-4 rounded-2xl border bg-card p-6">
           <Sparkles className="size-7 text-primary" aria-hidden />
-          <h2 className="text-xl font-semibold">Build your monthly budget</h2>
+          <h2 className="text-xl font-semibold">Create your monthly budget</h2>
           <p className="text-sm text-muted-foreground">
             Three quick steps: your income, your costs (filled in from your
-            records), then a suggested split.
+            records), then how much you want for yourself. The rest goes to Save & invest.
           </p>
           <Button
             className="w-full"
             disabled={!!loadError}
             onClick={() => setGuide(true)}
           >
-            Plan my budget
+            Create budget
           </Button>
           <p className="text-xs text-muted-foreground">
             Nothing is saved until you confirm.
@@ -162,7 +160,6 @@ export function BudgetExperience({
     .filter((b) => b.id !== "future")
     .reduce((s, b) => s + b.amount, 0);
   const over = noSalary ? 0 : -sheetTotals(plan).remaining;
-  const sipHref = !noSalary && over <= 0 ? budgetSipHref(future) : null;
 
   return (
     <section aria-label="Your budget" data-guide="budget-sheet" className="space-y-4">
@@ -224,7 +221,8 @@ export function BudgetExperience({
                   )}
                 </span>
               </div>
-              <ul className="mt-1 pl-5">
+              <details className="mt-1 pl-5"><summary className="min-h-9 cursor-pointer py-2 text-xs text-primary">View and edit</summary>
+              <ul>
                 {rowsIn(b.id)
                   .sort((x, y) => Number(isRuleRow(x)) - Number(isRuleRow(y)) || amountOf(y) - amountOf(x))
                   .map((r) => {
@@ -304,7 +302,7 @@ export function BudgetExperience({
                     </button>
                   </li>
                 )}
-              </ul>
+              </ul></details>
             </div>
           ))}
         </div>
@@ -315,14 +313,7 @@ export function BudgetExperience({
             a cost.
           </p>
         )}
-        {sipHref && (
-          <Link
-            href={sipHref}
-            className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground"
-          >
-            Use {formatINR(future)} for Your plan
-          </Link>
-        )}
+
       </div>
 
       {message && (
@@ -562,7 +553,7 @@ function RowSheet({
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
               >
-                <option value="fixed">Essentials</option>
+                <option value="fixed">Fixed spending</option>
                 <option value="personal">Personal spending</option>
               </Select>
             </Field>

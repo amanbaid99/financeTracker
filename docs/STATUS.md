@@ -1,5 +1,10 @@
 # Status
 
+## Budget without presets or planning prompts, 23 Nov 2026
+
+Budget setup keeps income, known-cost review and the user's personal amount with Save & invest as the remainder. Removed preset cost buttons, including day-to-day spending and transport; new costs use a name and amount. Existing entered/recorded costs are preserved. The Budget entry is Create budget. Removed the SIP handoff CTA from the saved Budget view. The summary shows Fixed spending, Personal spending and Save & invest, with item editing in collapsed View and edit disclosures. SIP planning remains available elsewhere in the app. No schema or saved financial data changes. Verification: lint, TypeScript, 767 unit tests, 40 Python tests and production build pass. Real-component browser checks at 320/375/768px verify manual expense entry, personal-first calculation, all three saved totals, collapsed editing and absence of SIP links, without overflow or runtime errors. Full signed-in E2E remains unverified because of the previously documented local database download limitation.
+
+
 ## Personal-first budget setup, 23 Nov 2026
 
 BudgetGuide keeps income and cost review, then asks how much to keep for Personal spending. Save & invest is the exact remainder after essentials and this amount, without rounding away user choices. Listed personal costs count within the amount, not twice; amounts below these costs or above available income cannot save. Existing SIPs are informational with a warning if the remainder is lower; no SIP is changed. No-salary cost setup is unchanged. Existing saved budgets are untouched until confirmed. Verification: lint, TypeScript, 767 unit tests, 40 Python tests and production build pass. Browser checks at 320/375/768px verify the personal input, exact remainder, overspend blocking and saved budget payload without overflow or runtime errors. Full signed-in E2E remains unverified due to the previously documented local database download limitation.

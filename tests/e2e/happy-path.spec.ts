@@ -964,12 +964,13 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // counts existing SIPs. Saved rows open on tap.
   await tab("Budget").click();
   await expect(page.getByRole("heading", { name: "Budget", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Plan my budget", exact: true }).click();
+  await page.getByRole("button", { name: "Create budget", exact: true }).click();
   await page.getByLabel("Monthly take-home income", { exact: true }).fill("200000");
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Your monthly costs" })).toBeVisible();
-  await page.getByRole("button", { name: "Groceries", exact: true }).click();
-  await page.getByLabel("Groceries monthly amount").fill("12000");
+  await page.getByLabel("Expense name",{exact:true}).fill("Groceries");
+  await page.getByLabel("A month",{exact:true}).fill("12000");
+  await page.getByRole("button", {name:"Add it",exact:true}).click();
   await page.getByRole("button", { name: "Continue", exact: true }).click();
   const future = page.getByLabel("Personal spending a month", { exact: true });
   await expect(future).toBeVisible();
@@ -977,11 +978,12 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await future.fill("40000");
   await page.getByRole("button", { name: "Save this budget", exact: true }).click();
   await expect(page.getByText("Budget saved.", { exact: true })).toBeVisible();
+  await page.locator("details").filter({has:page.getByRole("button",{name:"Edit Groceries"})}).getByText("View and edit",{exact:true}).click();
   await page.getByRole("button", { name: "Edit Groceries" }).click();
   await page.getByLabel("Monthly amount").fill("15000");
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByRole("button", { name: "Edit Groceries" })).toContainText("₹15,000");
-  await expect(page.getByRole("link", { name: /^Use ₹[\d,]+ for Your plan$/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /^Use ₹[\d,]+ for Your plan$/ })).toHaveCount(0);
   await page.screenshot({ path: "test-results/budget-375.png", fullPage: true });
   // Between jobs: no salary makes the budget just monthly costs.
   await page.getByRole("button", { name: "Edit income" }).click();

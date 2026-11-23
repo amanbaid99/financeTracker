@@ -7,7 +7,6 @@ import { MoneyInput } from "@/components/money-input";
 import { Field } from "@/components/forms/field";
 import { saveBudgetSheet } from "@/lib/budget-ratio-actions";
 import {
-  QUICK_ADDS,
   composeGuidedBudget,
   costTotal,
   guideCosts,
@@ -100,7 +99,6 @@ export function BudgetGuide({
     ]);
     setPersonalChoice(null);
   };
-  const listed = new Set(items.map((i) => i.row.name.toLowerCase()));
 
   function save() {
     if (!valid) return;
@@ -249,28 +247,8 @@ export function BudgetGuide({
                   </li>
                 ))}
               </ul>
-              <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">
-                  Add a common cost
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {QUICK_ADDS.filter(
-                    (q) => !listed.has(q.name.toLowerCase()),
-                  ).map((q) => (
-                    <button
-                      key={q.name}
-                      type="button"
-                      onClick={() => add(q.name, q.category)}
-                      className="inline-flex min-h-9 items-center gap-1 rounded-full border px-3 text-sm hover:border-primary"
-                    >
-                      <Plus className="size-3.5" aria-hidden />
-                      {q.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
               <div className="grid grid-cols-[1fr_8rem] items-end gap-2">
-                <Field label="Something else" htmlFor="guide-new-name">
+                <Field label="Expense name" htmlFor="guide-new-name">
                   <Input
                     id="guide-new-name"
                     maxLength={80}
@@ -336,13 +314,13 @@ export function BudgetGuide({
                   <dd className="tabular font-semibold">{formatINR(salary)}</dd>
                 </div>
                 <div className="flex justify-between gap-3">
-                  <dt>Essentials</dt>
+                  <dt>Fixed spending</dt>
                   <dd className="tabular font-semibold">
                     {formatINR(rec.essentials)}
                   </dd>
                 </div>
               </dl>
-              <Field label="Personal spending a month" htmlFor="guide-personal" hint="Your day-to-day spending, personal transport and fun money, including the personal costs already listed.">
+              <Field label="Personal spending a month" htmlFor="guide-personal" hint="The amount you want to keep for yourself, including any personal costs already listed.">
                 <MoneyInput id="guide-personal" value={chosenPersonal} onChange={v=>setPersonalChoice(v??0)}/>
               </Field>
               <div className="rounded-xl bg-primary-soft p-3" aria-live="polite">

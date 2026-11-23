@@ -12,7 +12,6 @@ export const EXPENSE_PRESETS = [
   { value: "insurance", name: "Insurance", category: "fixed" },
   { value: "subscriptions", name: "Subscriptions", category: "fixed" },
   { value: "groceries", name: "Groceries", category: "variable" },
-  { value: "transport", name: "Daily commute", category: "personal" },
   { value: "personal", name: "Personal spending", category: "personal" },
 ] as const;
 export type SheetLoan = { id?: string; name: string; emi: number };

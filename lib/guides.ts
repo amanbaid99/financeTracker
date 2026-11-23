@@ -89,10 +89,10 @@ export const GUIDES: Record<GuideId, Guide> = {
     title: "Your monthly budget",
     intro: "Three quick steps, then tap any row to change it.",
     steps: [
-      "Tap Plan my budget. Enter your take-home income, or tick No salary right now.",
-      "Check your monthly costs. They're filled in from your records and loans; untick what you don't pay or add a common cost.",
+      "Tap Create budget. Enter your take-home income, or tick No salary right now.",
+      "Check your monthly costs. They're filled in from your records and loans; untick what you don't pay or add your own expense.",
       "Choose how much to keep for Personal spending. Save & invest is the exact remainder after essentials and your personal amount, including existing SIPs.",
-      "After saving, tap any row or your income to change it. Use for Your plan opens the SIP planner with your Save & invest amount.",
+      "After saving, you see Fixed spending, Personal spending and Save & invest. Expand View and edit to change costs, or tap income to change it.",
     ],
   },
   ask: {
@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"Just your budget",items:[{title:"Three clear totals",text:"Create a budget with your own expenses and personal amount. No preset expense buttons or SIP-plan prompt. The summary shows Fixed spending, Personal spending and Save & invest."}]},
  {date:"2026-11-23",title:"Your personal budget first",items:[{title:"Choose what you keep",text:"In budget setup, enter your monthly Personal spending. Everything left after essentials goes to Save & invest. Review and save."}]},
  {date:"2026-11-23",title:"Unassigned money you can act on",items:[{title:"See the holding and choose",text:"Net worth names each unassigned amount. Assign it to a goal after review, or open a withdrawal preview for that holding. No money is moved."}]},
   {date:"2026-11-23",title:"One simple monthly plan",items:[

@@ -11,16 +11,6 @@ import { applyBudgetRules, emptyBudgetSheet, isRuleRow, rowAmount, type BudgetSh
 const PERSONAL = /day[ -]*to[ -]*day|everyday|daily (spend|expense)|transport|commut|fuel|petrol|personal|guilt[ -]*free|eating out|shopping|entertainment|fun/i;
 export const isPersonalCost = (row: Pick<BudgetSheetRow, "name" | "loanId">) => !row.loanId && PERSONAL.test(row.name);
 
-/** One tap adds a common cost you haven't listed yet. */
-export const QUICK_ADDS = [
-  { name: "Rent", category: "fixed" },
-  { name: "Groceries", category: "fixed" },
-  { name: "Utilities", category: "fixed" },
-  { name: "Insurance", category: "fixed" },
-  { name: "Day-to-day spending", category: "personal" },
-  { name: "Transport", category: "personal" },
-] as const;
-
 export type GuideCost = { row: BudgetSheetRow; included: boolean; source: string };
 
 /** Every recorded cost and loan EMI, ready to confirm. Savings rows aren't costs. */

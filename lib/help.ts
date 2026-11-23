@@ -163,11 +163,11 @@ export const HELP: HelpTopic[] = [
     section: "Budget",
     q: "How does the budget work?",
     a: [
-      "Tap Plan my budget. Three steps: your take-home income (or tick No salary right now), your monthly costs, then a suggested split.",
-      "Your costs come filled in from your records and loans, groceries and day-to-day spending included. Untick anything you don't pay, fix amounts, or add a common cost with one tap.",
+      "Tap Create budget. Three steps: your take-home income (or tick No salary right now), your monthly costs, then a suggested split.",
+      "Your costs come filled in from your records and loans, groceries and day-to-day spending included. Untick anything you don't pay, fix amounts, or add an expense by name and amount.",
       "With a salary, choose how much to keep for Personal spending, including your day-to-day costs and personal costs already listed. Save & invest is exactly what remains after essentials and that personal amount. Existing SIPs count inside Save & invest. If this is less than your running SIPs, review them with your provider; the app does not change them.",
       "With no salary right now, the budget is just your monthly costs. Covered till salary uses it to show how long your money lasts.",
-      "After saving, tap any row to change its amount, rename it, move it between Essentials and Personal spending, or remove it. Tap your income to change it. Each change saves when you tap Save. Use for Your plan opens the SIP planner with your Save & invest amount.",
+      "After saving, expand View and edit to change an amount, rename a cost, move it between Fixed spending and Personal spending, or remove it. Tap your income to change it. Each change saves when you tap Save. Budget stays focused on fixed spending, personal spending and Save & invest.",
       "Budget options has Run setup again and Reset budget. No actual spending is tracked.",
     ],
     tags: "income costs expenses budget free to invest plan",
@@ -178,7 +178,7 @@ export const HELP: HelpTopic[] = [
     q: "How do I reset my budget and start over?",
     a: [
       "Below the saved budget, open Budget options, choose Reset budget, then Reset and start over. Run setup again goes through the three steps without deleting first. Keep my budget or closing the panel cancels without deleting anything.",
-      "Reset removes only your saved budget and returns to Plan my budget. Your loans, holdings, SIPs, income records, goals and cards stay as they are. Reset cannot be undone. If it fails, your budget remains visible with an error.",
+      "Reset removes only your saved budget and returns to Create budget. Your loans, holdings, SIPs, income records, goals and cards stay as they are. Reset cannot be undone. If it fails, your budget remains visible with an error.",
     ],
     tags: "delete clear budget start over reset",
   },
