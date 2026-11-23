@@ -196,7 +196,7 @@ export const HELP: HelpTopic[] = [
     q: "How do I plan my monthly SIPs?",
     a: [
       "Your monthly SIPs lists every holding you can add money to each month, with a suggested amount. Holdings with nothing suggested show ₹0, so you can still choose to put money there.",
-      "Suggestions cover what your goals need, up to your budget's Save & invest if you have one. Change any amount, or tap Use suggestions to go back. If the total is more than your budget sets aside, you'll see a note; you can still save.",
+      "Suggestions follow steps: first the emergency fund's minimum (1 month of fixed costs within 3 months, then 3 months within 6), then what bills coming up need each month, then ₹500 for every other goal so all of them move, then the rest to the closest goal first. Why these amounts shows each goal's share. Suggestions cover what your goals need, up to your budget's Save & invest if you have one. Change any amount, or tap Use suggestions to go back. If the total is more than your budget sets aside, you'll see a note; you can still save.",
       "Suggestions use a fund you already hold first: the best fit, or else the closest one (money needed within a year never goes into equity). A bank account is suggested first only for money needed within a year; for 1 to 3 years, a debt or arbitrage fund you hold comes first. Suggested, but you don't hold one only appears when nothing you hold is close. Add one in Net worth and it joins the list.",
       "Save this plan keeps it in the app. No SIP is started or changed with your provider.",
     ],

@@ -17,6 +17,11 @@ Last updated: 23 Nov 2026.
 
 
 
+
+## Stepped SIP split, 24 Nov 2026
+
+`lib/step-allocation.ts` decides each goal's monthly amount for Your monthly SIPs: emergency floor (1 month of essentials within 3 months, then 3 months within 6, net of what's saved), bills funds' `monthlyNeed`, ₹500 for every other live goal when the budget stretches to all of them, then closest goals first up to each goal's pace, then the rest of the emergency fund's pace. Without a budget it shows the full need. `sipSuggestions` now uses it and `sipPlan` (pooled) to place amounts in held funds; the hybrid engine is no longer used for these suggestions. Essentials come from the saved budget's non-personal rows (or records). AI does not calculate amounts (rule 2). Note: a bill due very soon can take most of a month's budget before the ₹500 minimums.
+
 ## Suggestions on Goals, 24 Nov 2026
 
 `components/goal-suggestions.tsx` at the top of Goals. Mapping suggestions (`mappingSuggestions` in lib/goal-suggestions.ts) compare `proposeGoalMapping(..., [], ...)` with the current links per goal; Accept/Accept all/Change save via `saveGoalMapping`/`saveAllMappings` (lib/goal-suggestion-actions.ts), replacing that goal's goal_allocations rows (the DB trigger enforces 100% per holding; on failure the old rows are restored). `readGoals` now uses saved goal_allocations when a hybrid plan exists or any rows exist. Tidy suggestions reuse `simplifyHints` with spare money computed from the saved mapping, plus equity covering money needed within a year. "Not now" snoozes a suggestion for 7 days via `snooze_update` (its maximum). The app never buys or sells.

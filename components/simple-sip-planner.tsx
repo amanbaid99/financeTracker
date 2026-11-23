@@ -22,6 +22,7 @@ export function SimpleSipPlanner({
   links: currentLinks,
   today,
   budgetMonthly,
+  essentialsMonthly = 0,
   savedAmounts,
   hasConfirmed,
   revision,
@@ -33,6 +34,8 @@ export function SimpleSipPlanner({
   today: string;
   /** The budget's Save & invest a month, 0 if none. */
   budgetMonthly: number;
+  /** Fixed costs and EMIs a month, for the emergency fund floor. */
+  essentialsMonthly?: number;
   /** Amounts saved last time, per holding (inv:<id>). */
   savedAmounts: SipMinimums;
   hasConfirmed: boolean;
@@ -64,9 +67,18 @@ export function SimpleSipPlanner({
         links,
         today,
         budgetMonthly,
+        essentialsMonthly,
         riskTolerance,
       }),
-    [goals, investments, links, today, budgetMonthly, riskTolerance],
+    [
+      goals,
+      investments,
+      links,
+      today,
+      budgetMonthly,
+      essentialsMonthly,
+      riskTolerance,
+    ],
   );
   const suggestedFor = (id: string) =>
     s.holdings.find((h) => h.investment.id === id)?.suggested ?? 0;
@@ -152,6 +164,35 @@ export function SimpleSipPlanner({
           </p>
         )}
       </div>
+
+      {s.byGoal.some((l) => l.monthly > 0) && (
+        <details className="surface-card rounded-2xl border bg-card p-4">
+          <summary className="cursor-pointer font-semibold">
+            Why these amounts
+          </summary>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Emergency fund first (1 month of costs within 3 months, then 3
+            months within 6), then bills coming up, then ₹500 for every other
+            goal, then the closest goal first.
+          </p>
+          <ul className="mt-2 divide-y">
+            {s.byGoal.map((l) => (
+              <li
+                key={l.goalId}
+                className="flex items-start justify-between gap-3 py-2 text-sm"
+              >
+                <span className="min-w-0">
+                  <span className="block font-medium">{l.goalName}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    {l.why}
+                  </span>
+                </span>
+                <span className="tabular shrink-0">{formatINR(l.monthly)}</span>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
 
       <div className="surface-card rounded-2xl border bg-card p-4">
         <div className="flex items-center justify-between gap-3">

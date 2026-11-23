@@ -134,7 +134,10 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
-  { date: "2026-11-24", title: "Suggestions on Goals", items: [
+  { date: "2026-11-23", title: "A clearer SIP split", items: [
+    { title: "Closest goal first", text: "Emergency fund minimum first, then bills coming up, then ₹500 for every other goal, then the rest to the closest goal. Why these amounts shows each step." },
+  ] },
+  { date: "2026-11-23", title: "Suggestions on Goals", items: [
     { title: "Accept or change", text: "Goals suggests which of your holdings should cover each goal. Accept, change it yourself, or put it off for a week." },
     { title: "Keep it simple", text: "Ideas to merge, tidy or move money, using only what you already hold. Nothing is bought or sold for you." },
   ] },
