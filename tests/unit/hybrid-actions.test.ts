@@ -57,15 +57,9 @@ it("rejects stale previews before confirming", async () => {
   ).toBe(false);
   expect(rpc).not.toHaveBeenCalled();
 });
-it("caps plans by the real budget and extra buffer", async () => {
-  expect((await confirmHybridPlan({ ...input, monthly: 50001 })).ok).toBe(
-    false,
-  );
-  expect(
-    (await confirmHybridPlan({ ...input, monthly: 40000, cashBuffer: 20000 }))
-      .ok,
-  ).toBe(false);
-  expect(rpc).not.toHaveBeenCalled();
+it("lets you plan more than the budget sets aside; the screen only notes it", async () => {
+  expect((await confirmHybridPlan({ ...input, monthly: 50001 })).ok).toBe(true);
+  expect(rpc).toHaveBeenCalled();
 });
 it("rejects foreign holding keys and duplicate one-time money", async () => {
   expect(

@@ -12,6 +12,11 @@ Last updated: 23 Nov 2026.
 
 
 
+
+## SIP plan as one list, 23 Nov 2026
+
+`/goals/sip` now renders `components/simple-sip-planner.tsx`: every holding you can add monthly money to (not FDs or EPF), each with a suggested amount from `sipSuggestions` (lib/simple-sip.ts, built on hybridPlan/hybridVehicles; basis is what goals need, capped at the budget's Save & invest when it has one) and an editable amount, plus "Suggested, but you don't hold one" kinds of fund. Save writes a confirmed hybrid plan with the typed amounts as per-holding minimums and monthly = their total. `confirmHybridPlan` no longer rejects plans above the budget (monthlySavings = max(capacity, monthly)); the screen shows a note instead. HybridPlanner stays for the Your plan view.
+
 ## Home stops suggesting new funds, 23 Nov 2026
 
 Home's This month keeps only the "Add dates to plan your goals" cue from `missingVehicleCues`; "Set up a liquid fund" style cues are left out (they ignore bank accounts and don't suit the owner with no salary). The snooze button reads "Remind me tomorrow" everywhere.

@@ -357,10 +357,14 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Hybrid plan: no income is entered yet, so new monthly contributions are capped at zero.
   await page.goto("/goals?do=plan");
   await expect(page).toHaveURL(/\/goals\/sip$/);
-  // Nothing left in the budget: a plain explanation instead of ₹0 figures.
-  await expect(page.getByRole("heading",{name:"Nothing to invest each month right now"})).toBeVisible();
-  await expect(page.getByLabel("Monthly plan amount",{exact:true})).toHaveCount(0);
-  await page.getByRole("button",{name:"Confirm plan",exact:true}).click();
+  // One list: every holding with a suggested amount, each one editable.
+  await expect(page.getByRole("heading",{name:"Your monthly SIPs"})).toBeVisible();
+  await expect(page.getByLabel("Index SIP a month")).toBeVisible();
+  await expect(page.getByLabel("Bank FD a month")).toHaveCount(0);
+  await page.getByLabel("Index SIP a month").fill("12000");
+  await expect(page.getByText(/^₹12,000$/).first()).toBeVisible();
+  await page.screenshot({path:"test-results/sip-plan-375.png",fullPage:true});
+  await page.getByRole("button",{name:"Save this plan",exact:true}).click();
   await expect(page).toHaveURL(/\/goals\/plan$/);
   await expect(page.getByText("Your confirmed plan",{exact:true})).toBeVisible();
   await expect(page.getByRole("link",{name:"Plan a withdrawal",exact:true})).toBeVisible();
@@ -385,7 +389,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // A confirmed plan keeps its mapping, so the new fund counts once the plan is confirmed again.
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.goto("/goals/sip");
-  await page.getByRole("button",{name:"Confirm plan",exact:true}).click();
+  await page.getByRole("button",{name:"Save this plan",exact:true}).click();
   await expect(page).toHaveURL(/\/goals\/plan$/);
   // Extra money: where a one-time amount would go, without saving anything.
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
@@ -441,7 +445,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     .click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await page.goto("/goals/sip");
-  await page.getByRole("button",{name:"Confirm plan",exact:true}).click();
+  await page.getByRole("button",{name:"Save this plan",exact:true}).click();
   await expect(page).toHaveURL(/\/goals\/plan$/);
   await page.goto("/goals");
   await billsCard.click();

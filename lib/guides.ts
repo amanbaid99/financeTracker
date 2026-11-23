@@ -134,6 +134,9 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-23", title: "A simpler SIP plan", items: [
+    { title: "Every holding, one list", text: "Your monthly SIPs shows each holding with a suggested amount, ₹0 where nothing is suggested. Change any amount and save." },
+  ] },
   { date: "2026-11-23", title: "An easier budget", items: [
     { title: "Three steps", text: "Income, your costs (filled in from your records, groceries and day-to-day spending included), then a rounded split that counts the SIPs you already have." },
     { title: "No salary right now", text: "Tick it and the budget becomes your monthly costs, which Covered till salary uses." },

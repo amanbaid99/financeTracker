@@ -183,12 +183,12 @@ export const HELP: HelpTopic[] = [
   {
     id: "budget-sip",
     section: "Budget",
-    q: "What does Use for Your plan do?",
+    q: "How do I plan my monthly SIPs?",
     a: [
-      "Use for Your plan opens the SIP planner with your budget as the affordability limit. You can plan less, leave an extra buffer, and set optional total monthly minimums for individual holdings.",
-      "If your budget has nothing left for saving and investing (for example, no salary right now), the planner says so plainly instead of showing ₹0 figures. Your goals are still covered by money you already have. Update your income in Budget when your salary starts.",
-      "Where to contribute stays grouped by investment vehicle and purpose. Why this plan? shows each goal’s coverage, required and planned amounts, status, shortfall, alternatives and assumptions. Manual overrides are retained and checked against the same budget.",
-      "Confirm plan saves an immutable, timestamped version. Budget, goal, balance, ownership or risk changes prompt a fresh review without rewriting old plans. The prior category minimum inputs are removed. No provider SIP, trade or balance is changed by confirmation.",
+      "Your monthly SIPs lists every holding you can add money to each month, with a suggested amount. Holdings with nothing suggested show ₹0, so you can still choose to put money there.",
+      "Suggestions cover what your goals need, up to your budget's Save & invest if you have one. Change any amount, or tap Use suggestions to go back. If the total is more than your budget sets aside, you'll see a note; you can still save.",
+      "Suggested, but you don't hold one lists kinds of fund that would suit a goal you have nothing for. Add one in Net worth and it joins the list.",
+      "Save this plan keeps it in the app. No SIP is started or changed with your provider.",
     ],
     tags: "budget sip save invest monthly allocation plan",
   },
