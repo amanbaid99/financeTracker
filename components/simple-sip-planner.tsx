@@ -7,6 +7,7 @@ import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
 import { confirmHybridPlan } from "@/lib/hybrid-actions";
 import { proposeGoalMapping } from "@/lib/hybrid-mapping";
+import {hybridPlan,hybridVehicles} from "@/lib/hybrid-plan";
 import { sipSuggestions } from "@/lib/simple-sip";
 import type { SipMinimums } from "@/lib/sip-minimums";
 import { formatINR } from "@/lib/format";
@@ -24,7 +25,6 @@ export function SimpleSipPlanner({
   budgetMonthly,
   essentialsMonthly = 0,
   savedAmounts,
-  hasConfirmed,
   revision,
   riskTolerance,
 }: {
@@ -50,14 +50,14 @@ export function SimpleSipPlanner({
       proposeGoalMapping(
         goals,
         investments,
-        hasConfirmed ? currentLinks : [],
+        currentLinks,
         today,
         {
-          refresh: hasConfirmed,
+          refresh: false,
           riskTolerance,
         },
       ),
-    [goals, investments, currentLinks, today, hasConfirmed, riskTolerance],
+    [goals, investments, currentLinks, today, riskTolerance],
   );
   const s = useMemo(
     () =>
@@ -96,7 +96,17 @@ export function SimpleSipPlanner({
     (h) => (amounts[h.investment.id] ?? 0) !== h.suggested,
   );
 
+  const overBudget = total > budgetMonthly;
+  const preview = useMemo(()=>{
+    if(total>budgetMonthly)return null;
+    const input={goals,investments,links,today,riskTolerance,monthlySavings:budgetMonthly,monthlyPlanLimit:total,
+      minimums:Object.fromEntries(Object.entries(amounts).map(([id,n])=>[`inv:${id}`,n]))};
+    const result=hybridPlan(input);
+    return {result,vehicles:hybridVehicles(input,result)};
+  },[goals,investments,links,today,riskTolerance,budgetMonthly,total,amounts]);
+
   function save() {
+    if (overBudget) return setError("Lower the amounts or update your budget before saving.");
     setError("");
     const minimums = Object.fromEntries(
       Object.entries(amounts)
@@ -110,7 +120,7 @@ export function SimpleSipPlanner({
         monthly: total,
         lump: 0,
         cashBuffer: 0,
-        refreshMapping: hasConfirmed,
+        refreshMapping: false,
         minimums,
         overrides: {},
       });
@@ -131,34 +141,10 @@ export function SimpleSipPlanner({
           The amounts you&apos;ve set below. Your goals need about{" "}
           {formatINR(s.goalsNeed)} a month.
         </p>
-        {s.basis > 0 && (
-          <div className="mt-2 space-y-1 rounded-xl bg-muted/50 p-3 text-xs">
-            <p className="font-medium">
-              {budgetMonthly > 0
-                ? `Your budget sets aside ${formatINR(budgetMonthly)}. Suggested split of ${formatINR(s.basis)}:`
-                : `Suggested split of ${formatINR(s.basis)}:`}
-            </p>
-            <p className="flex justify-between gap-3">
-              <span>Your holdings below</span>
-              <span className="tabular">{formatINR(s.inHoldings)}</span>
-            </p>
-            {s.inNewFunds > 0 && (
-              <p className="flex justify-between gap-3">
-                <span>Funds you don&apos;t hold yet (further down)</span>
-                <span className="tabular">{formatINR(s.inNewFunds)}</span>
-              </p>
-            )}
-            {s.unplaced > 0 && (
-              <p className="flex justify-between gap-3">
-                <span>
-                  Not suggested anywhere; add it to any holding if you like
-                </span>
-                <span className="tabular">{formatINR(s.unplaced)}</span>
-              </p>
-            )}
-          </div>
-        )}
-        {budgetMonthly > 0 && total > budgetMonthly && (
+        {budgetMonthly === 0 && <p className="mt-2 text-sm text-muted-foreground">No monthly savings available yet. <Link href="/goals/budget" className="font-medium text-primary">Update your budget</Link> to plan new contributions. Existing investments still cover your goals.</p>}
+        <p className="text-sm text-muted-foreground">Available from your budget: {formatINR(budgetMonthly)}/mo</p>
+        {!overBudget&&total<budgetMonthly&&<p className="text-xs text-muted-foreground">{formatINR(budgetMonthly-total)} remains unassigned. You don&apos;t have to invest it all.</p>}
+        {overBudget && (
           <p className="text-xs text-warning">
             {formatINR(total - budgetMonthly)} more than your budget sets aside.
           </p>
@@ -171,9 +157,8 @@ export function SimpleSipPlanner({
             Why these amounts
           </summary>
           <p className="mt-2 text-xs text-muted-foreground">
-            Emergency fund first (1 month of costs within 3 months, then 3
-            months within 6), then bills coming up, then ₹500 for every other
-            goal, then the closest goal first.
+            Essential goals first, then other goals based on their priority,
+            deadline and remaining need. The same rules calculate your saved plan.
           </p>
           <ul className="mt-2 divide-y">
             {s.byGoal.map((l) => (
@@ -241,7 +226,7 @@ export function SimpleSipPlanner({
                           : "Nothing suggested"}
                       </p>
                     </div>
-                    <div className="w-32 shrink-0">
+                    <div className="w-28 shrink-0">
                       <MoneyInput
                         aria-label={`${h.label} a month`}
                         value={amounts[id] ?? 0}
@@ -291,12 +276,13 @@ export function SimpleSipPlanner({
         </div>
       )}
 
+      {preview&&differsFromSuggested&&<p className="rounded-xl bg-muted/50 p-3 text-sm">With these amounts, your goals still need about {formatINR(preview.result.monthlyContributionShortfall)} more a month.{preview.result.goals.some(g=>g.category==="essential"&&g.monthlyShortfall>0)?" Some essential goals remain short.":""}</p>}
       {error && (
         <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}
-      <Button className="w-full" disabled={pending} onClick={save}>
+      <Button className="w-full" disabled={pending || overBudget} onClick={save}>
         {pending ? "Saving…" : "Save this plan"}
       </Button>
       <p className="text-xs text-muted-foreground">

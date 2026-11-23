@@ -62,17 +62,17 @@ export const HELP: HelpTopic[] = [
       "The planner proposes percentage ownership of your existing investments. Confirming a plan saves that mapping. Confirmed shares stay in place until you approve a new plan; only unassigned ownership is available for extra mapping.",
       "An investment can support several goals, but its total assigned share cannot exceed 100%. Current allocated values follow its recorded balance. Deleting or completing a goal releases ownership without deleting the investment.",
       "Essentials and flexible goals use separate holdings for new planning. Travel prefers a suitable separate bank account or another liquid fund. Missing suitable vehicles are shown as categories, never invented products.",
-      "Only assigned, accessible investments count toward coverage. Check missing valuation dates, restricted assets and risk warnings under Why this plan? No live prices or automatic trades are used.",
+      "Only assigned, accessible investments count toward coverage. Check missing valuation dates, restricted assets and risk warnings under Goal coverage and calculations on Your plan. No live prices or automatic trades are used.",
     ],
     tags: "auto allocate link map which fund covers goal priority emergency sinking",
   },
   {
     id: "goal-suggestions",
     section: "Goals",
-    q: "What are the Suggestions on Goals?",
+    q: "How do I change which investments cover a goal?",
     a: [
-      "Which money covers which goal: when the app would cover a goal differently from now, it suggests which of your holdings to use. Accept saves it; Change lets you pick holdings and shares yourself; Accept all does every goal at once. If another goal already uses part of that holding, its share shrinks to make room, so nothing is counted twice; that goal may then show a new suggestion. Accepted choices stay until you change them, and a new suggestion appears when something changes, like a new fund.",
-      "Keep it simple: ideas to merge funds that do the same job, tidy small holdings, use money no goal needs, or move equity that covers money needed soon. The app doesn't buy or sell anything. When you've done one, tap Done, update amounts. Not now hides any suggestion for a week.",
+      "Open a goal to see Covered by. The app proposes suitable existing investments in the background when you create your monthly plan. Review and save once; there is no separate mapping approval list.",
+      "For a manual change, tap Change what covers this goal inside its details. Other goals keep their allocations. If your chosen share is already used, the edit is rejected without changing your previous coverage.",
     ],
     tags: "suggestions accept change mapping merge move sell simplify",
   },
@@ -113,7 +113,7 @@ export const HELP: HelpTopic[] = [
     a: [
       "Hybrid allocation is the default. Essential minimums come first, then remaining essential requirements, using your ranking, deadline and goal ID. Flexible minimums follow; remaining money is shared using priority, urgency and outstanding need.",
       "High, medium and low priorities have weights 3, 2 and 1. Urgency weights are 1.5 within 12 months, 1.25 within 36 months and 1 later. Each allocation is capped at the monthly requirement, with deterministic rounding. Unneeded money stays unallocated.",
-      "A visible extra cash buffer reduces available savings. Existing SIPs are displayed separately, and no recommendation can exceed the budget. A zero surplus produces no new monthly allocation.",
+      "Any saved extra cash buffer reduces available savings. Existing SIPs are displayed separately, and no recommendation can exceed the budget. A zero surplus produces no new monthly allocation.",
     ],
     tags: "money plan priority split sip allocate emergency floor fifth",
   },
@@ -122,7 +122,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "Can I choose which goal comes first?",
     a: [
-      "Open Your plan, then Edit order to rank essential goals, including bills. Minimums are addressed before remaining essential requirements. Flexible goals use priority, urgency and need rather than this ranking.",
+      "Open Goal coverage and calculations on Your plan, then Change essential order to rank essential goals, including bills. Minimums are addressed before remaining essential requirements. Flexible goals use priority, urgency and need rather than this ranking.",
       "An undated emergency fund uses a visible 12-month build assumption. Other undated goals require a date for projections and receive money only through an explicit monthly preference. Saving a ranking updates the recommendation, not your confirmed historical plan or actual investments.",
     ],
     tags: "priority rank order first emergency",
@@ -132,7 +132,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "What happens when I confirm my plan?",
     a: [
-      "Your plan now separates the recommendation, the plan you confirm and your recorded investments. Confirm plan saves a new immutable version and coverage mapping. It does not start a SIP, move money or increase a balance.",
+      "Your plan now separates the recommendation, the plan you confirm and your recorded investments. Save this plan saves a new immutable version and coverage mapping. It does not start a SIP, move money or increase a balance.",
       "After actually setting up a provider SIP or making a transaction, record the resulting SIP or balance in Net worth, or review and confirm a CAS import. Existing recorded SIPs are never silently cut to fit a new recommendation.",
     ],
     tags: "this month checklist tick sip",
@@ -196,7 +196,7 @@ export const HELP: HelpTopic[] = [
     q: "How do I plan my monthly SIPs?",
     a: [
       "Your monthly SIPs lists every holding you can add money to each month, with a suggested amount. Holdings with nothing suggested show ₹0, so you can still choose to put money there.",
-      "Suggestions follow steps: first the emergency fund's minimum (1 month of fixed costs within 3 months, then 3 months within 6), then what bills coming up need each month, then ₹500 for every other goal so all of them move, then the rest to the closest goal first. Why these amounts shows each goal's share. Suggestions cover what your goals need, up to your budget's Save & invest if you have one. Change any amount, or tap Use suggestions to go back. If the total is more than your budget sets aside, you'll see a note; you can still save.",
+      "Suggestions and saved outcomes use the same calculation: essential goals first, then other goals based on priority, deadline and remaining need. There is no automatic amount for every goal. A zero budget produces no new contributions; amounts above available savings cannot be saved. Update Budget if your income or costs changed.",
       "Suggestions use a fund you already hold first: the best fit, or else the closest one (money needed within a year never goes into equity). A bank account is suggested first only for money needed within a year; for 1 to 3 years, a debt or arbitrage fund you hold comes first. Suggested, but you don't hold one only appears when nothing you hold is close. Add one in Net worth and it joins the list.",
       "Save this plan keeps it in the app. No SIP is started or changed with your provider.",
     ],

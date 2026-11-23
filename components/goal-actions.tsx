@@ -9,6 +9,8 @@ import {
   investmentSub,
   investmentTitle,
 } from "@/components/investment-sheet";
+import { GoalMappingControl } from "./goal-suggestions";
+import { holdingLabel } from "@/lib/goal-suggestions";
 import { Sheet } from "@/components/sheet";
 import { Button } from "@/components/ui/button";
 import { deleteGoal } from "@/lib/actions";
@@ -222,6 +224,8 @@ export function GoalInvestments({
       >
         <Plus /> Add investment
       </Button>
+      <GoalMappingControl goalId={goal.id} goalName={goal.name} links={links}
+        holdings={investments.map(i=>({id:i.id,label:holdingLabel(i),value:i.value}))} />
       {open && (
         <InvestmentSheet
           goalId={null}

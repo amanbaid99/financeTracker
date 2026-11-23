@@ -37,7 +37,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "I have extra money previews where spare cash helps your goals. Nothing is saved until you confirm. New goal adds something you want to save for.",
       "Update amounts lets you enter the latest amounts for your investments.",
       "Import statement reads a CAS. You review the results before saving.",
-      "SIP plan separates safety, lifestyle and long-term amounts, then groups vehicles within each purpose. Essentials use a separate holding from lifestyle goals. Set monthly minimums for your named holdings. Plan a withdrawal previews which holdings you could use without moving money.",
+      "SIP plan separates safety, lifestyle and long-term amounts, then groups vehicles within each purpose. Essentials use a separate holding from lifestyle goals. Set monthly amounts for your named holdings. Plan a withdrawal previews which holdings you could use without moving money.",
       "Log a card bill records a statement for an existing card. Add a new card in the Cards tab.",
       "You can reopen this guide from the info button inside the + menu.",
     ],
@@ -53,13 +53,10 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Focus goals shows the first three unfinished goals, followed by Other goals and then Covered. A goal on hold keeps its place. Use Change order to move goals.",
       "Loans can have payoff goals. Manage any loan in Net worth, even if its goal was deleted. Each shows what's left, the EMI and when it ends. Confirm the outstanding amount from your lender each month. Once confirmed, it stays until your next update. Older schedule-based balances and future payoff figures are estimates.",
       "Tap +, then Update amounts to enter new amounts, or Import statement to update funds from a CAS.",
-      "Your plan (top right) shows how your monthly money is split, top of your order first. Edit order there to choose which goals come first.",
-      "Use Plan monthly contributions when starting a plan, or Your plan for an existing allocation. Reminders stay on Home, so Goals stays focused on progress.",
-      "Your plan has its own page: tap Your plan. It shows where the money goes and why, then This month lists what to add to your SIPs. Tick a step once you've set it up: it's added to that fund's SIP, with Undo for 10 seconds.",
-      "Open a goal for its What to do box. If your plan can't cover it, it says how much more a month keeps it on track.",
-      "The plan page shows what your budget allows and what your plan uses. Open Budget and plan details there for income, costs, EMIs and SIPs.",
-      "Edit plan sets one monthly investment budget, including what you already invest. One-time savings are optional.",
-      "Budget and plan details shows the goal breakdown and lets you compare one holding per goal with a spread across holdings. Nothing is saved until you confirm.",
+      "Your plan shows your confirmed monthly investments. Edit plan opens one list of holdings and amounts, within what your budget makes available.",
+      "Open a goal to see what covers it and its remaining gap. Change what covers this goal is optional and never reduces another goal's share.",
+      "Essential goals come first. Other goals use priority, deadline and need, with no automatic contribution to every goal.",
+      "Goal coverage and calculations, and previous plans, are secondary details. Saving a plan never starts a SIP or changes investment balances.",
     ],
   },
   portfolio: {
@@ -134,13 +131,10 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
-  { date: "2026-11-23", title: "A clearer SIP split", items: [
-    { title: "Closest goal first", text: "Emergency fund minimum first, then bills coming up, then ₹500 for every other goal, then the rest to the closest goal. Why these amounts shows each step." },
-  ] },
-  { date: "2026-11-23", title: "Suggestions on Goals", items: [
-    { title: "Accept or change", text: "Goals suggests which of your holdings should cover each goal. Accept, change it yourself, or put it off for a week." },
-    { title: "Keep it simple", text: "Ideas to merge, tidy or move money, using only what you already hold. Nothing is bought or sold for you." },
-  ] },
+  {date:"2026-11-23",title:"One simple monthly plan",items:[
+    {title:"Review once",text:"Choose monthly amounts by holding and save once. Suggestions and goal outcomes use the same calculation, within your budget."},
+    {title:"Coverage stays in the background",text:"Open a goal to see what covers it or change it. No separate mapping approval list. Emergency and lifestyle money stay separate."},
+  ]},
   { date: "2026-11-23", title: "A simpler SIP plan", items: [
     { title: "Every holding, one list", text: "Your monthly SIPs shows each holding with a suggested amount, ₹0 where nothing is suggested. Change any amount and save." },
   ] },

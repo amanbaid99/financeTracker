@@ -7,16 +7,7 @@ import { ExtraMoney } from "@/components/extra-money";
 import { GoalsOverview } from "@/components/goals-overview";
 import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
-import { loadMoneyPlan, loadRunway, loadSnapshot } from "@/lib/data";
-import { GoalSuggestions } from "@/components/goal-suggestions";
-import { loadHybridContext } from "@/lib/hybrid-data";
-import { proposeGoalMapping } from "@/lib/hybrid-mapping";
-import {
-  holdingLabel,
-  mappingSuggestions,
-  tidySuggestions,
-  visible,
-} from "@/lib/goal-suggestions";
+import { loadMoneyPlan, loadRunway } from "@/lib/data";
 import { sortGoals } from "@/lib/goal-summary";
 
 export const metadata: Metadata = { title: "Goals" };
@@ -38,29 +29,7 @@ export default async function GoalsPage({
     sipsNow,
     unassigned,
     budgetMonthly,
-    allocation,
   } = await loadMoneyPlan();
-  const [snap, hybrid] = await Promise.all([loadSnapshot(), loadHybridContext()]);
-  const snoozes = (snap.settings?.update_snoozes ?? {}) as Record<string, unknown>;
-  // Suggestions: the app's own mapping where it differs from yours, and tidy-ups.
-  let proposed: typeof links = [];
-  try {
-    proposed = proposeGoalMapping(goals, investments, [], today, {
-      riskTolerance: hybrid.riskTolerance,
-    });
-  } catch {
-    proposed = [];
-  }
-  const mapSuggestions = visible(
-    mappingSuggestions(goals, investments, links, proposed),
-    snoozes,
-    today,
-  );
-  const tidy = visible(
-    tidySuggestions(goals, investments, links, allocation),
-    snoozes,
-    today,
-  );
   const between=await loadRunway();
   // Every investment remains updatable from the + menu.
   const goalNames = new Map(goals.map((g) => [g.id, g.name]));
@@ -93,12 +62,6 @@ export default async function GoalsPage({
 
         </div>
       </div>
-
-      <GoalSuggestions
-        mappings={mapSuggestions}
-        tidy={tidy}
-        holdings={investments.map((i) => ({ id: i.id, label: holdingLabel(i), value: i.value }))}
-      />
 
       {updatable.length > 0 && (
         <UpdateButton

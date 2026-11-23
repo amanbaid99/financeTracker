@@ -1,14 +1,11 @@
 // The SIP plan as one list: every holding you could put monthly money into,
 // with a suggested amount (₹0 where nothing is suggested), so you decide.
-// Amounts per goal come from lib/step-allocation.ts (emergency floor, bills,
-// a little for every goal, then closest first); sipPlan then puts each goal's
-// amount into a holding you already have. Pure; suggestions only.
+// Uses the same hybrid engine and vehicle picker as confirmation and goal outcomes.
 
-import { categoryForHorizon, type Suggestion } from "./allocate";
+import { hybridPlan, hybridVehicles } from "./hybrid-plan";
 import { KIND_LABELS, asKind } from "./instruments";
 import { categoryLabel } from "./categories";
-import { sipPlan } from "./sip-plan";
-import { stepAllocation, type StepLine } from "./step-allocation";
+
 import type { Investment, Link, TrackedGoal } from "./tracker";
 
 /** Kinds you can't add monthly money to yourself. */
@@ -50,45 +47,27 @@ export function sipSuggestions(opts: {
   inNewFunds: number;
   unplaced: number;
   /** Per goal: how much and why. */
-  byGoal: StepLine[];
+  byGoal: { goalId: string; goalName: string; monthly: number; why: string }[];
 } {
-  const plan = stepAllocation({
-    goals: opts.goals,
-    essentialsMonthly: opts.essentialsMonthly ?? 0,
-    budget: opts.budgetMonthly,
-  });
-  const suggestions: Suggestion[] = plan.lines
-    .filter((l) => l.monthly > 0)
-    .map((l) => {
-      const g = opts.goals.find((x) => x.id === l.goalId)!;
-      const { category, why } = categoryForHorizon(g.months, g.type);
-      return {
-        goalId: g.id,
-        goalName: g.name,
-        lump: 0,
-        monthly: l.monthly,
-        category,
-        categoryLabel: categoryLabel(category),
-        why,
-        after: g,
-        stage: "ranked" as const,
-      };
-    });
-  const lines = sipPlan(suggestions, opts.investments, opts.links, "pooled", opts.goals);
-  const byInvestment = new Map(
-    lines.flatMap((l) => (l.investment ? [[l.investment.id, l] as const] : [])),
-  );
+  const input = {
+    goals: opts.goals, investments: opts.investments, links: opts.links,
+    today: opts.today, riskTolerance: opts.riskTolerance,
+    monthlySavings: Math.max(0, opts.budgetMonthly),
+  };
+  const plan = hybridPlan(input);
+  const lines = hybridVehicles(input, plan);
+  const byInvestment = new Map(lines.map(l => [l.key, l]));
   const holdings = opts.investments
     .filter((i) => !NOT_MONTHLY.has(asKind(i.kind)))
     .map((i) => {
-      const line = byInvestment.get(i.id);
+      const line = byInvestment.get(`inv:${i.id}`);
       const kindLabel =
         i.kind === "mutual_fund" ? categoryLabel(i.category) : KIND_LABELS[asKind(i.kind)];
       return {
         investment: i,
         label: i.name?.trim() || kindLabel,
         kindLabel,
-        suggested: line?.monthly ?? 0,
+        suggested: line?.total ?? 0,
         covers: line?.parts.map((p) => p.goalName) ?? [],
       };
     })
@@ -99,12 +78,12 @@ export function sipSuggestions(opts: {
         a.label.localeCompare(b.label),
     );
   const newFunds = lines
-    .filter((l) => !l.investment && l.monthly > 0)
+    .filter((l) => !l.key.startsWith("inv:") && l.total > 0)
     .map((l) => ({
-      key: l.key ?? `new:${l.category}`,
-      label: `A new ${categoryLabel(l.category).toLowerCase()}`,
-      category: l.category,
-      suggested: l.monthly,
+      key: l.key,
+      label: l.label,
+      category: plan.goals.find(g => l.parts.some(p => p.goalId === g.goalId))?.investmentCategory ?? "liquid_fund",
+      suggested: l.total,
       covers: l.parts.map((p) => p.goalName),
     }));
   const inHoldings = holdings.reduce((a, h) => a + h.suggested, 0);
@@ -112,11 +91,11 @@ export function sipSuggestions(opts: {
   return {
     holdings,
     newFunds,
-    goalsNeed: plan.need,
-    basis: plan.basis,
+    goalsNeed: plan.totalMonthlyRequired,
+    basis: plan.totalMonthlyAllocated,
     inHoldings,
     inNewFunds,
-    unplaced: Math.max(0, plan.basis - inHoldings - inNewFunds),
-    byGoal: plan.lines,
+    unplaced: Math.max(0, plan.totalMonthlyAllocated - inHoldings - inNewFunds),
+    byGoal: plan.goals.map(g => ({goalId:g.goalId, goalName:g.goalName, monthly:g.recommendedMonthly, why:g.explanation})),
   };
 }

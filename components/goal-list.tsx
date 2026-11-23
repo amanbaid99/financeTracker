@@ -292,7 +292,7 @@ export function GoalList({
                       href="/goals/plan"
                       className="inline-flex min-h-10 items-center font-medium text-primary"
                     >
-                      Review allocation and assumptions
+                      View monthly plan
                     </NextLink>
                   </div>
                 )}

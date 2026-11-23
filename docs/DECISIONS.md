@@ -1,5 +1,14 @@
 # Product decisions
 
+## One monthly planning flow, 23 Nov 2026
+
+Your monthly SIPs uses hybridPlan/hybridVehicles, exactly as confirmation and goal projections do. Removed the separate step-allocation engine and automatic ₹500 per goal. Zero savings means zero new contributions. Both UI and server reject monthly totals above available savings; capacity is never inflated to fit a proposed plan. Budget is the source of available money, not URL parameters.
+
+Goals no longer has a mapping/tidy approval inbox. Covered by remains inside each goal with an optional manual Change what covers this goal sheet. Normal planning preserves current mappings and fills free suitable ownership; no automatic refresh that trims confirmed shares. Emergency/essential vehicles remain separate from lifestyle vehicles. Removed mergeMapping's newest-choice-wins shrinking. save_goal_coverage is an authenticated invoker RPC using existing owner RLS and 100% trigger, locking the owner's profile, goals and holdings in the same order as confirmation. It edits one goal in a transaction, preserves all other goals and rolls back failure. No new tables or financial data changes on deployment.
+
+Your plan is a compact read-only confirmed vehicle list with one Edit plan entry point to Your monthly SIPs. Goal math and frozen prior plans are secondary disclosures. Recommendations, confirmed plans and actual provider contributions remain separate. Existing investments and transactions are unchanged.
+
+
 Why the app works the way it does. Newest first within each section. When the owner changes
 direction, add a line here so the next person doesn't undo it.
 

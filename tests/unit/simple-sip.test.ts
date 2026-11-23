@@ -41,7 +41,7 @@ describe("sipSuggestions", () => {
       investments,
       links: [],
       today,
-      budgetMonthly: 0,
+      budgetMonthly: 10000,
     });
     expect(s.holdings.map((h) => h.investment.id).sort()).toEqual([
       "bank",
@@ -95,7 +95,7 @@ describe("reusing what you hold", () => {
       investments: funds,
       links: [],
       today,
-      budgetMonthly: 0,
+      budgetMonthly: 10000,
     });
     expect(s.newFunds).toEqual([]);
     expect(s.holdings[0].suggested).toBeGreaterThan(0);
@@ -116,7 +116,7 @@ describe("reusing what you hold", () => {
       investments: funds,
       links: [],
       today,
-      budgetMonthly: 0,
+      budgetMonthly: 10000,
     });
     expect(s.holdings[0].suggested).toBe(0);
     expect(s.newFunds.length).toBeGreaterThan(0);
@@ -142,7 +142,7 @@ describe("1 to 3 year goals", () => {
       investments: funds,
       links: [],
       today,
-      budgetMonthly: 0,
+      budgetMonthly: 10000,
     });
     expect(
       s.holdings.find((h) => h.investment.id === "arb")!.suggested,
@@ -166,8 +166,25 @@ describe("1 to 3 year goals", () => {
       investments: funds,
       links: [],
       today,
-      budgetMonthly: 0,
+      budgetMonthly: 10000,
     });
     expect(s.holdings[0].suggested).toBeGreaterThan(0);
   });
+});
+
+it("zero savings never produces new contribution suggestions",()=>{
+ const funds=[inv("cash","savings","savings_account",1000)];
+ const goal:GoalInput={id:"trip",name:"Trip",type:"travel",target:100000,targetDate:"2027-06-01",inflationPct:null};
+ const s=sipSuggestions({goals:[trackGoal(goal,funds,[],today)],investments:funds,links:[],today,budgetMonthly:0});
+ expect(s.basis).toBe(0);expect(s.inHoldings+s.inNewFunds).toBe(0);expect(s.goalsNeed).toBeGreaterThan(0);
+});
+
+it("uses exactly the same per-goal engine result as plan calculation, without a blanket minimum",async()=>{
+ const {hybridPlan}=await import("@/lib/hybrid-plan");
+ const funds=[inv("bank","savings","savings_account",0)];
+ const goals=[{id:"small",name:"Small",type:"custom",target:1200,targetDate:"2027-11-23",inflationPct:0,expectedReturnPct:0},{id:"large",name:"Large",type:"custom",target:120000,targetDate:"2027-11-23",inflationPct:0,expectedReturnPct:0}].map(g=>trackGoal(g as GoalInput,funds,[],today));
+ const s=sipSuggestions({goals,investments:funds,links:[],today,budgetMonthly:20000});
+ const result=hybridPlan({goals,investments:funds,links:[],today,monthlySavings:20000});
+ expect(s.byGoal.map(g=>[g.goalId,g.monthly])).toEqual(result.goals.map(g=>[g.goalId,g.recommendedMonthly]));
+ expect(s.byGoal.find(g=>g.goalId==="small")!.monthly).toBe(100);
 });

@@ -1258,6 +1258,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      save_goal_coverage: { Args: {p_goal: string; p_rows: Json}; Returns: undefined };
       add_invite: {
         Args: { p_email: string; p_note?: string };
         Returns: undefined;

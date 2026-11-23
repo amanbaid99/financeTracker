@@ -364,6 +364,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByLabel("Index SIP a month").fill("12000");
   await expect(page.getByText(/^₹12,000$/).first()).toBeVisible();
   await page.screenshot({path:"test-results/sip-plan-375.png",fullPage:true});
+  // No salary: a positive plan cannot be saved, and zero remains safe.
+  await expect(page.getByRole("button",{name:"Save this plan",exact:true})).toBeDisabled();
+  await page.getByLabel("Index SIP a month").fill("0");
   await page.getByRole("button",{name:"Save this plan",exact:true}).click();
   await expect(page).toHaveURL(/\/goals\/plan$/);
   await expect(page.getByText("Your confirmed plan",{exact:true})).toBeVisible();
@@ -372,7 +375,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.screenshot({path:"test-results/plan-375.png",fullPage:true});
   await page.getByRole("link",{name:"Goals",exact:true}).first().click();
   await page.getByRole("button",{name:/^House/}).click();
-  await expect(page.getByRole("link",{name:"Review allocation and assumptions"})).toBeVisible();
+  await expect(page.getByRole("link",{name:"View monthly plan"})).toBeVisible();
   await page.getByRole("button",{name:"Edit Index SIP"}).click();
   await expect(page.getByRole("dialog",{name:"Index SIP"}).getByLabel("Monthly SIP")).toHaveValue("10,000");
   await page.getByRole("button",{name:"Close",exact:true}).click();
@@ -388,18 +391,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     .click();
   // A confirmed plan keeps its mapping, so the new fund counts once the plan is confirmed again.
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  // Goals suggests where the new fund fits; Accept saves it.
+  // Coverage is a goal detail, not a separate approval inbox.
   await page.goto("/goals");
-  const suggestions = page.getByRole("region", { name: "Suggestions" });
-  await expect(suggestions).toBeVisible();
-  await page.screenshot({ path: "test-results/suggestions-375.png", fullPage: true });
-  const accept = suggestions.getByRole("button", { name: /^Accept for / }).first();
-  if (await accept.count()) {
-    const before = await suggestions.getByRole("button", { name: /^Accept for / }).count();
-    await accept.click();
-    await expect(suggestions.getByRole("button", { name: /^Accept for / })).toHaveCount(before - 1);
-    await expect(suggestions.getByRole("alert")).toHaveCount(0);
-  }
+  await expect(page.getByRole("region", {name:"Suggestions"})).toHaveCount(0);
   await page.goto("/goals/sip");
   await page.getByRole("button",{name:"Save this plan",exact:true}).click();
   await expect(page).toHaveURL(/\/goals\/plan$/);

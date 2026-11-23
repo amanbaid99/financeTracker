@@ -44,7 +44,8 @@ export async function confirmHybridPlan(
       b.budget.emis,
       v.cashBuffer,
     );
-    // Your choice: a plan above the budget is allowed (the screen notes it).
+    if (v.monthly > capacity.availableSavings)
+      return {ok:false,error:"This plan exceeds your available monthly savings. Update your budget or lower the amounts."};
     const held = new Set(g.investments.map((i) => `inv:${i.id}`));
     if (Object.keys(v.minimums).some((k) => !held.has(k)))
       return {
@@ -59,7 +60,7 @@ export async function confirmHybridPlan(
     const links = proposeGoalMapping(
       g.goals,
       g.investments,
-      c.plans.length ? g.links : [],
+      g.links,
       g.today,
       { refresh: v.refreshMapping, riskTolerance: c.riskTolerance },
     );
@@ -78,7 +79,7 @@ export async function confirmHybridPlan(
       goals: g.goals,
       investments: g.investments,
       links,
-      monthlySavings: Math.max(capacity.availableSavings, v.monthly),
+      monthlySavings: capacity.availableSavings,
       monthlyPlanLimit: v.monthly,
       budgetDeficit: capacity.budgetDeficit,
       oneTime: v.lump,
