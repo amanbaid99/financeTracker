@@ -6,16 +6,61 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser } from "./data";
 import { todayIST } from "./dates";
+import { mergeMapping, type MapRow } from "./mapping-merge";
 
 const row = z.object({
   investmentId: z.string().uuid(),
   percent: z.number().gt(0).max(100),
 });
-const pct = (n: number) => Math.floor(n * 100) / 100;
 
 type Result = { ok: true } | { ok: false; error: string };
 const FULL =
-  "A holding would be more than fully used across goals. Lower a share and try again.";
+  "Couldn't save the new mapping. Your previous one is kept. Try again.";
+
+/**
+ * Replaces the mapping for some goals, trimming other goals' shares of a
+ * holding when it would be more than fully used. Restores the old mapping if
+ * saving fails.
+ */
+async function replaceMapping(
+  goalIds: string[],
+  next: MapRow[],
+): Promise<Result> {
+  const { supabase, user } = await requireUser();
+  const { data: before, error: readError } = await supabase
+    .from("goal_allocations")
+    .select("goal_id, holding_id, percent");
+  if (readError || !before)
+    return { ok: false, error: "Couldn't save. Try again." };
+  const saved = before.map((b) => ({
+    goalId: b.goal_id,
+    investmentId: b.holding_id,
+    percent: Number(b.percent),
+  }));
+  const merged = mergeMapping(saved, goalIds, next);
+  const toRows = (rows: MapRow[]) =>
+    rows.map((r) => ({
+      user_id: user.id,
+      goal_id: r.goalId,
+      holding_id: r.investmentId,
+      percent: r.percent,
+    }));
+  const { error: delError } = await supabase
+    .from("goal_allocations")
+    .delete()
+    .eq("user_id", user.id);
+  if (delError) return { ok: false, error: "Couldn't save. Try again." };
+  const { error } = merged.length
+    ? await supabase.from("goal_allocations").insert(toRows(merged))
+    : { error: null };
+  if (error) {
+    if (saved.length)
+      await supabase.from("goal_allocations").insert(toRows(saved));
+    return { ok: false, error: FULL };
+  }
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
 
 /** Saves which holdings cover one goal, replacing what covered it before. */
 export async function saveGoalMapping(input: {
@@ -27,45 +72,10 @@ export async function saveGoalMapping(input: {
     .safeParse(input);
   if (!v.success)
     return { ok: false, error: "Check the shares and try again." };
-  const { supabase, user } = await requireUser();
-  const { data: before, error: readError } = await supabase
-    .from("goal_allocations")
-    .select("holding_id, percent")
-    .eq("goal_id", v.data.goalId);
-  if (readError) return { ok: false, error: "Couldn't save. Try again." };
-  const { error: delError } = await supabase
-    .from("goal_allocations")
-    .delete()
-    .eq("goal_id", v.data.goalId);
-  if (delError) return { ok: false, error: "Couldn't save. Try again." };
-  const rows = v.data.rows
-    .map((r) => ({ ...r, percent: pct(r.percent) }))
-    .filter((r) => r.percent > 0);
-  if (rows.length) {
-    const { error } = await supabase.from("goal_allocations").insert(
-      rows.map((r) => ({
-        user_id: user.id,
-        goal_id: v.data.goalId,
-        holding_id: r.investmentId,
-        percent: r.percent,
-      })),
-    );
-    if (error) {
-      // Put the previous mapping back so nothing is lost.
-      if (before?.length)
-        await supabase.from("goal_allocations").insert(
-          before.map((b) => ({
-            user_id: user.id,
-            goal_id: v.data.goalId,
-            holding_id: b.holding_id,
-            percent: b.percent,
-          })),
-        );
-      return { ok: false, error: FULL };
-    }
-  }
-  revalidatePath("/", "layout");
-  return { ok: true };
+  return replaceMapping(
+    [v.data.goalId],
+    v.data.rows.map((r) => ({ ...r, goalId: v.data.goalId })),
+  );
 }
 
 /** Accept all: replaces the mapping of every goal listed, in one go. */
@@ -81,44 +91,7 @@ export async function saveAllMappings(input: {
     return { ok: false, error: "Check the shares and try again." };
   const goalIds = [...new Set(v.data.rows.map((r) => r.goalId))];
   if (!goalIds.length) return { ok: true };
-  const { supabase, user } = await requireUser();
-  const { data: before, error: readError } = await supabase
-    .from("goal_allocations")
-    .select("goal_id, holding_id, percent")
-    .in("goal_id", goalIds);
-  if (readError) return { ok: false, error: "Couldn't save. Try again." };
-  const { error: delError } = await supabase
-    .from("goal_allocations")
-    .delete()
-    .in("goal_id", goalIds);
-  if (delError) return { ok: false, error: "Couldn't save. Try again." };
-  const rows = v.data.rows
-    .map((r) => ({ ...r, percent: pct(r.percent) }))
-    .filter((r) => r.percent > 0);
-  const { error } = await supabase.from("goal_allocations").insert(
-    rows.map((r) => ({
-      user_id: user.id,
-      goal_id: r.goalId,
-      holding_id: r.investmentId,
-      percent: r.percent,
-    })),
-  );
-  if (error) {
-    if (before?.length)
-      await supabase
-        .from("goal_allocations")
-        .insert(
-          before.map((b) => ({
-            user_id: user.id,
-            goal_id: b.goal_id,
-            holding_id: b.holding_id,
-            percent: b.percent,
-          })),
-        );
-    return { ok: false, error: FULL };
-  }
-  revalidatePath("/", "layout");
-  return { ok: true };
+  return replaceMapping(goalIds, v.data.rows);
 }
 
 /** "Not now": hides a suggestion for a week. */

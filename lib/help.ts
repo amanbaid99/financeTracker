@@ -71,7 +71,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "What are the Suggestions on Goals?",
     a: [
-      "Which money covers which goal: when the app would cover a goal differently from now, it suggests which of your holdings to use. Accept saves it; Change lets you pick holdings and shares yourself; Accept all does every goal at once. Accepted choices stay until you change them, and a new suggestion appears when something changes, like a new fund.",
+      "Which money covers which goal: when the app would cover a goal differently from now, it suggests which of your holdings to use. Accept saves it; Change lets you pick holdings and shares yourself; Accept all does every goal at once. If another goal already uses part of that holding, its share shrinks to make room, so nothing is counted twice; that goal may then show a new suggestion. Accepted choices stay until you change them, and a new suggestion appears when something changes, like a new fund.",
       "Keep it simple: ideas to merge funds that do the same job, tidy small holdings, use money no goal needs, or move equity that covers money needed soon. The app doesn't buy or sell anything. When you've done one, tap Done, update amounts. Not now hides any suggestion for a week.",
     ],
     tags: "suggestions accept change mapping merge move sell simplify",

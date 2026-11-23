@@ -18,6 +18,11 @@ Last updated: 23 Nov 2026.
 
 
 
+
+## Accepting a mapping makes room, 24 Nov 2026
+
+Accepting one goal's suggestion failed with "more than fully used" when other goals already used part of the holding. `mergeMapping` (lib/mapping-merge.ts) now replaces the accepted goals' rows and scales down other goals' shares of any holding that would go over 100%. Save, Accept and Accept all all go through `replaceMapping`, which restores the old rows if the insert fails.
+
 ## Stepped SIP split, 24 Nov 2026
 
 `lib/step-allocation.ts` decides each goal's monthly amount for Your monthly SIPs: emergency floor (1 month of essentials within 3 months, then 3 months within 6, net of what's saved), bills funds' `monthlyNeed`, ₹500 for every other live goal when the budget stretches to all of them, then closest goals first up to each goal's pace, then the rest of the emergency fund's pace. Without a budget it shows the full need. `sipSuggestions` now uses it and `sipPlan` (pooled) to place amounts in held funds; the hybrid engine is no longer used for these suggestions. Essentials come from the saved budget's non-personal rows (or records). AI does not calculate amounts (rule 2). Note: a bill due very soon can take most of a month's budget before the ₹500 minimums.
