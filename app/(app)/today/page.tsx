@@ -5,6 +5,7 @@ import {
   HomeGoals,
   HomeStatus,
   MoneySummary,
+  HomeDebt,
 } from "@/components/home-sections";
 import { UpdatesDue } from "@/components/updates-due";
 import {
@@ -104,10 +105,11 @@ export default async function HomePage() {
       <HomeStatus
         tone={status.tone}
         text={status.text}
-        todo={todo.length + (bills ? 1 : 0)}
+        todo={todo.filter(i=>!i.optional).length + (bills ? 1 : 0)}
       />
       {bills && <CardBillNudge missing={bills.missing} month={bills.month} />}
-      <UpdatesDue items={todo} today={today} compact title="This month" />
+      <UpdatesDue items={todo.filter(i=>!i.optional)} today={today} compact title="This month" />
+      <HomeDebt loans={loans} today={today}/>
       <HomeGoals
         goals={g.goals}
         today={today}
@@ -115,6 +117,7 @@ export default async function HomePage() {
         emergencyMonths={emergencyMonths(g.goals, essentials)}
       />
 
+      <UpdatesDue items={todo.filter(i=>i.optional)} today={today} compact title="Optional quarterly review"/>
     </main>
   );
 }

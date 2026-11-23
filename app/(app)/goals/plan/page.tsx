@@ -4,9 +4,8 @@ import { BackLink } from "@/components/back-link";
 import { InvestmentVehicles } from "@/components/investment-vehicles";
 import { buttonVariants } from "@/components/ui/button";
 import { loadHybridContext, loadHybridHistory } from "@/lib/hybrid-data";
-import { HYBRID_VERSION } from "@/lib/hybrid-engine";
 import { snapshotCompatible } from "@/lib/hybrid-plan";
-import { sameGoalMapping } from "@/lib/hybrid-mapping";
+import {planNeedsReview} from "@/lib/plan-review";
 import { loadMoneyPlan } from "@/lib/data";
 import { formatINR, formatDate } from "@/lib/format";
 import { todayIST } from "@/lib/dates";
@@ -17,7 +16,7 @@ export default async function PlanPage(){
  const [d,c,history]=await Promise.all([loadMoneyPlan(),loadHybridContext(),loadHybridHistory()]);
  const latest=c.plans[0];
  const result=latest&&snapshotCompatible(latest.result)?latest.result:null;
- const stale=!!result&&(latest.input_revision!==c.sourceRevision||result.calculatedOn!==d.today||latest.engine_version!==HYBRID_VERSION||!sameGoalMapping(result.links,d.links));
+ const stale=!!result&&planNeedsReview({...latest,result},c.sourceRevision,d.links);
  return <main className="space-y-4">
   <BackLink fallback="/goals" label="Goals"/>
   <div className="flex items-center justify-between gap-3"><h1 className="text-2xl font-semibold">Your monthly plan</h1>

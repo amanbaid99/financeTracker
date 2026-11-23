@@ -1,5 +1,12 @@
 # Status
 
+## Lower-maintenance reviews and visible debt, 23 Nov 2026
+
+Saved plan review flags now depend on source inputs, mapping or engine changes, not merely a new calendar day. Date validation when confirming an open draft is retained. Monthly card-statement generation, logging and reminders are unchanged. Loan and CAS reviews become optional three-month checks after the last known balance/import, with stable reminder keys and a next-week snooze using the existing seven-day RPC limit. Optional reviews appear below focus goals on Home and do not add to its task count.
+
+Home adds a compact Debt repayment card with schedule-only expected balance, progress when original borrowing is known, EMI and expected payoff timing. Last recorded balances remain separate, actual balances/payment records/net worth are unchanged, missing data produces no invented payoff date, and scheduled payoff asks for lender closure confirmation. Existing loan management stays in Net worth. No schema changes. Verification: lint, TypeScript, 770 unit tests, 40 Python tests and production build pass. Mobile component checks at 320/375/768px verify estimated versus recorded debt, quarterly-review presentation, next-week snoozing and unchanged next-day card snoozing, without overflow or runtime errors. Full signed-in E2E remains unverified due to the documented local database download limitation.
+
+
 ## Budget without presets or planning prompts, 23 Nov 2026
 
 Budget setup keeps income, known-cost review and the user's personal amount with Save & invest as the remainder. Removed preset cost buttons, including day-to-day spending and transport; new costs use a name and amount. Existing entered/recorded costs are preserved. The Budget entry is Create budget. Removed the SIP handoff CTA from the saved Budget view. The summary shows Fixed spending, Personal spending and Save & invest, with item editing in collapsed View and edit disclosures. SIP planning remains available elsewhere in the app. No schema or saved financial data changes. Verification: lint, TypeScript, 767 unit tests, 40 Python tests and production build pass. Real-component browser checks at 320/375/768px verify manual expense entry, personal-first calculation, all three saved totals, collapsed editing and absence of SIP links, without overflow or runtime errors. Full signed-in E2E remains unverified because of the previously documented local database download limitation.

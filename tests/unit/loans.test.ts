@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { afterPayment, loanTotals, loanView, type Loan } from "@/lib/loans";
+import { debtOverview, afterPayment, loanTotals, loanView, type Loan } from "@/lib/loans";
 
 const TODAY = "2026-10-31";
 const loan = (over: Partial<Loan> = {}): Loan => ({
@@ -87,4 +87,15 @@ describe("loan view", () => {
     expect(t.debtFree! > "2028-01-01").toBe(true);
     expect(t.openEnded).toBe(false);
   });
+});
+
+it("Home debt progress is an estimate and never changes confirmed balances",()=>{
+ const l=loan({principal:100000,outstanding:80000,ratePct:0,emi:5000,asOf:"2026-01-01",confirmedOn:"2026-01-01",emiDay:10});
+ const original=JSON.stringify(l);const d=debtOverview([l],"2026-03-11")!;
+ expect(d.expected).toBe(65000);expect(d.recorded).toBe(80000);expect(d.progress).toBe(0.35);
+ expect(JSON.stringify(l)).toBe(original);expect(loanView(l,"2026-03-11").state.balance).toBe(80000);
+});
+it("does not invent a debt percentage or payoff date with missing data",()=>{
+ const d=debtOverview([loan({principal:null,emi:0,monthsLeft:null})],TODAY)!;
+ expect(d.progress).toBeNull();expect(d.debtFree).toBeNull();expect(debtOverview([],TODAY)).toBeNull();
 });

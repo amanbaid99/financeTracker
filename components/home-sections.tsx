@@ -1,3 +1,5 @@
+import {debtOverview} from "@/lib/loans";
+import {monthYear} from "@/lib/goal-summary";
 import Link from "next/link";
 import {
   ChevronRight,
@@ -241,4 +243,17 @@ export function MoneySummary({
       </Link>
     </section>
   );
+}
+
+/** A visual schedule projection, separate from the recorded debt used in net worth. */
+export function HomeDebt({loans,today}:{loans:import("@/lib/loans").Loan[];today:string}){
+ const d=debtOverview(loans,today);
+ if(!d)return null;
+ return <section aria-labelledby="home-debt-h" className="surface-card space-y-3 rounded-2xl border bg-card p-4">
+  <div className="flex items-center justify-between gap-3"><h2 id="home-debt-h" className="font-semibold">Debt repayment</h2><Link href="/assets#owe-h" className="inline-flex min-h-10 items-center text-sm text-primary">View loans</Link></div>
+  <div><p className="text-xs text-muted-foreground">Expected remaining today</p><p className="tabular text-2xl font-semibold">{formatINRCompact(d.expected)}</p></div>
+  {d.progress!==null&&<div className="space-y-1"><Progress value={d.progress*100} label="Scheduled debt repayment progress" tone="neutral"/><p className="text-xs text-muted-foreground">{Math.round(d.progress*100)}% repaid on this schedule (estimate)</p></div>}
+  <p className="text-sm">{d.scheduledPayoff?"Your schedule has reached payoff. Confirm closure with your lender.":`${formatINRCompact(d.monthlyEmi)}/mo in EMIs${d.debtFree?` · Estimated debt-free ${monthYear(d.debtFree)}`:" · Payoff date needs more loan details"}`}</p>
+  <p className="text-xs text-muted-foreground">Assumes scheduled EMIs continue. Last recorded balances total {formatINRCompact(d.recorded)}. No payments or balances are updated automatically.</p>
+ </section>;
 }

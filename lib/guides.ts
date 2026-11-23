@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"Less upkeep, more clarity",items:[{title:"Let your plan run",text:"A new day no longer asks you to review a saved plan. Monthly card logging stays. Loan and CAS reviews are optional quarterly checks, with next-week snooze."},{title:"Debt at a glance",text:"Home shows expected repayment progress and payoff timing, clearly separate from your recorded balance. No payments are marked automatically."}]},
  {date:"2026-11-23",title:"Just your budget",items:[{title:"Three clear totals",text:"Create a budget with your own expenses and personal amount. No preset expense buttons or SIP-plan prompt. The summary shows Fixed spending, Personal spending and Save & invest."}]},
  {date:"2026-11-23",title:"Your personal budget first",items:[{title:"Choose what you keep",text:"In budget setup, enter your monthly Personal spending. Everything left after essentials goes to Save & invest. Review and save."}]},
  {date:"2026-11-23",title:"Unassigned money you can act on",items:[{title:"See the holding and choose",text:"Net worth names each unassigned amount. Assign it to a goal after review, or open a withdrawal preview for that holding. No money is moved."}]},
@@ -241,12 +242,12 @@ export const RELEASES: Release[] = [
     items: [
       {
         title: "Updates due",
-        text: "Goals shows one update at a time: missing card statements, monthly loan balances and a CAS refresh from the 5th. Update now or ask again tomorrow. Set each card's statement day in Edit card. No payment is assumed missed.",
+        text: "Goals shows one update at a time: missing card statements, optional quarterly loan and CAS reviews. Card reminders stay monthly; optional reviews can wait until next week. Set each card's statement day in Edit card. No payment is assumed missed.",
         show: { path: "/goals", target: "updates-due" },
       },
       {
         title: "Loan balances you confirm",
-        text: "Confirm your lender's outstanding amount from the 2nd each month. See borrowed, outstanding and principal repaid. Confirmed balances stay until you update them; future payoff figures are estimates.",
+        text: "Confirm your lender's outstanding amount when reviewing it, with an optional quarterly reminder. See borrowed, outstanding and principal repaid. Confirmed balances stay until you update them; future payoff figures are estimates.",
       },
       {
         title: "CAS amounts clearly reviewed",

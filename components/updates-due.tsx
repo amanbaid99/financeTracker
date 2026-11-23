@@ -48,17 +48,17 @@ export function UpdatesDue({
           size="sm"
           variant="ghost"
           disabled={pending}
-          aria-label={compact?`Remind me tomorrow: ${item.title}`:"Remind me tomorrow"}
+          aria-label={item.optional?`Remind me next week: ${item.title}`:compact?`Remind me tomorrow: ${item.title}`:"Remind me tomorrow"}
           onClick={() =>
             start(async () => {
               setError("");
-              const result = await snoozeUpdate(item.key);
+              const result = await snoozeUpdate(item.key,item.optional?7:1);
               if (!result.ok) setError(result.error ?? "Try again.");
               else router.refresh();
             })
           }
         >
-          Remind me tomorrow
+          {item.optional?"Remind me next week":"Remind me tomorrow"}
         </Button>}
       </div>
       </li>)}</ul>

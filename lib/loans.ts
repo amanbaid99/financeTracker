@@ -244,3 +244,18 @@ export function cardEmis(loans: Loan[], cardId: string, today: string): number {
     .filter((s) => s.balance > 0)
     .reduce((s, st) => s + st.emi, 0);
 }
+
+/** Schedule-only Home view. Never updates confirmed balances or records payments. */
+export function debtOverview(loans:Loan[],today:string){
+ const active=loans.filter(l=>l.outstanding>0);
+ if(!active.length)return null;
+ const projected=active.map(l=>({loan:l,state:loanState({...loanInput(l),confirmed:false},today)}));
+ const expected=projected.reduce((s,v)=>s+v.state.balance,0);
+ const principal=active.every(l=>!!l.principal&&l.principal>0)?active.reduce((s,l)=>s+l.principal!,0):null;
+ const ends=projected.filter(v=>v.state.balance>0).map(v=>v.state.endDate);
+ return {expected,recorded:active.reduce((s,l)=>s+l.outstanding,0),
+  monthlyEmi:projected.filter(v=>v.state.balance>0).reduce((s,v)=>s+v.state.emi,0),
+  debtFree:ends.length&&ends.every(Boolean)?(ends as string[]).sort().at(-1)!:null,
+  progress:principal?Math.max(0,Math.min(1,(principal-expected)/principal)):null,
+  scheduledPayoff:expected===0};
+}

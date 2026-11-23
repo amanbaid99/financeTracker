@@ -8,6 +8,7 @@ export interface UpdateDue {
   detail: string;
   href: string;
   actionLabel?: string;
+  optional?: boolean;
   /** False for things that can't wait (payments, plan steps): no Tomorrow button. */
   snooze?: boolean;
 }
@@ -47,35 +48,19 @@ export function updatesDue({
       href: `/cards?do=${encodeURIComponent(`bill:${c.id}:${latest.slice(0, 7)}`)}`,
     });
   }
-  const loanMonth =
-    today.slice(8) >= "02" ? month : addMonths(`${month}-01`, -1).slice(0, 7);
-  {
-    for (const l of loans) {
-      if (
-        l.outstanding <= 0 ||
-        (l.confirmedOn && l.confirmedOn.slice(0, 7) >= loanMonth)
-      )
-        continue;
-      items.push({
-        key: `loan:${l.id}:${loanMonth}`,
-        title: `Update ${l.name} balance`,
-        actionLabel:"Update balance",
-        detail: "Confirm this month's outstanding amount from your lender.",
-        href: `/updates?loan=${l.id}`,
-      });
-    }
+  // Stable review periods: time passing is not a missed payment or failed plan.
+  for (const l of loans) {
+    const last=l.confirmedOn??l.asOf;
+    const reviewOn=addMonths(last,3);
+    if(l.outstanding<=0||today<reviewOn)continue;
+    items.push({key:`loan:${l.id}:${reviewOn}`,title:`Review ${l.name} balance`,
+      optional:true,actionLabel:"Review balance",detail:"An optional quarterly check against your lender. Scheduled progress is estimated; no payment is assumed confirmed.",href:`/updates?loan=${l.id}`});
   }
-  const refreshMonth =
-    today.slice(8) >= "05" ? month : addMonths(`${month}-01`, -1).slice(0, 7);
-  if (hasFunds && (!casMonth || casMonth < refreshMonth))
-    items.push({
-      key: `cas:${refreshMonth}`,
-      title: "Refresh your investments",
-      actionLabel:"Upload CAS",
-      detail:
-        "Upload a recent CAS. Review current balances before saving.",
-      href: "/import",
-    });
+  const lastCasDay=lastCas?todayIST(new Date(lastCas)):null;
+  const casReviewOn=lastCasDay?addMonths(lastCasDay,3):null;
+  if(hasFunds&&(!casReviewOn||today>=casReviewOn))items.push({
+    key:`cas:${casReviewOn??"initial"}`,title:"Review investment balances",optional:true,actionLabel:"Upload CAS",
+    detail:"Optional quarterly refresh. Your recorded balances and saved plan remain available until you choose to update them.",href:"/import"});
   return items.filter(
     (i) =>
       typeof snoozes[i.key] !== "string" || (snoozes[i.key] as string) <= today,

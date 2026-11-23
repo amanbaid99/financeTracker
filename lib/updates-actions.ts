@@ -5,12 +5,13 @@ import { z } from "zod";
 import { requireUser } from "@/lib/data";
 import { todayIST } from "@/lib/dates";
 
-export async function snoozeUpdate(key: string) {
+export async function snoozeUpdate(key: string, days: 1 | 7 = 1) {
+  if(days!==1&&days!==7)return {ok:false,error:"Invalid reminder interval."};
   const parsed = z.string().min(1).max(100).safeParse(key);
   if (!parsed.success) return { ok: false, error: "Invalid update." };
   const { supabase } = await requireUser();
   const tomorrow = new Date(`${todayIST()}T00:00:00Z`);
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + days);
   const { error } = await supabase.rpc("snooze_update", {
     update_key: parsed.data,
     until_day: tomorrow.toISOString().slice(0, 10),

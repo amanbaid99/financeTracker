@@ -36,8 +36,9 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "What appears in This month on Home?",
     a: [
-      "Up to three reminders on Home, with Show more for the rest: a CAS upload, loan balances to confirm, and goals that need a date. Remind me tomorrow hides one until the next day. Home doesn't suggest opening new funds. Missing card statements use the statement day in Edit card. Days beyond the end of a month use its last day. Without a statement day, card reminders stay off.",
-      "Loan balance updates start on the 2nd. Monthly CAS reminders start on the 5th when you hold mutual funds. Saving a relevant update clears its reminder. Goals needing the same missing fund category share one cue. Suitable held funds are reused; an undated purchase asks for a date instead of guessing its horizon. Record fund opens a category-prefilled form, without choosing a scheme or saving anything. Set up the fund with your provider, then confirm its record in Net worth. Remind me tomorrow postpones that item until the next day, across your devices.",
+      "Monthly card logging remains on Home. Missing card statements use the statement day in Edit card. Days beyond the end of a month use its last day. Without a statement day, card reminders stay off.",
+      "Loan and investment refreshes appear separately as Optional quarterly review, three months after the last known balance or CAS upload. They do not add to Home's task count. Remind me next week postpones an optional review; cards keep Remind me tomorrow. You can update values sooner whenever you choose.",
+      "Home shows scheduled debt progress and payoff timing as estimates. Recorded balances and net worth stay unchanged until you confirm a real update. A saved investment plan does not need review merely because a calendar day passed.",
       "A missing statement or balance update never means you missed a payment. Card statements count only for milestones; the app does not track card payment confirmations.",
     ],
     tags: "reminder nudge statement monthly CAS loan balance snooze",
@@ -133,6 +134,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "What happens when I confirm my plan?",
     a: [
+      "A saved plan remains in place across calendar days. Changed financial inputs or calculation rules can request a review; simply opening the app tomorrow does not. Loan and CAS reminders are optional quarterly checks. Monthly card logging stays unchanged.",
       "Your plan now separates the recommendation, the plan you confirm and your recorded investments. Save this plan saves a new immutable version and coverage mapping. It does not start a SIP, move money or increase a balance.",
       "After actually setting up a provider SIP or making a transaction, record the resulting SIP or balance in Net worth, or review and confirm a CAS import. Existing recorded SIPs are never silently cut to fit a new recommendation.",
     ],
@@ -251,7 +253,7 @@ export const HELP: HelpTopic[] = [
     q: "Where are my loans?",
     a: [
       "Loans are tracked separately from their payoff goals. Add one with New goal, then Close my loan. Open Net worth, What you owe, and tap Manage loan to update, mark it closed or delete it, even if the payoff goal was removed.",
-      "Open a loan and tap Update loan balance. Enter the outstanding principal from your lender and confirm. It stays until your next update, with a reminder from the 2nd each month. Amount borrowed is optional; when known, the loan card in your goals shows what's repaid of it, otherwise what's left, with the end date. If you're saving to close it early, a second bar shows that saving. Older unconfirmed balances and future payoff figures are estimates.",
+      "Open a loan and tap Update loan balance. Enter the outstanding principal from your lender and confirm. It stays until your next update, with a reminder at an optional quarterly review. Amount borrowed is optional; when known, the loan card in your goals shows what's repaid of it, otherwise what's left, with the end date. If you're saving to close it early, a second bar shows that saving. Older unconfirmed balances and future payoff figures are estimates.",
       "Deleting a payoff goal does not close its loan. Mark closed / foreclosed sets the outstanding balance to zero, removes future EMIs and keeps history while hiding the closed loan from the page. Permanently deleting an unlinked loan also removes its recorded payment history, after confirmation. If a payoff goal is still linked, close the loan or remove the payoff goal first.",
     ],
     tags: "loan emi debt owe balance outstanding personal card",
