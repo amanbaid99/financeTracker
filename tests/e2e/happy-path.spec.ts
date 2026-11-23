@@ -360,10 +360,10 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // No saved budget is required: enter an explicit available monthly amount.
   await expect(page.getByRole("heading",{name:"Your monthly SIPs"})).toBeVisible();
   await page.getByLabel("How much can you invest each month?",{exact:true}).fill("50000");
-  await expect(page.getByLabel("Index SIP a month")).toBeVisible();
+  await expect(page.getByLabel("House a month")).toBeVisible();
   await expect(page.getByLabel("Bank FD a month")).toHaveCount(0);
-  await page.getByLabel("Index SIP a month").fill("12000");
-  await expect(page.getByLabel("Index SIP a month")).toHaveValue("12,000");
+  await page.getByLabel("House a month").fill("12000");
+  await expect(page.getByLabel("House a month")).toHaveValue("12,000");
   await page.screenshot({path:"test-results/sip-plan-375.png",fullPage:true});
   await page.getByRole("button",{name:"Save this plan",exact:true}).click();
   await expect(page).toHaveURL(/\/goals\/plan$/);

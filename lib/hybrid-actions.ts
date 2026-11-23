@@ -15,6 +15,8 @@ const schema = z.object({
   monthly: z.number().int().min(0).max(1e9),
   manualSavings: z.number().int().min(0).max(1e9).optional(),
   exactHoldings: z.boolean().default(false),
+  allocationMode: z.literal("safety_deadline").optional(),
+  monthlyEssentials: z.number().int().min(0).max(1e9).optional(),
   lump: z.number().int().min(0).max(1e13),
   cashBuffer: z.number().int().min(0).max(1e9).default(0),
   refreshMapping: z.boolean().default(false),
@@ -65,6 +67,30 @@ export async function confirmHybridPlan(
         error:
           "This plan exceeds your available monthly savings. Update your budget or lower the amounts.",
       };
+    const monthlyEssentials = configured
+      ? b.budget.costs + b.budget.emis
+      : (v.monthlyEssentials ?? 0);
+    if (
+      v.allocationMode &&
+      v.monthly > 0 &&
+      g.goals.some(
+        (g) =>
+          !g.completed &&
+          (g.type === "emergency_fund" || (g.emergencyReserve ?? 0) > 0),
+      ) &&
+      !configured &&
+      v.monthlyEssentials === undefined
+    )
+      return {
+        ok: false,
+        error: "Enter monthly essential costs to calculate emergency runway.",
+      };
+    if (v.allocationMode && Object.keys(v.minimums).length)
+      return {
+        ok: false,
+        error:
+          "Goal-first plans use goal amounts. Clear old holding minimums before saving.",
+      };
     const held = new Set(g.investments.map((i) => `inv:${i.id}`));
     if (Object.keys(v.minimums).some((k) => !held.has(k)))
       return {
@@ -103,6 +129,8 @@ export async function confirmHybridPlan(
       oneTime: v.lump,
       minimums: v.minimums,
       exactHoldings: v.exactHoldings,
+      allocationMode: v.allocationMode,
+      monthlyEssentials,
       overrides: v.overrides,
       cashBuffer: v.cashBuffer,
       budget: b.budget,

@@ -1,5 +1,11 @@
 # Product decisions
 
+## Goal-first SIP planning, 23 Nov 2026
+
+The SIP route now uses a goal-first SimpleSipPlanner: monthly savings, essential monthly costs if no saved budget, then editable goal totals with automatic vehicle splits. Existing models, mapping, funding maths and atomic confirmation are reused. safety_deadline is an explicit versioned allocation mode: first reach one month and then three months of emergency runway from accessible recorded cash/liquid/overnight holdings, capped by user targets; then fill requirements by next bill date or goal deadline. Combined safety/bills ownership is counted once. Safety requirements can accelerate this month's reserve building. Goal edits consume capacity before automatic allocation and show a warning. Recalculate after confirmed emergency balance updates rather than assuming planned SIPs happened.
+
+Suitable linked vehicles split each goal amount using as many ₹1,000 minimum slots as fit; smaller amounts remain in one vehicle and integer remainders are deterministic. Safety and lifestyle pools stay separate. Existing products are preferred; broad classes are used when none suits. Only the monthly SIP workflow uses this mode; older hybrid workflows and historical plan snapshots remain readable. Confirmation rechecks costs/capacity from the saved budget, or requires explicit manual essential costs, and stores mode, costs, overrides and vehicle/goal breakdown in existing immutable plan JSON. No schema changes or actual contribution/holding updates. Legacy holding minimums are not silently carried into the new goal-first recommendation; only Save confirms the replacement.
+
 ## Live SIP holding choices, 23 Nov 2026
 
 Explicit holding edits are exact monthly choices, including zero. The remaining monthly capacity is recalculated using the existing hybrid engine and vehicle picker; edited holdings are excluded from automatic contribution destinations without removing their existing goal coverage. Confirmation stores only explicit choices with exactHoldings and the full monthly limit in immutable plan inputs. Legacy minimum-only plans retain their existing semantics. Reset clears choices; overcommitted plans cannot be saved. No holdings, provider SIPs or actual contributions are changed.

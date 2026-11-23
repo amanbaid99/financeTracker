@@ -111,3 +111,21 @@ it("rejects exact holding choices above the monthly allowance",async()=>{
  expect((await confirmHybridPlan({...input,exactHoldings:true,minimums:{"inv:holding":10001}})).ok).toBe(false);
  expect(rpc).not.toHaveBeenCalled();
 });
+
+it("confirms goal-first mode with essential costs from the saved budget",async()=>{
+ expect((await confirmHybridPlan({...input,allocationMode:"safety_deadline",monthlyEssentials:1})).ok).toBe(true);
+ const args=rpc.mock.calls[0][1];expect(args.p_inputs.monthlyEssentials).toBe(50000);expect(args.p_result.allocationMode).toBe("safety_deadline");
+});
+it("requires explicit monthly essentials for a manual emergency runway plan",async()=>{
+ vi.mocked(loadBudget).mockResolvedValue({budgetConfigured:false,budget:{income:0,costs:0,emis:0}} as never);
+ vi.mocked(loadGoals).mockResolvedValue({today:input.calculatedOn,goals:[{id:"safety",name:"Safety",type:"emergency_fund",target:120000,targetDate:null,inflationPct:0}],investments:[],links:[]} as never);
+ expect((await confirmHybridPlan({...input,manualSavings:10000,allocationMode:"safety_deadline"})).ok).toBe(false);expect(rpc).not.toHaveBeenCalled();
+ expect((await confirmHybridPlan({...input,manualSavings:10000,allocationMode:"safety_deadline",monthlyEssentials:10000})).ok).toBe(true);
+ expect(rpc.mock.calls[0][1].p_inputs.monthlyEssentials).toBe(10000);
+});
+it("accepts explicit zero essential costs without pretending a missing value was zero",async()=>{
+ vi.mocked(loadBudget).mockResolvedValue({budgetConfigured:false,budget:{income:0,costs:0,emis:0}} as never);
+ vi.mocked(loadGoals).mockResolvedValue({today:input.calculatedOn,goals:[{id:"safety",name:"Safety",type:"emergency_fund",target:120000,targetDate:null,inflationPct:0}],investments:[],links:[]} as never);
+ expect((await confirmHybridPlan({...input,manualSavings:10000,allocationMode:"safety_deadline",monthlyEssentials:0})).ok).toBe(true);
+ expect(rpc.mock.calls[0][1].p_inputs.monthlyEssentials).toBe(0);
+});

@@ -7,7 +7,12 @@
 import type { Suggestion } from "./allocate";
 import { categoryLabel } from "./categories";
 import { asKind, etfCategory, isEtf } from "./instruments";
-import { freePercent, type Investment, type Link, type GoalInput } from "./tracker";
+import {
+  freePercent,
+  type Investment,
+  type Link,
+  type GoalInput,
+} from "./tracker";
 
 export interface SipPart {
   goalId: string;
@@ -33,7 +38,7 @@ export interface SipLine {
   parts: SipPart[];
 }
 
-export type SipStrategy = "simple" | "diversified" | "pooled";
+export type SipStrategy = "simple" | "diversified" | "pooled" | "goal_first";
 
 /** Amounts in a suggestion are additions to an existing monthly contribution. */
 export function sipAction(line: SipLine) {
@@ -87,10 +92,37 @@ const STAND_INS: Record<string, string[]> = {
  * what you hold before suggesting a new fund. Short-term money stays safe.
  */
 const NEARBY: Record<string, string[]> = {
-  liquid_fund: ["short_debt_fund", "corporate_bond", "debt_fund", "gilt", "conservative_hybrid", "savings_account"],
-  short_debt_fund: ["overnight_fund", "savings_account", "gilt", "conservative_hybrid"],
-  balanced_advantage: ["large_cap", "equity_index", "flexi_cap", "short_debt_fund", "corporate_bond", "mid_small_cap", "international", "liquid_fund"],
-  equity_index: ["aggressive_hybrid", "balanced_advantage", "multi_asset", "sectoral_thematic", "conservative_hybrid"],
+  liquid_fund: [
+    "short_debt_fund",
+    "corporate_bond",
+    "debt_fund",
+    "gilt",
+    "conservative_hybrid",
+    "savings_account",
+  ],
+  short_debt_fund: [
+    "overnight_fund",
+    "savings_account",
+    "gilt",
+    "conservative_hybrid",
+  ],
+  balanced_advantage: [
+    "large_cap",
+    "equity_index",
+    "flexi_cap",
+    "short_debt_fund",
+    "corporate_bond",
+    "mid_small_cap",
+    "international",
+    "liquid_fund",
+  ],
+  equity_index: [
+    "aggressive_hybrid",
+    "balanced_advantage",
+    "multi_asset",
+    "sectoral_thematic",
+    "conservative_hybrid",
+  ],
 };
 
 /** Gold spreads the risk but can swing, so it gets at most this share of a goal. */
@@ -247,27 +279,141 @@ export function splitForGoal(
   links: Link[],
   strategy: SipStrategy = "diversified",
   preferBank = false,
+  goal?: Pick<GoalInput, "type" | "targetDate">,
 ): FundShare[] {
+  if (strategy === "goal_first") {
+    const linked = new Set(
+      links
+        .filter((l) => l.goalId === goalId && l.percent > 0)
+        .map((l) => l.investmentId),
+    );
+    const fit = (i: Investment) => {
+      const exact = rank(i, category);
+      if (exact !== null) return exact;
+      const near = (NEARBY[category] ?? []).indexOf(kindOf(i) ?? "");
+      return near < 0 ? null : 100 + near;
+    };
+    let candidates = investments.filter(
+      (i) =>
+        linked.has(i.id) &&
+        (!i.availability || i.availability === "available") &&
+        i.kind !== "fd" &&
+        i.kind !== "epf" &&
+        (!i.accessibleOn ||
+          !goal?.targetDate ||
+          i.accessibleOn <= goal.targetDate) &&
+        (fit(i) !== null ||
+          (goal?.type === "retirement" &&
+            ["nps", "ppf", "stock"].includes(i.kind) &&
+            ["equity_index", "balanced_advantage"].includes(category))) &&
+        (i.category !== "elss" ||
+          (i.accessibleOn &&
+            goal?.targetDate &&
+            i.accessibleOn <= goal.targetDate)),
+    );
+    candidates.sort(
+      (a, b) =>
+        (fit(a) ?? 50) - (fit(b) ?? 50) ||
+        b.monthlySip - a.monthlySip ||
+        a.id.localeCompare(b.id),
+    );
+    // Gold is a diversifier, never a large default share of a goal's SIP.
+    const nonGold = candidates.filter((i) => kindOf(i) !== "gold");
+    const gold = candidates.find((i) => kindOf(i) === "gold");
+    candidates =
+      monthly >= 5000 && nonGold.length >= 4 && gold
+        ? [...nonGold, gold]
+        : nonGold;
+    if (!candidates.length)
+      return splitForGoal(
+        goalId,
+        category,
+        monthly,
+        lump,
+        investments,
+        links,
+        "pooled",
+        preferBank,
+      );
+    const count = Math.min(
+      candidates.length,
+      Math.max(1, Math.floor(monthly / 1000)),
+    );
+    const selected = candidates.slice(0, count);
+    const base = Math.floor(monthly / count),
+      remainder = monthly % count;
+    return selected.map((investment, index) => ({
+      investment,
+      monthly: base + (index < remainder ? 1 : 0),
+      lump: 0,
+      similar: kindOf(investment) !== category,
+      percent: 100,
+      note: noteFor(investment),
+    }));
+  }
   // Pick one suitable vehicle from the caller’s purpose-safe pool.
   // Near-term lifestyle money can prefer a bank; never use equity, gold or ELSS.
   if (strategy === "pooled") {
     // A bank account comes first only for money needed within a year. For 1 to
     // 3 years, a debt or arbitrage fund you hold comes first; a bank account
     // is the last resort (see NEARBY).
-    const allowed=[...(STAND_INS[category]??[category])].filter(k=>!["gold","elss"].includes(k));
-    if(preferBank&&allowed.includes("savings_account")){allowed.splice(allowed.indexOf("savings_account"),1);allowed.unshift("savings_account");}
-    let candidates=investments.filter(i=>(!i.availability||i.availability==="available")&&allowed.includes(kindOf(i)??""));
-    const linkedIds=new Set(links.filter(l=>l.goalId===goalId&&l.percent>0).map(l=>l.investmentId));
-    const own=candidates.filter(i=>linkedIds.has(i.id));if(own.length)candidates=own;
-    candidates.sort((a,b)=>allowed.indexOf(kindOf(a)!)-allowed.indexOf(kindOf(b)!) || b.monthlySip-a.monthlySip || b.value-a.value || a.id.localeCompare(b.id));
-    let investment=candidates[0];
+    const allowed = [...(STAND_INS[category] ?? [category])].filter(
+      (k) => !["gold", "elss"].includes(k),
+    );
+    if (preferBank && allowed.includes("savings_account")) {
+      allowed.splice(allowed.indexOf("savings_account"), 1);
+      allowed.unshift("savings_account");
+    }
+    let candidates = investments.filter(
+      (i) =>
+        (!i.availability || i.availability === "available") &&
+        allowed.includes(kindOf(i) ?? ""),
+    );
+    const linkedIds = new Set(
+      links
+        .filter((l) => l.goalId === goalId && l.percent > 0)
+        .map((l) => l.investmentId),
+    );
+    const own = candidates.filter((i) => linkedIds.has(i.id));
+    if (own.length) candidates = own;
+    candidates.sort(
+      (a, b) =>
+        allowed.indexOf(kindOf(a)!) - allowed.indexOf(kindOf(b)!) ||
+        b.monthlySip - a.monthlySip ||
+        b.value - a.value ||
+        a.id.localeCompare(b.id),
+    );
+    let investment = candidates[0];
     // Nothing that fits exactly: use your closest fund before suggesting a new
     // one. Money needed soon never falls back to equity.
-    if(!investment){
-      const near=NEARBY[category]??[];
-      investment=investments.filter(i=>(!i.availability||i.availability==="available")&&near.includes(kindOf(i)??"")).sort((a,b)=>near.indexOf(kindOf(a)!)-near.indexOf(kindOf(b)!) || b.monthlySip-a.monthlySip || b.value-a.value || a.id.localeCompare(b.id))[0];
+    if (!investment) {
+      const near = NEARBY[category] ?? [];
+      investment = investments
+        .filter(
+          (i) =>
+            (!i.availability || i.availability === "available") &&
+            near.includes(kindOf(i) ?? ""),
+        )
+        .sort(
+          (a, b) =>
+            near.indexOf(kindOf(a)!) - near.indexOf(kindOf(b)!) ||
+            b.monthlySip - a.monthlySip ||
+            b.value - a.value ||
+            a.id.localeCompare(b.id),
+        )[0];
     }
-    return investment?[{investment,monthly,lump,similar:kindOf(investment)!==category,percent:100,note:noteFor(investment)}]:[];
+    return investment
+      ? [
+          {
+            investment,
+            monthly,
+            lump,
+            similar: kindOf(investment) !== category,
+            percent: 100,
+            note: noteFor(investment),
+          },
+        ]
+      : [];
   }
   const pctOf = new Map(
     links
@@ -385,28 +531,59 @@ export function splitForGoal(
   }));
 }
 
-const isEssential=(g:Pick<GoalInput,"type"|"goalCategory">)=>g.goalCategory?g.goalCategory==="essential":["emergency_fund","bills_fund","loan_payoff"].includes(g.type);
-function purposePool(s:Suggestion,all:Suggestion[],investments:Investment[],links:Link[],goals:Pick<GoalInput,"id"|"type">[]){
- const safety=new Set(goals.filter(isEssential).map(g=>g.id));
- const protectedIds=new Set(links.filter(l=>safety.has(l.goalId)&&l.percent>0).map(l=>l.investmentId));
- // Reserve the essentials' proposed vehicle too, even before it has a recorded balance.
- const essentialPool=(goal:Suggestion)=>{
-   const own=new Set(links.filter(l=>l.goalId===goal.goalId&&l.percent>0).map(l=>l.investmentId));
-   const linked=investments.filter(i=>own.has(i.id)&&rank(i,goal.category)!==null);
-   return linked.length?linked:investments;
- };
- for(const essential of all.filter(x=>isEssential(x.after)))for(const sh of splitForGoal(essential.goalId,essential.category,essential.monthly,essential.lump,essentialPool(essential),links,"pooled"))protectedIds.add(sh.investment.id);
- if(isEssential(s.after))return essentialPool(s);
- return investments.filter(i=>!protectedIds.has(i.id));
+const isEssential = (g: Pick<GoalInput, "type" | "goalCategory">) =>
+  g.goalCategory
+    ? g.goalCategory === "essential"
+    : ["emergency_fund", "bills_fund", "loan_payoff"].includes(g.type);
+function purposePool(
+  s: Suggestion,
+  all: Suggestion[],
+  investments: Investment[],
+  links: Link[],
+  goals: Pick<GoalInput, "id" | "type">[],
+) {
+  const safety = new Set(goals.filter(isEssential).map((g) => g.id));
+  const protectedIds = new Set(
+    links
+      .filter((l) => safety.has(l.goalId) && l.percent > 0)
+      .map((l) => l.investmentId),
+  );
+  // Reserve the essentials' proposed vehicle too, even before it has a recorded balance.
+  const essentialPool = (goal: Suggestion) => {
+    const own = new Set(
+      links
+        .filter((l) => l.goalId === goal.goalId && l.percent > 0)
+        .map((l) => l.investmentId),
+    );
+    const linked = investments.filter(
+      (i) => own.has(i.id) && rank(i, goal.category) !== null,
+    );
+    return linked.length ? linked : investments;
+  };
+  for (const essential of all.filter((x) => isEssential(x.after)))
+    for (const sh of splitForGoal(
+      essential.goalId,
+      essential.category,
+      essential.monthly,
+      essential.lump,
+      essentialPool(essential),
+      links,
+      "pooled",
+    ))
+      protectedIds.add(sh.investment.id);
+  if (isEssential(s.after)) return essentialPool(s);
+  return investments.filter((i) => !protectedIds.has(i.id));
 }
-function placeholderKey(s:Suggestion,strategy:SipStrategy){return `new:${s.category}${strategy==="pooled"?isEssential(s.after)?":safety":":other":""}`;}
+function placeholderKey(s: Suggestion, strategy: SipStrategy) {
+  return `new:${s.category}${strategy === "pooled" || strategy === "goal_first" ? (isEssential(s.after) ? ":safety" : ":other") : ""}`;
+}
 
 export function sipPlan(
   suggestions: Suggestion[],
   investments: Investment[] = [],
   links: Link[] = [],
   strategy: SipStrategy = "diversified",
-  goals:Pick<GoalInput,"id"|"type">[]=suggestions.map(s=>s.after),
+  goals: Pick<GoalInput, "id" | "type">[] = suggestions.map((s) => s.after),
 ): SipLine[] {
   const lines = new Map<string, SipLine>();
   const add = (
@@ -416,7 +593,7 @@ export function sipPlan(
     monthly: number,
   ) => {
     const line = lines.get(key) ?? make();
-    line.key=key;
+    line.key = key;
     line.monthly += monthly;
     line.parts.push({
       goalId: s.goalId,
@@ -433,17 +610,25 @@ export function sipPlan(
       s.category,
       s.monthly,
       0,
-      strategy==="pooled"?purposePool(s,suggestions,investments,links,goals):investments,
+      strategy === "pooled" || strategy === "goal_first"
+        ? purposePool(s, suggestions, investments, links, goals)
+        : investments,
       links,
       strategy,
-      strategy==="pooled"&&!isEssential(s.after)&&["liquid_fund","short_debt_fund"].includes(s.category),
+      (strategy === "pooled" || strategy === "goal_first") &&
+        !isEssential(s.after) &&
+        ["liquid_fund", "short_debt_fund"].includes(s.category),
+      s.after,
     );
     if (!shares.length) {
       add(
-        placeholderKey(s,strategy),
+        placeholderKey(s, strategy),
         () => ({
           investment: null,
-          label: strategy==="pooled"?`${isEssential(s.after)?"Essentials: ":"Separate: "}${categoryLabel(s.category)}`:`New ${categoryLabel(s.category).toLowerCase()}`,
+          label:
+            strategy === "pooled" || strategy === "goal_first"
+              ? `${isEssential(s.after) ? "Essentials: " : "Separate: "}${categoryLabel(s.category)}`
+              : `New ${categoryLabel(s.category).toLowerCase()}`,
           category: s.category,
           similar: false,
           note: null,
@@ -510,14 +695,15 @@ export function planSteps(
   investments: Investment[] = [],
   links: Link[] = [],
   strategy: SipStrategy = "diversified",
-  goals:Pick<GoalInput,"id"|"type">[]=suggestions.map(s=>s.after),
+  goals: Pick<GoalInput, "id" | "type">[] = suggestions.map((s) => s.after),
 ): PlanStep[] {
   const steps = new Map<string, PlanStep>();
   const addGoal = (step: PlanStep, id: string, name: string) => {
     if (!step.goals.some((g) => g.id === id)) step.goals.push({ id, name });
   };
   for (const l of sipPlan(suggestions, investments, links, strategy, goals)) {
-    const key = l.key??(l.investment ? `inv:${l.investment.id}` : `new:${l.category}`);
+    const key =
+      l.key ?? (l.investment ? `inv:${l.investment.id}` : `new:${l.category}`);
     const step: PlanStep = {
       key,
       investment: l.investment,
@@ -538,10 +724,14 @@ export function planSteps(
       s.category,
       0,
       s.lump,
-      strategy==="pooled"?purposePool(s,suggestions,investments,links,goals):investments,
+      strategy === "pooled" || strategy === "goal_first"
+        ? purposePool(s, suggestions, investments, links, goals)
+        : investments,
       links,
       strategy,
-      strategy==="pooled"&&!isEssential(s.after)&&["liquid_fund","short_debt_fund"].includes(s.category),
+      (strategy === "pooled" || strategy === "goal_first") &&
+        !isEssential(s.after) &&
+        ["liquid_fund", "short_debt_fund"].includes(s.category),
     ).filter((sh) => sh.lump > 0);
     const parts = shares.length
       ? shares.map((sh) => ({
@@ -554,9 +744,12 @@ export function planSteps(
         }))
       : [
           {
-            key: placeholderKey(s,strategy),
+            key: placeholderKey(s, strategy),
             investment: null,
-            label: strategy==="pooled"?categoryLabel(s.category):`New ${categoryLabel(s.category).toLowerCase()}`,
+            label:
+              strategy === "pooled"
+                ? categoryLabel(s.category)
+                : `New ${categoryLabel(s.category).toLowerCase()}`,
             lump: s.lump,
             note: null,
           },

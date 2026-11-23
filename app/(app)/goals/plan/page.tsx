@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BackLink } from "@/components/back-link";
+import {GoalSipSummary} from "@/components/goal-sip-summary";
 import { InvestmentVehicles } from "@/components/investment-vehicles";
 import { buttonVariants } from "@/components/ui/button";
 import { loadHybridContext, loadHybridHistory } from "@/lib/hybrid-data";
@@ -26,7 +27,7 @@ export default async function PlanPage(){
    <section className="surface-card space-y-4 rounded-2xl border bg-card p-4">
     <div><p className="text-xs text-muted-foreground">Your confirmed plan</p><p className="tabular text-3xl font-semibold">{formatINR(result.totalMonthlyAllocated)}</p></div>
     {stale&&<p className="rounded-xl bg-muted/50 p-3 text-sm">Your inputs changed. Edit the plan to review updated amounts. This saved plan stays unchanged until you confirm.</p>}
-    {(result.vehicles??[]).some(v=>v.total>0)?<InvestmentVehicles rows={result.vehicles??[]}/>:<p className="text-sm text-muted-foreground">No monthly contributions in this plan. Your existing investments still cover your goals.</p>}
+    {(result.vehicles??[]).some(v=>v.total>0)?result.allocationMode==="safety_deadline"?<GoalSipSummary result={result}/>:<InvestmentVehicles rows={result.vehicles??[]}/>:<p className="text-sm text-muted-foreground">No monthly contributions in this plan. Your existing investments still cover your goals.</p>}
     {result.monthlyContributionShortfall>0&&<p className="text-sm text-muted-foreground">Your goals need about {formatINR(result.monthlyContributionShortfall)} more a month. You can adjust amounts, dates or targets.</p>}
     <p className="text-xs text-muted-foreground">This is your plan in the app. Set up SIPs with your provider and record actual contributions separately.</p>
    </section>

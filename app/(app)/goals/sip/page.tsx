@@ -3,20 +3,22 @@ import { BackLink } from "@/components/back-link";
 import { SimpleSipPlanner } from "@/components/simple-sip-planner";
 import { loadMoneyPlan, loadBudget } from "@/lib/data";
 import { loadHybridContext } from "@/lib/hybrid-data";
-import { loadSipMinimums } from "@/lib/sip-minimums-data";
+
 export const metadata: Metadata = { title: "Your monthly SIPs" };
 export default async function BudgetSipPage() {
-  const [d, b, c, minimums] = await Promise.all([
+  const [d, b, c] = await Promise.all([
     loadMoneyPlan(),
     loadBudget(),
     loadHybridContext(),
-    loadSipMinimums(),
   ]);
   const prior = c.plans[0]?.inputs as
     | {
         budgetSource?: string;
         monthlySavings?: number;
-        exactHoldings?: boolean;
+        allocationMode?: "safety_deadline";
+        monthlyEssentials?: number;
+        monthlyPlanLimit?: number;
+        overrides?: Record<string, number>;
       }
     | undefined;
   const initialMonthly = b.budgetConfigured
@@ -34,8 +36,8 @@ export default async function BudgetSipPage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold">Your monthly SIPs</h1>
         <p className="text-sm text-muted-foreground">
-          Choose where your monthly savings go. Review the amounts and save
-          once.
+          Emergency cover first, then your nearest goals. Review the monthly
+          amounts and save once.
         </p>
       </div>
       <SimpleSipPlanner
@@ -45,10 +47,21 @@ export default async function BudgetSipPage() {
         today={d.today}
         budgetMonthly={Math.max(0, b.budget.planMonthly)}
         budgetConfigured={b.budgetConfigured}
-        initialMonthly={initialMonthly}
-        savedAmounts={minimums}
-        savedExactHoldings={prior?.exactHoldings ?? false}
-        hasConfirmed={c.plans.length > 0}
+        initialMonthly={
+          prior?.allocationMode === "safety_deadline"
+            ? (prior.monthlyPlanLimit ?? initialMonthly)
+            : initialMonthly
+        }
+        monthlyEssentials={
+          b.budgetConfigured
+            ? b.budget.costs + b.budget.emis
+            : (prior?.monthlyEssentials ?? null)
+        }
+        initialOverrides={
+          prior?.allocationMode === "safety_deadline"
+            ? (prior.overrides ?? {})
+            : {}
+        }
         revision={c.revision}
         riskTolerance={c.riskTolerance}
       />

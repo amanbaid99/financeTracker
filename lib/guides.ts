@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"Goal-first SIP planning",items:[{title:"Build safety, then the next goal",text:"One month of emergency cover comes first, then three months. Next come payments and goals by deadline. Review one amount per goal, with suitable vehicle splits underneath and a ₹1,000 minimum per selected vehicle where possible."}]},
  {date:"2026-11-23",title:"Nearer goals come into focus",items:[{title:"Clearer goal order",text:"Essentials stay first. Other goals follow by deadline, so an old ranking cannot hide a nearer goal. Covered goals stay at the bottom. Your saved investment plan is unchanged."}]},
  {date:"2026-11-23",title:"Add an investment directly to a goal",items:[{title:"Linked when you save",text:"Add investment inside a goal now saves its coverage link too. Choose a new investment or one you already have, and review the share before saving."}]},
  {date:"2026-11-23",title:"SIP suggestions adjust around your choices",items:[{title:"One monthly total",text:"Enter an amount for any holding and the other suggestions update automatically. Your choices stay fixed when you save and reopen. Use suggestions resets your edits."}]},

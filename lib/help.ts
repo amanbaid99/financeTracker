@@ -113,8 +113,8 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "How does the plan decide where money goes?",
     a: [
-      "Hybrid allocation is the default. Essential minimums come first, then remaining essential requirements, using your ranking, deadline and goal ID. Flexible minimums follow; remaining money is shared using priority, urgency and outstanding need.",
-      "High, medium and low priorities have weights 3, 2 and 1. Urgency weights are 1.5 within 12 months, 1.25 within 36 months and 1 later. Each allocation is capped at the monthly requirement, with deterministic rounding. Unneeded money stays unallocated.",
+      "The monthly SIP planner builds one month of emergency cover, then three months, using accessible recorded balances and essential costs plus EMIs. It then fills monthly requirements for upcoming payments and goals in nearest-deadline order. A combined emergency / sinking fund is counted once.",
+      "Each goal has one monthly amount. It is split across suitable linked vehicles with at least ₹1,000 each where possible. ₹1,200 stays in one vehicle; ₹2,400 can use two at ₹1,200 each. Smaller amounts stay in one. Money is never increased just to meet a minimum. Unneeded money stays unallocated.",
       "Any saved extra cash buffer reduces available savings. Existing SIPs are displayed separately, and no recommendation can exceed the budget. A zero surplus produces no new monthly allocation.",
     ],
     tags: "money plan priority split sip allocate emergency floor fifth",
@@ -198,9 +198,9 @@ export const HELP: HelpTopic[] = [
     section: "Budget",
     q: "How do I plan my monthly SIPs?",
     a: [
-      "Enter How much can you invest each month? at the top of Your monthly SIPs. You can do this without a saved budget by declaring what you can set aside after expenses and EMIs. A saved budget supplies the default and caps the amount. The entered amount refreshes suggestions for your holdings. Editing a holding keeps that amount fixed and automatically recalculates the other suggestions within the same monthly total. Use suggestions clears your edits. Holdings with nothing suggested show ₹0, so you can still choose to put money there.",
-      "Suggestions and saved outcomes use the same calculation: essential goals first, then other goals based on priority, deadline and remaining need. There is no automatic amount for every goal. A saved budget with zero surplus produces no new contributions; amounts above its available savings cannot be saved. Without a saved budget, enter your available amount directly. This stays a planning assumption and never creates income records.",
-      "Suggestions use a fund you already hold first: the best fit, or else the closest one (money needed within a year never goes into equity). A bank account is suggested first only for money needed within a year; for 1 to 3 years, a debt or arbitrage fund you hold comes first. Suggested, but you don't hold one only appears when nothing you hold is close. Add one in Net worth and it joins the list.",
+      "Enter How much can you invest each month? Your monthly SIPs now lists goals, with destinations underneath. A saved budget supplies the default and ceiling. Without one, enter available savings after expenses and EMIs, plus monthly essential costs for the emergency runway calculation.",
+      "Emergency cover reaches one month first, then three months, followed by payments and goals in deadline order. Existing accessible bank, liquid and overnight balances count toward runway, not future market growth or future SIPs. After recording emergency deposits, review the plan so new money can move to the next goals. Zero surplus creates no contributions.",
+      "Suitable linked holdings come first. The app keeps safety and lifestyle money separate. If no suitable holding exists, it names a broad investment class, never a new product. Edit a goal amount to keep it fixed while others recalculate. Reset amounts restores recommendations. Your edits can delay emergency cover or nearer goals; the screen warns about this.",
       "Save this plan keeps it in the app. No SIP is started or changed with your provider.",
     ],
     tags: "budget sip save invest monthly allocation plan",

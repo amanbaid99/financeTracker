@@ -1,6 +1,7 @@
 // One deterministic funding and allocation calculation. Decimal arithmetic, integer INR outputs.
 // No database, clock, AI or mutation of supplied goals/holdings.
 import Decimal from "decimal.js-light";
+import { goalSipDeadline, prepareSafetyStages } from "./goal-sip-policy";
 import { addMonths, monthsBetween } from "./dates";
 import { categoryForHorizon } from "./allocate";
 import { defaultReturn } from "./instruments";
@@ -18,7 +19,7 @@ import {
   futureValueDecimal,
   requiredMonthlyDecimal,
 } from "./funding-math";
-export const HYBRID_VERSION = "hybrid-1.0.0";
+export const HYBRID_VERSION = "hybrid-1.1.0";
 export interface HybridPolicy {
   priority: Record<"high" | "medium" | "low", number>;
   urgency: [number, number, number];
@@ -38,7 +39,10 @@ export const DEFAULT_HYBRID_POLICY: HybridPolicy = {
   maxExtensionMonths: 600,
 };
 export type FundingStatus =
-  "fully_funded" | "on_track" | "at_risk" | "underfunded";
+  | "fully_funded"
+  | "on_track"
+  | "at_risk"
+  | "underfunded";
 export interface HybridGoal {
   goalId: string;
   goalName: string;
@@ -79,6 +83,12 @@ export interface HybridGoal {
       source: string;
     }[];
     emergencyBuildMonths?: number;
+    runway?: {
+      monthlyEssentials: number;
+      accessibleCorpus: number;
+      oneMonthTarget: number;
+      threeMonthTarget: number;
+    };
   };
   alternatives: {
     additionalMonthly: number;
@@ -88,6 +98,8 @@ export interface HybridGoal {
   };
 }
 export interface HybridResult {
+  allocationMode?: "safety_deadline";
+  fundingOrder?: string[];
   vehicles?: import("./investment-plan").MonthlyVehicle[];
   strategy: "hybrid";
   riskTolerance: "conservative" | "moderate" | "aggressive" | null;
@@ -120,6 +132,8 @@ export interface HybridInput {
   monthlyPlanLimit?: number;
   budgetDeficit?: number;
   oneTime?: number;
+  allocationMode?: "safety_deadline";
+  monthlyEssentials?: number;
   fixedByGoal?: Record<string, number>;
   reservedOutsideGoals?: number;
   overrides?: Record<string, number>;
@@ -443,8 +457,14 @@ export function calculateHybrid(input: HybridInput): HybridResult {
       currentMonthly = currentMonthly.plus(
         new D(inv.monthlySip).times(l.percent).div(100),
       );
-      if(["ppf","epf","nps"].includes(inv.kind)&&!inv.accessibleOn)warnings.push(`Confirm retirement access eligibility before the deadline: ${inv.id}.`);
-      if(assetClassOf(inv)==="other")warnings.push(`Unclassified holding: ${inv.id}. Confirm its liquidity and valuation.`);
+      if (["ppf", "epf", "nps"].includes(inv.kind) && !inv.accessibleOn)
+        warnings.push(
+          `Confirm retirement access eligibility before the deadline: ${inv.id}.`,
+        );
+      if (assetClassOf(inv) === "other")
+        warnings.push(
+          `Unclassified holding: ${inv.id}. Confirm its liquidity and valuation.`,
+        );
       if (!inv.valuationDate)
         warnings.push(
           `Valuation date missing: ${inv.id}. Using the recorded balance, not a live price.`,
@@ -492,7 +512,9 @@ export function calculateHybrid(input: HybridInput): HybridResult {
         g.bills ?? [],
         integer(coverage),
         0,
-        input.today,g.emergencyReserve??0,safetyReserveMonths(g,input.today),
+        input.today,
+        g.emergencyReserve ?? 0,
+        safetyReserveMonths(g, input.today),
       );
       target = bill.target;
       existing = integer(coverage);
@@ -543,8 +565,14 @@ export function calculateHybrid(input: HybridInput): HybridResult {
     const funded =
       g.type === "bills_fund"
         ? required === 0 &&
-          hybridBillsForecast(g.bills ?? [], integer(coverage), 0, input.today,g.emergencyReserve??0,safetyReserveMonths(g,input.today))
-            .cashflowShortfall === 0
+          hybridBillsForecast(
+            g.bills ?? [],
+            integer(coverage),
+            0,
+            input.today,
+            g.emergencyReserve ?? 0,
+            safetyReserveMonths(g, input.today),
+          ).cashflowShortfall === 0
         : existing >= target;
     let { category: investmentCategory } = hybridCategory(months, g.type);
     if (
@@ -664,13 +692,29 @@ export function calculateHybrid(input: HybridInput): HybridResult {
         source.find((g) => g.id === row.goalId)!.bills ?? [],
         row.existingCoverage + take,
         0,
-        input.today,source.find(g=>g.id===row.goalId)?.emergencyReserve??0,safetyReserveMonths(source.find(g=>g.id===row.goalId)!,input.today),
+        input.today,
+        source.find((g) => g.id === row.goalId)?.emergencyReserve ?? 0,
+        safetyReserveMonths(
+          source.find((g) => g.id === row.goalId)!,
+          input.today,
+        ),
       ).requiredMonthly;
     row.effectiveMinimumMonthly = Math.min(
       row.minimumMonthly,
       row.requiredMonthly,
     );
   }
+  const safety =
+    input.allocationMode === "safety_deadline"
+      ? prepareSafetyStages(
+          source,
+          rows,
+          input.investments,
+          links,
+          money(input.monthlyEssentials ?? 0),
+          input.today,
+        )
+      : null;
   let left = planLimit - money(input.reservedOutsideGoals ?? 0);
   for (const row of rows) {
     const fixed = Math.min(
@@ -707,49 +751,92 @@ export function calculateHybrid(input: HybridInput): HybridResult {
   const essentials = ordered.filter(
     (r) => r.category === "essential" && adjustable(r),
   );
-  for (const r of essentials) give(r, r.effectiveMinimumMonthly);
-  for (const r of essentials) give(r, r.requiredMonthly);
-  const flexible = rows.filter(
-    (r) => r.category === "flexible" && adjustable(r),
-  );
-  const weight = (r: HybridGoal, need: number) =>
-    new D(policy.priority[r.priority])
-      .times(
-        policy.urgency[
-          r.months !== null && r.months <= 12
-            ? 0
-            : r.months !== null && r.months <= 36
-              ? 1
-              : 2
-        ],
-      )
-      .times(need);
-  const distribute = (minimums: boolean) => {
-    const items = flexible.map((r) => {
-      const need = Math.max(
-        0,
-        (minimums ? r.effectiveMinimumMonthly : r.requiredMonthly) -
-          r.recommendedMonthly,
+  if (!safety) {
+    for (const r of essentials) give(r, r.effectiveMinimumMonthly);
+    for (const r of essentials) give(r, r.requiredMonthly);
+    const flexible = rows.filter(
+      (r) => r.category === "flexible" && adjustable(r),
+    );
+    const weight = (r: HybridGoal, need: number) =>
+      new D(policy.priority[r.priority])
+        .times(
+          policy.urgency[
+            r.months !== null && r.months <= 12
+              ? 0
+              : r.months !== null && r.months <= 36
+                ? 1
+                : 2
+          ],
+        )
+        .times(need);
+    const distribute = (minimums: boolean) => {
+      const items = flexible.map((r) => {
+        const need = Math.max(
+          0,
+          (minimums ? r.effectiveMinimumMonthly : r.requiredMonthly) -
+            r.recommendedMonthly,
+        );
+        return {
+          id: r.goalId,
+          cap: need,
+          weight: weight(
+            r,
+            Math.max(0, r.requiredMonthly - r.recommendedMonthly),
+          ),
+        };
+      });
+      const amounts = weightedAllocate(left, items);
+      for (const r of flexible) {
+        const n = amounts[r.goalId] ?? 0;
+        r.recommendedMonthly += n;
+        left -= n;
+      }
+    };
+    distribute(true);
+    distribute(false);
+  } else {
+    for (const months of [1, 3]) {
+      const stageTarget = Math.min(
+        safety.target,
+        (input.monthlyEssentials ?? 0) * months,
       );
-      return {
-        id: r.goalId,
-        cap: need,
-        weight: weight(
-          r,
-          Math.max(0, r.requiredMonthly - r.recommendedMonthly),
-        ),
-      };
-    });
-    const amounts = weightedAllocate(left, items);
-    for (const r of flexible) {
-      const n = amounts[r.goalId] ?? 0;
-      r.recommendedMonthly += n;
-      left -= n;
+      let need = Math.max(
+        0,
+        stageTarget -
+          safety.coverage -
+          safety.stages.reduce((sum, s) => sum + s.row.recommendedMonthly, 0),
+      );
+      for (const stage of safety.stages) {
+        if (!adjustable(stage.row)) continue;
+        const before = stage.row.recommendedMonthly;
+        give(
+          stage.row,
+          Math.min(
+            stage.row.requiredMonthly,
+            stage.row.recommendedMonthly + need,
+            stage.cap,
+          ),
+        );
+        need -= stage.row.recommendedMonthly - before;
+      }
     }
-  };
-  distribute(true);
-  distribute(false);
-  const adjustmentRoom=budget-planLimit+left;
+    for (const row of [...rows].sort(
+      (a, b) =>
+        goalSipDeadline(
+          source.find((g) => g.id === a.goalId)!,
+          input.today,
+        ).localeCompare(
+          goalSipDeadline(source.find((g) => g.id === b.goalId)!, input.today),
+        ) || a.goalId.localeCompare(b.goalId),
+    )) {
+      if (adjustable(row)) give(row, row.requiredMonthly);
+      if (!safety.stages.some((s) => s.row === row))
+        row.explanation = row.needsDate
+          ? "Add a deadline to place this goal after emergency cover."
+          : "After one and three months of emergency cover, goals are funded in nearest-deadline order.";
+    }
+  }
+  const adjustmentRoom = budget - planLimit + left;
   for (const row of rows) {
     const rate = row.assumptions.annualReturnPct,
       months = row.months ?? 0;
@@ -779,7 +866,8 @@ export function calculateHybrid(input: HybridInput): HybridResult {
             : row.months !== 0 &&
                 !row.needsDate &&
                 row.monthlyShortfall <=
-                  adjustmentRoom+(budget * policy.atRiskMonthlyIncreasePct) / 100
+                  adjustmentRoom +
+                    (budget * policy.atRiskMonthlyIncreasePct) / 100
               ? "at_risk"
               : "underfunded";
     if (row.months === 0) row.immediateShortfall = row.projectedShortfall;
@@ -792,7 +880,12 @@ export function calculateHybrid(input: HybridInput): HybridResult {
         source.find((g) => g.id === row.goalId)!.bills ?? [],
         row.existingCoverage + row.oneTimeAllocated,
         row.recommendedMonthly,
-        input.today,source.find(g=>g.id===row.goalId)?.emergencyReserve??0,safetyReserveMonths(source.find(g=>g.id===row.goalId)!,input.today),
+        input.today,
+        source.find((g) => g.id === row.goalId)?.emergencyReserve ?? 0,
+        safetyReserveMonths(
+          source.find((g) => g.id === row.goalId)!,
+          input.today,
+        ),
       );
       row.projectedShortfall = Math.max(
         0,
@@ -808,7 +901,7 @@ export function calculateHybrid(input: HybridInput): HybridResult {
         row.status =
           row.monthlyShortfall > 0 &&
           row.monthlyShortfall <=
-            adjustmentRoom+(budget * policy.atRiskMonthlyIncreasePct) / 100 &&
+            adjustmentRoom + (budget * policy.atRiskMonthlyIncreasePct) / 100 &&
           state.immediateShortfall === 0
             ? "at_risk"
             : "underfunded";
@@ -924,6 +1017,28 @@ export function calculateHybrid(input: HybridInput): HybridResult {
     strategy: "hybrid",
     riskTolerance: input.riskTolerance ?? null,
     engineVersion: HYBRID_VERSION,
+    ...(input.allocationMode
+      ? {
+          allocationMode: input.allocationMode,
+          fundingOrder: [...rows]
+            .sort(
+              (a, b) =>
+                Number(!!b.assumptions.runway) -
+                  Number(!!a.assumptions.runway) ||
+                goalSipDeadline(
+                  source.find((g) => g.id === a.goalId)!,
+                  input.today,
+                ).localeCompare(
+                  goalSipDeadline(
+                    source.find((g) => g.id === b.goalId)!,
+                    input.today,
+                  ),
+                ) ||
+                a.goalId.localeCompare(b.goalId),
+            )
+            .map((g) => g.goalId),
+        }
+      : {}),
     calculatedOn: input.today,
     policy,
     availableMonthlySavings: budget,
@@ -950,4 +1065,8 @@ export function calculateHybrid(input: HybridInput): HybridResult {
   };
 }
 
-function safetyReserveMonths(g:GoalInput,today:string){return g.emergencyReserveDate?Math.max(0,Math.min(12,monthsBetween(today,g.emergencyReserveDate))):12;}
+function safetyReserveMonths(g: GoalInput, today: string) {
+  return g.emergencyReserveDate
+    ? Math.max(0, Math.min(12, monthsBetween(today, g.emergencyReserveDate)))
+    : 12;
+}

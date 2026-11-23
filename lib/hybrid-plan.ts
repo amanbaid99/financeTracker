@@ -102,7 +102,7 @@ export function hybridVehicles(
   input: HybridPlanInput,
   calculated?: HybridResult,
 ): MonthlyVehicle[] {
-  if (input.exactHoldings)
+  if (input.exactHoldings && input.allocationMode !== "safety_deadline")
     return exactVehicles(input, calculated ?? hybridPlan(input));
   const plan = hybridMoneyPlan(input, calculated),
     result = plan.hybrid!,
@@ -112,7 +112,7 @@ export function hybridVehicles(
     plan.suggestions,
     input.investments,
     result.links,
-    "pooled",
+    input.allocationMode === "safety_deadline" ? "goal_first" : "pooled",
     input.goals,
   ))
     rows.push({
