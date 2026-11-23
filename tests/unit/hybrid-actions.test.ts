@@ -71,6 +71,7 @@ it("rejects foreign holding keys and duplicate one-time money", async () => {
 });
 it("supports zero surplus without inventing contributions", async () => {
   vi.mocked(loadBudget).mockResolvedValue({
+    budgetConfigured:true,
     budget: { income: 0, costs: 1000, emis: 500 },
   } as never);
   expect(await confirmHybridPlan({ ...input, monthly: 0 })).toEqual({
@@ -84,3 +85,14 @@ it("keeps a failed RPC from being reported as confirmed", async () => {
 });
 
 it("requires a fresh review when the calculation date changes",async()=>{expect((await confirmHybridPlan({...input,calculatedOn:"2026-11-21"})).ok).toBe(false);expect(rpc).not.toHaveBeenCalled();});
+
+it("allows a declared monthly capacity without a saved budget, without inventing income",async()=>{
+ vi.mocked(loadBudget).mockResolvedValue({budgetConfigured:false,budget:{income:0,costs:1000,emis:0}} as never);
+ expect(await confirmHybridPlan({...input,monthly:20000,manualSavings:25000})).toEqual({ok:true});
+ const inputs=rpc.mock.calls[0][1].p_inputs;expect(inputs.monthlySavings).toBe(25000);expect(inputs.budget.income).toBe(0);expect(inputs.budgetSource).toBe("manual");
+ expect((await confirmHybridPlan({...input,monthly:26000,manualSavings:25000})).ok).toBe(false);
+});
+it("a manual declaration cannot bypass a saved budget's available amount",async()=>{
+ vi.mocked(loadBudget).mockResolvedValue({budgetConfigured:true,budget:{income:10000,costs:10000,emis:0}} as never);
+ expect((await confirmHybridPlan({...input,monthly:10000,manualSavings:10000})).ok).toBe(false);expect(rpc).not.toHaveBeenCalled();
+});

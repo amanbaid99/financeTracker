@@ -354,19 +354,17 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     page.getByRole("button", { name: "Edit Index SIP" }),
   ).toBeVisible();
 
-  // Hybrid plan: no income is entered yet, so new monthly contributions are capped at zero.
+  // SIP plan: no budget is saved yet, so the user declares available monthly savings.
   await page.goto("/goals?do=plan");
   await expect(page).toHaveURL(/\/goals\/sip$/);
-  // One list: every holding with a suggested amount, each one editable.
+  // No saved budget is required: enter an explicit available monthly amount.
   await expect(page.getByRole("heading",{name:"Your monthly SIPs"})).toBeVisible();
+  await page.getByLabel("How much can you invest each month?",{exact:true}).fill("50000");
   await expect(page.getByLabel("Index SIP a month")).toBeVisible();
   await expect(page.getByLabel("Bank FD a month")).toHaveCount(0);
   await page.getByLabel("Index SIP a month").fill("12000");
-  await expect(page.getByText(/^₹12,000$/).first()).toBeVisible();
+  await expect(page.getByLabel("Index SIP a month")).toHaveValue("12,000");
   await page.screenshot({path:"test-results/sip-plan-375.png",fullPage:true});
-  // No salary: a positive plan cannot be saved, and zero remains safe.
-  await expect(page.getByRole("button",{name:"Save this plan",exact:true})).toBeDisabled();
-  await page.getByLabel("Index SIP a month").fill("0");
   await page.getByRole("button",{name:"Save this plan",exact:true}).click();
   await expect(page).toHaveURL(/\/goals\/plan$/);
   await expect(page.getByText("Your confirmed plan",{exact:true})).toBeVisible();

@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"Enter your SIP amount directly",items:[{title:"Budget setup is optional",text:"Enter how much you can invest monthly at the top of the SIP planner. Suggestions update immediately. Your confirmed amount stays available when you reopen it."}]},
  {date:"2026-11-23",title:"Budget setup in two screens",items:[{title:"All your numbers together",text:"Income, EMIs, rent, utilities and personal spending share one screen. Next, review the allocation and save. Unknown costs start blank."}]},
  {date:"2026-11-23",title:"No automatic personal expense rows",items:[{title:"One personal amount",text:"Budget setup no longer imports old Transport or Day-to-day spending records. Choose your Personal spending amount yourself. Explicitly saved expenses are preserved."}]},
  {date:"2026-11-23",title:"One safety fund",items:[{title:"Emergency and planned bills together",text:"A combined goal keeps an emergency reserve and scheduled bills in one place. Planned bills use money above the reserve; withdrawals protect it unless you explicitly choose otherwise."}]},

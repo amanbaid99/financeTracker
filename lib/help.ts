@@ -198,8 +198,8 @@ export const HELP: HelpTopic[] = [
     section: "Budget",
     q: "How do I plan my monthly SIPs?",
     a: [
-      "Your monthly SIPs lists every holding you can add money to each month, with a suggested amount. Holdings with nothing suggested show ₹0, so you can still choose to put money there.",
-      "Suggestions and saved outcomes use the same calculation: essential goals first, then other goals based on priority, deadline and remaining need. There is no automatic amount for every goal. A zero budget produces no new contributions; amounts above available savings cannot be saved. Update Budget if your income or costs changed.",
+      "Enter How much can you invest each month? at the top of Your monthly SIPs. You can do this without a saved budget by declaring what you can set aside after expenses and EMIs. A saved budget supplies the default and caps the amount. The entered amount refreshes suggestions for your holdings. Holdings with nothing suggested show ₹0, so you can still choose to put money there.",
+      "Suggestions and saved outcomes use the same calculation: essential goals first, then other goals based on priority, deadline and remaining need. There is no automatic amount for every goal. A saved budget with zero surplus produces no new contributions; amounts above its available savings cannot be saved. Without a saved budget, enter your available amount directly. This stays a planning assumption and never creates income records.",
       "Suggestions use a fund you already hold first: the best fit, or else the closest one (money needed within a year never goes into equity). A bank account is suggested first only for money needed within a year; for 1 to 3 years, a debt or arbitrage fund you hold comes first. Suggested, but you don't hold one only appears when nothing you hold is close. Add one in Net worth and it joins the list.",
       "Save this plan keeps it in the app. No SIP is started or changed with your provider.",
     ],

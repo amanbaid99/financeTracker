@@ -6,6 +6,7 @@ import {
   calculateHybrid,
   unallocatedLiquidValue,
 } from "./hybrid-engine";
+import {sipCapacity} from "./sip-capacity";
 import {savedBudgetInputs} from "./planner-budget";
 import "server-only";
 import { redirect } from "next/navigation";
@@ -550,6 +551,7 @@ export const loadBudget = cache(async () => {
     recordIncome: incomeRows
       .filter((i) => i.active)
       .reduce((s, i) => s + i.amount, 0),
+    budgetConfigured:!!fromSheet,
     incomes: fromSheet?.incomes ?? incomeRows,
     costs: fromSheet?.costs ?? costRows,
     loanEmis,
@@ -580,15 +582,15 @@ export const loadMoneyPlan = cache(async () => {
     ),
   );
   const context = await loadHybridContext();
-  const priorBuffer = (
-    context.plans[0]?.inputs as { cashBuffer?: number } | undefined
-  )?.cashBuffer;
-  const capacity = monthlyCapacity(
+  const prior=context.plans[0]?.inputs as {cashBuffer?:number;budgetSource?:string;declaredMonthlySavings?:number;monthlySavings?:number}|undefined;
+  const priorBuffer=prior?.cashBuffer;
+  const computedCapacity = monthlyCapacity(
     b.budget.income,
     b.budget.costs,
     b.budget.emis,
     Number.isSafeInteger(priorBuffer) && priorBuffer! >= 0 ? priorBuffer : 0,
   );
+  const capacity = b.budgetConfigured?sipCapacity(true,computedCapacity.availableSavings,computedCapacity.budgetDeficit):prior?.budgetSource==="manual"?sipCapacity(false,0,0,prior.declaredMonthlySavings??prior.monthlySavings):computedCapacity;
   const plan = input
     ? hybridMoneyPlan({
         goals,

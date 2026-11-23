@@ -1,5 +1,12 @@
 # Architecture
 
+## Editable SIP capacity without mandatory budget setup, 23 Nov 2026
+
+SimpleSipPlanner now leads with an editable How much can you invest each month? field. A missing saved budget is distinct from a budget with zero surplus. Without a saved budget, users explicitly enter available monthly savings after expenses/EMIs; changing the amount refreshes suggestions and each destination stays editable. Before an amount is entered, the planner shows an input prompt rather than a wall of zero recommendations. A saved budget supplies the default and remains an enforced ceiling.
+
+Confirmation accepts manualSavings only without a saved budget, records budgetSource/declaredMonthlySavings in the immutable plan inputs and flags that income/costs are not budget-verified. It never invents income or updates budgets/holdings. The shared capacity resolver preserves that confirmed assumption when Goals and the SIP editor reopen, so it does not collapse to zero on reload. Recorded contributions remain separate. Tests distinguish missing versus zero budgets, reject manual bypass of a known budget and exercise actual loaders on reload. No schema changes.
+
+
 ## One emergency and sinking goal, 23 Nov 2026
 
 Supports one bills_fund goal with emergencyReserve and emergencyReserveDate in existing planning_settings. No competing goal type or new tables. Bills keep their amounts, cycles and due dates. The shared corpus is counted once; scheduled bills use only the balance above the reserve. Monthly funding builds a missing reserve by the earlier of its original deadline and 12 months, alongside bill funding. Reserve assumptions exclude projected investment returns. The existing goal editor preserves and edits both reserve fields, and saving includes the reserve in the stored target.

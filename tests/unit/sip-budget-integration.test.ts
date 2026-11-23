@@ -6,7 +6,7 @@ vi.mock("@/lib/supabase/server",()=>({createClient:vi.fn()}));
 vi.mock("@/lib/hybrid-data",()=>({loadHybridContext:vi.fn()}));
 import {createClient} from "@/lib/supabase/server";
 import {loadHybridContext} from "@/lib/hybrid-data";
-import {loadBudget} from "@/lib/data";
+import {loadBudget,loadMoneyPlan} from "@/lib/data";
 import {confirmHybridPlan} from "@/lib/hybrid-actions";
 import {composeGuidedBudget} from "@/lib/budget-guide";
 import {todayIST} from "@/lib/dates";
@@ -27,4 +27,11 @@ it("confirmation accepts the displayed savings instead of rejecting against obso
  expect(await confirmHybridPlan({calculatedOn:today,revision:rev,monthly:61985,lump:0,minimums:{},overrides:{}})).toEqual({ok:true});
  const call=rpc.mock.calls.find(c=>c[0]==="confirm_hybrid_plan");expect(call).toBeDefined();expect(call![1].p_inputs.monthlySavings).toBe(61985);
  expect((await confirmHybridPlan({calculatedOn:today,revision:rev,monthly:61986,lump:0,minimums:{},overrides:{}})).ok).toBe(false);
+});
+
+it("reopening a confirmed manual plan keeps its declared capacity when no budget exists",async()=>{
+ const snapshot={goals:[],holdings:[],allocations:[],goal_bills:[],loans:[],loan_payments:[],incomes:[],expenses:[],profile:{plan_monthly:20000,plan_lump_sum:0}};
+ vi.mocked(createClient).mockResolvedValue({auth:{getClaims:async()=>({data:{claims:{sub:"owner"}}})},rpc:async()=>({data:snapshot,error:null}),from:(table:string)=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:table==="budget_ratio_plans"?null:{plan_sip_minimums:{}},error:null})})})})} as never);
+ vi.mocked(loadHybridContext).mockResolvedValue({plans:[{inputs:{budgetSource:"manual",declaredMonthlySavings:50000,monthlySavings:50000}}],goalSettings:[],holdingDetails:[],revision:rev,sourceRevision:rev,riskTolerance:null} as never);
+ const p=await loadMoneyPlan();expect(p.budget.income).toBe(0);expect(p.plan!.hybrid!.availableMonthlySavings).toBe(50000);expect(p.plan!.hybrid!.monthlyPlanLimit).toBe(20000);
 });

@@ -1,5 +1,6 @@
 "use server";
 import { z } from "zod";
+import {sipCapacity} from "./sip-capacity";
 import { revalidatePath } from "next/cache";
 import { loadGoals, loadBudget, requireUser } from "./data";
 import { loadHybridContext } from "./hybrid-data";
@@ -12,6 +13,7 @@ const schema = z.object({
   calculatedOn:z.iso.date(),
   revision: z.string().regex(/^[a-f0-9]{32}$/),
   monthly: z.number().int().min(0).max(1e9),
+  manualSavings:z.number().int().min(0).max(1e9).optional(),
   lump: z.number().int().min(0).max(1e13),
   cashBuffer: z.number().int().min(0).max(1e9).default(0),
   refreshMapping: z.boolean().default(false),
@@ -44,7 +46,9 @@ export async function confirmHybridPlan(
       b.budget.emis,
       v.cashBuffer,
     );
-    if (v.monthly > capacity.availableSavings)
+    const configured=b.budgetConfigured??b.budget.income>0;
+    const availableSavings=sipCapacity(configured,capacity.availableSavings,capacity.budgetDeficit,v.manualSavings).availableSavings;
+    if (v.monthly > availableSavings)
       return {ok:false,error:"This plan exceeds your available monthly savings. Update your budget or lower the amounts."};
     const held = new Set(g.investments.map((i) => `inv:${i.id}`));
     if (Object.keys(v.minimums).some((k) => !held.has(k)))
@@ -79,9 +83,11 @@ export async function confirmHybridPlan(
       goals: g.goals,
       investments: g.investments,
       links,
-      monthlySavings: capacity.availableSavings,
+      monthlySavings: availableSavings,
+      budgetSource:configured?"budget":"manual",
+      declaredMonthlySavings:configured?null:availableSavings,
       monthlyPlanLimit: v.monthly,
-      budgetDeficit: capacity.budgetDeficit,
+      budgetDeficit: configured?capacity.budgetDeficit:0,
       oneTime: v.lump,
       minimums: v.minimums,
       overrides: v.overrides,
@@ -90,6 +96,7 @@ export async function confirmHybridPlan(
     };
     const result = hybridPlan(inputs);
     result.vehicles = hybridVehicles(inputs, result);
+    if(!configured)result.warnings.push("Monthly savings entered by you after expenses and EMIs. Income and costs are not verified by a saved budget.");
     const { error } = await supabase.rpc("confirm_hybrid_plan", {
       p_revision: v.revision,
       p_inputs: JSON.parse(JSON.stringify(inputs)) as Json,

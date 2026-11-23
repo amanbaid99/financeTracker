@@ -7,7 +7,7 @@ import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
 import { confirmHybridPlan } from "@/lib/hybrid-actions";
 import { proposeGoalMapping } from "@/lib/hybrid-mapping";
-import {hybridPlan,hybridVehicles} from "@/lib/hybrid-plan";
+import { hybridPlan, hybridVehicles } from "@/lib/hybrid-plan";
 import { sipSuggestions } from "@/lib/simple-sip";
 import type { SipMinimums } from "@/lib/sip-minimums";
 import { formatINR } from "@/lib/format";
@@ -23,6 +23,8 @@ export function SimpleSipPlanner({
   links: currentLinks,
   today,
   budgetMonthly,
+  budgetConfigured = true,
+  initialMonthly,
   essentialsMonthly = 0,
   savedAmounts,
   revision,
@@ -34,6 +36,8 @@ export function SimpleSipPlanner({
   today: string;
   /** The budget's Save & invest a month, 0 if none. */
   budgetMonthly: number;
+  budgetConfigured?: boolean;
+  initialMonthly?: number | null;
   /** Fixed costs and EMIs a month, for the emergency fund floor. */
   essentialsMonthly?: number;
   /** Amounts saved last time, per holding (inv:<id>). */
@@ -45,18 +49,26 @@ export function SimpleSipPlanner({
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState("");
+  const [monthly, setMonthly] = useState<number | null>(
+    initialMonthly === undefined
+      ? budgetConfigured
+        ? budgetMonthly
+        : null
+      : initialMonthly,
+  );
+  const validMonthly =
+    monthly !== null &&
+    Number.isSafeInteger(monthly) &&
+    monthly >= 0 &&
+    monthly <= 1e9;
+  const monthlyLimit = validMonthly ? monthly : 0;
+  const capacity = budgetConfigured ? budgetMonthly : monthlyLimit;
   const links = useMemo(
     () =>
-      proposeGoalMapping(
-        goals,
-        investments,
-        currentLinks,
-        today,
-        {
-          refresh: false,
-          riskTolerance,
-        },
-      ),
+      proposeGoalMapping(goals, investments, currentLinks, today, {
+        refresh: false,
+        riskTolerance,
+      }),
     [goals, investments, currentLinks, today, riskTolerance],
   );
   const s = useMemo(
@@ -66,7 +78,7 @@ export function SimpleSipPlanner({
         investments,
         links,
         today,
-        budgetMonthly,
+        budgetMonthly: monthlyLimit,
         essentialsMonthly,
         riskTolerance,
       }),
@@ -75,7 +87,7 @@ export function SimpleSipPlanner({
       investments,
       links,
       today,
-      budgetMonthly,
+      monthlyLimit,
       essentialsMonthly,
       riskTolerance,
     ],
@@ -96,22 +108,78 @@ export function SimpleSipPlanner({
     (h) => (amounts[h.investment.id] ?? 0) !== h.suggested,
   );
 
-  const overBudget = total > budgetMonthly;
-  const preview = useMemo(()=>{
-    if(total>budgetMonthly)return null;
-    const input={goals,investments,links,today,riskTolerance,monthlySavings:budgetMonthly,monthlyPlanLimit:total,
-      minimums:Object.fromEntries(Object.entries(amounts).map(([id,n])=>[`inv:${id}`,n]))};
+  const overBudget =
+    total > monthlyLimit || (budgetConfigured && monthlyLimit > budgetMonthly);
+
+  function changeMonthly(value: number | null) {
+    setMonthly(value);
+    setError("");
+    const next = sipSuggestions({
+      goals,
+      investments,
+      links,
+      today,
+      budgetMonthly:
+        value !== null &&
+        Number.isSafeInteger(value) &&
+        value >= 0 &&
+        value <= 1e9
+          ? value
+          : 0,
+      essentialsMonthly,
+      riskTolerance,
+    });
+    setAmounts(
+      Object.fromEntries(
+        next.holdings.map((h) => [h.investment.id, h.suggested]),
+      ),
+    );
+  }
+  const preview = useMemo(() => {
+    if (total > monthlyLimit || !validMonthly) return null;
+    const input = {
+      goals,
+      investments,
+      links,
+      today,
+      riskTolerance,
+      monthlySavings: capacity,
+      monthlyPlanLimit: total,
+      minimums: Object.fromEntries(
+        Object.entries(amounts).map(([id, n]) => [`inv:${id}`, n]),
+      ),
+    };
     try {
-      const result=hybridPlan(input);
-      return {result,vehicles:hybridVehicles(input,result),error:""};
-    } catch(error) {
-      return {result:null,vehicles:[],error:error instanceof Error?error.message:"Could not calculate this plan. Review the amounts."};
+      const result = hybridPlan(input);
+      return { result, vehicles: hybridVehicles(input, result), error: "" };
+    } catch (error) {
+      return {
+        result: null,
+        vehicles: [],
+        error:
+          error instanceof Error
+            ? error.message
+            : "Could not calculate this plan. Review the amounts.",
+      };
     }
-  },[goals,investments,links,today,riskTolerance,budgetMonthly,total,amounts]);
+  }, [
+    goals,
+    investments,
+    links,
+    today,
+    riskTolerance,
+    capacity,
+    monthlyLimit,
+    validMonthly,
+    total,
+    amounts,
+  ]);
 
   function save() {
-    if(preview?.error)return setError(preview.error);
-    if (overBudget) return setError("Lower the amounts or update your budget before saving.");
+    if (!validMonthly) return setError("Enter a valid monthly amount first.");
+    if (preview?.error) return setError(preview.error);
+    if (overBudget)
+      return setError("Lower the amounts or update your budget before saving.");
     setError("");
     const minimums = Object.fromEntries(
       Object.entries(amounts)
@@ -120,21 +188,24 @@ export function SimpleSipPlanner({
     );
     start(async () => {
       try {
-      const res = await confirmHybridPlan({
-        calculatedOn: today,
-        revision,
-        monthly: total,
-        lump: 0,
-        cashBuffer: 0,
-        refreshMapping: false,
-        minimums,
-        overrides: {},
-      });
-      if (!res.ok) return setError(res.error);
-      router.replace("/goals/plan");
-      router.refresh();
+        const res = await confirmHybridPlan({
+          calculatedOn: today,
+          revision,
+          monthly: total,
+          ...(!budgetConfigured ? { manualSavings: monthlyLimit } : {}),
+          lump: 0,
+          cashBuffer: 0,
+          refreshMapping: false,
+          minimums,
+          overrides: {},
+        });
+        if (!res.ok) return setError(res.error);
+        router.replace("/goals/plan");
+        router.refresh();
       } catch {
-        setError("Connection interrupted. Reload the planner to check whether the plan saved before retrying.");
+        setError(
+          "Connection interrupted. Reload the planner to check whether the plan saved before retrying.",
+        );
       }
     });
   }
@@ -142,158 +213,221 @@ export function SimpleSipPlanner({
   return (
     <section aria-label="Monthly SIPs" className="space-y-4">
       <div className="surface-card space-y-1 rounded-2xl border bg-card p-4">
-        <p className="text-xs text-muted-foreground">Total a month</p>
-        <p className="tabular text-3xl font-semibold tracking-tight">
-          {formatINR(total)}
+        <label
+          htmlFor="sip-monthly-budget"
+          className="block text-sm font-semibold"
+        >
+          How much can you invest each month?
+        </label>
+        <MoneyInput
+          id="sip-monthly-budget"
+          value={monthly}
+          onChange={changeMonthly}
+        />
+        <p className="pt-1 text-xs text-muted-foreground">
+          {budgetConfigured
+            ? `Your budget allows ${formatINR(budgetMonthly)}/mo.`
+            : "No budget is saved. Enter what you can set aside after expenses and EMIs. You can create a budget later."}{" "}
+          Changing this amount refreshes the suggested split.
         </p>
-        <p className="text-xs text-muted-foreground">
-          The amounts you&apos;ve set below. Your goals need about{" "}
-          {formatINR(s.goalsNeed)} a month.
-        </p>
-        {budgetMonthly === 0 && <p className="mt-2 text-sm text-muted-foreground">No monthly savings available yet. <Link href="/goals/budget" className="font-medium text-primary">Update your budget</Link> to plan new contributions. Existing investments still cover your goals.</p>}
-        <p className="text-sm text-muted-foreground">Available from your budget: {formatINR(budgetMonthly)}/mo</p>
-        {!overBudget&&total<budgetMonthly&&<p className="text-xs text-muted-foreground">{formatINR(budgetMonthly-total)} remains unassigned. You don&apos;t have to invest it all.</p>}
+        {monthly !== null && !validMonthly && (
+          <p role="alert" className="text-sm text-danger">
+            Enter a whole-rupee monthly amount up to {formatINR(1e9)}.
+          </p>
+        )}
+        {monthly === null && (
+          <p className="pt-2 text-sm text-muted-foreground">
+            Enter your monthly amount to see where it could go.
+          </p>
+        )}
+        {monthly !== null && (
+          <p className="pt-2 text-sm text-muted-foreground">
+            {formatINR(total)} assigned to your holdings
+            {monthlyLimit > total
+              ? ` · ${formatINR(monthlyLimit - total)} not assigned yet`
+              : ""}
+            .
+          </p>
+        )}
         {overBudget && (
-          <p className="text-xs text-warning">
-            {formatINR(total - budgetMonthly)} more than your budget sets aside.
+          <p role="alert" className="pt-2 text-sm text-danger">
+            {budgetConfigured && monthlyLimit > budgetMonthly
+              ? "This exceeds your budget. Lower the amount or update Budget."
+              : "Your holding amounts exceed the monthly amount above."}
           </p>
+        )}
+        {budgetConfigured && monthlyLimit > budgetMonthly && (
+          <Link
+            href="/goals/budget"
+            className="inline-flex min-h-10 items-center text-sm text-primary"
+          >
+            Edit budget
+          </Link>
         )}
       </div>
 
-      {s.byGoal.some((l) => l.monthly > 0) && (
-        <details className="surface-card rounded-2xl border bg-card p-4">
-          <summary className="cursor-pointer font-semibold">
-            Why these amounts
-          </summary>
-          <p className="mt-2 text-xs text-muted-foreground">
-            Essential goals first, then other goals based on their priority,
-            deadline and remaining need. The same rules calculate your saved plan.
-          </p>
-          <ul className="mt-2 divide-y">
-            {s.byGoal.map((l) => (
-              <li
-                key={l.goalId}
-                className="flex items-start justify-between gap-3 py-2 text-sm"
-              >
-                <span className="min-w-0">
-                  <span className="block font-medium">{l.goalName}</span>
-                  <span className="block text-xs text-muted-foreground">
-                    {l.why}
-                  </span>
-                </span>
-                <span className="tabular shrink-0">{formatINR(l.monthly)}</span>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
-
-      <div className="surface-card rounded-2xl border bg-card p-4">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="font-semibold">Your holdings</h2>
-          {differsFromSuggested && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                setAmounts(
-                  Object.fromEntries(
-                    s.holdings.map((h) => [h.investment.id, h.suggested]),
-                  ),
-                )
-              }
-            >
-              Use suggestions
-            </Button>
+      {monthlyLimit > 0 && (
+        <>
+          {s.byGoal.some((l) => l.monthly > 0) && (
+            <details className="surface-card rounded-2xl border bg-card p-4">
+              <summary className="cursor-pointer font-semibold">
+                Why these amounts
+              </summary>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Essential goals first, then other goals based on their priority,
+                deadline and remaining need. The same rules calculate your saved
+                plan.
+              </p>
+              <ul className="mt-2 divide-y">
+                {s.byGoal.map((l) => (
+                  <li
+                    key={l.goalId}
+                    className="flex items-start justify-between gap-3 py-2 text-sm"
+                  >
+                    <span className="min-w-0">
+                      <span className="block font-medium">{l.goalName}</span>
+                      <span className="block text-xs text-muted-foreground">
+                        {l.why}
+                      </span>
+                    </span>
+                    <span className="tabular shrink-0">
+                      {formatINR(l.monthly)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </details>
           )}
-        </div>
-        {s.holdings.length === 0 ? (
-          <p className="py-3 text-sm text-muted-foreground">
-            No holdings yet. Add your funds and accounts in Net worth.
-          </p>
-        ) : (
-          <ul className="divide-y">
-            {s.holdings.map((h) => {
-              const id = h.investment.id;
-              const suggested = suggestedFor(id);
-              return (
-                <li key={id} className="space-y-2 py-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="break-words text-sm font-medium">
-                        {h.label}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {h.kindLabel}
-                        {h.investment.monthlySip > 0
-                          ? ` · now ${formatINR(h.investment.monthlySip)}/mo`
-                          : ""}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {suggested > 0
-                          ? `Suggested ${formatINR(suggested)}${h.covers.length ? ` for ${h.covers.join(", ")}` : ""}`
-                          : "Nothing suggested"}
-                      </p>
-                    </div>
-                    <div className="w-28 shrink-0">
-                      <MoneyInput
-                        aria-label={`${h.label} a month`}
-                        value={amounts[id] ?? 0}
-                        onChange={(v) =>
-                          setAmounts((a) => ({ ...a, [id]: v ?? 0 }))
-                        }
-                      />
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
 
-      {s.newFunds.length > 0 && (
-        <div className="surface-card space-y-2 rounded-2xl border bg-card p-4">
-          <h2 className="font-semibold">
-            Suggested, but you don&apos;t hold one
-          </h2>
-          <ul className="divide-y">
-            {s.newFunds.map((f) => (
-              <li
-                key={f.key}
-                className="flex items-start justify-between gap-3 py-3 text-sm"
-              >
-                <span className="min-w-0">
-                  <span className="block font-medium">{f.label}</span>
-                  <span className="block text-xs text-muted-foreground">
-                    {formatINR(f.suggested)} a month
-                    {f.covers.length ? ` for ${f.covers.join(", ")}` : ""}
-                  </span>
-                </span>
-                <Link
-                  href={`/assets?do=add&category=${encodeURIComponent(f.category)}`}
-                  className="inline-flex min-h-9 shrink-0 items-center gap-1 text-sm text-primary"
+          <div className="surface-card rounded-2xl border bg-card p-4">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="font-semibold">Your holdings</h2>
+              {differsFromSuggested && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setAmounts(
+                      Object.fromEntries(
+                        s.holdings.map((h) => [h.investment.id, h.suggested]),
+                      ),
+                    )
+                  }
                 >
-                  <Plus className="size-3.5" aria-hidden /> Add one
-                </Link>
-              </li>
-            ))}
-          </ul>
-          <p className="text-xs text-muted-foreground">
-            Once you add it, it shows in the list above.
-          </p>
-        </div>
-      )}
+                  Use suggestions
+                </Button>
+              )}
+            </div>
+            {s.holdings.length === 0 ? (
+              <p className="py-3 text-sm text-muted-foreground">
+                No holdings yet. Add your funds and accounts in Net worth.
+              </p>
+            ) : (
+              <ul className="divide-y">
+                {s.holdings.map((h) => {
+                  const id = h.investment.id;
+                  const suggested = suggestedFor(id);
+                  return (
+                    <li key={id} className="space-y-2 py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="break-words text-sm font-medium">
+                            {h.label}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {h.kindLabel}
+                            {h.investment.monthlySip > 0
+                              ? ` · now ${formatINR(h.investment.monthlySip)}/mo`
+                              : ""}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {suggested > 0
+                              ? `Suggested ${formatINR(suggested)}${h.covers.length ? ` for ${h.covers.join(", ")}` : ""}`
+                              : "Nothing suggested"}
+                          </p>
+                        </div>
+                        <div className="w-28 shrink-0">
+                          <MoneyInput
+                            aria-label={`${h.label} a month`}
+                            value={amounts[id] ?? 0}
+                            onChange={(v) =>
+                              setAmounts((a) => ({ ...a, [id]: v ?? 0 }))
+                            }
+                          />
+                        </div>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
 
-      {preview?.result&&differsFromSuggested&&<p className="rounded-xl bg-muted/50 p-3 text-sm">With these amounts, your goals still need about {formatINR(preview.result.monthlyContributionShortfall)} more a month.{preview.result.goals.some(g=>g.category==="essential"&&g.monthlyShortfall>0)?" Some essential goals remain short.":""}</p>}
-      {preview?.error&&<p role="alert" className="text-sm text-danger">{preview.error}</p>}
+          {s.newFunds.length > 0 && (
+            <div className="surface-card space-y-2 rounded-2xl border bg-card p-4">
+              <h2 className="font-semibold">
+                Suggested, but you don&apos;t hold one
+              </h2>
+              <ul className="divide-y">
+                {s.newFunds.map((f) => (
+                  <li
+                    key={f.key}
+                    className="flex items-start justify-between gap-3 py-3 text-sm"
+                  >
+                    <span className="min-w-0">
+                      <span className="block font-medium">{f.label}</span>
+                      <span className="block text-xs text-muted-foreground">
+                        {formatINR(f.suggested)} a month
+                        {f.covers.length ? ` for ${f.covers.join(", ")}` : ""}
+                      </span>
+                    </span>
+                    <Link
+                      href={`/assets?do=add&category=${encodeURIComponent(f.category)}`}
+                      className="inline-flex min-h-9 shrink-0 items-center gap-1 text-sm text-primary"
+                    >
+                      <Plus className="size-3.5" aria-hidden /> Add one
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              <p className="text-xs text-muted-foreground">
+                Once you add it, it shows in the list above.
+              </p>
+            </div>
+          )}
+        </>
+      )}
+      {preview?.result && differsFromSuggested && (
+        <p className="rounded-xl bg-muted/50 p-3 text-sm">
+          With these amounts, your goals still need about{" "}
+          {formatINR(preview.result.monthlyContributionShortfall)} more a month.
+          {preview.result.goals.some(
+            (g) => g.category === "essential" && g.monthlyShortfall > 0,
+          )
+            ? " Some essential goals remain short."
+            : ""}
+        </p>
+      )}
+      {preview?.error && (
+        <p role="alert" className="text-sm text-danger">
+          {preview.error}
+        </p>
+      )}
       {error && (
         <p role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}
-      {error&&<Button variant="outline" onClick={()=>router.refresh()}>Reload planner</Button>}
-      <Button className="w-full" disabled={pending || overBudget || !!preview?.error} onClick={save}>
+      {error && (
+        <Button variant="outline" onClick={() => router.refresh()}>
+          Reload planner
+        </Button>
+      )}
+      <Button
+        className="w-full"
+        disabled={pending || !validMonthly || overBudget || !!preview?.error}
+        onClick={save}
+      >
         {pending ? "Saving…" : "Save this plan"}
       </Button>
       <p className="text-xs text-muted-foreground">
