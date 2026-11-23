@@ -50,7 +50,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Tap Add a goal and pick a type: a purchase, a trip, an emergency fund, a bills fund or paying off a loan.",
       "Add your mutual funds, stocks, savings and deposits. The app works out which goal each one covers, and why.",
       "Tap a goal to open it. You'll see how much is saved, what's left and the monthly amount that gets you there on time.",
-      "Focus goals shows the first three unfinished goals, followed by Other goals and then Covered. A goal on hold keeps its place. Use Change order to move goals.",
+      "Focus goals shows the first three unfinished goals, followed by Other goals and then Covered. Essentials come first, then other goals by deadline. Order essentials changes essential priorities. A goal on hold keeps its place.",
       "Loans can have payoff goals. Manage any loan in Net worth, even if its goal was deleted. Each shows what's left, the EMI and when it ends. Confirm the outstanding amount from your lender each month. Once confirmed, it stays until your next update. Older schedule-based balances and future payoff figures are estimates.",
       "Tap +, then Update amounts to enter new amounts, or Import statement to update funds from a CAS.",
       "Your plan shows your confirmed monthly investments. Edit plan opens one list of holdings and amounts, within what your budget makes available.",
@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"Nearer goals come into focus",items:[{title:"Clearer goal order",text:"Essentials stay first. Other goals follow by deadline, so an old ranking cannot hide a nearer goal. Covered goals stay at the bottom. Your saved investment plan is unchanged."}]},
  {date:"2026-11-23",title:"Add an investment directly to a goal",items:[{title:"Linked when you save",text:"Add investment inside a goal now saves its coverage link too. Choose a new investment or one you already have, and review the share before saving."}]},
  {date:"2026-11-23",title:"SIP suggestions adjust around your choices",items:[{title:"One monthly total",text:"Enter an amount for any holding and the other suggestions update automatically. Your choices stay fixed when you save and reopen. Use suggestions resets your edits."}]},
  {date:"2026-11-23",title:"Enter your SIP amount directly",items:[{title:"Budget setup is optional",text:"Enter how much you can invest monthly at the top of the SIP planner. Suggestions update immediately. Your confirmed amount stays available when you reopen it."}]},

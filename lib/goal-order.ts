@@ -1,9 +1,7 @@
-// One order for goals everywhere: bills funds first, then your own order
-// (or the app's), with loans the EMIs already close after the rest unless
-// you've placed them, and goals reached last. Being on hold doesn't move a
-// goal: it keeps its place and says so. Pure: callers pass today.
+// Display order and legacy planning order are kept separate. Flexible goals
+// display by deadline; only essentials use saved ranks. Pure: callers pass today.
 
-import { horizonGroup, horizonRank } from "./goal-status";
+import { horizonDate, horizonGroup, horizonRank } from "./goal-status";
 import type { TrackedGoal } from "./tracker";
 
 /** Loans that close on their EMIs alone need nothing from you. */
@@ -30,12 +28,34 @@ export function planOrder<T extends TrackedGoal>(
   );
 }
 
-/** All goals, in order, with goals reached at the end. */
+/** Display order is independent of the saved plan: only essentials use custom ranks. */
 export function orderGoals<T extends TrackedGoal>(
   goals: T[],
   today: string,
 ): T[] {
-  return [...planOrder(goals, today)].sort(
-    (a, b) => Number(a.status === "reached") - Number(b.status === "reached"),
+  const essential = (g: TrackedGoal) =>
+    (g.goalCategory ??
+      (["emergency_fund", "bills_fund", "loan_payoff"].includes(g.type) ||
+      !!g.loanState
+        ? "essential"
+        : "flexible")) === "essential";
+  const unattendedLoan = (g: TrackedGoal) => autoLoan(g) && g.planRank == null;
+  return [...goals].sort(
+    (a, b) =>
+      Number(a.status === "reached" || !!a.completed) -
+        Number(b.status === "reached" || !!b.completed) ||
+      Number(!!b.billsFund) - Number(!!a.billsFund) ||
+      Number(unattendedLoan(a)) - Number(unattendedLoan(b)) ||
+      Number(essential(b)) - Number(essential(a)) ||
+      (essential(a) && essential(b)
+        ? (a.planRank ?? 999) - (b.planRank ?? 999) ||
+          Number(b.type === "emergency_fund") -
+            Number(a.type === "emergency_fund")
+        : 0) ||
+      horizonRank(horizonGroup(a, today)) -
+        horizonRank(horizonGroup(b, today)) ||
+      (horizonDate(a) ?? "9999").localeCompare(horizonDate(b) ?? "9999") ||
+      (a.months ?? 999) - (b.months ?? 999) ||
+      a.id.localeCompare(b.id),
   );
 }

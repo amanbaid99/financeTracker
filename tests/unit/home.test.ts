@@ -16,8 +16,8 @@ const card = (milestones: Milestone[], amount = 1000): Card => ({
   bills: [{ id: "bill", month: "2026-11-01", amount, paid: true, dueDate: null, note: null }],
 });
 describe("Home focus", () => {
-  it("follows the user's order, skips reached goals and caps the list at three", () => {
-    const goals = [goal("four", 4), goal("done", 0, "reached"), goal("two", 2), goal("one", 1), goal("three", 3)];
+  it("follows flexible goal deadlines, skips reached goals and caps the list at three", () => {
+    const goals = [goal("four", 4), goal("done", 0, "reached"), goal("two", 2), goal("one", 1), goal("three", 3)].map(g=>({...g,targetDate:`2027-0${g.planRank!+1}-01`}));
     expect(focusGoals(goals, today).map((g) => g.id)).toEqual(["one", "two", "three"]);
     expect(goals[0].id).toBe("four");
     expect(focusGoals([goal("done", 0, "reached")], today)).toEqual([]);

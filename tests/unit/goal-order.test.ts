@@ -63,3 +63,17 @@ describe("orderGoals", () => {
     ]);
   });
 });
+
+it("ignores legacy flexible ranks so nearer goals are visible before distant ranked goals",()=>{
+ const goals=[g("Retirement",{targetDate:"2059-11-16",planRank:6}),g("House",{targetDate:"2040-01-01",planRank:5}),g("Marriage",{targetDate:"2028-01-01",planRank:4}),g("Travel",{targetDate:"2027-06-30",months:7}),g("Safety",{type:"bills_fund",billsFund:{upcoming:[]} as unknown as TrackedGoal["billsFund"],planRank:1}),g("Fun",{targetDate:null})];
+ expect(orderGoals(goals,"2026-11-23").map(g=>g.id)).toEqual(["Safety","Travel","Marriage","House","Retirement","Fun"]);
+ expect(orderGoals([...goals].reverse(),"2026-11-23")).toEqual(orderGoals(goals,"2026-11-23"));
+ expect(goals[0].planRank).toBe(6);
+});
+it("keeps custom essential ranks while flexible goals use deadlines",()=>{
+ const goals=[g("Essential later",{goalCategory:"essential",planRank:1,targetDate:"2029-01-01"}),g("Essential soon",{goalCategory:"essential",planRank:2,targetDate:"2027-01-01"}),g("Flexible",{planRank:0,targetDate:"2026-12-01"})];
+ expect(orderGoals(goals,"2026-11-23").map(g=>g.id)).toEqual(["Essential later","Essential soon","Flexible"]);
+});
+it("uses IDs to break equal deadlines and always places reached goals last",()=>{
+ expect(orderGoals([g("b"),g("a"),g("Covered safety",{status:"reached",billsFund:{upcoming:[]} as unknown as TrackedGoal["billsFund"]})],"2026-11-23").map(g=>g.id)).toEqual(["a","b","Covered safety"]);
+});

@@ -134,7 +134,7 @@ export function GoalList({
   const filtered = filter
     ? goals.filter((g) => goalStatus(g, today, between).tone === filter)
     : goals;
-  // Every goal in one list, in the plan's order. The first three are the
+  // Essentials first, then flexible goals by deadline. The first three are the
   // ones to focus on; nothing is folded away.
   const ordered = orderGoals(filtered, today);
   const active = ordered.filter((g) => g.status !== "reached");
@@ -353,7 +353,7 @@ export function GoalList({
               href="/goals/order"
               className="inline-flex min-h-10 items-center text-xs font-medium text-primary"
             >
-              Change order
+              Order essentials
             </NextLink>
           </div>
           {renderGoals(top)}

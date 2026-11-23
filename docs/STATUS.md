@@ -1,5 +1,9 @@
 # Status
 
+## Goal display follows upcoming deadlines, 23 Nov 2026
+
+Old plan ranks on flexible goals hid newer, nearer goals below distant goals. orderGoals now keeps essentials first, respects their saved order, and sorts flexible goals by deadline with deterministic ID ties. Covered goals remain at the bottom; unplaced loans already covered by EMIs remain after other active goals. Home uses the same focus order. The control is labelled Order essentials to match the existing essential-only editor. Legacy planOrder and all financial allocation calculations remain unchanged. No hosted goal ranks or saved plans are rewritten. Verification: lint, TypeScript, 804 unit tests, 40 Python tests and production build pass. Regression cases cover stale flexible ranks, essential order, equal deadlines, covered goals and matching Home focus.
+
 ## Investments added inside a goal stay linked, 23 Nov 2026
 
 GoalInvestments had opened InvestmentSheet with goalId null, so saving created a portfolio holding without a goal allocation. It now passes the goal ID/name, existing linked IDs and the current share when editing. New and existing holding saves reuse saveInvestment's allocation persistence and 100% ownership validation. Portfolio-only entry points and pooled plan recording are unchanged. New component-context and save-action regressions pass. Full lint, TypeScript, unit/Python checks and production build pass. Real-component browser checks at 320/375/768px verify new-holding and existing-holding goal IDs in save payloads and retention of a 35% share when editing. No hosted financial data was changed for testing. Full signed-in E2E remains unverified.

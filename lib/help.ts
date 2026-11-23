@@ -93,7 +93,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "What order are my goals in?",
     a: [
-      "Your order: bills funds first, then the order you set with Change order, or the app's order (emergency fund first, then by when the money is needed). A goal on hold keeps its place and says so. Loans the EMIs already close come after the rest unless you place them, and goals reached come last.",
+      "Essentials come first, with bills funds at the top and your saved essential order respected. Flexible goals follow by nearest deadline; old flexible rankings do not hide nearer goals. Undated goals follow dated ones. A goal on hold keeps its place. Loans the EMIs already close come after the rest unless placed in your essential order. Covered goals stay at the bottom. Order essentials changes essential funding priorities, not flexible goal order.",
       "The first three unfinished goals are under Focus goals, followed by Other goals. Reached goals have their own Covered section at the bottom. Every goal stays visible. Open a goal for its plan and investments; Show details reveals exact totals and calculations.",
     ],
     tags: "order priority top three list focus",
