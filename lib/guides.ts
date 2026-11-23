@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-23",title:"Budget amounts line up",items:[{title:"Clearer monthly allocation",text:"Fixed, Personal and Save & invest now use aligned rows with percentages and edit icons, without cramped tiles."}]},
  {date:"2026-11-23",title:"Cleaner goals and Budget",items:[{title:"Less analysis, clearer controls",text:"Goal details focus on investments and scheduled payments. Budget shows three clear totals, direct personal and saving edits, and fixed costs without nested menus."}]},
  {date:"2026-11-23",title:"A quieter Home summary",items:[{title:"Just the progress",text:"Debt repayment shows estimated progress and payoff timing. Net worth shows only what you own and owe, with a light red background when negative."}]},
  {date:"2026-11-23",title:"Simpler goal editing",items:[{title:"No planning preferences panel",text:"Goals keep the essentials: target, date and optional inflation. Mark a goal completed directly when editing it. Previous custom assumptions stay saved."}]},

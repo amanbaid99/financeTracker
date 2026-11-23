@@ -236,41 +236,44 @@ export function BudgetExperience({
             </div>
           )}
           <div
-            className={cn(
-              "grid gap-2",
-              noSalary ? "grid-cols-2" : "grid-cols-3",
-            )}
+            className="divide-y divide-border/60"
             aria-label="Monthly allocation"
           >
             {totals.map((b) => {
               const content = (
                 <>
-                  <span className="mb-2 flex min-h-8 items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="flex min-w-0 items-center gap-2 text-sm">
                     <span
                       className={cn("size-2 shrink-0 rounded-full", b.color)}
                       aria-hidden
                     />
-                    {b.id === "essentials"
-                      ? "Fixed"
-                      : b.id === "personal"
-                        ? "Personal"
-                        : "Save & invest"}
+                    <span>
+                      {b.id === "essentials"
+                        ? "Fixed"
+                        : b.id === "personal"
+                          ? "Personal"
+                          : "Save & invest"}
+                    </span>
                   </span>
-                  <span className="tabular block text-sm font-semibold sm:text-base">
+                  <span className="tabular whitespace-nowrap text-right text-sm font-semibold">
                     {formatINRCompact(b.amount)}
                   </span>
-                  <span className="mt-1 block text-xs text-muted-foreground">
+                  <span className="tabular whitespace-nowrap text-right text-xs text-muted-foreground">
                     {!noSalary && plan.salary > 0
-                      ? `${Math.round((b.amount / plan.salary) * 100)}% of income`
-                      : "per month"}
+                      ? `${Math.round((b.amount / plan.salary) * 100)}%`
+                      : ""}
+                  </span>
+                  <span className="flex justify-end">
+                    {b.id !== "essentials" && (
+                      <Pencil className="size-3.5 text-primary" aria-hidden />
+                    )}
                   </span>
                 </>
               );
+              const rowClass =
+                "grid min-h-12 w-full grid-cols-[minmax(0,1fr)_5.5rem_2.25rem_1rem] items-center gap-2 py-3 text-left";
               return b.id === "essentials" ? (
-                <div
-                  key={b.id}
-                  className="rounded-xl border border-border/60 bg-card/80 p-2.5"
-                >
+                <div key={b.id} className={rowClass}>
                   {content}
                 </div>
               ) : (
@@ -280,17 +283,14 @@ export function BudgetExperience({
                   aria-label={`Edit ${b.name}`}
                   disabled={!!loadError}
                   onClick={() =>
-                    edit({
-                      kind: b.id === "future" ? "future" : "personal",
-                    })
+                    edit({ kind: b.id === "future" ? "future" : "personal" })
                   }
-                  className="press relative rounded-xl border border-border/60 bg-card/80 p-2.5 text-left transition-colors hover:border-primary/40"
+                  className={cn(
+                    rowClass,
+                    "press transition-colors hover:bg-primary/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                  )}
                 >
                   {content}
-                  <Pencil
-                    className="absolute bottom-3 right-2 size-3 text-primary"
-                    aria-hidden
-                  />
                 </button>
               );
             })}
