@@ -251,7 +251,10 @@ export function splitForGoal(
   // Pick one suitable vehicle from the caller’s purpose-safe pool.
   // Near-term lifestyle money can prefer a bank; never use equity, gold or ELSS.
   if (strategy === "pooled") {
-    const allowed=[...(STAND_INS[category]??[category]),...(preferBank&&category==="short_debt_fund"?["savings_account"]:[])].filter(k=>!["gold","elss"].includes(k));
+    // A bank account comes first only for money needed within a year. For 1 to
+    // 3 years, a debt or arbitrage fund you hold comes first; a bank account
+    // is the last resort (see NEARBY).
+    const allowed=[...(STAND_INS[category]??[category])].filter(k=>!["gold","elss"].includes(k));
     if(preferBank&&allowed.includes("savings_account")){allowed.splice(allowed.indexOf("savings_account"),1);allowed.unshift("savings_account");}
     let candidates=investments.filter(i=>(!i.availability||i.availability==="available")&&allowed.includes(kindOf(i)??""));
     const linkedIds=new Set(links.filter(l=>l.goalId===goalId&&l.percent>0).map(l=>l.investmentId));

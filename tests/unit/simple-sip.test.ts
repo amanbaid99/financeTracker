@@ -122,3 +122,52 @@ describe("reusing what you hold", () => {
     expect(s.newFunds.length).toBeGreaterThan(0);
   });
 });
+
+describe("1 to 3 year goals", () => {
+  it("prefer an arbitrage fund you hold over a bank account", () => {
+    const funds = [
+      inv("bank", "savings", "savings_account", 10000),
+      inv("arb", "mutual_fund", "arbitrage", 5000),
+    ];
+    const marriage: GoalInput = {
+      id: "m",
+      name: "Marriage",
+      type: "wedding",
+      target: 500000,
+      targetDate: "2028-06-01",
+      inflationPct: null,
+    };
+    const s = sipSuggestions({
+      goals: [trackGoal(marriage, funds, [], today)],
+      investments: funds,
+      links: [],
+      today,
+      budgetMonthly: 0,
+    });
+    expect(
+      s.holdings.find((h) => h.investment.id === "arb")!.suggested,
+    ).toBeGreaterThan(0);
+    expect(s.holdings.find((h) => h.investment.id === "bank")!.suggested).toBe(
+      0,
+    );
+  });
+  it("still use the bank account when nothing better is held", () => {
+    const funds = [inv("bank", "savings", "savings_account", 10000)];
+    const marriage: GoalInput = {
+      id: "m",
+      name: "Marriage",
+      type: "wedding",
+      target: 500000,
+      targetDate: "2028-06-01",
+      inflationPct: null,
+    };
+    const s = sipSuggestions({
+      goals: [trackGoal(marriage, funds, [], today)],
+      investments: funds,
+      links: [],
+      today,
+      budgetMonthly: 0,
+    });
+    expect(s.holdings[0].suggested).toBeGreaterThan(0);
+  });
+});

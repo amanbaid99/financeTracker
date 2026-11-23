@@ -15,6 +15,11 @@ Last updated: 23 Nov 2026.
 
 
 
+
+## Bank accounts only first for money due within a year, 24 Nov 2026
+
+Pooled picking (lib/sip-plan.ts) no longer adds or prefers a savings account for 1 to 3 year goals; a held debt, arbitrage or liquid fund comes first, with the bank account as the NEARBY last resort. Goals under a year still prefer a bank account.
+
 ## SIP plan shows where the budget goes, 24 Nov 2026
 
 The top card on Your monthly SIPs now splits the suggested amount (budget Save & invest, capped at what goals need) into: your holdings, funds you don't hold yet, and any part not suggested anywhere (`inHoldings`, `inNewFunds`, `unplaced` from `sipSuggestions`). "Total a month" is labelled as the amounts you've set.
