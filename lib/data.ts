@@ -319,7 +319,10 @@ export async function readGoals(): Promise<GoalsData> {
   }));
   const bare = inputs.map((g) => trackGoal(g, investments, [], today));
   let allocation = autoAllocate(bare, investments, today);
-  const links = hybridContext.plans.length
+  // Saved mappings (a confirmed plan, or a suggestion you accepted on Goals)
+  // decide which money covers which goal; otherwise it's worked out for you.
+  const useSaved = hybridContext.plans.length > 0 || check(allocations).length > 0;
+  const links = useSaved
     ? check(allocations)
         .map((a) => ({
           goalId: a.goal_id,
@@ -330,7 +333,7 @@ export async function readGoals(): Promise<GoalsData> {
     : allocation.links
         .map((l) => ({ ...l, percent: Math.floor(l.percent * 100) / 100 }))
         .filter((l) => l.percent > 0);
-  if (hybridContext.plans.length) {
+  if (useSaved) {
     const coverage = calculateHybrid({
       today,
       goals: inputs,

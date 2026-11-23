@@ -16,6 +16,11 @@ Last updated: 23 Nov 2026.
 
 
 
+
+## Suggestions on Goals, 24 Nov 2026
+
+`components/goal-suggestions.tsx` at the top of Goals. Mapping suggestions (`mappingSuggestions` in lib/goal-suggestions.ts) compare `proposeGoalMapping(..., [], ...)` with the current links per goal; Accept/Accept all/Change save via `saveGoalMapping`/`saveAllMappings` (lib/goal-suggestion-actions.ts), replacing that goal's goal_allocations rows (the DB trigger enforces 100% per holding; on failure the old rows are restored). `readGoals` now uses saved goal_allocations when a hybrid plan exists or any rows exist. Tidy suggestions reuse `simplifyHints` with spare money computed from the saved mapping, plus equity covering money needed within a year. "Not now" snoozes a suggestion for 7 days via `snooze_update` (its maximum). The app never buys or sells.
+
 ## Bank accounts only first for money due within a year, 24 Nov 2026
 
 Pooled picking (lib/sip-plan.ts) no longer adds or prefers a savings account for 1 to 3 year goals; a held debt, arbitrage or liquid fund comes first, with the bank account as the NEARBY last resort. Goals under a year still prefer a bank account.

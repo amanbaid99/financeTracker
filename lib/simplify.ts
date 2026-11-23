@@ -42,8 +42,13 @@ export function simplifyHints(
   );
   const total = investments.reduce((s, i) => s + Math.max(0, i.value), 0);
 
-  const accounts=investments.filter(i=>i.kind==="savings");
-  if(accounts.length>2)hints.push({id:"bank-accounts",title:`${accounts.length} bank accounts to review`,text:`Give each account a clear job, such as salary, bills or a backup. Consider closing an extra account only after checking salary credits, EMIs, UPI, autopay, linked investments, fees and minimum-balance rules. A low balance alone does not mean an account is unused.`});
+  const accounts = investments.filter((i) => i.kind === "savings");
+  if (accounts.length > 2)
+    hints.push({
+      id: "bank-accounts",
+      title: `${accounts.length} bank accounts to review`,
+      text: `Give each account a clear job, such as salary, bills or a backup. Consider closing an extra account only after checking salary credits, EMIs, UPI, autopay, linked investments, fees and minimum-balance rules. A low balance alone does not mean an account is unused.`,
+    });
 
   // Several funds of the same type.
   const byType = new Map<string, Investment[]>();
@@ -92,11 +97,11 @@ export function simplifyHints(
       text:
         cash >= 50000 && cash >= allocation.spareTotal * 0.95
           ? "It's all safe money that no goal due soon needs. It's free for a new goal; for goals 3 or more years away, equity usually suits better."
-          : `Mostly ${POOL_LABEL[pools[0]]}. It's free for a new goal, or to give a goal more room.` +
+          : `${POOL_LABEL[pools[0]] ? `Mostly ${POOL_LABEL[pools[0]]}. ` : ""}It's free for a new goal, or to give a goal more room.` +
             (cash >= 50000
               ? ` ${formatINR(cash)} of it is safe money no goal due soon needs; for goals 3 or more years away, equity usually suits better.`
               : ""),
     });
   }
-  return hints.slice(0,3);
+  return hints.slice(0, 3);
 }

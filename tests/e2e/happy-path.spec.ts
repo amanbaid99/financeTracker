@@ -388,6 +388,18 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     .click();
   // A confirmed plan keeps its mapping, so the new fund counts once the plan is confirmed again.
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  // Goals suggests where the new fund fits; Accept saves it.
+  await page.goto("/goals");
+  const suggestions = page.getByRole("region", { name: "Suggestions" });
+  await expect(suggestions).toBeVisible();
+  await page.screenshot({ path: "test-results/suggestions-375.png", fullPage: true });
+  const accept = suggestions.getByRole("button", { name: /^Accept for / }).first();
+  if (await accept.count()) {
+    const before = await suggestions.getByRole("button", { name: /^Accept for / }).count();
+    await accept.click();
+    await expect(suggestions.getByRole("button", { name: /^Accept for / })).toHaveCount(before - 1);
+    await expect(suggestions.getByRole("alert")).toHaveCount(0);
+  }
   await page.goto("/goals/sip");
   await page.getByRole("button",{name:"Save this plan",exact:true}).click();
   await expect(page).toHaveURL(/\/goals\/plan$/);

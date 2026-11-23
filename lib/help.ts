@@ -67,6 +67,16 @@ export const HELP: HelpTopic[] = [
     tags: "auto allocate link map which fund covers goal priority emergency sinking",
   },
   {
+    id: "goal-suggestions",
+    section: "Goals",
+    q: "What are the Suggestions on Goals?",
+    a: [
+      "Which money covers which goal: when the app would cover a goal differently from now, it suggests which of your holdings to use. Accept saves it; Change lets you pick holdings and shares yourself; Accept all does every goal at once. Accepted choices stay until you change them, and a new suggestion appears when something changes, like a new fund.",
+      "Keep it simple: ideas to merge funds that do the same job, tidy small holdings, use money no goal needs, or move equity that covers money needed soon. The app doesn't buy or sell anything. When you've done one, tap Done, update amounts. Not now hides any suggestion for a week.",
+    ],
+    tags: "suggestions accept change mapping merge move sell simplify",
+  },
+  {
     id: "goal-simplify",
     section: "Net worth",
     q: "What is Simplify your portfolio?",
