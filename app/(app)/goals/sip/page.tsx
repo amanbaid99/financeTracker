@@ -15,6 +15,7 @@ export default async function BudgetSipPage() {
         monthlyEssentials?: number;
         monthlyPlanLimit?: number;
         overrides?: Record<string, number>;
+        vehicleOverrides?: import("@/lib/sip-worksheet").VehicleOverrides;
       }
     | undefined;
   const initialMonthly =
@@ -45,6 +46,7 @@ export default async function BudgetSipPage() {
             ? (prior.overrides ?? {})
             : {}
         }
+        initialVehicleOverrides={prior?.vehicleOverrides ?? {}}
         revision={c.revision}
         riskTolerance={c.riskTolerance}
       />

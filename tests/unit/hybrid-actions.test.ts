@@ -134,3 +134,13 @@ it("saves 71000 independently even if Budget is zero or cannot be read",async()=
  expect(await confirmHybridPlan({...input,monthly:71000,allocationMode:"safety_deadline"})).toEqual({ok:true});
  expect(loadBudget).not.toHaveBeenCalled();const args=rpc.mock.calls[0][1];expect(args.p_monthly).toBe(71000);expect(args.p_inputs.monthlySavings).toBe(71000);expect(args.p_inputs.budgetSource).toBe("standalone");expect(args.p_inputs.budget).toBeNull();
 });
+it("confirms scoped vehicle choices and recomputes totals on the server",async()=>{
+ const goalId="00000000-0000-4000-8000-000000000001";
+ vi.mocked(loadGoals).mockResolvedValue({today:input.calculatedOn,goals:[{id:goalId,name:"Safety",type:"emergency_fund",target:120000,targetDate:"2027-11-22",inflationPct:0,expectedReturnPct:0}],investments:[{id:"holding",name:"Savings",kind:"mutual_fund",category:"liquid_fund",value:10000,monthlySip:0,returnPct:0}],links:[{goalId,investmentId:"holding",percent:100}]} as never);
+ const vehicleOverrides={[goalId]:{"inv:holding":2000}};
+ expect(await confirmHybridPlan({...input,allocationMode:"safety_deadline",overrides:{[goalId]:3000},vehicleOverrides})).toEqual({ok:true});
+ const args=rpc.mock.calls[0][1];expect(args.p_inputs.vehicleOverrides).toEqual(vehicleOverrides);expect(args.p_result.vehicles.reduce((n:number,v:{total:number})=>n+v.total,0)).toBe(3000);expect(args.p_result.vehicles.find((v:{key:string})=>v.key==="inv:holding").total).toBe(2000);expect(args.p_result.goals[0].existingCoverage).toBe(10000);
+});
+it("rejects vehicle choices for an unknown goal before writing",async()=>{
+ expect((await confirmHybridPlan({...input,allocationMode:"safety_deadline",vehicleOverrides:{"00000000-0000-4000-8000-000000000001":{"inv:foreign":1000}}})).ok).toBe(false);expect(rpc).not.toHaveBeenCalled();
+});

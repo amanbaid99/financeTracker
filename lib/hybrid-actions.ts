@@ -4,6 +4,7 @@ import { sipCapacity } from "./sip-capacity";
 import { revalidatePath } from "next/cache";
 import { loadGoals, loadBudget, requireUser } from "./data";
 import { loadHybridContext } from "./hybrid-data";
+import { sipWorksheet } from "./sip-worksheet";
 import { hybridPlan, hybridVehicles } from "./hybrid-plan";
 import { proposeGoalMapping } from "./hybrid-mapping";
 import { monthlyCapacity, unallocatedLiquidValue } from "./hybrid-engine";
@@ -21,6 +22,15 @@ const schema = z.object({
   cashBuffer: z.number().int().min(0).max(1e9).default(0),
   refreshMapping: z.boolean().default(false),
   minimums: sipMinimumsSchema,
+  vehicleOverrides: z
+    .record(
+      z.string().uuid(),
+      z.record(
+        z.string().regex(/^inv:[a-zA-Z0-9_-]+$/),
+        z.number().int().min(0).max(1e9),
+      ),
+    )
+    .default({}),
   overrides: z
     .record(z.string().uuid(), z.number().int().min(0).max(1e9))
     .default({}),
@@ -128,11 +138,14 @@ export async function confirmHybridPlan(
       allocationMode: v.allocationMode,
       monthlyEssentials,
       overrides: v.overrides,
+      vehicleOverrides: v.vehicleOverrides,
       cashBuffer: v.cashBuffer,
       budget: b?.budget ?? null,
     };
-    const result = hybridPlan(inputs);
-    result.vehicles = hybridVehicles(inputs, result);
+    const result = standalone
+      ? sipWorksheet(inputs).result
+      : hybridPlan(inputs);
+    if (!standalone) result.vehicles = hybridVehicles(inputs, result);
     if (!configured)
       result.warnings.push(
         standalone

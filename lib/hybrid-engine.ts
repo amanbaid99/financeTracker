@@ -20,7 +20,7 @@ import {
   futureValueDecimal,
   requiredMonthlyDecimal,
 } from "./funding-math";
-export const HYBRID_VERSION = "hybrid-1.3.0";
+export const HYBRID_VERSION = "hybrid-1.4.0";
 export interface HybridPolicy {
   priority: Record<"high" | "medium" | "low", number>;
   urgency: [number, number, number];
@@ -138,6 +138,7 @@ export interface HybridInput {
   fixedByGoal?: Record<string, number>;
   reservedOutsideGoals?: number;
   overrides?: Record<string, number>;
+  allowOverfunding?: boolean;
   policy?: Partial<HybridPolicy>;
 }
 const integer = (n: Decimal | number | string) => {
@@ -742,7 +743,9 @@ export function calculateHybrid(input: HybridInput): HybridResult {
     if (!ids.has(id)) throw Error("An overridden goal no longer exists.");
     money(value);
     const row = rows.find((r) => r.goalId === id)!;
-    if (value > row.requiredMonthly)
+    if (source.find((g) => g.id === id)?.completed && value > 0)
+      throw Error("Completed goals cannot receive new contributions.");
+    if (value > row.requiredMonthly && !input.allowOverfunding)
       throw Error("A goal allocation cannot exceed its monthly requirement.");
     if (value < row.recommendedMonthly)
       throw Error(

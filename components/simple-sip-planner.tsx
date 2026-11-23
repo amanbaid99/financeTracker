@@ -4,12 +4,18 @@ import { useRouter } from "next/navigation";
 import { MoneyInput } from "./money-input";
 import { useToast } from "./ui/toast";
 import { Button } from "./ui/button";
-import { hybridPlan, hybridVehicles } from "@/lib/hybrid-plan";
+import { Progress } from "./ui/progress";
+import { GoalIcon } from "./goal-icon";
+import {
+  sipWorksheet,
+  type VehicleOverrides,
+  type WorksheetVehicle,
+} from "@/lib/sip-worksheet";
 import { proposeGoalMapping } from "@/lib/hybrid-mapping";
-import { goalSipDeadline } from "@/lib/goal-sip-policy";
 import { confirmHybridPlan } from "@/lib/hybrid-actions";
 import { formatINR, formatDate } from "@/lib/format";
-import type { Investment, Link as GoalLink, TrackedGoal } from "@/lib/tracker";
+import { cn } from "@/lib/utils";
+import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
 export function SimpleSipPlanner({
   goals,
   investments,
@@ -18,26 +24,29 @@ export function SimpleSipPlanner({
   initialMonthly,
   monthlyEssentials,
   initialOverrides = {},
+  initialVehicleOverrides = {},
   revision,
   riskTolerance,
 }: {
   goals: TrackedGoal[];
   investments: Investment[];
-  links: GoalLink[];
+  links: Link[];
   today: string;
   initialMonthly: number | null;
   monthlyEssentials: number | null;
   initialOverrides?: Record<string, number>;
+  initialVehicleOverrides?: VehicleOverrides;
   revision: string;
   riskTolerance: "conservative" | "moderate" | "aggressive" | null;
 }) {
-  const router = useRouter();
-  const toast = useToast();
-  const [monthly, setMonthly] = useState<number | null>(initialMonthly);
-  const [essentials, setEssentials] = useState<number | null>(
-    monthlyEssentials,
-  );
+  const router = useRouter(),
+    toast = useToast();
+  const [monthly, setMonthly] = useState(initialMonthly);
+  const [essentials, setEssentials] = useState(monthlyEssentials);
   const [overrides, setOverrides] = useState(initialOverrides);
+  const [vehicleOverrides, setVehicleOverrides] = useState(
+    initialVehicleOverrides,
+  );
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
   const valid =
@@ -45,11 +54,6 @@ export function SimpleSipPlanner({
     Number.isSafeInteger(monthly) &&
     monthly >= 0 &&
     monthly <= 1e9;
-  const hasSafety = goals.some(
-    (g) =>
-      !g.completed &&
-      (g.type === "emergency_fund" || (g.emergencyReserve ?? 0) > 0),
-  );
   const costs = essentials ?? 0;
   const costsValid = Number.isSafeInteger(costs) && costs >= 0 && costs <= 1e9;
   const links = useMemo(
@@ -62,62 +66,36 @@ export function SimpleSipPlanner({
   );
   const preview = useMemo(() => {
     if (!valid || !costsValid) return null;
+    const input = {
+      goals,
+      investments,
+      links,
+      today,
+      riskTolerance,
+      monthlySavings: monthly!,
+      monthlyPlanLimit: monthly!,
+      monthlyEssentials: costs,
+      allocationMode: "safety_deadline" as const,
+      overrides,
+      vehicleOverrides,
+    };
     try {
-      const input = {
-        goals,
-        investments,
-        links,
-        today,
-        riskTolerance,
-        monthlySavings: monthly!,
-        monthlyPlanLimit: monthly!,
-        allocationMode: "safety_deadline" as const,
-        monthlyEssentials: costs,
-        overrides,
-        minimums: {},
-      };
-      const result = hybridPlan(input);
-      result.vehicles = hybridVehicles(input, result);
-      return { result, error: "" };
+      return { sheet: sipWorksheet(input), error: "" };
     } catch (e) {
       try {
-        const fallback = hybridPlan({
-          goals,
-          investments,
-          links,
-          today,
-          riskTolerance,
-          monthlySavings: monthly!,
-          monthlyPlanLimit: monthly!,
-          allocationMode: "safety_deadline",
-          monthlyEssentials: costs,
-        });
-        fallback.vehicles = hybridVehicles(
-          {
-            goals,
-            investments,
-            links,
-            today,
-            monthlySavings: monthly!,
-            allocationMode: "safety_deadline",
-            monthlyEssentials: costs,
-          },
-          fallback,
-        );
         return {
-          result: fallback,
-          error:
-            e instanceof Error
-              ? e.message
-              : "Could not calculate. Review your amounts.",
+          sheet: sipWorksheet({
+            ...input,
+            overrides: {},
+            vehicleOverrides: {},
+          }),
+          error: e instanceof Error ? e.message : "Review your amounts.",
         };
       } catch {
         return {
-          result: null,
+          sheet: null,
           error:
-            e instanceof Error
-              ? e.message
-              : "Could not calculate. Review your amounts.",
+            e instanceof Error ? e.message : "Could not calculate this plan.",
         };
       }
     }
@@ -132,26 +110,89 @@ export function SimpleSipPlanner({
     monthly,
     costs,
     overrides,
+    vehicleOverrides,
   ]);
-  const result = preview?.result;
-  const rows = result
+  const sheet = preview?.sheet,
+    result = sheet?.result;
+  const ordered = result
     ? [...result.goals].sort(
         (a, b) =>
-          Number(!!b.assumptions.runway) - Number(!!a.assumptions.runway) ||
-          goalSipDeadline(
-            goals.find((g) => g.id === a.goalId)!,
-            today,
-          ).localeCompare(
-            goalSipDeadline(goals.find((g) => g.id === b.goalId)!, today),
-          ) ||
-          a.goalId.localeCompare(b.goalId),
+          (result.fundingOrder?.indexOf(a.goalId) ?? 0) -
+          (result.fundingOrder?.indexOf(b.goalId) ?? 0),
       )
     : [];
-  const safety = rows.filter((g) => g.assumptions.runway);
-  const runway = safety.reduce(
-    (n, g) => n + (g.assumptions.runway?.accessibleCorpus ?? 0),
-    0,
-  );
+  const edited =
+    Object.keys(overrides).length > 0 ||
+    Object.keys(vehicleOverrides).length > 0;
+  function changeGoal(id: string, value: number | null) {
+    setError("");
+    setOverrides((old) => ({ ...old, [id]: value ?? 0 }));
+    setVehicleOverrides((old) => {
+      const next = { ...old };
+      delete next[id];
+      return next;
+    });
+  }
+  function changeVehicle(
+    id: string,
+    row: WorksheetVehicle,
+    value: number | null,
+  ) {
+    const amount = value ?? 0;
+    const current = vehicleOverrides[id]?.[row.key] ?? row.amount;
+    const goalTotal =
+      overrides[id] ??
+      result?.goals.find((g) => g.goalId === id)?.recommendedMonthly ??
+      0;
+    setError("");
+    setOverrides((old) => ({
+      ...old,
+      [id]: Math.max(0, goalTotal + amount - current),
+    }));
+    if (row.held)
+      setVehicleOverrides((old) => ({
+        ...old,
+        [id]: { ...old[id], [row.key]: amount },
+      }));
+    else
+      setVehicleOverrides((old) => {
+        const next = { ...old };
+        delete next[id];
+        return next;
+      });
+  }
+  function restoreGoal(id: string) {
+    setError("");
+    setOverrides((old) => {
+      const next = { ...old };
+      delete next[id];
+      return next;
+    });
+    setVehicleOverrides((old) => {
+      const next = { ...old };
+      delete next[id];
+      return next;
+    });
+  }
+  function restoreVehicle(id: string, key: string) {
+    setError("");
+    setOverrides((old) => {
+      const next = { ...old };
+      delete next[id];
+      return next;
+    });
+    setVehicleOverrides((old) => {
+      const next = { ...old, [id]: { ...old[id] } };
+      delete next[id][key];
+      if (!Object.keys(next[id]).length) delete next[id];
+      return next;
+    });
+  }
+  function reset() {
+    setError("");
+    setOverrides({});
+    setVehicleOverrides({});
+  }
   function save() {
     if (!valid || !result || preview?.error) return;
     setError("");
@@ -169,6 +210,7 @@ export function SimpleSipPlanner({
           refreshMapping: false,
           minimums: {},
           overrides,
+          vehicleOverrides,
         });
         if (!res.ok) return setError(res.error);
         toast({ text: "SIP plan saved." });
@@ -182,10 +224,13 @@ export function SimpleSipPlanner({
     });
   }
   return (
-    <div className="space-y-4">
-      <section className="surface-card space-y-3 rounded-2xl border bg-card p-4">
-        <label htmlFor="goal-sip-monthly" className="text-sm font-semibold">
-          How much can you invest each month?
+    <div className="space-y-5">
+      <section className="surface-card overflow-hidden rounded-3xl border border-primary/15 bg-gradient-to-br from-primary/5 via-card to-card p-5 sm:p-6">
+        <label
+          htmlFor="goal-sip-monthly"
+          className="text-sm font-medium text-muted-foreground"
+        >
+          Your monthly SIP amount
         </label>
         <MoneyInput
           id="goal-sip-monthly"
@@ -195,19 +240,39 @@ export function SimpleSipPlanner({
             setMonthly(v);
             setError("");
           }}
+          className="[&_input]:h-20 [&_input]:rounded-none [&_input]:border-0 [&_input]:bg-transparent [&_input]:pl-9 [&_input]:pr-0 [&_input]:text-4xl [&_input]:font-semibold [&_span]:left-0 [&_span]:text-3xl sm:[&_input]:text-5xl"
         />
         <p className="text-xs text-muted-foreground">
-          Emergency cover first: one month, then three months. Next, payments
-          and goals by nearest deadline. Amounts include any SIPs already
-          running.
+          Set a total. Adjust any goal or vehicle below; the rest recalculates.
+          Budget stays separate.
         </p>
-        <p className="text-xs text-muted-foreground">
-          This amount is for SIP planning only. Your budget stays separate.
-        </p>
-        {hasSafety && (
-          <div className="space-y-2">
-            <label htmlFor="goal-sip-costs" className="text-sm font-medium">
-              Monthly essential costs and EMIs (optional)
+        {result && !preview?.error && (
+          <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 border-t pt-3 text-sm">
+            <span>
+              <b className="tabular">
+                {formatINR(result.totalMonthlyAllocated)}
+              </b>{" "}
+              allocated
+            </span>
+            <span className="text-muted-foreground">
+              <b className="tabular">
+                {formatINR(
+                  Math.max(0, monthly! - result.totalMonthlyAllocated),
+                )}
+              </b>{" "}
+              left
+            </span>
+          </div>
+        )}
+        {goals.some(
+          (g) => g.type === "emergency_fund" || (g.emergencyReserve ?? 0) > 0,
+        ) && (
+          <details className="mt-3 text-xs text-muted-foreground">
+            <summary className="min-h-9 cursor-pointer py-2 underline decoration-dotted underline-offset-4">
+              Emergency cover estimate (optional)
+            </summary>
+            <label className="mb-2 block" htmlFor="goal-sip-costs">
+              Monthly essential costs and EMIs
             </label>
             <MoneyInput
               id="goal-sip-costs"
@@ -215,129 +280,193 @@ export function SimpleSipPlanner({
               value={essentials}
               onChange={setEssentials}
             />
-            <p className="text-xs text-muted-foreground">
-              Optional: use this for one- and three-month emergency cover. Leave
-              blank to use the emergency goal’s own requirement.
+            <p className="mt-2">
+              Enables one- and three-month cover estimates. Otherwise the
+              emergency goal’s own requirement comes first.
             </p>
-          </div>
+          </details>
         )}
       </section>
-      {result && (
+      {sheet && (
         <>
-          {safety.length > 0 && costs > 0 && (
-            <section className="rounded-2xl border border-primary/20 bg-primary-soft p-4 text-sm">
-              <p className="font-semibold">
-                Emergency cover: {(runway / costs).toFixed(1)} months
-              </p>
-              <p className="mt-1 text-muted-foreground">
-                {formatINR(runway)} saved. One month:{" "}
-                {formatINR(
-                  Math.min(
-                    safety.reduce(
-                      (n, g) => n + g.assumptions.runway!.oneMonthTarget,
-                      0,
-                    ),
-                    costs,
-                  ),
-                )}
-                . Three months:{" "}
-                {formatINR(
-                  Math.min(
-                    safety.reduce(
-                      (n, g) => n + g.assumptions.runway!.threeMonthTarget,
-                      0,
-                    ),
-                    costs * 3,
-                  ),
-                )}
-                .
-              </p>
-            </section>
-          )}
-          <section className="surface-card rounded-2xl border bg-card p-4">
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="font-semibold">Your goals, in funding order</h2>
-              {Object.keys(overrides).length > 0 && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setOverrides({})}
-                >
-                  Reset amounts
-                </Button>
-              )}
-            </div>
-            {Object.keys(overrides).length > 0 && (
-              <p className="mt-2 text-xs text-warning">
-                Your edits take priority and may delay emergency cover or
-                earlier goals.
-              </p>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-semibold">Your goals, in funding order</h2>
+            {edited && (
+              <button
+                type="button"
+                onClick={reset}
+                className="min-h-10 text-xs text-primary underline decoration-dotted underline-offset-4"
+              >
+                Reset amounts
+              </button>
             )}
-            <ul className="divide-y">
-              {rows
-                .filter(
-                  (g) =>
-                    g.status !== "fully_funded" ||
-                    g.recommendedMonthly > 0 ||
-                    !!g.assumptions.runway,
-                )
-                .map((g) => (
-                  <li key={g.goalId} className="space-y-2 py-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="break-words font-medium">{g.goalName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {g.assumptions.runway
-                            ? "Emergency cover and scheduled payments"
-                            : g.targetDate
-                              ? `Due ${formatDate(g.targetDate)}`
-                              : "Add a deadline to plan this goal"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {Object.hasOwn(overrides, g.goalId)
-                            ? "Chosen by you"
-                            : g.recommendedMonthly > 0
-                              ? "Recommended this month"
-                              : g.status === "fully_funded"
-                                ? "Existing balance covers the target"
-                                : "Waiting for earlier goals"}
-                        </p>
+          </div>
+          <div className="space-y-4">
+            {ordered
+              .filter((g) => !goals.find((x) => x.id === g.goalId)?.completed)
+              .map((g) => {
+                const dated = !g.needsDate;
+                const met =
+                  g.projectedShortfall === 0 && g.immediateShortfall === 0;
+                const tone = preview?.error
+                  ? "neutral"
+                  : !dated
+                    ? "neutral"
+                    : met
+                      ? "success"
+                      : "danger";
+                const baseline = sheet.baseline.goals.find(
+                  (x) => x.goalId === g.goalId,
+                )!;
+                const raw = overrides[g.goalId] ?? g.recommendedMonthly;
+                const vehicles = sheet.rows[g.goalId] ?? [];
+                const name = goals.find((x) => x.id === g.goalId)!;
+                return (
+                  <section
+                    key={g.goalId}
+                    data-goal-id={g.goalId}
+                    data-funding-status={tone}
+                    className={cn(
+                      "surface-card overflow-hidden rounded-2xl border bg-card",
+                      tone === "success"
+                        ? "border-success/30"
+                        : tone === "danger"
+                          ? "border-danger/25"
+                          : "border-border",
+                    )}
+                  >
+                    <div className="space-y-3 p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="mb-2 flex items-center gap-2">
+                            <GoalIcon
+                              type={name.type}
+                              className="size-5 shrink-0 text-primary"
+                            />
+                            <h3 className="break-words font-semibold">
+                              {g.goalName}
+                            </h3>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {g.assumptions.runway
+                              ? "Emergency cover and scheduled payments"
+                              : g.targetDate
+                                ? `Due ${formatDate(g.targetDate)}`
+                                : "No target date"}
+                          </p>
+                        </div>
+                        <div className="w-32 shrink-0">
+                          <label className="mb-1 block text-right text-xs text-muted-foreground">
+                            Goal total / month
+                          </label>
+                          <MoneyInput
+                            aria-label={`${g.goalName} a month`}
+                            value={raw}
+                            onChange={(v) => changeGoal(g.goalId, v)}
+                          />
+                          {(Object.hasOwn(overrides, g.goalId) ||
+                            Object.keys(vehicleOverrides[g.goalId] ?? {})
+                              .length > 0) && (
+                            <button
+                              type="button"
+                              onClick={() => restoreGoal(g.goalId)}
+                              className="min-h-9 w-full text-right text-xs text-primary underline decoration-dotted underline-offset-4"
+                            >
+                              Use suggested amount
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className="w-28 shrink-0">
-                        <MoneyInput
-                          aria-label={`${g.goalName} a month`}
-                          value={overrides[g.goalId] ?? g.recommendedMonthly}
-                          onChange={(v) =>
-                            setOverrides((old) => ({
-                              ...old,
-                              [g.goalId]: v ?? 0,
-                            }))
+                      <div className="space-y-1.5">
+                        <div className="flex flex-wrap justify-between gap-2 text-xs">
+                          <span
+                            className={cn(
+                              "font-medium",
+                              tone === "success"
+                                ? "text-success"
+                                : tone === "danger"
+                                  ? "text-danger"
+                                  : "text-muted-foreground",
+                            )}
+                          >
+                            {preview?.error
+                              ? "Review amounts to update projections"
+                              : !dated
+                                ? "Add a date to check progress"
+                                : met
+                                  ? g.status === "fully_funded"
+                                    ? "Already funded"
+                                    : "Projected to meet goal"
+                                  : `${formatINR(g.projectedShortfall)} projected shortfall`}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {!preview?.error &&
+                              `${g.targetCorpus > 0 ? Math.min(100, Math.round((g.projectedCorpus / g.targetCorpus) * 100)) : 100}% projected`}
+                          </span>
+                        </div>
+                        <Progress
+                          value={
+                            preview?.error
+                              ? 0
+                              : g.targetCorpus > 0
+                                ? (g.projectedCorpus / g.targetCorpus) * 100
+                                : 100
                           }
+                          tone={tone}
+                          label={`${g.goalName} projected funding`}
                         />
                       </div>
                     </div>
-                    {result.vehicles?.flatMap((v) =>
-                      v.parts
-                        .filter((p) => p.goalId === g.goalId && p.monthly > 0)
-                        .map((p) => (
-                          <div
-                            key={v.key}
-                            className="flex justify-between gap-3 text-sm text-muted-foreground"
-                          >
-                            <span className="min-w-0 break-words">
+                    <div className="divide-y border-t px-4">
+                      {vehicles.map((v) => (
+                        <div
+                          key={v.key}
+                          className="flex items-start justify-between gap-3 py-3"
+                        >
+                          <div className="min-w-0 py-1">
+                            <p className="break-words text-sm font-medium">
                               {v.label}
-                            </span>
-                            <span className="tabular shrink-0">
-                              {formatINR(p.monthly)}
-                            </span>
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {v.held
+                                ? Object.hasOwn(
+                                    vehicleOverrides[g.goalId] ?? {},
+                                    v.key,
+                                  )
+                                  ? "Chosen by you"
+                                  : "Your holding"
+                                : "Suggested investment type"}
+                            </p>
                           </div>
-                        )),
-                    )}
-                    <details className="text-xs text-muted-foreground">
-                      <summary className="min-h-9 cursor-pointer py-2 text-primary">
+                          <div className="w-28 shrink-0">
+                            <MoneyInput
+                              aria-label={`${v.label} for ${g.goalName} a month`}
+                              value={
+                                vehicleOverrides[g.goalId]?.[v.key] ?? v.amount
+                              }
+                              onChange={(n) => changeVehicle(g.goalId, v, n)}
+                            />
+                            {Object.hasOwn(
+                              vehicleOverrides[g.goalId] ?? {},
+                              v.key,
+                            ) && (
+                              <button
+                                type="button"
+                                onClick={() => restoreVehicle(g.goalId, v.key)}
+                                className="min-h-9 w-full text-right text-xs text-primary underline decoration-dotted underline-offset-4"
+                              >
+                                Use suggestion
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <details className="border-t px-4 text-xs text-muted-foreground">
+                      <summary className="min-h-10 cursor-pointer py-3">
                         Plan details
                       </summary>
-                      <dl className="space-y-1 pb-2">
+                      <dl className="space-y-1">
                         {[
                           [
                             g.assumptions.runway
@@ -349,6 +478,10 @@ export function SimpleSipPlanner({
                           ["Monthly gap", g.monthlyShortfall],
                           ["Target at deadline", g.targetCorpus],
                           ["Projected at deadline", g.projectedCorpus],
+                          [
+                            "Suggested monthly amount",
+                            baseline.recommendedMonthly,
+                          ],
                         ].map(([label, value]) => (
                           <div
                             key={label}
@@ -361,58 +494,38 @@ export function SimpleSipPlanner({
                           </div>
                         ))}
                       </dl>
-                      <p>{g.explanation}</p>
-                      <p className="mt-1">
+                      <p className="mt-2">{g.explanation}</p>
+                      <p className="mb-3 mt-1">
                         Return {g.assumptions.annualReturnPct}% · Inflation{" "}
-                        {g.assumptions.inflationPct}%. Future contributions are
-                        projections.
+                        {g.assumptions.inflationPct}%. These are projections.
                       </p>
+                      {g.immediateShortfall > 0 && (
+                        <p className="pb-3 text-warning">
+                          {formatINR(g.immediateShortfall)} is needed before the
+                          next monthly contribution.
+                        </p>
+                      )}
                     </details>
-                    {g.immediateShortfall > 0 && (
-                      <p className="text-xs text-warning">
-                        {formatINR(g.immediateShortfall)} is needed before the
-                        next monthly contribution. A SIP cannot cover an
-                        immediate payment.
-                      </p>
-                    )}
-                    {g.assumptions.runway &&
-                      g.warnings
-                        .filter((w) => w.startsWith("Only accessible"))
-                        .map((w) => (
-                          <p key={w} className="text-xs text-warning">
-                            {w}
-                          </p>
-                        ))}
-                  </li>
-                ))}
-            </ul>
-            <p className="border-t pt-3 text-sm">
-              <strong>
-                {formatINR(result.totalMonthlyAllocated)}/mo planned
-              </strong>
-              {monthly! - result.totalMonthlyAllocated > 0
-                ? ` · ${formatINR(monthly! - result.totalMonthlyAllocated)} left unassigned`
-                : ""}
-            </p>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Use at least ₹1,000 per selected vehicle where possible. A smaller
-              amount stays in one. Only suitable holdings are selected; safety
-              and lifestyle money stay separate. Review after emergency deposits
-              are recorded so later contributions can move to the next goal.
-            </p>
-          </section>
+                  </section>
+                );
+              })}
+          </div>
         </>
       )}
       {(error || preview?.error) && (
-        <p
+        <div
           role="alert"
           className="rounded-xl bg-danger-soft p-3 text-sm text-danger"
         >
-          {error || preview?.error}{" "}
-          <Button variant="ghost" size="sm" onClick={() => setOverrides({})}>
-            Reset amounts
-          </Button>
-        </p>
+          {error || preview?.error}
+          <button
+            type="button"
+            onClick={reset}
+            className="ml-2 min-h-10 underline decoration-dotted underline-offset-4"
+          >
+            Use suggestions
+          </button>
+        </div>
       )}
       <Button
         className="w-full"
@@ -422,8 +535,8 @@ export function SimpleSipPlanner({
         {pending ? "Saving…" : "Save this plan"}
       </Button>
       <p className="text-xs text-muted-foreground">
-        Saving confirms a plan only. Set up SIPs with your provider. No money
-        moves and no investment balance changes.
+        Saving confirms a plan only. No money moves or provider SIPs change.
+        Green and red show projected funding, not guaranteed returns.
       </p>
     </div>
   );

@@ -271,6 +271,65 @@ function splitAmount(
  * With none of the goal's own funds suitable, it uses one fund or bank
  * account that goals don't fully use yet. Returns [] when nothing you hold suits.
  */
+/** Existing matching order, reused by the goal worksheet without changing suitability rules. */
+export function goalFirstCandidates(
+  goalId: string,
+  category: string,
+  monthly: number,
+  investments: Investment[],
+  links: Link[],
+  goal?: Pick<GoalInput, "type" | "targetDate">,
+): Investment[] {
+  const linked = new Set(
+    links
+      .filter((l) => l.goalId === goalId && l.percent > 0)
+      .map((l) => l.investmentId),
+  );
+  const fit = (i: Investment) => {
+    const exact = rank(i, category);
+    if (exact !== null) return exact;
+    const near = (NEARBY[category] ?? []).indexOf(kindOf(i) ?? "");
+    return near < 0 ? null : 100 + near;
+  };
+  let candidates = investments.filter(
+    (i) =>
+      linked.has(i.id) &&
+      (ASSUME_HOLDINGS_WITHDRAWABLE ||
+        !i.availability ||
+        i.availability === "available") &&
+      i.kind !== "fd" &&
+      i.kind !== "epf" &&
+      (ASSUME_HOLDINGS_WITHDRAWABLE ||
+        !i.accessibleOn ||
+        !goal?.targetDate ||
+        i.accessibleOn <= goal.targetDate) &&
+      (fit(i) !== null ||
+        (goal?.type === "retirement" &&
+          ["nps", "ppf", "stock"].includes(i.kind) &&
+          ["equity_index", "balanced_advantage"].includes(category))) &&
+      (ASSUME_HOLDINGS_WITHDRAWABLE ||
+        i.category !== "elss" ||
+        (i.accessibleOn &&
+          goal?.targetDate &&
+          i.accessibleOn <= goal.targetDate)),
+  );
+  candidates.sort(
+    (a, b) =>
+      (fit(a) ?? 50) - (fit(b) ?? 50) ||
+      b.monthlySip - a.monthlySip ||
+      a.id.localeCompare(b.id),
+  );
+  // Gold is a diversifier, never a large default share of a goal's SIP.
+  const nonGold = candidates.filter((i) => kindOf(i) !== "gold");
+  const gold = candidates.find((i) => kindOf(i) === "gold");
+  candidates =
+    monthly >= 5000 && nonGold.length >= 4 && gold
+      ? [...nonGold, gold]
+      : nonGold;
+
+  return candidates;
+}
+
 export function splitForGoal(
   goalId: string,
   category: string,
@@ -283,52 +342,14 @@ export function splitForGoal(
   goal?: Pick<GoalInput, "type" | "targetDate">,
 ): FundShare[] {
   if (strategy === "goal_first") {
-    const linked = new Set(
-      links
-        .filter((l) => l.goalId === goalId && l.percent > 0)
-        .map((l) => l.investmentId),
+    const candidates = goalFirstCandidates(
+      goalId,
+      category,
+      monthly,
+      investments,
+      links,
+      goal,
     );
-    const fit = (i: Investment) => {
-      const exact = rank(i, category);
-      if (exact !== null) return exact;
-      const near = (NEARBY[category] ?? []).indexOf(kindOf(i) ?? "");
-      return near < 0 ? null : 100 + near;
-    };
-    let candidates = investments.filter(
-      (i) =>
-        linked.has(i.id) &&
-        (ASSUME_HOLDINGS_WITHDRAWABLE ||
-          !i.availability ||
-          i.availability === "available") &&
-        i.kind !== "fd" &&
-        i.kind !== "epf" &&
-        (ASSUME_HOLDINGS_WITHDRAWABLE ||
-          !i.accessibleOn ||
-          !goal?.targetDate ||
-          i.accessibleOn <= goal.targetDate) &&
-        (fit(i) !== null ||
-          (goal?.type === "retirement" &&
-            ["nps", "ppf", "stock"].includes(i.kind) &&
-            ["equity_index", "balanced_advantage"].includes(category))) &&
-        (ASSUME_HOLDINGS_WITHDRAWABLE ||
-          i.category !== "elss" ||
-          (i.accessibleOn &&
-            goal?.targetDate &&
-            i.accessibleOn <= goal.targetDate)),
-    );
-    candidates.sort(
-      (a, b) =>
-        (fit(a) ?? 50) - (fit(b) ?? 50) ||
-        b.monthlySip - a.monthlySip ||
-        a.id.localeCompare(b.id),
-    );
-    // Gold is a diversifier, never a large default share of a goal's SIP.
-    const nonGold = candidates.filter((i) => kindOf(i) !== "gold");
-    const gold = candidates.find((i) => kindOf(i) === "gold");
-    candidates =
-      monthly >= 5000 && nonGold.length >= 4 && gold
-        ? [...nonGold, gold]
-        : nonGold;
     if (!candidates.length)
       return splitForGoal(
         goalId,

@@ -190,8 +190,8 @@ export const HELP: HelpTopic[] = [
     a: [
       "Enter How much can you invest each month? This is a standalone planning amount: Budget is not read, used as a limit or changed. Your monthly SIPs lists goals and their investment destinations. Monthly essential costs are optional for emergency-cover estimates.",
       "Emergency cover reaches one month first, then three months, followed by payments and goals in deadline order. Current recorded balances count toward runway under the all-holdings-available assumption, not future market growth or future SIPs. After recording emergency deposits, review the plan so new money can move to the next goals. A zero SIP planning amount creates no contributions. Without optional monthly costs, the emergency goal’s own monthly requirement is funded first.",
-      "Suitable linked holdings come first. The app keeps safety and lifestyle money separate. If no suitable holding exists, it names a broad investment class, never a new product. Edit a goal amount to keep it fixed while others recalculate. Reset amounts restores recommendations. Your edits can delay emergency cover or nearer goals; the screen warns about this.",
-      "Save this plan keeps it in the app. No SIP is started or changed with your provider.",
+      "Goals follow emergency and deadline priority. Vehicles inside each goal are sorted by suitability and existing SIPs. All linked monthly vehicles stay visible, including ₹0 suggestions. Change a goal to resplit its vehicles, or change a vehicle to update the goal total and remaining goals. Your fixed choices stay within the monthly total. Dotted Use suggested amount and Use suggestion buttons restore automatic planning; Reset amounts clears all edits.",
+      "Green means the projected corpus meets the goal; red shows a projected shortfall. These use the saved return and inflation assumptions, not guaranteed returns. Goal and vehicle choices are restored when you reopen the saved plan. No provider SIP or actual balance changes.",
     ],
     tags: "budget sip save invest monthly allocation plan",
   },
