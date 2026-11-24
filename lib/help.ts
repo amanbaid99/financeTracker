@@ -36,7 +36,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "What appears in This month on Home?",
     a: [
-      "Monthly card logging remains on Home. Missing card statements use the statement day in Edit card. Days beyond the end of a month use its last day. Without a statement day, card reminders stay off.",
+      "Monthly card logging remains on Home. Goal-date prompts have been removed. Missing card statements use the statement day in Edit card. Days beyond the end of a month use its last day. Without a statement day, card reminders stay off.",
       "Loan and investment refreshes appear separately as Optional quarterly review, three months after the last known balance or CAS upload. They do not add to Home's task count. Remind me next week postpones an optional review; cards keep Remind me tomorrow. You can update values sooner whenever you choose.",
       "Home shows a debt progress bar, estimated percentage repaid and payoff timing. Home net worth uses a light red background when negative and shows only assets and liabilities. Recorded balances stay unchanged until you confirm a real update. A saved investment plan does not need review merely because a calendar day passed.",
       "A missing statement or balance update never means you missed a payment. Card statements count only for milestones; the app does not track card payment confirmations.",

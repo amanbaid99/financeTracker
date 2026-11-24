@@ -24,7 +24,7 @@ import {
   thisMonth,
   upcomingPayments,
 } from "@/lib/home";
-import { homeNextUp, missingVehicleCues } from "@/lib/home-cues";
+import { homeNextUp } from "@/lib/home-cues";
 import { updatesDue } from "@/lib/updates";
 
 export const metadata: Metadata = { title: "Home" };
@@ -63,18 +63,9 @@ export default async function HomePage() {
     ),
     snoozes,
   });
-  // Only the "add dates" cue: suggestions to open new funds don't belong on
-  // Home (they ignore bank accounts and money you may not have coming in).
-  const cues = missingVehicleCues({
-    goals: g.goals,
-    investments: g.investments,
-    links: g.links,
-    today,
-    snoozes,
-  }).filter((c) => c.key === "goal-dates");
   const payments = upcomingPayments(loans, today);
   const todo = thisMonth({
-    updates: homeNextUp(due, cues),
+    updates: homeNextUp(due, []),
     milestone: closeMilestone(c.cards, loans, today),
   });
   const bills = cardBillNudge(c.cards, today);

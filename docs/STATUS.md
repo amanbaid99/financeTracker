@@ -1,5 +1,9 @@
 # Status
 
+## Removed Home goal-date reminder, 24 Nov 2026
+
+Home no longer generates the Add dates to plan your goals card or includes it in the monthly task count. This removes its Review goals and Remind me tomorrow controls. Other monthly reminders and goal date fields remain unchanged. No financial calculations or stored records changed. Verification: lint, TypeScript, 876 unit tests, 40 Python tests and production build pass. Home passes no goal-planning cues to the reminder list; the empty list renders no card.
+
 ## Consistent budget edits and planning reset, 24 Nov 2026
 
 Income and cost edits now use rebalanceBudgetEdit: keep the user’s chosen personal amount and calculate Save & invest as the remaining income. Dedicated personal/saving edits retain their existing behaviour. Negative room stays visible as overspending rather than negative saving. The shared Budget/SIP available target follows the recalculated amount.
