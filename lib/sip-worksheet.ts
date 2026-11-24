@@ -30,6 +30,7 @@ export function sipVehicleEdit(
   currentGoalTotal: number,
   vehicleOverrides: VehicleOverrides,
   held: boolean,
+  redistributeWithinGoal = true,
 ) {
   const next = { ...vehicleOverrides };
   if (held) next[goalId] = { ...next[goalId], [key]: amount };
@@ -38,7 +39,7 @@ export function sipVehicleEdit(
     overrides: {
       // Reuse this goal's automatic allocation before taking money from other goals.
       // A class-only row has no other editable vehicle to absorb the difference.
-      [goalId]: held
+      [goalId]: held && redistributeWithinGoal
         ? Math.max(currentGoalTotal, Object.values(next[goalId]).reduce((s, n) => s + n, 0))
         : Math.max(0, currentGoalTotal + amount - currentAmount),
     },

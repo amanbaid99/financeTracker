@@ -269,3 +269,12 @@ it("25000 in a goal becomes 24000 automatic plus 1000 chosen without taking Trav
  expect(after.result.goals.find(g=>g.goalId==="travel")!.recommendedMonthly).toBe(10000);
  expect(after.result.totalMonthlyAllocated).toBe(45000);
 });
+it("reducing a goal's sole vehicle does not introduce a holding from another goal",async()=>{
+ const {sipVehicleEdit}=await import("@/lib/sip-worksheet");
+ const edited=sipVehicleEdit("safety","inv:cash",2000,30000,30000,{},true,false);
+ expect(edited.overrides).toEqual({safety:2000});
+ const result=sipWorksheet({...input,...edited});
+ expect(result.rows.safety.map(v=>[v.key,v.amount])).toEqual([["inv:cash",2000]]);
+ expect(result.result.goals.find(g=>g.goalId==="safety")!.recommendedMonthly).toBe(2000);
+ expect(result.result.totalMonthlyAllocated).toBeLessThanOrEqual(input.monthlySavings);
+});

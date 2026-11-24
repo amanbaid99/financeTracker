@@ -13,6 +13,7 @@ import {
   type VehicleOverrides,
   type WorksheetVehicle,
 } from "@/lib/sip-worksheet";
+import { goalFirstCandidates } from "@/lib/sip-plan";
 import { proposeGoalMapping } from "@/lib/hybrid-mapping";
 import { confirmHybridPlan } from "@/lib/hybrid-actions";
 import { formatINR, formatDate } from "@/lib/format";
@@ -149,9 +150,6 @@ export function SimpleSipPlanner({
           (result.fundingOrder?.indexOf(b.goalId) ?? 0),
       )
     : [];
-  const edited =
-    Object.keys(overrides).length > 0 ||
-    Object.keys(vehicleOverrides).length > 0;
   function changeVehicle(
     id: string,
     row: WorksheetVehicle,
@@ -166,41 +164,10 @@ export function SimpleSipPlanner({
     setError("");
     const next = sipVehicleEdit(
       id, row.key, amount, current, goalTotal, vehicleOverrides, row.held,
+      goalFirstCandidates(id, result?.goals.find(g => g.goalId === id)?.investmentCategory ?? "", Math.max(goalTotal, 1000), investments.filter(i => `inv:${i.id}` !== row.key && !Object.hasOwn(vehicleOverrides[id] ?? {}, `inv:${i.id}`)), links, goals.find(g => g.id === id)).length > 0,
     );
     setOverrides(next.overrides);
     setVehicleOverrides(next.vehicleOverrides);
-  }
-  function restoreGoal(id: string) {
-    setError("");
-    setOverrides((old) => {
-      const next = { ...old };
-      delete next[id];
-      return next;
-    });
-    setVehicleOverrides((old) => {
-      const next = { ...old };
-      delete next[id];
-      return next;
-    });
-  }
-  function restoreVehicle(id: string, key: string) {
-    setError("");
-    setOverrides((old) => {
-      const next = { ...old };
-      delete next[id];
-      return next;
-    });
-    setVehicleOverrides((old) => {
-      const next = { ...old, [id]: { ...old[id] } };
-      delete next[id][key];
-      if (!Object.keys(next[id]).length) delete next[id];
-      return next;
-    });
-  }
-  function reset() {
-    setError("");
-    setOverrides({});
-    setVehicleOverrides({});
   }
   function save() {
     if (!valid || !result || preview?.error || recalculating) return;
@@ -294,32 +261,15 @@ export function SimpleSipPlanner({
         <>
           <div className="flex items-center justify-between gap-3">
             <h2 className="font-semibold">Your goals, in funding order</h2>
-            {edited && (
-              <button
-                type="button"
-                onClick={reset}
-                className="min-h-10 text-xs text-primary underline decoration-dotted underline-offset-4"
-              >
-                Reset amounts
-              </button>
-            )}
+
           </div>
           <div className="space-y-4">
             {ordered
               .filter((g) => !goals.find((x) => x.id === g.goalId)?.completed)
               .map((g) => {
-                const dated = !g.needsDate;
-                const met =
-                  g.projectedShortfall === 0 && g.immediateShortfall === 0;
-                const tone =
-                  recalculating || preview?.error
-                    ? "neutral"
-                    : !dated
-                      ? "neutral"
-                      : met
-                        ? "success"
-                        : "danger";
                 const raw = overrides[g.goalId] ?? g.recommendedMonthly;
+                const met = raw >= g.requiredMonthly;
+                const tone = preview?.error ? "neutral" : met ? "success" : "danger";
                 const vehicles = sheet.rows[g.goalId] ?? [];
                 const name = goals.find((x) => x.id === g.goalId)!;
                 return (
@@ -351,73 +301,19 @@ export function SimpleSipPlanner({
                           <p className="text-xs text-muted-foreground">
                             {g.assumptions.runway
                               ? "Emergency cover and scheduled payments"
-                              : g.targetDate
+                              : name.type === "bills_fund"
+                                ? "Scheduled payments"
+                                : g.targetDate
                                 ? `Due ${formatDate(g.targetDate)}`
                                 : "No target date"}
                           </p>
                         </div>
-                        <div className="w-32 shrink-0">
-                          <p className="mb-1 text-right text-xs text-muted-foreground">
-                            Monthly total
-                          </p>
-                          <p
-                            className="tabular break-words text-right text-xl font-semibold"
-                            aria-label={`${g.goalName} monthly total`}
-                          >
-                            {formatINR(raw)}
-                          </p>
-                          {(Object.hasOwn(overrides, g.goalId) ||
-                            Object.keys(vehicleOverrides[g.goalId] ?? {})
-                              .length > 0) && (
-                            <button
-                              type="button"
-                              onClick={() => restoreGoal(g.goalId)}
-                              className="min-h-9 w-full text-right text-xs text-primary underline decoration-dotted underline-offset-4"
-                            >
-                              Use suggested amount
-                            </button>
-                          )}
-                        </div>
+
                       </div>
                       <div className="space-y-1.5">
-                        <div className="flex flex-wrap justify-between gap-2 text-xs">
-                          <span
-                            className={cn(
-                              "font-medium",
-                              tone === "success"
-                                ? "text-success"
-                                : tone === "danger"
-                                  ? "text-danger"
-                                  : "text-muted-foreground",
-                            )}
-                          >
-                            {preview?.error
-                              ? "Review amounts to update projections"
-                              : !dated
-                                ? "Add a date to check progress"
-                                : met
-                                  ? g.status === "fully_funded"
-                                    ? "Already funded"
-                                    : "Projected to meet goal"
-                                  : `${formatINR(g.projectedShortfall)} projected shortfall`}
-                          </span>
-                          <span className="text-muted-foreground">
-                            {!recalculating &&
-                              !preview?.error &&
-                              `${g.targetCorpus > 0 ? Math.min(100, Math.round((g.projectedCorpus / g.targetCorpus) * 100)) : 100}% projected`}
-                          </span>
-                        </div>
-                        <Progress
-                          value={
-                            preview?.error
-                              ? 0
-                              : g.targetCorpus > 0
-                                ? (g.projectedCorpus / g.targetCorpus) * 100
-                                : 100
-                          }
-                          tone={tone}
-                          label={`${g.goalName} projected funding`}
-                        />
+                        <p className="tabular text-sm font-medium" aria-label={`${g.goalName} monthly total`}>{formatINR(raw)} / month allocated</p>
+                        <Progress value={preview?.error ? 0 : g.requiredMonthly > 0 ? (raw / g.requiredMonthly) * 100 : 100} tone={tone} label={`${g.goalName} monthly allocation`} />
+                        <div className="flex justify-between gap-3 text-xs text-muted-foreground"><span>₹0</span><span className="tabular text-right">{formatINR(g.requiredMonthly)} / month required</span></div>
                       </div>
                     </div>
                     <div className="divide-y border-t px-4">
@@ -430,16 +326,7 @@ export function SimpleSipPlanner({
                             <p className="break-words text-sm font-medium">
                               {v.label}
                             </p>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {v.held
-                                ? Object.hasOwn(
-                                    vehicleOverrides[g.goalId] ?? {},
-                                    v.key,
-                                  )
-                                  ? "Chosen by you"
-                                  : "Your holding"
-                                : "Suggested investment type"}
-                            </p>
+
                           </div>
                           <div className="w-28 shrink-0">
                             <MoneyInput
@@ -449,18 +336,7 @@ export function SimpleSipPlanner({
                               }
                               onChange={(n) => changeVehicle(g.goalId, v, n)}
                             />
-                            {Object.hasOwn(
-                              vehicleOverrides[g.goalId] ?? {},
-                              v.key,
-                            ) && (
-                              <button
-                                type="button"
-                                onClick={() => restoreVehicle(g.goalId, v.key)}
-                                className="min-h-9 w-full text-right text-xs text-primary underline decoration-dotted underline-offset-4"
-                              >
-                                Use suggestion
-                              </button>
-                            )}
+
                           </div>
                         </div>
                       ))}
@@ -477,13 +353,7 @@ export function SimpleSipPlanner({
           className="rounded-xl bg-danger-soft p-3 text-sm text-danger"
         >
           {error || preview?.error}
-          <button
-            type="button"
-            onClick={reset}
-            className="ml-2 min-h-10 underline decoration-dotted underline-offset-4"
-          >
-            Use suggestions
-          </button>
+
         </div>
       )}
       <Button
@@ -501,7 +371,7 @@ export function SimpleSipPlanner({
       </Button>
       <p className="text-xs text-muted-foreground">
         Saving confirms a plan only. No money moves or provider SIPs change.
-        Green and red show projected funding, not guaranteed returns.
+        The bar shows monthly allocation, not investment returns.
       </p>
     </div>
   );

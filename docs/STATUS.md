@@ -1,5 +1,11 @@
 # Status
 
+## Clear monthly SIP allocation cards, 24 Nov 2026
+
+Replaced corpus projections and percentages on SIP cards with monthly allocation bars from ₹0 to calculated requiredMonthly. The allocated amount appears once above the bar; colour compares monthly allocated versus required, not future corpus. Removed duplicate header totals, per-row ownership labels, goal/vehicle suggestion buttons and reset CTAs. Bills use Scheduled payments rather than No target date. Amount inputs, priority ordering, start month, confirmation and saved snapshots remain.
+
+A held-vehicle edit now checks for another suitable unpinned linked vehicle before retaining the goal total. If none exists, lowering that vehicle lowers the goal total, so automatic fallback cannot introduce another holding just to fill the previous total. Other suitable linked vehicles can still absorb within-goal changes. Existing saved snapshots are not rewritten. No holdings, actual contributions or Budget changes. Verification: lint, TypeScript, 861 unit tests, 40 Python tests and production build pass. Browser checks at 320/375/768px verify monthly percentage, no duplicate labels/buttons/totals, sole-vehicle edits, save/reopen and no overflow. No hosted financial data changed for tests.
+
 ## SIP start month and review reminder, 24 Nov 2026
 
 Added Start contributions from to the standalone SIP planner. The month is validated, sent to confirmation, recomputed server-side and stored in the existing immutable plan inputs. Reopening restores it. Engine hybrid-1.5.0 keeps valuation/inflation/goal deadlines on today’s horizon and reduces only future monthly contribution periods; it retains the existing full-month convention, so January skips December’s normal period when planning on 24 November. Existing corpus and one-time growth are not delayed. Bill cash-flow checks exclude deferred contributions and expose pre-start cash gaps. No feasible contribution periods produces an underfunded outcome with an immediate-gap warning, rather than inventing investments.
