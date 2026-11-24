@@ -12,6 +12,7 @@ import { sipMinimumsSchema } from "./sip-minimums";
 import type { Json } from "./supabase/database.types";
 const schema = z.object({
   calculatedOn: z.iso.date(),
+  contributionStartMonth: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional(),
   revision: z.string().regex(/^[a-f0-9]{32}$/),
   monthly: z.number().int().min(0).max(1e9),
   manualSavings: z.number().int().min(0).max(1e9).optional(),
@@ -138,6 +139,7 @@ export async function confirmHybridPlan(
       minimums: v.minimums,
       exactHoldings: v.exactHoldings,
       allocationMode: v.allocationMode,
+      contributionStartMonth: standalone ? v.contributionStartMonth : undefined,
       monthlyEssentials,
       overrides: v.overrides,
       vehicleOverrides: v.vehicleOverrides,

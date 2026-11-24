@@ -1,3 +1,4 @@
+import { todayIST } from "@/lib/dates";
 import { loadSavedSipPlan } from "@/lib/hybrid-data";
 import { SavedSipSummary } from "@/components/saved-sip-summary";
 import type { HybridResult } from "@/lib/hybrid-engine";
@@ -24,7 +25,7 @@ export default async function BudgetPage() {
           <GuideButton id="budget" />
         </div>
       </div>
-      <BudgetExperience initial={sheet.plan} saved={sheet.saved} salary={recordIncome} loans={loanEmis} knownCosts={recordCosts} sips={sips} loadError={sheet.error} sipSummary={sip.plan ? <SavedSipSummary result={sip.plan.result as unknown as HybridResult} /> : sip.error ? <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">Could not load your saved SIP plan. Reload to try again.</p> : null} />
+      <BudgetExperience initial={sheet.plan} saved={sheet.saved} salary={recordIncome} loans={loanEmis} knownCosts={recordCosts} sips={sips} loadError={sheet.error} sipSummary={sip.plan ? <SavedSipSummary result={sip.plan.result as unknown as HybridResult} startMonth={(sip.plan.inputs as {contributionStartMonth?: string})?.contributionStartMonth} savedOn={todayIST(new Date(sip.plan.created_at))} today={todayIST()} /> : sip.error ? <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">Could not load your saved SIP plan. Reload to try again.</p> : null} />
     </main>
   );
 }

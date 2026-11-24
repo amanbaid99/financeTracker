@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-24",title:"Choose when SIPs start",items:[{title:"Plan ahead, then leave it steady",text:"Choose a start month in the SIP planner. Budget keeps your confirmed amounts and shows a monthly review reminder from that month onward. Nothing changes until you confirm."}]},
  {date:"2026-11-23",title:"Simpler goal editing",items:[{title:"Remove goals you no longer need",text:"Removed the Goal completed checkbox. Delete a goal from its details when you no longer need it; its investments stay."}]},
  {date:"2026-11-23",title:"Your SIP plan on Budget",items:[{title:"Save, then see the plan",text:"Saving SIPs opens Budget with your confirmed monthly total and each goal’s vehicles. Edit plan brings you back. Budget spacing and no-salary amount alignment are tidier."}]},
  {date:"2026-11-23",title:"Adjust within a goal first",items:[{title:"Keep other goals steady",text:"Entering a vehicle amount reallocates automatic money within that goal first. Other goals only change if the chosen amounts need more than the goal total."}]},

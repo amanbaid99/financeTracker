@@ -10,6 +10,7 @@ export default async function BudgetSipPage() {
   const prior = c.plans[0]?.inputs as
     | {
         budgetSource?: string;
+        contributionStartMonth?: string;
         monthlySavings?: number;
         allocationMode?: "safety_deadline";
         monthlyPlanLimit?: number;
@@ -45,6 +46,7 @@ export default async function BudgetSipPage() {
             : {}
         }
         initialVehicleOverrides={prior?.vehicleOverrides ?? {}}
+        initialStartMonth={prior?.contributionStartMonth}
         revision={c.revision}
         riskTolerance={c.riskTolerance}
       />

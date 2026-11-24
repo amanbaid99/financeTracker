@@ -59,7 +59,7 @@ export const loadHybridHistory=cache(async()=>{
 export const loadSavedSipPlan = cache(async () => {
   const { supabase, user } = await requireUser();
   const { data, error } = await supabase.from("allocation_plans")
-    .select("id,created_at,result")
+    .select("id,created_at,inputs,result")
     .eq("user_id", user.id)
     .eq("inputs->>allocationMode", "safety_deadline")
     .order("created_at", { ascending: false })

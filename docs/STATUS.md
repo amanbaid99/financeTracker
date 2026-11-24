@@ -1,5 +1,11 @@
 # Status
 
+## SIP start month and review reminder, 24 Nov 2026
+
+Added Start contributions from to the standalone SIP planner. The month is validated, sent to confirmation, recomputed server-side and stored in the existing immutable plan inputs. Reopening restores it. Engine hybrid-1.5.0 keeps valuation/inflation/goal deadlines on today’s horizon and reduces only future monthly contribution periods; it retains the existing full-month convention, so January skips December’s normal period when planning on 24 November. Existing corpus and one-time growth are not delayed. Bill cash-flow checks exclude deferred contributions and expose pre-start cash gaps. No feasible contribution periods produces an underfunded outcome with an immediate-gap warning, rather than inventing investments.
+
+Budget shows the start month beside the unchanged saved snapshot. A calendar-month review prompt appears after the save month, no earlier than the chosen start month. It links to the existing editor; no recalculation, auto-save, provider change or balance increase occurs from the reminder. Old plans without a month retain previous calculations. No schema changes, actual transactions or hosted records changed. Verification: lint, TypeScript, 860 unit tests, 40 Python tests and production build pass. New cases cover deferred requirements, unchanged inflation/existing growth, no feasible periods, pre-start bill cash gaps, invalid months, reminder timing and immutable snapshots. Real-component browser checks at 320/375/768px verify start-month save/reopen, no early reminder, review links, unchanged saved totals and no overflow. Full signed-in E2E remains unverified.
+
 ## Removed goal completion option, 23 Nov 2026
 
 Removed the Goal completed, stop planning new contributions checkbox from GoalForm. Delete goal remains the way to remove an unwanted goal. Existing completion values and historical plans are preserved; no hosted goals or investment balances changed. Verification: lint, TypeScript, 853 unit tests, 40 Python tests and production build pass.

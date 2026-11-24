@@ -144,3 +144,6 @@ it("confirms scoped vehicle choices and recomputes totals on the server",async()
 it("rejects vehicle choices for an unknown goal before writing",async()=>{
  expect((await confirmHybridPlan({...input,allocationMode:"safety_deadline",vehicleOverrides:{"00000000-0000-4000-8000-000000000001":{"inv:foreign":1000}}})).ok).toBe(false);expect(rpc).not.toHaveBeenCalled();
 });
+it("persists and recomputes the standalone SIP start month without reading Budget",async()=>{
+ const res=await confirmHybridPlan({...input,allocationMode:"safety_deadline",contributionStartMonth:"2027-01"});expect(res.ok).toBe(true);expect(loadBudget).not.toHaveBeenCalled();expect(rpc.mock.calls[0][1].p_inputs.contributionStartMonth).toBe("2027-01");
+});

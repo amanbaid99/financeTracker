@@ -1,6 +1,7 @@
 import { ASSUME_HOLDINGS_WITHDRAWABLE } from "./holding-access";
 // One deterministic funding and allocation calculation. Decimal arithmetic, integer INR outputs.
 // No database, clock, AI or mutation of supplied goals/holdings.
+import { sipContributionDelay } from "./sip-start";
 import Decimal from "decimal.js-light";
 import { goalSipDeadline, prepareSafetyStages } from "./goal-sip-policy";
 import { addMonths, monthsBetween } from "./dates";
@@ -20,7 +21,7 @@ import {
   futureValueDecimal,
   requiredMonthlyDecimal,
 } from "./funding-math";
-export const HYBRID_VERSION = "hybrid-1.4.0";
+export const HYBRID_VERSION = "hybrid-1.5.0";
 export interface HybridPolicy {
   priority: Record<"high" | "medium" | "low", number>;
   urgency: [number, number, number];
@@ -78,6 +79,8 @@ export interface HybridGoal {
     inflationPct: number;
     targetType: string;
     contributionTiming: string;
+    contributionStartMonth?: string;
+    skippedContributionMonths?: number;
     existingInvestmentReturns: {
       investmentId: string;
       annualReturnPct: number;
@@ -125,6 +128,7 @@ export interface HybridResult {
 }
 export interface HybridInput {
   today: string;
+  contributionStartMonth?: string;
   goals: GoalInput[];
   investments: Investment[];
   links: Link[];
@@ -366,6 +370,8 @@ export function calculateHybrid(input: HybridInput): HybridResult {
     policy.maxExtensionMonths > 1200
   )
     throw Error("Invalid planning policy.");
+  const delay = sipContributionDelay(input.today, input.contributionStartMonth);
+  const billForecast = (bills: Parameters<typeof hybridBillsForecast>[0], balance: number, monthly: number, today: string, reserve = 0, reserveMonths = 12) => hybridBillsForecast(bills, balance, monthly, today, reserve, reserveMonths, delay);
   const budget = money(input.monthlySavings),
     planLimit = Math.min(budget, money(input.monthlyPlanLimit ?? budget)),
     oneTime = money(input.oneTime ?? 0);
@@ -503,6 +509,7 @@ export function calculateHybrid(input: HybridInput): HybridResult {
       )
         warnings.push(`Confirm maturity or early access: ${inv.id}.`);
     }
+    const contributionMonths = months === null ? null : Math.max(0, months - delay);
     let required =
       months === null
         ? (g.minimumMonthly ?? 0)
@@ -510,19 +517,20 @@ export function calculateHybrid(input: HybridInput): HybridResult {
     // Existing assets each grow at their own rate, never at the future contribution rate.
     let existing = integer(projected);
     const gap = Math.max(0, target - existing);
-    if (months !== null && months > 0) {
+    if (contributionMonths !== null && contributionMonths > 0) {
       const r = growth(rate, 1).minus(1);
       required =
         gap === 0
           ? 0
           : up(
               r.isZero()
-                ? new D(gap).div(months)
-                : new D(gap).times(r).div(growth(rate, months).minus(1)),
+                ? new D(gap).div(contributionMonths)
+                : new D(gap).times(r).div(growth(rate, contributionMonths).minus(1)),
             );
     }
+    if (contributionMonths === 0) required = 0;
     if (g.type === "bills_fund") {
-      const bill = hybridBillsForecast(
+      const bill = billForecast(
         g.bills ?? [],
         integer(coverage),
         0,
@@ -557,6 +565,7 @@ export function calculateHybrid(input: HybridInput): HybridResult {
       warnings.push(
         "Add a date for a deadline-based projection. Only an explicit monthly amount is planned.",
       );
+    if (contributionMonths === 0 && months !== 0) warnings.push("No monthly contribution fits before this deadline with the selected start month.");
     if (actualMonths === 0)
       warnings.push(
         g.targetDate! < input.today
@@ -579,7 +588,7 @@ export function calculateHybrid(input: HybridInput): HybridResult {
     const funded =
       g.type === "bills_fund"
         ? required === 0 &&
-          hybridBillsForecast(
+          billForecast(
             g.bills ?? [],
             integer(coverage),
             0,
@@ -649,6 +658,7 @@ export function calculateHybrid(input: HybridInput): HybridResult {
         inflationPct: inflation,
         targetType: g.targetType ?? "today",
         contributionTiming: "end_of_month",
+        ...(input.contributionStartMonth ? { contributionStartMonth: input.contributionStartMonth, skippedContributionMonths: delay } : {}),
         existingInvestmentReturns,
         ...(g.type === "emergency_fund" && !g.targetDate
           ? { emergencyBuildMonths: policy.emergencyBuildMonths }
@@ -698,11 +708,11 @@ export function calculateHybrid(input: HybridInput): HybridResult {
         gap,
         0,
         row.assumptions.annualReturnPct,
-        row.months,
+        Math.max(0, row.months - delay),
       );
     }
     if (source.find((g) => g.id === row.goalId)?.type === "bills_fund")
-      row.requiredMonthly = hybridBillsForecast(
+      row.requiredMonthly = billForecast(
         source.find((g) => g.id === row.goalId)!.bills ?? [],
         row.existingCoverage + take,
         0,
@@ -862,7 +872,8 @@ export function calculateHybrid(input: HybridInput): HybridResult {
       months = row.months ?? 0;
     row.projectedCorpus =
       row.projectedExistingCorpus +
-      endMonthValue(row.oneTimeAllocated, row.recommendedMonthly, rate, months);
+      endMonthValue(row.oneTimeAllocated, 0, rate, months) +
+      endMonthValue(0, row.recommendedMonthly, rate, Math.max(0, months - delay));
     row.monthlyShortfall = Math.max(
       0,
       row.requiredMonthly - row.recommendedMonthly,
@@ -883,20 +894,20 @@ export function calculateHybrid(input: HybridInput): HybridResult {
           ? "on_track"
           : bill && row.monthlyShortfall === 0
             ? "on_track"
-            : row.months !== 0 &&
+            : (row.months === null || row.months > delay) &&
                 !row.needsDate &&
                 row.monthlyShortfall <=
                   adjustmentRoom +
                     (budget * policy.atRiskMonthlyIncreasePct) / 100
               ? "at_risk"
               : "underfunded";
-    if (row.months === 0) row.immediateShortfall = row.projectedShortfall;
+    if (row.months !== null && row.months <= delay) row.immediateShortfall = row.projectedShortfall;
     if (bill) {
       row.projectedCorpus =
         row.existingCoverage +
         row.oneTimeAllocated +
-        row.recommendedMonthly * 12;
-      const state = hybridBillsForecast(
+        row.recommendedMonthly * Math.max(0, 12 - delay);
+      const state = billForecast(
         source.find((g) => g.id === row.goalId)!.bills ?? [],
         row.existingCoverage + row.oneTimeAllocated,
         row.recommendedMonthly,
@@ -976,7 +987,7 @@ export function calculateHybrid(input: HybridInput): HybridResult {
       for (let m = 1; m <= policy.maxExtensionMonths; m++) {
         futureContributions = futureContributions
           .times(contributionFactor)
-          .plus(row.recommendedMonthly);
+          .plus(m > delay ? row.recommendedMonthly : 0);
         target =
           row.assumptions.targetType === "future"
             ? new D(row.targetCorpus)

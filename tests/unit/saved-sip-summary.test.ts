@@ -12,3 +12,8 @@ it("keeps a confirmed zero plan editable",()=>{
  const html=renderToStaticMarkup(createElement(SavedSipSummary,{result:{totalMonthlyAllocated:0,goals:[]} as unknown as HybridResult}));
  expect(html).toContain("₹0");expect(html).toContain("No monthly contributions");expect(html).toContain("Edit plan");
 });
+it("shows a review reminder without changing confirmed amounts",()=>{
+ const result={totalMonthlyAllocated:71000,goals:[]} as unknown as HybridResult;
+ const html=renderToStaticMarkup(createElement(SavedSipSummary,{result,startMonth:"2027-01",savedOn:"2026-11-24",today:"2027-01-01"}));
+ expect(html).toContain("₹71,000");expect(html).toContain("Jan 2027");expect(html).toContain("Review plan");expect(html).toContain("saved amounts stay unchanged");
+});

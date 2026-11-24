@@ -16,6 +16,7 @@ import {
 import { proposeGoalMapping } from "@/lib/hybrid-mapping";
 import { confirmHybridPlan } from "@/lib/hybrid-actions";
 import { formatINR, formatDate } from "@/lib/format";
+import { Input } from "./ui/input";
 import { cn } from "@/lib/utils";
 import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
 export function SimpleSipPlanner({
@@ -24,6 +25,7 @@ export function SimpleSipPlanner({
   links: currentLinks,
   today,
   initialMonthly,
+  initialStartMonth,
   initialOverrides = {},
   initialVehicleOverrides = {},
   revision,
@@ -34,6 +36,7 @@ export function SimpleSipPlanner({
   links: Link[];
   today: string;
   initialMonthly: number | null;
+  initialStartMonth?: string;
   initialOverrides?: Record<string, number>;
   initialVehicleOverrides?: VehicleOverrides;
   revision: string;
@@ -42,6 +45,7 @@ export function SimpleSipPlanner({
   const router = useRouter(),
     toast = useToast();
   const [monthly, setMonthly] = useState(initialMonthly);
+  const [startMonth, setStartMonth] = useState(initialStartMonth ?? today.slice(0,7));
   const [overrides, setOverrides] = useState(initialOverrides);
   const [vehicleOverrides, setVehicleOverrides] = useState(
     initialVehicleOverrides,
@@ -49,6 +53,7 @@ export function SimpleSipPlanner({
   const [error, setError] = useState("");
   const [pending, start] = useTransition();
   const valid =
+    /^\d{4}-(0[1-9]|1[0-2])$/.test(startMonth) &&
     monthly !== null &&
     Number.isSafeInteger(monthly) &&
     monthly >= 0 &&
@@ -62,8 +67,8 @@ export function SimpleSipPlanner({
     [goals, investments, currentLinks, today, riskTolerance],
   );
   const edits = useMemo(
-    () => ({ monthly, overrides, vehicleOverrides }),
-    [monthly, overrides, vehicleOverrides],
+    () => ({ monthly, overrides, vehicleOverrides, startMonth }),
+    [monthly, overrides, vehicleOverrides, startMonth],
   );
   const deferred = useDeferredValue(edits);
   const recalculating = deferred !== edits;
@@ -77,10 +82,11 @@ export function SimpleSipPlanner({
       monthlySavings: deferred.monthly ?? 0,
       monthlyPlanLimit: deferred.monthly ?? 0,
       monthlyEssentials: 0,
+      contributionStartMonth: deferred.startMonth,
       includeAlternatives: false,
       allocationMode: "safety_deadline" as const,
     }),
-    [goals, investments, links, today, riskTolerance, deferred.monthly],
+    [goals, investments, links, today, riskTolerance, deferred.monthly, deferred.startMonth],
   );
   const recommendation = useMemo(() => {
     if (
@@ -203,6 +209,7 @@ export function SimpleSipPlanner({
       try {
         const res = await confirmHybridPlan({
           calculatedOn: today,
+          contributionStartMonth: startMonth,
           revision,
           monthly: monthly!,
           manualSavings: monthly!,
@@ -245,6 +252,12 @@ export function SimpleSipPlanner({
           }}
           className="[&_input]:h-20 [&_input]:rounded-none [&_input]:border-0 [&_input]:bg-transparent [&_input]:pl-9 [&_input]:pr-0 [&_input]:text-4xl [&_input]:font-semibold [&_span]:left-0 [&_span]:text-3xl sm:[&_input]:text-5xl"
         />
+        <div className="my-4 space-y-1.5">
+          <label htmlFor="sip-start-month" className="text-sm font-medium">Start contributions from</label>
+          <Input id="sip-start-month" type="month" value={startMonth} onChange={e => {setStartMonth(e.target.value);setError("");}} />
+          <p className="text-xs text-muted-foreground">Projections use full monthly periods and no contributions before this month. Saved amounts only change when you confirm.</p>
+          {result?.goals.some(g => g.months !== null && g.months <= (g.assumptions.skippedContributionMonths ?? 0) && g.projectedShortfall > 0) && <p role="alert" className="text-sm text-warning">Some goals are due before contributions can start. They need existing money or an earlier start.</p>}
+        </div>
         <p className="text-xs text-muted-foreground">
           Goals fill in priority order. Vehicle edits use the lowest-priority
           automatic money first. Budget stays separate.
@@ -306,9 +319,6 @@ export function SimpleSipPlanner({
                       : met
                         ? "success"
                         : "danger";
-                const baseline = sheet.baseline.goals.find(
-                  (x) => x.goalId === g.goalId,
-                )!;
                 const raw = overrides[g.goalId] ?? g.recommendedMonthly;
                 const vehicles = sheet.rows[g.goalId] ?? [];
                 const name = goals.find((x) => x.id === g.goalId)!;
