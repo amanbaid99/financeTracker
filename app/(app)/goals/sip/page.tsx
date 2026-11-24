@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { BackLink } from "@/components/back-link";
+import { ResetSipPlan } from "@/components/reset-sip-plan";
 import { SimpleSipPlanner } from "@/components/simple-sip-planner";
 import { budgetSipAmount } from "@/lib/budget-sip-amount";
 import { loadBudgetSheet } from "@/lib/budget-ratio-data";
@@ -23,7 +24,7 @@ export default async function BudgetSipPage() {
       }
     | undefined;
   const initialMonthly =
-    prior?.monthlyPlanLimit ?? prior?.monthlySavings ?? d.plan?.monthly ?? null;
+    c.sipReset ? null : prior?.monthlyPlanLimit ?? prior?.monthlySavings ?? d.plan?.monthly ?? null;
   return (
     <main className="space-y-4">
       <BackLink fallback="/goals" label="Goals" />
@@ -34,7 +35,9 @@ export default async function BudgetSipPage() {
           amounts and save once.
         </p>
       </div>
+      {c.plans.length > 0 && <ResetSipPlan />}
       <SimpleSipPlanner
+        key={c.plans[0]?.id ?? "new-sip"}
         goals={d.goals}
         investments={d.investments}
         links={d.links}

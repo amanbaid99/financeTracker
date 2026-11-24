@@ -1,5 +1,9 @@
 # Setup
 
+## Monthly planning reset
+
+Apply 20261124162721_reset_monthly_planning before deploying the new reset actions. Installed on sbkpirchaaljlwzgntrf. The authenticated invoker RPC clears monthly preferences and appends a reset marker, optionally deleting Budget in the same transaction. Existing data tables, RLS and goal ownership are unchanged. No new environment variables.
+
 Accounts, secret names (never values) and CI. For running the app locally, see AGENTS.md.
 
 ## Hybrid plan history

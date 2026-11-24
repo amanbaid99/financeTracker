@@ -8,6 +8,7 @@ import {
   Sparkles,
   Pencil,
 } from "lucide-react";
+import { rebalanceBudgetEdit } from "@/lib/budget-rebalance";
 import { BudgetGuide } from "@/components/budget-guide";
 import { Sheet } from "@/components/sheet";
 import { Field } from "@/components/forms/field";
@@ -90,7 +91,7 @@ export function BudgetExperience({
 
   /** Saves a changed budget straight away: tapping Save is the confirmation. */
   function persist(next: BudgetSheet, note = "Saved.") {
-    const normalised = applyBudgetRules(next);
+    const normalised = plan ? rebalanceBudgetEdit(plan, next) : applyBudgetRules(next);
     setError("");
     start(async () => {
       try {
@@ -533,6 +534,7 @@ export function BudgetExperience({
           onSave={(amount) =>
             persist({
               ...plan,
+              rows: plan.rows.filter(r => r.id !== "setup-personal" && !isRuleRow(r)),
               rules: {
                 savings: { mode: "amount", value: 0 },
                 investing: { mode: "amount", value: 0 },
@@ -599,8 +601,8 @@ export function BudgetExperience({
         >
           <div className="space-y-4">
             <p className="text-sm">
-              This removes only your saved budget. It can&apos;t be undone. Your
-              loans, goals, investments and other records stay as they are.
+              This resets your budget and saved SIP plan so you can start fresh. Your
+              goals, investments, loan records and provider SIPs stay as they are.
             </p>
             {error && (
               <p role="alert" className="text-sm text-danger">
@@ -620,7 +622,7 @@ export function BudgetExperience({
                     setPlan(null);
                     setReset(false);
                     setMessage(
-                      "Budget reset. Start a new one when you're ready.",
+                      "Budget and SIP plan reset. Start fresh when you're ready.",
                     );
                     router.refresh();
                   } catch {

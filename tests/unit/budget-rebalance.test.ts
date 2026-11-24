@@ -1,0 +1,10 @@
+import {expect,it} from "vitest";
+import {rebalanceBudgetEdit} from "@/lib/budget-rebalance";
+import {applyBudgetRules,type BudgetSheet} from "@/lib/budget-sheet";
+import {budgetSipAmount} from "@/lib/budget-sip-amount";
+const plan=applyBudgetRules({version:2,salary:200000,rows:[{id:"fixed",name:"Fixed",category:"fixed",mode:"amount",value:68015,loanId:null}],excludedLoanIds:[],rules:{savings:{mode:"amount",value:0},investing:{mode:"amount",value:0},future:{mode:"amount",value:91985}}} satisfies BudgetSheet);
+const personal=(p:BudgetSheet)=>p.rows.filter(r=>r.category==="personal").reduce((s,r)=>s+r.value,0);
+it("income 200000 to 170000 preserves personal 40000 and reduces saving to 61985",()=>{const next=rebalanceBudgetEdit(plan,{...plan,salary:170000});expect(personal(next)).toBe(40000);expect(budgetSipAmount(next)).toBe(61985);expect(budgetSipAmount(plan)).toBe(91985);});
+it("fixed cost additions and deletions change the remainder, not personal spending",()=>{const next=rebalanceBudgetEdit(plan,{...plan,rows:plan.rows.map(r=>r.id==="fixed"?{...r,value:78015}:r)});expect(personal(next)).toBe(40000);expect(budgetSipAmount(next)).toBe(81985);const removed=rebalanceBudgetEdit(plan,{...plan,rows:plan.rows.filter(r=>r.id!=="fixed")});expect(personal(removed)).toBe(40000);expect(budgetSipAmount(removed)).toBe(160000);});
+it("does not undo an explicit saving edit",()=>{const next=rebalanceBudgetEdit(plan,{...plan,rules:{...plan.rules!,future:{mode:"amount",value:71985}}});expect(budgetSipAmount(next)).toBe(71985);expect(personal(next)).toBe(60000);});
+it("never makes saving negative and keeps the overspending visible",()=>{const next=rebalanceBudgetEdit(plan,{...plan,salary:90000});expect(budgetSipAmount(next)).toBe(0);expect(personal(next)).toBe(40000);expect(next.rows.reduce((s,r)=>s+r.value,0)).toBeGreaterThan(next.salary);});

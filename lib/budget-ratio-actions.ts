@@ -61,8 +61,8 @@ export async function applySheetToPlan() {
 /** Reset only the authenticated owner's budget after an explicit in-app confirmation. */
 export async function resetBudgetSheet(confirmation: unknown) {
   if (confirmation !== "RESET_BUDGET") return { ok: false as const, error: "Confirm that you want to reset this budget." };
-  const { supabase, user } = await requireUser();
-  const { error } = await supabase.from("budget_ratio_plans").delete().eq("user_id", user.id);
+  const { supabase } = await requireUser();
+  const { error } = await supabase.rpc("reset_monthly_planning", {p_reset_budget:true});
   if (error) return { ok: false as const, error: "Could not reset your budget. Try again." };
   revalidatePath("/", "layout");
   return { ok: true as const };

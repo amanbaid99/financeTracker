@@ -1258,6 +1258,7 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      reset_monthly_planning: { Args: { p_reset_budget?: boolean }; Returns: undefined };
       save_goal_coverage: { Args: {p_goal: string; p_rows: Json}; Returns: undefined };
       add_invite: {
         Args: { p_email: string; p_note?: string };

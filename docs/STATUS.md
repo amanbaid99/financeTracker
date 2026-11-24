@@ -1,5 +1,13 @@
 # Status
 
+## Consistent budget edits and planning reset, 24 Nov 2026
+
+Income and cost edits now use rebalanceBudgetEdit: keep the user’s chosen personal amount and calculate Save & invest as the remaining income. Dedicated personal/saving edits retain their existing behaviour. Negative room stays visible as overspending rather than negative saving. The shared Budget/SIP available target follows the recalculated amount.
+
+Reset Budget explicitly clears Budget and monthly SIP planning in one invoker-rights database transaction. Reset SIP plan is also available on Budget and the planner, with confirmation, while retaining Budget. An append-only reset marker hides the prior active plan, so an old profile default or saved snapshot cannot resurrect ₹71,000. Existing goal ownership, investments, actual SIP records and plan history stay unchanged. Empty planning has a clear Create SIP plan entry. Resetting the editor remounts only its amount form to clear stale local inputs; a new confirmation supersedes the reset marker. No new tables or columns.
+
+Migration reset_monthly_planning is installed on the hosted project. The CLI migration generator failed because its telemetry writes to a read-only home path; the SQL migration was created in the existing series and tested with PGlite before installation. Hosted verification confirms SECURITY INVOKER and authenticated-only execution. No reset was executed on hosted user records for testing. Verification: lint, TypeScript, 876 unit tests, 40 Python tests and production build pass. PGlite tests exercise invoker/RLS isolation across two owners and transactional rollback; action tests check explicit confirmation and error handling. Real-component mobile tests at 320/375/768px cover income/personal/fixed edits, updated shared targets, both reset flows, cancellation and the fresh-plan entry. Full signed-in E2E remains unverified.
+
 ## Budget-linked SIP starting amount, 24 Nov 2026
 
 Per the owner’s latest request, saved income-budget Save & invest is now the shared available amount on Budget and the SIP editor, using budgetSipAmount and the existing sheet normalization. This supersedes the earlier editor default that always restored the older standalone total. Missing/no-salary budgets retain the last manual SIP amount; explicit saved zero remains zero. The editor stays editable and confirmation remains standalone, without a Budget ceiling or any change to actual holdings, contributions or budget records.

@@ -591,7 +591,7 @@ export const loadMoneyPlan = cache(async () => {
     Number.isSafeInteger(priorBuffer) && priorBuffer! >= 0 ? priorBuffer : 0,
   );
   const capacity = prior?.budgetSource==="standalone"?sipCapacity(false,0,0,prior.declaredMonthlySavings??prior.monthlySavings):b.budgetConfigured?sipCapacity(true,computedCapacity.availableSavings,computedCapacity.budgetDeficit):prior?.budgetSource==="manual"?sipCapacity(false,0,0,prior.declaredMonthlySavings??prior.monthlySavings):computedCapacity;
-  const plan = input
+  const plan = input && !context.sipReset
     ? hybridMoneyPlan({
         goals,
         investments,

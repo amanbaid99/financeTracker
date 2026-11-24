@@ -1,4 +1,5 @@
 import { sipReviewDue } from "@/lib/sip-start";
+import { ResetSipPlan } from "./reset-sip-plan";
 import Link from "next/link";
 import { ArrowUpRight, Repeat2 } from "lucide-react";
 import type { HybridResult } from "@/lib/hybrid-engine";
@@ -30,6 +31,10 @@ export function SavedSipSummary({ result, startMonth, savedOn, today, budgetMont
       </div>)}
       {!goals.length && <p className="py-4 text-sm text-muted-foreground">No monthly contributions in this plan. Edit it whenever you’re ready.</p>}
     </div>
-    <p className="border-t px-5 py-3 text-xs text-muted-foreground">Planned amounts only. Set up SIPs with your provider.</p>
+    <div className="border-t px-5 py-3"><p className="text-xs text-muted-foreground">Planned amounts only. Set up SIPs with your provider.</p><ResetSipPlan /></div>
   </section>;
+}
+
+export function EmptySipPlan({budgetMonthly}:{budgetMonthly?:number|null}){
+ return <section aria-label="SIP plan" className="surface-card space-y-3 rounded-2xl border bg-card p-5"><h2 className="font-semibold">No SIP plan saved</h2><p className="text-sm text-muted-foreground">{budgetMonthly!=null?`${formatINR(budgetMonthly)} a month is available from your budget.`:"Choose a monthly amount and start fresh."}</p><Link href="/goals/sip" className="inline-flex min-h-11 items-center gap-1 text-sm font-medium text-primary">Create SIP plan<ArrowUpRight className="size-4" aria-hidden /></Link></section>;
 }

@@ -37,8 +37,10 @@ export const loadHybridContext = cache(async () => {
     risk.error
   )
     throw Error("Could not load your plan settings. Reload before planning.");
+  const sipReset = !!(plans.data?.[0]?.inputs as {sipReset?: boolean} | undefined)?.sipReset;
   return {
-    plans: plans.data ?? [],
+    sipReset,
+    plans: sipReset ? [] : plans.data ?? [],
     goalSettings: goalSettings.data ?? [],
     holdingDetails: holdingDetails.data ?? [],
     revision: revision.data!,
@@ -50,9 +52,9 @@ export const loadHybridContext = cache(async () => {
 /** History is needed only on Your plan, not on every portfolio/home request. */
 export const loadHybridHistory=cache(async()=>{
  const {supabase,user}=await requireUser();
- const {data,error}=await supabase.from("allocation_plans").select("id,created_at,result").eq("user_id",user.id).order("created_at",{ascending:false}).order("id",{ascending:false}).limit(10);
+ const {data,error}=await supabase.from("allocation_plans") .select("id,created_at,inputs,result").eq("user_id",user.id).order("created_at",{ascending:false}).order("id",{ascending:false}).limit(10);
  if(error)throw Error("Could not load your previous plans. Try again.");
- return data??[];
+ return (data??[]).filter(p=>!(p.inputs as {sipReset?: boolean})?.sipReset);
 });
 
 /** Budget displays the confirmed SIP snapshot, never a fresh recommendation. */
@@ -66,5 +68,5 @@ export const loadSavedSipPlan = cache(async () => {
     .order("id", { ascending: false })
     .limit(1).maybeSingle();
   if (error) throw Error("Could not load your saved SIP plan.");
-  return data;
+  return (data?.inputs as {sipReset?: boolean} | undefined)?.sipReset ? null : data;
 });

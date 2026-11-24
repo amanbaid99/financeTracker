@@ -1,5 +1,9 @@
 # Product decisions
 
+## Consistent edits and reset, 24 Nov 2026
+
+Income and fixed-cost edits preserve the personal spending choice and make Save & invest the remainder. Explicit saving edits can still change the remaining personal amount. Reset Budget now explicitly resets active monthly SIP planning too; SIP-only reset retains Budget. Resets append a marker and preserve historical plans, goal coverage and actual provider/investment records. Reset state outranks legacy profile defaults. After a reset, enter a new amount or use the current budget to build fresh recommendations.
+
 ## Budget-linked SIP default, 24 Nov 2026
 
 The owner now wants Budget Save & invest and SIP capacity to stay in sync. A saved income budget supplies the default editable SIP total and the available amount displayed on the saved-plan card. Confirmed allocations remain unchanged until review and confirmation; the card names any difference explicitly. No-salary or missing budgets preserve manual planning. Confirmation does not impose a Budget limit or rewrite Budget, holdings or transactions.

@@ -25,3 +25,8 @@ it("starts from 91985 in Save and invest instead of the older 71000 plan",async(
 it("a budget load failure does not block manual SIP planning",async()=>{
  vi.mocked(loadBudget).mockRejectedValue(Error("offline"));expect((await planner()).props.initialMonthly).toBe(71000);
 });
+it("does not resurrect the old profile amount after an explicit reset",async()=>{
+ vi.mocked(loadHybridContext).mockResolvedValue({sipReset:true,plans:[],revision:"a".repeat(32),riskTolerance:null} as never);
+ vi.mocked(loadGoals).mockResolvedValue({today:"2026-11-24",goals:[],investments:[],links:[],plan:{monthly:71000,lump:0}} as never);
+ const p=await planner();expect(p.props.initialMonthly).toBeNull();expect(p.props.initialOverrides).toEqual({});expect(p.props.initialVehicleOverrides).toEqual({});
+});
