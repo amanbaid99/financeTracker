@@ -9,12 +9,16 @@ const far:GoalInput={id:"far",name:"Retirement",type:"retirement",target:1200000
 const cash=(value:number):Investment=>({id:"cash",name:"Safety account",kind:"savings",category:"savings_account",value,monthlySip:0,returnPct:0,valuationDate:today});
 const input=(coverage=0,monthlySavings=40000):HybridPlanInput=>({today,goals:[far,safety,near],investments:[cash(coverage)],links:[{investmentId:"cash",goalId:"safety",percent:100}],monthlySavings,monthlyEssentials:10000,allocationMode:"safety_deadline"});
 const amount=(r:ReturnType<typeof hybridPlan>,id:string)=>r.goals.find(g=>g.goalId===id)!.recommendedMonthly;
-it("builds one month then three months of cover before the nearest goal",()=>{
+it("paces cover (a third of month one, a sixth of months two and three), then ₹500 each, then nearest first",()=>{
  const result=hybridPlan(input());
- expect(amount(result,"safety")).toBe(30000);
  expect(amount(result,"near")).toBe(10000);
- expect(amount(result,"far")).toBe(0);
+ expect(amount(result,"far")).toBe(10000);
+ expect(amount(result,"safety")).toBe(20000);
  expect(result.totalMonthlyAllocated).toBe(40000);
+ const tight=hybridPlan(input(0,8000));
+ expect(amount(tight,"safety")).toBeGreaterThanOrEqual(6667);
+ expect(amount(tight,"near")).toBeGreaterThanOrEqual(500);
+ expect(amount(tight,"far")).toBeGreaterThanOrEqual(500);
 });
 it("puts a small surplus entirely into the missing first month",()=>{
  const result=hybridPlan(input(3000,5000));
@@ -24,9 +28,9 @@ it("puts a small surplus entirely into the missing first month",()=>{
 it("uses existing cover once and funds dates rather than legacy ranks",()=>{
  const data=input(20000,25000);data.goals=data.goals.map(g=>({...g,planRank:g.id==="far"?1:99}));
  const result=hybridPlan(data);
- expect(amount(result,"safety")).toBe(10000);
+ expect(amount(result,"safety")).toBe(5000);
  expect(amount(result,"near")).toBe(10000);
- expect(amount(result,"far")).toBe(5000);
+ expect(amount(result,"far")).toBe(10000);
  expect(result).toEqual(hybridPlan({...data,goals:[...data.goals].reverse(),investments:[...data.investments].reverse()}));
 });
 it("prioritizes a scheduled bill before a later goal after the safety floor",()=>{
@@ -46,12 +50,12 @@ it("uses recorded balances despite legacy access flags under the availability as
 });
 it("does not count the same three-month safety target once per emergency goal",()=>{
  const data=input(0,40000);data.goals.push({...safety,id:"safety2",name:"Other safety"});const r=hybridPlan(data);
- expect(amount(r,"safety")+amount(r,"safety2")).toBe(30000);
+ expect(amount(r,"safety")+amount(r,"safety2")).toBe(20000);
  expect(amount(r,"near")).toBe(10000);
 });
 const funds:Investment[]=Array.from({length:5},(_,i)=>({id:`fund${i}`,name:`Held fund ${i}`,kind:"mutual_fund",category:"equity_index",value:10000,monthlySip:0,returnPct:0}));
 const links=funds.map(i=>({investmentId:i.id,goalId:far.id,percent:100}));
-it.each([[500,[500]],[1200,[1200]],[2400,[1200,1200]],[5000,[1000,1000,1000,1000,1000]],[6203,[1241,1241,1241,1240,1240]]])("splits %i without scattering sub-1000 amounts",(monthly,expected)=>{
+it.each([[500,[500]],[1200,[1200]],[2400,[2400]],[5000,[2500,2500]],[6203,[3102,3101]]])("splits %i into one holding, or two from ₹5,000",(monthly,expected)=>{
  const parts=splitForGoal(far.id,"equity_index",monthly as number,0,funds,links,"goal_first",false,far);
  expect(parts.map(p=>p.monthly)).toEqual(expected);
  expect(parts.reduce((s,p)=>s+p.monthly,0)).toBe(monthly);
@@ -62,7 +66,7 @@ it("does not mutate a previous calculation after a balance change",()=>{
 
 it("keeps overrides exact and rejects a total beyond the available monthly amount",()=>{
  const data=input(0,40000);const r=hybridPlan({...data,overrides:{near:5000}});
- expect(amount(r,"near")).toBe(5000);expect(amount(r,"safety")).toBe(30000);expect(r.totalMonthlyAllocated).toBe(40000);
+ expect(amount(r,"near")).toBe(5000);expect(amount(r,"safety")).toBe(25000);expect(r.totalMonthlyAllocated).toBe(40000);
  expect(()=>hybridPlan({...data,overrides:{near:10000,far:10000,safety:30000}})).toThrow(/exceed/);
 });
 it("uses current equity value without adding projected growth under the availability assumption",()=>{
@@ -73,9 +77,9 @@ it("leaves expired deadlines and fully funded goals safe without adding fictitio
  const data=input(120000,50000);data.goals.push({...near,id:"past",targetDate:"2025-01-01"});
  const r=hybridPlan(data);expect(amount(r,"safety")).toBe(0);expect(amount(r,"past")).toBe(0);expect(r.immediateFundingShortfall).toBeGreaterThan(0);
 });
-it("splits nearby suitable retirement funds and keeps safety/lifestyle separate",()=>{
+it("uses at most two suitable retirement funds and keeps safety/lifestyle separate",()=>{
  const data=input(0,46000);data.investments.push(...funds);data.links.push(...links);const result=hybridPlan(data);const vehicles=hybridVehicles(data,result);
- expect(vehicles.filter(v=>v.parts.some(p=>p.goalId==="far"))).toHaveLength(5);
+ expect(vehicles.filter(v=>v.parts.some(p=>p.goalId==="far"))).toHaveLength(2);
  const safetyId=vehicles.find(v=>v.parts.some(p=>p.goalId==="safety"))!.key;
  expect(vehicles.filter(v=>v.parts.some(p=>p.goalId==="near")).every(v=>v.key!==safetyId)).toBe(true);
  expect(vehicles.reduce((s,v)=>s+v.total,0)).toBe(result.totalMonthlyAllocated);

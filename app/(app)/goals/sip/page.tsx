@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { BackLink } from "@/components/back-link";
 import { ResetSipPlan } from "@/components/reset-sip-plan";
 import { SimpleSipPlanner } from "@/components/simple-sip-planner";
-import { budgetSipAmount } from "@/lib/budget-sip-amount";
+import { budgetEssentials, budgetSipAmount } from "@/lib/budget-sip-amount";
 import { loadBudgetSheet } from "@/lib/budget-ratio-data";
 import { loadGoals, loadBudget } from "@/lib/data";
 import { loadHybridContext } from "@/lib/hybrid-data";
@@ -44,6 +44,7 @@ export default async function BudgetSipPage() {
         today={d.today}
         initialMonthly={budgetMonthly ?? initialMonthly}
         budgetMonthly={budgetMonthly}
+        essentialsMonthly={sheet && !sheet.error ? budgetEssentials(sheet.plan, sheet.saved) : 0}
         initialOverrides={
           prior?.allocationMode === "safety_deadline"
             ? (prior.overrides ?? {})

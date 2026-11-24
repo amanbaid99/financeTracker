@@ -20,7 +20,7 @@ const g = (name: string, over: Partial<TrackedGoal> = {}) =>
 const loanState = { balance: 1000 } as TrackedGoal["loanState"];
 
 describe("orderGoals", () => {
-  it("keeps your order, on hold or not: bills funds first, unplaced EMI loans after, reached last", () => {
+  it("keeps your order, on hold or not: emergency fund, then bills funds, unplaced EMI loans after, reached last", () => {
     const goals = [
       g("Done", { status: "reached", planRank: 1 }),
       g("HDFC", { loanState, emisCloseFirst: true }),
@@ -30,8 +30,8 @@ describe("orderGoals", () => {
       g("Sinking", { billsFund: {} as TrackedGoal["billsFund"] }),
     ];
     expect(orderGoals(goals, "2026-11-16").map((x) => x.name)).toEqual([
-      "Sinking",
       "Emergency",
+      "Sinking",
       "IDFC",
       "Travel",
       "HDFC",

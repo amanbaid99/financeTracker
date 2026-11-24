@@ -3,6 +3,8 @@ import { z } from "zod";
 import { sipCapacity } from "./sip-capacity";
 import { revalidatePath } from "next/cache";
 import { loadGoals, loadBudget, requireUser } from "./data";
+import { loadBudgetSheet } from "./budget-ratio-data";
+import { budgetEssentials } from "./budget-sip-amount";
 import { loadHybridContext } from "./hybrid-data";
 import { sipWorksheet } from "./sip-worksheet";
 import { hybridPlan, hybridVehicles } from "./hybrid-plan";
@@ -85,8 +87,17 @@ export async function confirmHybridPlan(
         error:
           "This plan exceeds your available monthly savings. Update your budget or lower the amounts.",
       };
+    // The SIP planner paces the emergency fund from the budget's fixed costs,
+    // read here again so the saved plan matches what you saw.
+    const sheetForEssentials = standalone
+      ? await loadBudget()
+          .then((bb) => loadBudgetSheet(bb.budget.income || bb.recordIncome, bb.loanEmis))
+          .catch(() => null)
+      : null;
     const monthlyEssentials = standalone
-      ? 0
+      ? sheetForEssentials && !sheetForEssentials.error
+        ? budgetEssentials(sheetForEssentials.plan, sheetForEssentials.saved)
+        : 0
       : configured
         ? b!.budget.costs + b!.budget.emis
         : (v.monthlyEssentials ?? 0);

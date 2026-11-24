@@ -290,6 +290,8 @@ function essentialOrder(a: GoalInput, b: GoalInput) {
     a.id.localeCompare(b.id)
   );
 }
+/** Every goal gets at least this much a month when the budget stretches to all of them. */
+export const PROGRESS_MINIMUM = 500;
 /** Capped water filling with integer remainders; input order never breaks a tie. */
 export function weightedAllocate(
   total: number,
@@ -825,31 +827,49 @@ export function calculateHybrid(input: HybridInput): HybridResult {
     if (!(input.monthlyEssentials ?? 0))
       for (const stage of safety.stages)
         if (adjustable(stage.row)) give(stage.row, stage.row.requiredMonthly);
-    for (const months of [1, 3]) {
-      const stageTarget = Math.min(
-        safety.target,
-        (input.monthlyEssentials ?? 0) * months,
+    // Emergency pace: 1 month of essentials within 3 months, then 3 months
+    // within 6. Each month funds a third of the first gap and a sixth of the
+    // next, even when that's faster than the fund's own date would need.
+    const essentials = input.monthlyEssentials ?? 0;
+    if (essentials > 0) {
+      const oneMonth = Math.min(safety.target, essentials);
+      const threeMonths = Math.min(safety.target, essentials * 3);
+      const firstGap = Math.max(0, oneMonth - safety.coverage);
+      const nextGap = Math.max(
+        0,
+        threeMonths - Math.max(safety.coverage, oneMonth),
       );
       let need = Math.max(
         0,
-        stageTarget -
-          safety.coverage -
+        Math.ceil(firstGap / 3 + nextGap / 6) -
           safety.stages.reduce((sum, s) => sum + s.row.recommendedMonthly, 0),
       );
       for (const stage of safety.stages) {
         if (!adjustable(stage.row)) continue;
         const before = stage.row.recommendedMonthly;
-        give(
-          stage.row,
-          Math.min(
-            stage.row.requiredMonthly,
-            stage.row.recommendedMonthly + need,
-            stage.cap,
-          ),
-        );
+        give(stage.row, Math.min(stage.row.recommendedMonthly + need, stage.cap));
         need -= stage.row.recommendedMonthly - before;
       }
     }
+    const isBills = (row: HybridGoal) =>
+      source.find((g) => g.id === row.goalId)?.type === "bills_fund";
+    // Bills coming up come next, then a little for every other goal so all
+    // of them move, then the nearest deadline first.
+    for (const row of rows.filter((r) => isBills(r) && adjustable(r)))
+      give(row, row.requiredMonthly);
+    const others = rows.filter(
+      (r) =>
+        adjustable(r) &&
+        !isBills(r) &&
+        !safety.stages.some((s) => s.row === r) &&
+        (r.requiredMonthly > 0 ||
+          (r.needsDate &&
+            source.find((g) => g.id === r.goalId)?.type !== "loan_payoff")) &&
+        !source.find((g) => g.id === r.goalId)?.completed,
+    );
+    if (others.length && left >= PROGRESS_MINIMUM * others.length)
+      for (const row of others)
+        give(row, row.recommendedMonthly + PROGRESS_MINIMUM);
     for (const row of [...rows].sort(
       (a, b) =>
         goalSipDeadline(

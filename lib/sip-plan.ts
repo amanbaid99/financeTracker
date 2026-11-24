@@ -361,10 +361,8 @@ export function splitForGoal(
         "pooled",
         preferBank,
       );
-    const count = Math.min(
-      candidates.length,
-      Math.max(1, Math.floor(monthly / 1000)),
-    );
+    // Keep it simple: one holding per goal, two only for ₹5,000 or more.
+    const count = Math.min(candidates.length, monthly >= 5000 ? 2 : 1);
     const selected = candidates.slice(0, count);
     const base = Math.floor(monthly / count),
       remainder = monthly % count;

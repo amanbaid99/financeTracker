@@ -93,7 +93,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "What order are my goals in?",
     a: [
-      "Essentials come first, with bills funds at the top and your saved essential order respected. Flexible goals follow by nearest deadline; old flexible rankings do not hide nearer goals. Undated goals follow dated ones. A goal on hold keeps its place. Loans the EMIs already close come after the rest unless placed in your essential order. Covered goals stay at the bottom.",
+      "The emergency fund comes first, then bills funds, matching the SIP plan. Flexible goals follow by nearest deadline. Undated goals follow dated ones. A goal on hold keeps its place. Loans the EMIs already close come after the rest. Covered goals stay at the bottom.",
       "The first three unfinished goals are under Focus goals, followed by Other goals. Reached goals have their own Covered section at the bottom. Every goal stays visible. Open a goal to see covering investments, edit or remove it, and see its next three scheduled bills. Monthly requirements, forecasts and planning belong in the SIP planner.",
     ],
     tags: "order priority top three list focus",
@@ -113,8 +113,8 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "How does the plan decide where money goes?",
     a: [
-      "The monthly SIP planner builds one month of emergency cover, then three months, using accessible recorded balances and essential costs plus EMIs. It then fills monthly requirements for upcoming payments and goals in nearest-deadline order. A combined emergency / sinking fund is counted once.",
-      "Each goal has one monthly amount. It is split across suitable linked vehicles with at least ₹1,000 each where possible. ₹1,200 stays in one vehicle; ₹2,400 can use two at ₹1,200 each. Smaller amounts stay in one. Money is never increased just to meet a minimum. Unneeded money stays unallocated.",
+      "The monthly SIP planner paces the emergency fund from your budget's fixed costs (Essentials, EMIs included): each month it puts in a third of what's missing for 1 month of costs, plus a sixth of what's missing for 3 months. So you reach 1 month within 3 months and 3 months within 6. Without a saved budget it uses the fund's own pace. Then come bills funds, then ₹500 for every other goal (if the amount stretches to all of them), then the nearest deadline first. Anything left tops up the emergency fund.",
+      "Each goal's monthly amount goes into one suitable holding, or two when it's ₹5,000 or more, so your money isn't spread thin. Other linked holdings stay listed at ₹0 for you to change. Unneeded money stays unallocated.",
       "Any saved extra cash buffer reduces available savings. Existing SIPs are displayed separately, and no recommendation can exceed the budget. A zero surplus produces no new monthly allocation.",
     ],
     tags: "money plan priority split sip allocate emergency floor fifth",

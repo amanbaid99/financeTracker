@@ -27,6 +27,7 @@ export function SimpleSipPlanner({
   today,
   initialMonthly,
   budgetMonthly,
+  essentialsMonthly = 0,
   initialStartMonth,
   initialOverrides = {},
   initialVehicleOverrides = {},
@@ -39,6 +40,8 @@ export function SimpleSipPlanner({
   today: string;
   initialMonthly: number | null;
   budgetMonthly?: number | null;
+  /** Fixed costs a month from the budget, for the emergency fund's pace. */
+  essentialsMonthly?: number;
   initialStartMonth?: string;
   initialOverrides?: Record<string, number>;
   initialVehicleOverrides?: VehicleOverrides;
@@ -84,12 +87,12 @@ export function SimpleSipPlanner({
       riskTolerance,
       monthlySavings: deferred.monthly ?? 0,
       monthlyPlanLimit: deferred.monthly ?? 0,
-      monthlyEssentials: 0,
+      monthlyEssentials: essentialsMonthly,
       contributionStartMonth: deferred.startMonth,
       includeAlternatives: false,
       allocationMode: "safety_deadline" as const,
     }),
-    [goals, investments, links, today, riskTolerance, deferred.monthly, deferred.startMonth],
+    [goals, investments, links, today, riskTolerance, deferred.monthly, deferred.startMonth, essentialsMonthly],
   );
   const recommendation = useMemo(() => {
     if (
@@ -183,7 +186,7 @@ export function SimpleSipPlanner({
           monthly: monthly!,
           manualSavings: monthly!,
           allocationMode: "safety_deadline",
-          monthlyEssentials: 0,
+          monthlyEssentials: essentialsMonthly,
           lump: 0,
           cashBuffer: 0,
           refreshMapping: false,

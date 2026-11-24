@@ -6,6 +6,9 @@ vi.mock("@/lib/data", () => ({
   loadBudget: vi.fn(),
 }));
 vi.mock("@/lib/hybrid-data", () => ({ loadHybridContext: vi.fn() }));
+vi.mock("@/lib/budget-ratio-data", () => ({
+  loadBudgetSheet: vi.fn(async () => ({ plan: null, saved: false, error: null })),
+}));
 import { requireUser, loadGoals, loadBudget } from "@/lib/data";
 import { loadHybridContext } from "@/lib/hybrid-data";
 import { confirmHybridPlan } from "@/lib/hybrid-actions";
@@ -112,14 +115,14 @@ it("rejects exact holding choices above the monthly allowance",async()=>{
  expect(rpc).not.toHaveBeenCalled();
 });
 
-it("confirms standalone goal-first amounts without reading the budget",async()=>{
+it("confirms standalone goal-first amounts; with no saved budget, fixed costs are 0",async()=>{
  expect((await confirmHybridPlan({...input,allocationMode:"safety_deadline",monthlyEssentials:1})).ok).toBe(true);
- const args=rpc.mock.calls[0][1];expect(args.p_inputs.monthlyEssentials).toBe(0);expect(loadBudget).not.toHaveBeenCalled();expect(args.p_inputs.budgetSource).toBe("standalone");expect(args.p_result.allocationMode).toBe("safety_deadline");
+ const args=rpc.mock.calls[0][1];expect(args.p_inputs.monthlyEssentials).toBe(0);expect(args.p_inputs.budgetSource).toBe("standalone");expect(args.p_result.allocationMode).toBe("safety_deadline");
 });
 it("allows independent emergency planning without mandatory expense inputs",async()=>{
  vi.mocked(loadBudget).mockResolvedValue({budgetConfigured:false,budget:{income:0,costs:0,emis:0}} as never);
  vi.mocked(loadGoals).mockResolvedValue({today:input.calculatedOn,goals:[{id:"safety",name:"Safety",type:"emergency_fund",target:120000,targetDate:null,inflationPct:0}],investments:[],links:[]} as never);
- expect((await confirmHybridPlan({...input,manualSavings:10000,allocationMode:"safety_deadline"})).ok).toBe(true);expect(loadBudget).not.toHaveBeenCalled();
+ expect((await confirmHybridPlan({...input,manualSavings:10000,allocationMode:"safety_deadline"})).ok).toBe(true);
  expect((await confirmHybridPlan({...input,manualSavings:10000,allocationMode:"safety_deadline",monthlyEssentials:10000})).ok).toBe(true);
  expect(rpc.mock.calls[1][1].p_inputs.monthlyEssentials).toBe(0);
 });
@@ -132,7 +135,7 @@ it("accepts explicit zero essential costs without pretending a missing value was
 it("saves 71000 independently even if Budget is zero or cannot be read",async()=>{
  vi.mocked(loadBudget).mockRejectedValue(new Error("Budget must not be queried"));
  expect(await confirmHybridPlan({...input,monthly:71000,allocationMode:"safety_deadline"})).toEqual({ok:true});
- expect(loadBudget).not.toHaveBeenCalled();const args=rpc.mock.calls[0][1];expect(args.p_monthly).toBe(71000);expect(args.p_inputs.monthlySavings).toBe(71000);expect(args.p_inputs.budgetSource).toBe("standalone");expect(args.p_inputs.budget).toBeNull();
+ const args=rpc.mock.calls[0][1];expect(args.p_monthly).toBe(71000);expect(args.p_inputs.monthlyEssentials).toBe(0);expect(args.p_inputs.monthlySavings).toBe(71000);expect(args.p_inputs.budgetSource).toBe("standalone");expect(args.p_inputs.budget).toBeNull();
 });
 it("confirms scoped vehicle choices and recomputes totals on the server",async()=>{
  const goalId="00000000-0000-4000-8000-000000000001";
@@ -144,6 +147,19 @@ it("confirms scoped vehicle choices and recomputes totals on the server",async()
 it("rejects vehicle choices for an unknown goal before writing",async()=>{
  expect((await confirmHybridPlan({...input,allocationMode:"safety_deadline",vehicleOverrides:{"00000000-0000-4000-8000-000000000001":{"inv:foreign":1000}}})).ok).toBe(false);expect(rpc).not.toHaveBeenCalled();
 });
-it("persists and recomputes the standalone SIP start month without reading Budget",async()=>{
- const res=await confirmHybridPlan({...input,allocationMode:"safety_deadline",contributionStartMonth:"2027-01"});expect(res.ok).toBe(true);expect(loadBudget).not.toHaveBeenCalled();expect(rpc.mock.calls[0][1].p_inputs.contributionStartMonth).toBe("2027-01");
+it("persists and recomputes the standalone SIP start month",async()=>{
+ const res=await confirmHybridPlan({...input,allocationMode:"safety_deadline",contributionStartMonth:"2027-01"});expect(res.ok).toBe(true);expect(rpc.mock.calls[0][1].p_inputs.contributionStartMonth).toBe("2027-01");
+});
+
+it("paces the emergency fund from the saved budget's fixed costs, ignoring personal spending and savings",async()=>{
+ const { loadBudgetSheet } = await import("@/lib/budget-ratio-data");
+ vi.mocked(loadBudget).mockResolvedValue({budgetConfigured:true,recordIncome:100000,loanEmis:[],budget:{income:100000,costs:0,emis:0}} as never);
+ vi.mocked(loadBudgetSheet).mockResolvedValueOnce({saved:true,error:null,plan:{version:2,salary:100000,excludedLoanIds:[],rows:[
+  {id:"rent",name:"Rent",category:"fixed",mode:"amount",value:25000,loanId:null},
+  {id:"emi",name:"Loan EMI",category:"fixed",mode:"amount",value:5000,loanId:null},
+  {id:"fun",name:"Day-to-day",category:"personal",mode:"amount",value:20000,loanId:null},
+  {id:"sip",name:"Save & invest",category:"savings",mode:"amount",value:30000,loanId:null},
+ ]}} as never);
+ expect((await confirmHybridPlan({...input,allocationMode:"safety_deadline"})).ok).toBe(true);
+ expect(rpc.mock.calls[0][1].p_inputs.monthlyEssentials).toBe(30000);
 });

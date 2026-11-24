@@ -44,6 +44,8 @@ export function orderGoals<T extends TrackedGoal>(
     (a, b) =>
       Number(a.status === "reached" || !!a.completed) -
         Number(b.status === "reached" || !!b.completed) ||
+      // Same order as the SIP plan: emergency fund, then bills, then the rest.
+      Number(b.type === "emergency_fund") - Number(a.type === "emergency_fund") ||
       Number(!!b.billsFund) - Number(!!a.billsFund) ||
       Number(unattendedLoan(a)) - Number(unattendedLoan(b)) ||
       Number(essential(b)) - Number(essential(a)) ||

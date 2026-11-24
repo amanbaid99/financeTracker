@@ -1,5 +1,17 @@
 # Status
 
+
+## SIP planning matches Budget and Goals, 24 Nov 2026
+
+Checked the Budget → SIP plan → Goals chain with the owner's real data (read-only). Fixed:
+- Emergency pace in the safety_deadline engine (lib/hybrid-engine.ts): with fixed costs, each month funds a third of the gap to 1 month of costs plus a sixth of the gap to 3 months (stage cap, not the fund's slower pace). Fixed costs come from the saved budget's Essentials via `budgetEssentials` (lib/budget-sip-amount.ts) on the SIP page and again in `confirmHybridPlan`, so the preview and the saved plan match. No saved budget means 0 and the fund's own pace, as before.
+- After emergency: bills funds, then `PROGRESS_MINIMUM` (₹500) to every other live goal when the amount covers all of them (not loans the EMIs close), then nearest deadline first.
+- goal_first vehicle split: one holding per goal, two from ₹5,000 (lib/sip-plan.ts).
+- Goals page order (`orderGoals`): emergency fund, then bills funds, like the plan.
+- Owner's data (with their go-ahead): Marriage dated 2029-11-24, House 2036-11-24, all plan_rank cleared. Undated goals had been getting ₹0 in the plan.
+- Removed unused lib/simple-sip.ts, components/hybrid-planner.tsx, components/budget-sip-planner.tsx.
+- E2E updated for owner UI changes (compact ₹4L goal card, removed View monthly plan link, new no-salary budget header). Verification: npm run check (863 unit tests) and the full e2e pass.
+
 ## Consistent budget edits and planning reset, 24 Nov 2026
 
 Income and cost edits now use rebalanceBudgetEdit: keep the user’s chosen personal amount and calculate Save & invest as the remaining income. Dedicated personal/saving edits retain their existing behaviour. Negative room stays visible as overspending rather than negative saving. The shared Budget/SIP available target follows the recalculated amount.

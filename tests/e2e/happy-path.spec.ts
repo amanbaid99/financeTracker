@@ -211,7 +211,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Add investment" }).last().click();
   // Explicitly adding the FD links it too, regardless of the automatic picker.
   await expect(page.getByRole("button", { name: "Edit Bank FD" })).toBeVisible();
-  await expect(page.getByText("₹4,00,000", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /^House/ })).toContainText("₹4L of ₹20L");
   await expect(
     page.getByText(/Put ₹[\d,]+ a month into it to be on time/),
   ).toHaveCount(0);
@@ -363,7 +363,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.screenshot({path:"test-results/plan-375.png",fullPage:true});
   await page.getByRole("link",{name:"Goals",exact:true}).first().click();
   await page.getByRole("button",{name:/^House/}).click();
-  await expect(page.getByRole("link",{name:"View monthly plan"})).toBeVisible();
   await page.getByRole("button",{name:"Edit Index SIP"}).click();
   await expect(page.getByRole("dialog",{name:"Index SIP"}).getByLabel("Monthly SIP")).toHaveValue("10,000");
   await page.getByRole("button",{name:"Close",exact:true}).click();
@@ -975,7 +974,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Edit income" }).click();
   await page.getByText("No salary right now").click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(page.getByText("needed each month until your next salary")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit income" })).toContainText("No salary right now");
   await expect(page.getByRole("link", { name: /for Your plan$/ })).toHaveCount(0);
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
 

@@ -69,12 +69,11 @@ const input: SipWorksheetInput = {
 it("autofills goals and lists every linked vehicle, even when a suggestion is zero", () => {
   const s = sipWorksheet(input);
   expect(s.rows.retirement).toHaveLength(5);
-  expect(s.rows.retirement.map((v) => v.amount)).toEqual([
-    1200, 1200, 1200, 1200, 1200,
-  ]);
+  // Money goes into at most two holdings; the rest stay listed at ₹0.
+  expect(s.rows.retirement.map((v) => v.amount)).toEqual([5000, 5000, 0, 0, 0]);
   const low = sipWorksheet({ ...input, monthlySavings: 40000 });
   expect(low.rows.retirement).toHaveLength(5);
-  expect(low.rows.retirement.every((v) => v.amount === 0)).toBe(true);
+  expect(low.rows.retirement.filter((v) => v.amount > 0).length).toBeLessThanOrEqual(2);
 });
 it("keeps a vehicle exact while its goal and the remaining vehicles update", () => {
   const s = sipWorksheet({
@@ -82,20 +81,18 @@ it("keeps a vehicle exact while its goal and the remaining vehicles update", () 
     overrides: { retirement: 6800 },
     vehicleOverrides: { retirement: { "inv:fund0": 2000 } },
   });
-  expect(s.rows.retirement.map((v) => v.amount)).toEqual([
-    2000, 1200, 1200, 1200, 1200,
-  ]);
+  expect(s.rows.retirement.map((v) => v.amount)).toEqual([2000, 4800, 0, 0, 0]);
   expect(
     s.result.goals.find((g) => g.goalId === "retirement")!.recommendedMonthly,
   ).toBe(6800);
   expect(s.result.totalMonthlyAllocated).toBe(46000);
   expect(
     s.result.goals.find((g) => g.goalId === "travel")!.recommendedMonthly,
-  ).toBe(9200);
+  ).toBe(10000);
 });
-it("resplits a manually selected goal with the 1000 automatic minimum", () => {
+it("puts a small goal amount into one holding", () => {
   const s = sipWorksheet({ ...input, overrides: { retirement: 2400 } });
-  expect(s.rows.retirement.map((v) => v.amount)).toEqual([1200, 1200, 0, 0, 0]);
+  expect(s.rows.retirement.map((v) => v.amount)).toEqual([2400, 0, 0, 0, 0]);
 });
 it("manual vehicle floors survive restoration of a goal's automatic allocation", () => {
   const s = sipWorksheet({
@@ -228,12 +225,13 @@ it("fills the 71000 waterfall before later goals and takes edits from the tail",
   const amounts = (s: ReturnType<typeof sipWorksheet>) => Object.fromEntries(s.result.goals.map(g=>[g.goalId,g.recommendedMonthly]));
   const base = sipWorksheet(data);
   expect(base.result.fundingOrder).toEqual(["safety","payment","travel","marriage","retirement"]);
-  expect(amounts(base)).toEqual({safety:20000,payment:20000,travel:11000,marriage:20000,retirement:0});
+  // Every goal gets ₹500 first, so retirement isn't left at zero.
+  expect(amounts(base)).toEqual({safety:20000,payment:20000,travel:11000,marriage:19500,retirement:500});
   const edit = sipVehicleEdit("retirement","inv:fund0",5000,0,0,{},true);
   const changed = sipWorksheet({...data,...edit});
   expect(amounts(changed)).toEqual({safety:20000,payment:20000,travel:11000,marriage:15000,retirement:5000});
   const larger = sipWorksheet({...data,...sipVehicleEdit("retirement","inv:fund0",23000,5000,5000,edit.vehicleOverrides,true)});
-  expect(amounts(larger)).toEqual({safety:20000,payment:20000,travel:8000,marriage:0,retirement:23000});
+  expect(amounts(larger)).toEqual({safety:20000,payment:20000,travel:7500,marriage:500,retirement:23000});
   expect(larger.result.totalMonthlyAllocated).toBe(71000);
   expect(sipWorksheet({...data,goals:[...orderedGoals].reverse(),...edit})).toEqual(changed);
 });
