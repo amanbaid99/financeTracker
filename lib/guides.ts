@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-24",title:"Fewer Home reminders",items:[{title:"Goal date prompt removed",text:"Removed the Add dates to plan your goals reminder from Home."}]},
  {date:"2026-11-24",title:"Budget edits and a real fresh start",items:[{title:"Income changes update saving",text:"Income and fixed-cost edits keep your personal spending amount and update Save & invest. Reset budget clears monthly SIP planning too. Reset SIP plan is available separately, with confirmation."}]},
  {date:"2026-11-24",title:"Budget and SIP amounts together",items:[{title:"One starting amount",text:"Save & invest sets the SIP starting amount. Budget shows the same available total and any amount awaiting allocation. Review and save to confirm updated goal amounts."}]},
  {date:"2026-11-24",title:"Clearer monthly SIP bars",items:[{title:"Allocated versus required",text:"Goal cards show a monthly allocation bar, vehicle names and amount fields. Duplicate totals, holding labels and suggestion buttons are removed."}]},
