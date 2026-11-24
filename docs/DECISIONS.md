@@ -1,5 +1,9 @@
 # Product decisions
 
+## Budget-linked SIP default, 24 Nov 2026
+
+The owner now wants Budget Save & invest and SIP capacity to stay in sync. A saved income budget supplies the default editable SIP total and the available amount displayed on the saved-plan card. Confirmed allocations remain unchanged until review and confirmation; the card names any difference explicitly. No-salary or missing budgets preserve manual planning. Confirmation does not impose a Budget limit or rewrite Budget, holdings or transactions.
+
 ## Goal and vehicle SIP worksheet, 23 Nov 2026
 
 The standalone SIP screen now leads with a large editable monthly total. Each priority-ordered goal has its own total, projected coverage colour/bar and every linked monthly vehicle, including zero suggestions. Existing suitability sorting is extracted as goalFirstCandidates and reused. Goal edits resplit that goal's vehicles; vehicle edits adjust the parent goal total and redistribute the remaining capacity across unfixed goals. Dotted restore links release individual choices, while Reset amounts clears all choices. Invalid/over-budget edits remain visible and cannot be saved; their projections are neutral until corrected.

@@ -1,5 +1,11 @@
 # Status
 
+## Budget-linked SIP starting amount, 24 Nov 2026
+
+Per the owner’s latest request, saved income-budget Save & invest is now the shared available amount on Budget and the SIP editor, using budgetSipAmount and the existing sheet normalization. This supersedes the earlier editor default that always restored the older standalone total. Missing/no-salary budgets retain the last manual SIP amount; explicit saved zero remains zero. The editor stays editable and confirmation remains standalone, without a Budget ceiling or any change to actual holdings, contributions or budget records.
+
+Saved SIP goal/vehicle allocations stay immutable until confirmation. Budget shows the live available amount, the confirmed allocated amount and the exact remaining or over-budget difference, with Review plan. This avoids passing off unconfirmed money as already allocated. Opening Review starts with the updated Save & invest amount while preserving start month and existing choices. No new schema or hosted writes on page load. Verification: lint, TypeScript, 867 unit tests, 40 Python tests and production build pass. Tests cover shared targets, rule-row double-counting, explicit zero, manual fallback, read failures and both remaining/over-budget amounts. Mobile checks at 320/375/768px verify the exact ₹91,985/₹71,000/₹20,985 case, editable planning and the confirmed target. Full signed-in E2E remains unverified; no hosted financial records changed for testing.
+
 ## Clear monthly SIP allocation cards, 24 Nov 2026
 
 Replaced corpus projections and percentages on SIP cards with monthly allocation bars from ₹0 to calculated requiredMonthly. The allocated amount appears once above the bar; colour compares monthly allocated versus required, not future corpus. Removed duplicate header totals, per-row ownership labels, goal/vehicle suggestion buttons and reset CTAs. Bills use Scheduled payments rather than No target date. Amount inputs, priority ordering, start month, confirmation and saved snapshots remain.

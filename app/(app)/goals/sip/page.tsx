@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import { BackLink } from "@/components/back-link";
 import { SimpleSipPlanner } from "@/components/simple-sip-planner";
-import { loadGoals } from "@/lib/data";
+import { budgetSipAmount } from "@/lib/budget-sip-amount";
+import { loadBudgetSheet } from "@/lib/budget-ratio-data";
+import { loadGoals, loadBudget } from "@/lib/data";
 import { loadHybridContext } from "@/lib/hybrid-data";
 
 export const metadata: Metadata = { title: "Your monthly SIPs" };
 export default async function BudgetSipPage() {
-  const [d, c] = await Promise.all([loadGoals(), loadHybridContext()]);
+  const [d, c, b] = await Promise.all([loadGoals(), loadHybridContext(), loadBudget().catch(() => null)]);
+  const sheet = b ? await loadBudgetSheet(b.budget.income || b.recordIncome, b.loanEmis) : null;
+  const budgetMonthly = sheet && !sheet.error ? budgetSipAmount(sheet.plan, sheet.saved) : null;
   const prior = c.plans[0]?.inputs as
     | {
         budgetSource?: string;
@@ -35,11 +39,8 @@ export default async function BudgetSipPage() {
         investments={d.investments}
         links={d.links}
         today={d.today}
-        initialMonthly={
-          prior?.allocationMode === "safety_deadline"
-            ? (prior.monthlyPlanLimit ?? initialMonthly)
-            : initialMonthly
-        }
+        initialMonthly={budgetMonthly ?? initialMonthly}
+        budgetMonthly={budgetMonthly}
         initialOverrides={
           prior?.allocationMode === "safety_deadline"
             ? (prior.overrides ?? {})

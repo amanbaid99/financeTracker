@@ -17,3 +17,11 @@ it("shows a review reminder without changing confirmed amounts",()=>{
  const html=renderToStaticMarkup(createElement(SavedSipSummary,{result,startMonth:"2027-01",savedOn:"2026-11-24",today:"2027-01-01"}));
  expect(html).toContain("₹71,000");expect(html).toContain("Jan 2027");expect(html).toContain("Review plan");expect(html).toContain("saved amounts stay unchanged");
 });
+it("shows the budget target and the exact unallocated difference without rewriting allocations",()=>{
+ const result={totalMonthlyAllocated:71000,goals:[]} as unknown as HybridResult;const before=JSON.stringify(result);
+ const html=renderToStaticMarkup(createElement(SavedSipSummary,{result,budgetMonthly:91985}));
+ expect(html).toContain("₹91,985");expect(html).toContain("₹71,000 allocated");expect(html).toContain("₹20,985 to allocate");expect(html).toContain("Review plan");expect(JSON.stringify(result)).toBe(before);
+});
+it("clearly flags a saved plan that is above the revised budget",()=>{
+ const html=renderToStaticMarkup(createElement(SavedSipSummary,{result:{totalMonthlyAllocated:71000,goals:[]} as unknown as HybridResult,budgetMonthly:60000}));expect(html).toContain("₹11,000 over budget");
+});

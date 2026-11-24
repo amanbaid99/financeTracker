@@ -26,6 +26,7 @@ export function SimpleSipPlanner({
   links: currentLinks,
   today,
   initialMonthly,
+  budgetMonthly,
   initialStartMonth,
   initialOverrides = {},
   initialVehicleOverrides = {},
@@ -37,6 +38,7 @@ export function SimpleSipPlanner({
   links: Link[];
   today: string;
   initialMonthly: number | null;
+  budgetMonthly?: number | null;
   initialStartMonth?: string;
   initialOverrides?: Record<string, number>;
   initialVehicleOverrides?: VehicleOverrides;
@@ -219,6 +221,7 @@ export function SimpleSipPlanner({
           }}
           className="[&_input]:h-20 [&_input]:rounded-none [&_input]:border-0 [&_input]:bg-transparent [&_input]:pl-9 [&_input]:pr-0 [&_input]:text-4xl [&_input]:font-semibold [&_span]:left-0 [&_span]:text-3xl sm:[&_input]:text-5xl"
         />
+        {budgetMonthly != null && <p className="mt-2 text-xs text-muted-foreground">Save &amp; invest budget: {formatINR(budgetMonthly)} / month. Saving confirms this SIP plan only.</p>}
         <div className="my-4 space-y-1.5">
           <label htmlFor="sip-start-month" className="text-sm font-medium">Start contributions from</label>
           <Input id="sip-start-month" type="month" value={startMonth} onChange={e => {setStartMonth(e.target.value);setError("");}} />
@@ -227,7 +230,7 @@ export function SimpleSipPlanner({
         </div>
         <p className="text-xs text-muted-foreground">
           Goals fill in priority order. Vehicle edits use the lowest-priority
-          automatic money first. Budget stays separate.
+          automatic money first.
         </p>
         {result && !preview?.error && (
           <div className="mt-4 flex min-h-9 flex-wrap gap-x-4 gap-y-1 border-t pt-3 text-sm">

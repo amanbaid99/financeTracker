@@ -131,6 +131,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-24",title:"Budget and SIP amounts together",items:[{title:"One starting amount",text:"Save & invest sets the SIP starting amount. Budget shows the same available total and any amount awaiting allocation. Review and save to confirm updated goal amounts."}]},
  {date:"2026-11-24",title:"Clearer monthly SIP bars",items:[{title:"Allocated versus required",text:"Goal cards show a monthly allocation bar, vehicle names and amount fields. Duplicate totals, holding labels and suggestion buttons are removed."}]},
  {date:"2026-11-24",title:"Choose when SIPs start",items:[{title:"Plan ahead, then leave it steady",text:"Choose a start month in the SIP planner. Budget keeps your confirmed amounts and shows a monthly review reminder from that month onward. Nothing changes until you confirm."}]},
  {date:"2026-11-23",title:"Simpler goal editing",items:[{title:"Remove goals you no longer need",text:"Removed the Goal completed checkbox. Delete a goal from its details when you no longer need it; its investments stay."}]},
