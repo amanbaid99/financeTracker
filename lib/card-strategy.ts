@@ -86,3 +86,111 @@ export function cardStrategy(card: Card): CardStrategy {
     };
   return { useFor: "", remember: "" };
 }
+
+export interface SpendGuideGroup {
+  id: string;
+  title: string;
+  rows: {
+    label: string;
+    cardId: string;
+    cardName: string;
+    reason: string;
+    limit: string;
+  }[];
+}
+
+/** A small saved-benefit reference, not a live reward comparison. */
+export function cardSpendGuide(cards: Card[]): SpendGuideGroup[] {
+  const confirmed = (part: string) =>
+    cards.find((c) => {
+      if (!c.label.toLowerCase().includes(part) || !c.featureDetails)
+        return false;
+      // Personal free-text notes never establish an issuer reward rate.
+      return !!cardStrategy({
+        ...c,
+        featureDetails: { ...c.featureDetails, strategy: undefined },
+      }).useFor;
+    });
+  const amazon = confirmed("amazon"),
+    sbi = confirmed("phonepe"),
+    hdfc = confirmed("millennia"),
+    hsbc = confirmed("travelone");
+  const row = (card: Card, label: string, reason: string, limit: string) => ({
+    label,
+    cardId: card.id,
+    cardName: card.label,
+    reason,
+    limit,
+  });
+  const groups: SpendGuideGroup[] = [
+    {
+      id: "online",
+      title: "Online shopping",
+      rows: [
+        ...(amazon
+          ? [
+              row(
+                amazon,
+                "Amazon",
+                "5% cashback",
+                "Eligible Amazon purchases; check eligibility.",
+              ),
+            ]
+          : []),
+        ...(sbi
+          ? [
+              row(
+                sbi,
+                "Other online",
+                "5% cashback",
+                "₹1,000/month cap. Excludes rent, gold, wallets and EMIs.",
+              ),
+            ]
+          : []),
+      ],
+    },
+    {
+      id: "bills",
+      title: "Utilities & recharges",
+      rows: sbi
+        ? [
+            row(
+              sbi,
+              "Pay through PhonePe",
+              "10% back",
+              "Eligible PhonePe in-app spends: ₹1,500/month shared non-insurance cap. Insurance has a separate ₹500/month cap.",
+            ),
+          ]
+        : [],
+    },
+    {
+      id: "food",
+      title: "Food delivery",
+      rows: hdfc
+        ? [
+            row(
+              hdfc,
+              "Swiggy & Zomato",
+              "5% cashback",
+              "₹1,000/month shared partner cap. ₹50 per cashback redemption.",
+            ),
+          ]
+        : [],
+    },
+    {
+      id: "travel",
+      title: "Travel & forex",
+      rows: hsbc
+        ? [
+            row(
+              hsbc,
+              "Flights & foreign spends",
+              "4 points / ₹100",
+              "Eligible travel/forex; accelerated cap 50,000 points/month. Your Accor value: ₹1.80/point. Compare booking prices and forex charges.",
+            ),
+          ]
+        : [],
+    },
+  ];
+  return groups.filter((g) => g.rows.length);
+}

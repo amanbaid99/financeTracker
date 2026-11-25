@@ -76,7 +76,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro:
       "Your credit cards and how close you are to fee waivers and bonus points. Nothing here counts as money you owe.",
     steps: [
-      "Card strategy is a personal reference. Open it for reminders, then Edit to change or hide one. It does not compare purchases or track reward caps.",
+      "Which card to use groups a few confirmed choices by spend type: online shopping, utilities, food delivery and travel. Limits stay collapsed. It does not compare purchases or track reward caps.",
       "Open a card to track lounge visits and check its access conditions.",
       "Each card shows its milestone target, amount left and deadline straight away. Cards with every milestone reached sit below unfinished cards. Cards without milestones come last. A new milestone period moves a card back up automatically.",
       "Add a card with its name, annual fee, card-year start and optional lounge allowances. Add spend milestones separately. Never enter the card number.",
@@ -135,6 +135,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-25",title:"Fewer card decisions",items:[{title:"Choose by spend type",text:"A few useful spend categories replace long card-by-card notes. One card per use, one short reason, and limits tucked away."}]},
  {date:"2026-11-25",title:"Milestone cards first",items:[{title:"A simpler card order",text:"Cards without milestones now sit at the bottom automatically, with no empty milestone panel until opened."}]},
  {date:"2026-11-25",title:"Your card strategy, kept simple",items:[{title:"A quick reference",text:"A compact Card strategy section holds editable reminders for where to use each card. Refreshed card panels make spend progress, milestones and Log bill easier to scan."}]},
  {date:"2026-11-25",title:"Just the card essentials",items:[{title:"Milestones, bills and lounges",text:"Cards now focuses on spend targets, fee waivers, statement logs and lounge visits. One short form replaces reward setup and comparisons."}]},

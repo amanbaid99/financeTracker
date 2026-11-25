@@ -1,5 +1,9 @@
 # Status
 
+## Spend-type card reference, 25 Nov 2026
+
+Replaces the long per-card strategy notes and editor with four intentional spend groups: online shopping (Amazon and other online), utilities/recharges, food delivery, and travel/forex. Each use has one matching confirmed card and a brief reward line. Caps/conditions stay under one collapsed details section. Unsupported categories such as fuel are omitted. Retains saved personal notes and existing storage without modifying hosted records. No live comparisons, AI or transaction tracking. Verification: 16 targeted unit tests, lint, TypeScript and production build pass; real-component browser checks cover four groups, five choices, collapsed caps and no overflow at 320/375/768px.
+
 ## No-milestone card ordering, 25 Nov 2026
 
 Cards without milestones now appear after unfinished and fully reached milestone cards. Empty milestone panels and add prompts stay hidden until opened; bill logging, settings and lounges remain available. No manual no-milestone flag or data changes.
