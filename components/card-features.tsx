@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  CardReadingProgress,
+  type CardReadingStage,
+} from "@/components/card-reading-progress";
 import { BenefitEditor } from "@/components/card-benefit-editor";
 import {
   emptyBenefits,
@@ -479,12 +483,16 @@ export function CardFeaturesSheet({
   const [error, setError] = useState("");
   const [review, setReview] = useState<Review | null>(null);
   const [needsAi, setNeedsAi] = useState(false);
-  const [pending, start] = useTransition();
+  const [pending, setPending] = useState(false);
+  const [stage, setStage] = useState<CardReadingStage>("features");
 
-  const read = (allowAi = false) =>
-    start(async () => {
-      setError("");
+  const read = async (allowAi = false) => {
+    if (pending) return;
+    setPending(true);
+    setError("");
+    try {
       if (allowAi) {
+        setStage("permission");
         const on = await setAskEnabled(true);
         if (!on.ok) return setError(on.error ?? "Couldn't turn on AI.");
         setNeedsAi(false);
@@ -493,6 +501,7 @@ export function CardFeaturesSheet({
       if (mode === "pdf") {
         if (!file) return setError("Pick the card's features PDF first.");
         try {
+          setStage("pdf");
           source = await pdfText(file, password);
         } catch (e) {
           if ((e as { code?: string }).code === "password")
@@ -502,6 +511,7 @@ export function CardFeaturesSheet({
           );
         }
       }
+      setStage("features");
       const res = await extractCardFeatures({ text: source });
       if (!res.ok) {
         if (res.needsAi) return setNeedsAi(true);
@@ -524,7 +534,14 @@ export function CardFeaturesSheet({
             : "Typed or pasted features";
       }
       setReview(res.review);
-    });
+    } catch {
+      setError(
+        "Couldn't finish reading. Your text or file is still here. Try again.",
+      );
+    } finally {
+      setPending(false);
+    }
+  };
 
   return (
     <Sheet
@@ -540,162 +557,167 @@ export function CardFeaturesSheet({
       {review ? (
         <ReviewStep card={card} review={review} onDone={onClose} />
       ) : (
-        <div className="space-y-4">
-          <div
-            className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
-            role="tablist"
-            aria-label="How to add features"
-          >
-            {(
-              [
-                ["pdf", "Upload PDF"],
-                ["text", "Paste features"],
-              ] as const
-            ).map(([v, l]) => (
-              <button
-                key={v}
-                type="button"
-                role="tab"
-                aria-selected={mode === v}
-                onClick={() => setMode(v)}
-                className={cn(
-                  "min-h-11 rounded-md px-2 py-1.5 text-sm",
-                  mode === v
-                    ? "bg-card font-medium shadow-sm"
-                    : "text-muted-foreground",
-                )}
-              >
-                {l}
-              </button>
-            ))}
-          </div>
+        <>
+          {pending && (
+            <CardReadingProgress stage={stage} isPdf={mode === "pdf"} />
+          )}
+          <div className="space-y-4" hidden={pending}>
+            <div
+              className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+              role="tablist"
+              aria-label="How to add features"
+            >
+              {(
+                [
+                  ["pdf", "Upload PDF"],
+                  ["text", "Paste features"],
+                ] as const
+              ).map(([v, l]) => (
+                <button
+                  key={v}
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === v}
+                  onClick={() => setMode(v)}
+                  className={cn(
+                    "min-h-11 rounded-md px-2 py-1.5 text-sm",
+                    mode === v
+                      ? "bg-card font-medium shadow-sm"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
 
-          {mode === "pdf" ? (
-            <div className="space-y-3" role="tabpanel">
-              <Field
-                label="Card features PDF"
-                htmlFor="f-pdf"
-                hint="The bank's key facts, benefits guide or MITC. Not a statement."
-              >
-                <Input
-                  id="f-pdf"
-                  type="file"
-                  accept="application/pdf"
-                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                />
-              </Field>
-              {askPassword && (
-                <Field label="PDF password" htmlFor="f-pass">
+            {mode === "pdf" ? (
+              <div className="space-y-3" role="tabpanel">
+                <Field
+                  label="Card features PDF"
+                  htmlFor="f-pdf"
+                  hint="The bank's key facts, benefits guide or MITC. Not a statement."
+                >
                   <Input
-                    id="f-pass"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    id="f-pdf"
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(e) => setFile(e.target.files?.[0] ?? null)}
                   />
                 </Field>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-3" role="tabpanel">
-              <p className="text-sm text-muted-foreground">
-                No document? Type the features you know or paste information
-                from your preferred AI tool. Check it against official sources
-                before saving.
-              </p>
-              <Field
-                label="Card features or researched answer"
-                htmlFor="f-text"
-                hint="Public card terms only. Leave out personal details and card numbers."
-              >
-                <textarea
-                  id="f-text"
-                  rows={7}
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  maxLength={40000}
-                  placeholder="Paste rewards, caps, exclusions and lounge benefits, with official links if available."
-                  className="w-full rounded-lg border border-input bg-card px-3 py-2 text-base sm:text-sm"
-                />
-              </Field>
-              <Button
-                type="button"
-                variant="outline"
-                className="min-h-11 w-full"
-                onClick={copyPrompt}
-              >
-                Copy AI research prompt
-              </Button>
-              {copyStatus && (
-                <p role="status" className="text-xs text-muted-foreground">
-                  {copyStatus}
+                {askPassword && (
+                  <Field label="PDF password" htmlFor="f-pass">
+                    <Input
+                      id="f-pass"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                  </Field>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3" role="tabpanel">
+                <p className="text-sm text-muted-foreground">
+                  No document? Type the features you know or paste information
+                  from your preferred AI tool. Check it against official sources
+                  before saving.
                 </p>
-              )}
-              <details className="text-sm">
-                <summary className="min-h-11 cursor-pointer py-3 text-primary">
-                  View prompt
-                </summary>
-                <textarea
-                  aria-label="AI research prompt"
-                  readOnly
-                  value={CARD_RESEARCH_PROMPT}
-                  rows={9}
-                  onFocus={(e) => e.target.select()}
-                  className="w-full rounded-lg border bg-card p-3 text-sm"
-                />
-              </details>
-            </div>
-          )}
-
-          <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-            AI reads this twice and every fact is checked against your text.
-            Card numbers, emails and phone numbers are masked first. The PDF
-            isn&apos;t kept. Reviewed terms are saved only after you confirm.
-          </p>
-          {error && (
-            <p
-              role="alert"
-              className="rounded-lg bg-danger-soft p-2 text-sm text-danger"
-            >
-              {error}
-            </p>
-          )}
-          {needsAi ? (
-            <div className="space-y-3 rounded-lg border border-primary p-3 text-sm">
-              <p className="font-medium">Allow AI to read this?</p>
-              <p className="text-muted-foreground">
-                The text is sent to AI models through OpenRouter, with card
-                numbers, emails and phone numbers masked. This turns on the same
-                AI switch as Ask, which you can turn off in Settings.
-              </p>
-              <div className="grid grid-cols-2 gap-2">
+                <Field
+                  label="Card features or researched answer"
+                  htmlFor="f-text"
+                  hint="Public card terms only. Leave out personal details and card numbers."
+                >
+                  <textarea
+                    id="f-text"
+                    rows={7}
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    maxLength={40000}
+                    placeholder="Paste rewards, caps, exclusions and lounge benefits, with official links if available."
+                    className="w-full rounded-lg border border-input bg-card px-3 py-2 text-base sm:text-sm"
+                  />
+                </Field>
                 <Button
                   type="button"
                   variant="outline"
-                  disabled={pending}
-                  onClick={() => setNeedsAi(false)}
+                  className="min-h-11 w-full"
+                  onClick={copyPrompt}
                 >
-                  Not now
+                  Copy AI research prompt
                 </Button>
-                <Button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => read(true)}
-                >
-                  {pending ? "Reading…" : "Allow and read"}
-                </Button>
+                {copyStatus && (
+                  <p role="status" className="text-xs text-muted-foreground">
+                    {copyStatus}
+                  </p>
+                )}
+                <details className="text-sm">
+                  <summary className="min-h-11 cursor-pointer py-3 text-primary">
+                    View prompt
+                  </summary>
+                  <textarea
+                    aria-label="AI research prompt"
+                    readOnly
+                    value={CARD_RESEARCH_PROMPT}
+                    rows={9}
+                    onFocus={(e) => e.target.select()}
+                    className="w-full rounded-lg border bg-card p-3 text-sm"
+                  />
+                </details>
               </div>
-            </div>
-          ) : (
-            <Button
-              type="button"
-              className="w-full"
-              disabled={pending}
-              onClick={() => read()}
-            >
-              {pending ? "Reading…" : "Read features"}
-            </Button>
-          )}
-        </div>
+            )}
+
+            <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+              AI reads this twice and every fact is checked against your text.
+              Card numbers, emails and phone numbers are masked first. The PDF
+              isn&apos;t kept. Reviewed terms are saved only after you confirm.
+            </p>
+            {error && (
+              <p
+                role="alert"
+                className="rounded-lg bg-danger-soft p-2 text-sm text-danger"
+              >
+                {error}
+              </p>
+            )}
+            {needsAi ? (
+              <div className="space-y-3 rounded-lg border border-primary p-3 text-sm">
+                <p className="font-medium">Allow AI to read this?</p>
+                <p className="text-muted-foreground">
+                  The text is sent to AI models through OpenRouter, with card
+                  numbers, emails and phone numbers masked. This turns on the
+                  same AI switch as Ask, which you can turn off in Settings.
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={pending}
+                    onClick={() => setNeedsAi(false)}
+                  >
+                    Not now
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={pending}
+                    onClick={() => read(true)}
+                  >
+                    {pending ? "Reading…" : "Allow and read"}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                className="w-full"
+                disabled={pending}
+                onClick={() => read()}
+              >
+                {pending ? "Reading…" : "Read features"}
+              </Button>
+            )}
+          </div>
+        </>
       )}
     </Sheet>
   );

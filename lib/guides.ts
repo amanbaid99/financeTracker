@@ -133,6 +133,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-25",title:"A clearer card reader",items:[{title:"See what is happening",text:"An animated reading screen shows PDF extraction, feature checking and the review step. Nothing is saved until you confirm."}]},
  {date:"2026-11-25",title:"Card benefits, checked by you",items:[{title:"Which card and lounge visits",text:"Read a brochure, check the extracted terms and save. Compare published cashback by category and track lounge visits with a simple manual log. Detailed conditions stay tucked away and are available to Ask."}]},
  {date:"2026-11-25",title:"A small SIP requirement hint",items:[{title:"Required a month",text:"Each goal in Budget shows its required monthly SIP in small text. No extra analysis or action buttons."}]},
  {date:"2026-11-25",title:"Adjust each goal’s fund split",items:[{title:"Keep the total, choose the funds",text:"Adjust split opens a sheet with the goal total fixed. Change a fund amount and the others adjust. Save split keeps the preference and updates the investment mix. No extra amount boxes on the Budget summary."}]},
