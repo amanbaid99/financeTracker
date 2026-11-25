@@ -9,9 +9,9 @@
 
 Holdings can be marked "Not adding new money" (checkbox in components/investment-sheet.tsx, stored as `noNewMoney` in `holdings.planning_details`, no migration). Such holdings are left out of the Budget SIP split and the SIP vehicle candidates in lib/sip-plan.ts, but still count in net worth and goal coverage. The form now always sends planning details, keeping existing availability fields. The split under each goal on Your SIPs is now a small list (name left, amount right).
 
-## Saving and investing stats on Net worth, 25 Nov 2026
+## Saving and investing stats on Your SIPs, 25 Nov 2026
 
-Net worth starts with two tiles (components/money-flow.tsx, lib/money-flow.ts): Saved a month (Save & invest from the saved budget, with % of take-home; hidden with no salary) and Into investments (Your SIPs total on Budget, falling back to holdings' monthly SIPs), with what's saved but not in a SIP. Both link to Budget. Unit tests in tests/unit/money-flow.test.ts.
+The owner wanted these by the SIP section, not on Net worth (first placed there, then removed). Your SIPs on Budget (components/budget-sips.tsx) opens with two tiles: Saved a month (Save & invest, % of take-home) and Into investments (the live SIP total, % of what you save). They replace the old header line and total.
 
 ## SIP split across a goal's funds, 25 Nov 2026
 

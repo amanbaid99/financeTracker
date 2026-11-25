@@ -397,6 +397,7 @@ export function BudgetExperience({
         key={JSON.stringify(plan.sips ?? [])}
         rows={plan.sips ?? []}
         budgetMonthly={budgetSipAmount(plan)}
+        salary={plan.noSalary ? 0 : plan.salary}
         goals={goals}
         pending={pending}
         error={editing ? "" : error}

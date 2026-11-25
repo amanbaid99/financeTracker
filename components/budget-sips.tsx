@@ -25,6 +25,7 @@ type GoalOption = {
 export function BudgetSips({
   rows,
   budgetMonthly,
+  salary = 0,
   goals,
   pending,
   error,
@@ -33,6 +34,8 @@ export function BudgetSips({
   rows: SipRow[];
   /** Save & invest a month from the budget, or null with no salary. */
   budgetMonthly: number | null;
+  /** Take-home a month, for the saving rate; 0 with no salary. */
+  salary?: number;
   goals: GoalOption[];
   pending: boolean;
   error: string;
@@ -62,21 +65,35 @@ export function BudgetSips({
       aria-label="Your SIPs"
       className="surface-card space-y-3 rounded-2xl border bg-card p-4"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h3 className="font-semibold">Your SIPs</h3>
-          <p className="text-xs text-muted-foreground">
-            {budgetMonthly !== null
-              ? `Save & invest ${formatINR(budgetMonthly)} a month`
-              : "No salary right now"}
+      <h3 className="font-semibold">Your SIPs</h3>
+      <div
+        aria-label="Each month"
+        role="group"
+        className="grid grid-cols-2 gap-2"
+      >
+        <div className="rounded-xl bg-muted/60 p-3">
+          <p className="text-xs text-muted-foreground">Saved a month</p>
+          <p className="tabular mt-0.5 text-lg font-semibold">
+            {budgetMonthly !== null ? formatINR(budgetMonthly) : "No salary"}
           </p>
+          {budgetMonthly !== null && salary > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {Math.round((budgetMonthly / salary) * 100)}% of take-home
+            </p>
+          )}
         </div>
-        <span className="tabular shrink-0 text-right text-sm font-semibold">
-          {formatINR(status.assigned)}
-          <span className="block text-xs font-normal text-muted-foreground">
-            a month
-          </span>
-        </span>
+        <div className="rounded-xl bg-muted/60 p-3">
+          <p className="text-xs text-muted-foreground">Into investments</p>
+          <p className="tabular mt-0.5 text-lg font-semibold">
+            {formatINR(status.assigned)}
+          </p>
+          {budgetMonthly !== null && budgetMonthly > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {Math.round((status.assigned / budgetMonthly) * 100)}% of what you
+              save
+            </p>
+          )}
+        </div>
       </div>
 
       {goals.length === 0 ? (

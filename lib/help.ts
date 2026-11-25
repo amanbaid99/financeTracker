@@ -189,7 +189,7 @@ export const HELP: HelpTopic[] = [
     a: [
       "On Budget, under Fixed spending, Your SIPs lists each of your goals with an amount box. Type how much you'll put towards each goal a month, leave a box empty for ₹0, then tap Save SIPs. Undo puts back what you saved. Nothing is suggested or filled in for you.",
       "If a goal is covered by more than one fund or account, a short list under its box splits the amount equally between them, for example ₹6,000 each for two funds. Fixed deposits and EPF are left out, since they don't take a monthly SIP. So is any holding marked Not adding new money: open it on Net worth, tick that box and save.",
-      "The card shows your total and compares it with Save & invest: all assigned, ₹X left to assign, or ₹X more than your budget sets aside. When Save & invest changes later, your SIP amounts change in the same proportion.",
+      "At the top, Saved a month is your Save & invest amount and its share of take-home, and Into investments is the total of your SIPs and its share of what you save. Below the goals, the card compares your total with Save & invest: all assigned, ₹X left to assign, or ₹X more than your budget sets aside. When Save & invest changes later, your SIP amounts change in the same proportion.",
       "Goals shows each goal's monthly amount from your SIPs, and whether it's enough to be on time. These are plans only. Set up SIPs with your provider.",
     ],
     tags: "budget sip save invest monthly allocation plan",
@@ -215,17 +215,6 @@ export const HELP: HelpTopic[] = [
       "Net worth uses recorded holdings and loan balances. It does not show a performance chart.",
     ],
     tags: "assets loans owe history chart",
-  },
-  {
-    id: "money-flow",
-    section: "Net worth",
-    q: "What are Saved a month and Into investments?",
-    a: [
-      "Two numbers at the top of Net worth. Saved a month is Save & invest from your Budget, with its share of your take-home.",
-      "Into investments is the total of Your SIPs on Budget. If you haven't set any there, it uses the monthly SIPs on your holdings. The line under it shows how much you save but haven't put into a SIP yet.",
-      "Tap either one to open Budget. With no salary, Saved a month is left out.",
-    ],
-    tags: "saving rate savings invest SIP monthly stats",
   },
   {
     id: "liquid",

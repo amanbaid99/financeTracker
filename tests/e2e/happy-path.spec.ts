@@ -587,10 +587,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await tab("Net worth").click();
   await expect(page.getByRole("heading", { name: "Net worth", exact: true })).toBeVisible();
   // Net worth shows both sides: what you own and what you owe on loans.
-  // Saved a month and Into investments (the SIPs set on Budget).
-  const flow = page.getByRole("region", { name: "Each month" });
-  await expect(flow.getByText("Saved a month")).toBeVisible();
-  await expect(flow.getByText("Into investments")).toBeVisible();
   await expect(page.getByRole("region", { name: "What you owe" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "What you own" })).toBeVisible();
   await expect(page.getByText("Where your money is")).toBeVisible();
@@ -962,6 +958,10 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await sipCard.getByRole("button", { name: "Save SIPs" }).click();
   await expect(page.getByText("SIPs saved.")).toBeVisible();
   await expect(sipCard.getByLabel("House SIP a month")).toHaveValue("12,000");
+  // Saved a month and Into investments sit at the top of Your SIPs.
+  const flow = sipCard.getByRole("group", { name: "Each month" });
+  await expect(flow.getByText("Saved a month")).toBeVisible();
+  await expect(flow.getByText("₹12,000", { exact: true })).toBeVisible();
   // Each goal's amount is split equally across the funds covering it.
   const houseSplit = sipCard.getByRole("list", { name: "House split" });
   await expect(houseSplit.getByRole("listitem").first()).toContainText("Index SIP");
@@ -973,12 +973,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: /^House/ }).click();
   await expect(page.getByText(/^₹12,000$/).first()).toBeVisible();
   await expect(page.getByRole("link", { name: /a month from your SIPs/ })).toBeVisible();
-  // Net worth's Into investments follows Your SIPs.
-  await page.goto("/assets");
-  await expect(
-    page.getByRole("region", { name: "Each month" }).getByText("₹12,000", { exact: true }),
-  ).toBeVisible();
-  await page.screenshot({ path: "test-results/assets-375.png" });
+
   await page.goto("/goals/budget");
   // Between jobs: no salary makes the budget just monthly costs.
   await page.getByRole("button", { name: "Edit income" }).click();

@@ -9,10 +9,7 @@ import { PortfolioOverview } from "@/components/portfolio-overview";
 import { PortfolioHoldings } from "@/components/portfolio-holdings";
 import { UpdateButton } from "@/components/update-values";
 import { buttonVariants } from "@/components/ui/button";
-import { loadBudget, loadGoals, loadLoans, loadCurrentNetWorth, loadSnapshot } from "@/lib/data";
-import { loadBudgetSheet } from "@/lib/budget-ratio-data";
-import { moneyFlow } from "@/lib/money-flow";
-import { MoneyFlowStats } from "@/components/money-flow";
+import { loadGoals, loadLoans, loadCurrentNetWorth, loadSnapshot } from "@/lib/data";
 import { OweList } from "@/components/owe-list";
 import { NetWorthCard } from "@/components/net-worth-card";
 // import { AI_CONSENT_VERSION } from "@/lib/legal";
@@ -32,15 +29,13 @@ export default async function PortfolioPage({
   const { do: action,category } = await searchParams;
   const initialCategory=action==="add"?cueCategory(category):null;
   // One snapshot for everything here (shared with the layout).
-  const [{ investments, links, goals, today, allocation }, snap, worth, loans, b] =
+  const [{ investments, links, goals, today, allocation }, snap, worth, loans] =
     await Promise.all([
       loadGoals(),
       loadSnapshot(),
       loadCurrentNetWorth(),
       loadLoans(),
-      loadBudget(),
     ]);
-  const sheet = await loadBudgetSheet(b.budget.income || b.recordIncome, b.loanEmis);
   const importHistory = { data: snap.settings, error: null };
   // The AI portfolio review is hidden for now. To bring it back, uncomment
   // this (and the imports above) and pass review={reviewCard} below.
@@ -63,7 +58,6 @@ export default async function PortfolioPage({
   //   />
   // );
   const p = buildPortfolio(investments);
-  const flow = moneyFlow(sheet.plan, sheet.saved, p.monthlySips);
   const goalNames = new Map(goals.map((g) => [g.id, g.name]));
   // Every investment, with the goals it counts toward (if any).
   const updatable = investments.map((i) => ({
@@ -126,7 +120,6 @@ export default async function PortfolioPage({
         />
       )}
 
-      <MoneyFlowStats flow={flow} />
       <NetWorthCard history={[{ day: today, ...worth }]} />
       <OweList loans={loans} today={today} />
       <section aria-labelledby="own-h" className="space-y-2">
