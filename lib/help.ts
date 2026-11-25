@@ -217,6 +217,17 @@ export const HELP: HelpTopic[] = [
     tags: "assets loans owe history chart",
   },
   {
+    id: "money-flow",
+    section: "Net worth",
+    q: "What are Saved a month and Into investments?",
+    a: [
+      "Two numbers at the top of Net worth. Saved a month is Save & invest from your Budget, with its share of your take-home.",
+      "Into investments is the total of Your SIPs on Budget. If you haven't set any there, it uses the monthly SIPs on your holdings. The line under it shows how much you save but haven't put into a SIP yet.",
+      "Tap either one to open Budget. With no salary, Saved a month is left out.",
+    ],
+    tags: "saving rate savings invest SIP monthly stats",
+  },
+  {
     id: "liquid",
     section: "Net worth",
     q: "What counts as liquid money?",

@@ -5,6 +5,10 @@
 
 
 
+## Saving and investing stats on Net worth, 25 Nov 2026
+
+Net worth starts with two tiles (components/money-flow.tsx, lib/money-flow.ts): Saved a month (Save & invest from the saved budget, with % of take-home; hidden with no salary) and Into investments (Your SIPs total on Budget, falling back to holdings' monthly SIPs), with what's saved but not in a SIP. Both link to Budget. Unit tests in tests/unit/money-flow.test.ts.
+
 ## SIP split across a goal's funds, 25 Nov 2026
 
 Your SIPs shows a muted line under each goal with an amount, splitting it equally (whole rupees, `equalSplit` in lib/budget-sips.ts) across the holdings covering that goal, excluding FDs and EPF. The Budget page passes each goal's vehicles from `lines`. Display only: saved rows stay one per goal. Unit test and e2e cover it.

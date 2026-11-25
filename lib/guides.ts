@@ -132,6 +132,9 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-25", title: "Saving and investing at a glance", items: [
+    { title: "On Net worth", text: "Net worth now opens with what you save a month and how much of it goes into investments." },
+  ] },
   { date: "2026-11-25", title: "SIPs on your Budget", items: [
     { title: "Set them by hand", text: "Your SIPs sits under Fixed spending: one amount box per goal. It shows what's left to assign." },
     { title: "Follows Save & invest", text: "Change Save & invest and your SIPs change with it." },
