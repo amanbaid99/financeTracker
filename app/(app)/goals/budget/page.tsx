@@ -42,7 +42,10 @@ export default async function BudgetPage() {
           // Funds covering the goal that can take monthly money.
           vehicles: x.lines
             .filter(
-              (l) => l.investment.kind !== "fd" && l.investment.kind !== "epf",
+              (l) =>
+                l.investment.kind !== "fd" &&
+                l.investment.kind !== "epf" &&
+                !l.investment.noNewMoney,
             )
             .map((l) => holdingLabel(l.investment)),
         }))}

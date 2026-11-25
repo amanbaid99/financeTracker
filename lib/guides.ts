@@ -133,6 +133,7 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   { date: "2026-11-25", title: "Saving and investing at a glance", items: [
+    { title: "Stop new money into a holding", text: "Tick Not adding new money on a holding you're keeping but not adding to. It stays in your net worth and goals, and your SIPs skip it." },
     { title: "On Net worth", text: "Net worth now opens with what you save a month and how much of it goes into investments." },
   ] },
   { date: "2026-11-25", title: "SIPs on your Budget", items: [

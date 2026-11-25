@@ -17,6 +17,8 @@ export interface Investment {
   availability?: "available"|"locked"|"pledged"|"unavailable";
   accessibleOn?: string|null;
   valuationDate?: string|null;
+  /** Kept, but no new money goes in: left out of SIP splits and suggestions. */
+  noNewMoney?: boolean;
   id: string;
   kind: string;
   name: string | null;

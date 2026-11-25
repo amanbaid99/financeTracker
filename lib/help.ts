@@ -188,7 +188,7 @@ export const HELP: HelpTopic[] = [
     q: "How do I plan my monthly SIPs?",
     a: [
       "On Budget, under Fixed spending, Your SIPs lists each of your goals with an amount box. Type how much you'll put towards each goal a month, leave a box empty for ₹0, then tap Save SIPs. Undo puts back what you saved. Nothing is suggested or filled in for you.",
-      "If a goal is covered by more than one fund or account, a small line under its box splits the amount equally between them, for example ₹6,000 each for two funds. Fixed deposits and EPF are left out, since they don't take a monthly SIP.",
+      "If a goal is covered by more than one fund or account, a short list under its box splits the amount equally between them, for example ₹6,000 each for two funds. Fixed deposits and EPF are left out, since they don't take a monthly SIP. So is any holding marked Not adding new money: open it on Net worth, tick that box and save.",
       "The card shows your total and compares it with Save & invest: all assigned, ₹X left to assign, or ₹X more than your budget sets aside. When Save & invest changes later, your SIP amounts change in the same proportion.",
       "Goals shows each goal's monthly amount from your SIPs, and whether it's enough to be on time. These are plans only. Set up SIPs with your provider.",
     ],

@@ -963,7 +963,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText("SIPs saved.")).toBeVisible();
   await expect(sipCard.getByLabel("House SIP a month")).toHaveValue("12,000");
   // Each goal's amount is split equally across the funds covering it.
-  await expect(sipCard.getByText(/Index SIP ₹[\d,]+/)).toBeVisible();
+  const houseSplit = sipCard.getByRole("list", { name: "House split" });
+  await expect(houseSplit.getByRole("listitem").first()).toContainText("Index SIP");
+  await expect(houseSplit.getByRole("listitem").first()).toContainText(/₹[\d,]+/);
   await expect(sipCard.getByText(/left to assign|assigned|more than your budget/)).toBeVisible();
   await page.screenshot({ path: "test-results/budget-375.png", fullPage: true });
   // Goals shows what the SIPs put into each goal.

@@ -294,6 +294,7 @@ export function goalFirstCandidates(
   let candidates = investments.filter(
     (i) =>
       linked.has(i.id) &&
+      !i.noNewMoney &&
       (ASSUME_HOLDINGS_WITHDRAWABLE ||
         !i.availability ||
         i.availability === "available") &&

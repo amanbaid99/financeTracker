@@ -6,7 +6,7 @@ import { Field } from "@/components/forms/field";
 import { MoneyInput } from "@/components/money-input";
 import { Sheet } from "@/components/sheet";
 import { Button } from "@/components/ui/button";
-import { Input, Select } from "@/components/ui/input";
+import { Checkbox, Input, Select } from "@/components/ui/input";
 import {
   deleteInvestment,
   removeFromGoal,
@@ -115,6 +115,7 @@ export function InvestmentSheet({
       : prefill?.monthlySip || null,
   );
   const [ret, setRet] = useState(investment?.returnPct?.toString() ?? "");
+  const [noNewMoney, setNoNewMoney] = useState(!!investment?.noNewMoney);
   const [percent, setPercent] = useState(
     String(
       initialPercent ??
@@ -178,6 +179,19 @@ export function InvestmentSheet({
         value: value ?? 0,
         monthlySip: sip ?? 0,
         returnPct: ret.trim() === "" ? null : Number(ret),
+        // Keeps the other planning details as they are.
+        planningDetails: {
+          ...(investment?.availability
+            ? { availability: investment.availability }
+            : {}),
+          ...(investment?.accessibleOn !== undefined
+            ? { accessibleOn: investment.accessibleOn }
+            : {}),
+          ...(investment?.valuationDate !== undefined
+            ? { valuationDate: investment.valuationDate }
+            : {}),
+          ...(noNewMoney ? { noNewMoney: true } : {}),
+        },
         percent: pct,
         fromPlan,
         // Money added to one of your funds from the plan's savings.
@@ -354,6 +368,21 @@ export function InvestmentSheet({
                   ? `This also counts toward ${otherGoals === 1 ? "another goal" : `${otherGoals} other goals`}, so it changes there too.`
                   : `This counts toward ${otherGoals === 1 ? "a goal" : `${otherGoals} goals`}, so it changes there too.`}
               </p>
+            )}
+            {kind !== "fd" && kind !== "epf" && (
+              <label className="flex items-start gap-2 text-sm">
+                <Checkbox
+                  checked={noNewMoney}
+                  onChange={(e) => setNoNewMoney(e.target.checked)}
+                />
+                <span>
+                  Not adding new money
+                  <span className="block text-xs text-muted-foreground">
+                    It stays in your net worth and goals, but gets no share of
+                    your SIPs.
+                  </span>
+                </span>
+              </label>
             )}
             <details
               className="group rounded-lg border"

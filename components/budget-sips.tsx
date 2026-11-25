@@ -104,11 +104,24 @@ export function BudgetSips({
                 </div>
               </div>
               {(amounts[g.id] ?? 0) > 0 && (g.vehicles?.length ?? 0) > 0 && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {equalSplit(amounts[g.id] ?? 0, g.vehicles!.length)
-                    .map((n, i) => `${g.vehicles![i]} ${formatINR(n)}`)
-                    .join(" · ")}
-                </p>
+                <ul
+                  aria-label={`${g.label} split`}
+                  className="mt-2 space-y-1 border-l-2 border-border pl-3"
+                >
+                  {equalSplit(amounts[g.id] ?? 0, g.vehicles!.length).map(
+                    (n, i) => (
+                      <li
+                        key={i}
+                        className="flex items-baseline justify-between gap-3 text-xs text-muted-foreground"
+                      >
+                        <span className="min-w-0 break-words">
+                          {g.vehicles![i]}
+                        </span>
+                        <span className="tabular shrink-0">{formatINR(n)}</span>
+                      </li>
+                    ),
+                  )}
+                </ul>
               )}
             </li>
           ))}
