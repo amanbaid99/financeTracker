@@ -1,6 +1,8 @@
 "use server";
 
-import { benefitDraftSchema, readCardBenefits } from "@/lib/card-benefits";
+import { benefitDraftSchema, readCardBenefits, emptyBenefits } from "@/lib/card-benefits";
+import { cardStrategySchema } from "@/lib/card-strategy";
+import type { Json } from "@/lib/supabase/database.types";
 import { todayIST } from "@/lib/dates";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -331,4 +333,21 @@ export async function deleteLoungeVisit(id: string): Promise<Result> {
   } catch (e) {
     return fail(e);
   }
+}
+
+/** Change only a personal reminder, preserving issuer terms and lounge IDs. */
+export async function saveCardStrategy(input: { cardId: string; strategy: { useFor: string; remember: string } }): Promise<Result> {
+  try {
+    const v = z.object({cardId:z.string().uuid(),strategy:cardStrategySchema}).parse(input);
+    const {supabase,userId}=await session();
+    const row=await supabase.from("credit_cards").select("feature_details").eq("id",v.cardId).eq("user_id",userId).single();
+    if(row.error)throw new Error("Card not found.");
+    const previous=row.data.feature_details;
+    const base=previous && typeof previous==="object" && !Array.isArray(previous) ? previous : {...emptyBenefits(),version:1,reviewedAt:new Date().toISOString()};
+    let query=supabase.from("credit_cards").update({feature_details:{...base,strategy:v.strategy} as Json}).eq("id",v.cardId).eq("user_id",userId);
+    query=previous===null?query.is("feature_details",null):query.eq("feature_details",JSON.stringify(previous));
+    const res=await query.select("id").single();
+    if(res.error)throw new Error("The card changed while saving. Refresh and try again.");
+    return done(v.cardId);
+  }catch(e){return fail(e);}
 }

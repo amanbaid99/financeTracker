@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { cardStrategySchema } from "./card-strategy";
 import { SPEND_CATEGORY_KEYS, type SpendCategory } from "./card-advisor";
 import { periodBounds, type Card } from "./cards";
 
@@ -75,6 +76,7 @@ export const loungeRuleSchema = z.object({
 });
 export const benefitDraftSchema = z
   .object({
+    strategy: cardStrategySchema.optional(),
     source: z.string().trim().min(1).max(200),
     validThrough: z.string().date().nullable(),
     details: z.string().trim().max(16000),

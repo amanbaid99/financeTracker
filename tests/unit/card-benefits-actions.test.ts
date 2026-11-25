@@ -20,6 +20,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/dates", () => ({ todayIST: () => "2026-11-25" }));
 import {
   saveCard,
+  saveCardStrategy,
   logLoungeVisit,
   deleteLoungeVisit,
 } from "@/lib/cards-actions";
@@ -140,4 +141,18 @@ it("new card retries reuse the client ID under the authenticated owner", async (
     expect.objectContaining({ id, user_id: id }),
     expect.objectContaining({ id, user_id: id }),
   ]);
+});
+
+it("updates only the owner reminder and guards concurrent changes without renewing issuer review", async () => {
+  const previous={...emptyBenefits(),version:1,reviewedAt:"2026-01-01T00:00:00Z",lounges:[{id:"kept",name:"Domestic",visits:1,period:"quarter",conditions:"",evidence:"Confirmed"}]};
+  const q={select:vi.fn(),eq:vi.fn(),update:vi.fn(),single:vi.fn()};
+  q.select.mockReturnValue(q);q.eq.mockReturnValue(q);q.update.mockReturnValue(q);
+  q.single.mockResolvedValueOnce({data:{feature_details:previous},error:null}).mockResolvedValueOnce({data:{id},error:null});
+  mock.from.mockReturnValue(q);
+  expect((await saveCardStrategy({cardId:id,strategy:{useFor:"Groceries",remember:"My preferred card"}})).ok).toBe(true);
+  expect(q.update).toHaveBeenCalledWith({feature_details:{...previous,strategy:{useFor:"Groceries",remember:"My preferred card"}}});
+  expect(q.eq).toHaveBeenCalledWith("user_id",id);
+  expect(q.eq).toHaveBeenCalledWith("feature_details",JSON.stringify(previous));
+  q.single.mockResolvedValueOnce({data:{feature_details:previous},error:null}).mockResolvedValueOnce({data:null,error:{message:"stale"}});
+  expect((await saveCardStrategy({cardId:id,strategy:{useFor:"Changed",remember:""}})).ok).toBe(false);
 });

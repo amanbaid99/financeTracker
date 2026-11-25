@@ -1,5 +1,9 @@
 # Status
 
+## Card strategy and visual refresh, 25 Nov 2026
+
+Adds an expandable personal-reference panel with editable per-card reminders and starting notes for recognized, matching saved terms. No purchase comparison, AI, transaction sync or cap-usage calculation. Saves only optional strategy JSON within existing feature_details with owner checks and a stale-write guard, preserving issuer review timestamps, benefit IDs, logs and milestone data. An empty saved heading intentionally hides a card. Card panels have softer headers, more space, explicit spend/target totals and lighter Log bill actions. No schema or hosted data changes. Verification includes unit checks for scoped persistence, concurrent-change rejection, custom notes and hiding, plus real-component mobile checks at 320/375/768px covering defaults, editing, failed-save retention and hiding. Targeted 48 unit tests, lint, TypeScript and production build pass.
+
 ## Cards essentials, 25 Nov 2026
 
 Cards now shows only milestones, fee-waiver spend progress, bill logging and lounge allowances with visit logs. Replaces the reward wizard with a short card/settings form. Existing reward data is retained but no longer surfaced on Cards; existing milestones, bills and lounge log IDs are preserved. No database migration. Verification: lint, TypeScript, 923 unit tests, 40 Python tests and production build pass. Real-component mobile checks at 320/375/768px cover lounge logging, settings and preservation of existing reward fields. A repeated database-unit run hit its five-second timeout; isolated rerun with a longer runner timeout passed. Full signed-in E2E remains unavailable because the local database stack could not be installed in this workspace.

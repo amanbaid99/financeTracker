@@ -1,6 +1,7 @@
 "use client";
 
 import { SimpleCardSheet } from "@/components/simple-card-sheet";
+import { CardStrategy } from "@/components/card-strategy";
 import { CardLounges } from "@/components/card-lounges";
 
 import { Check, ChevronDown, CreditCard, Pencil, Plus } from "lucide-react";
@@ -100,19 +101,19 @@ function MilestoneRow({
       ? "success"
       : s.status === "missed"
         ? "danger"
-        : "neutral";
+        : "primary";
   const pill = STATUS[s.status];
   const pace =
     s.neededPerMonth !== null && s.status !== "missed" && s.remaining > 0
       ? ` · about ${formatINR(s.neededPerMonth)} a month`
       : "";
   return (
-    <li className="py-3">
+    <li className="py-4">
       <button
         type="button"
         onClick={onEdit}
         aria-label={`Edit milestone ${s.name}`}
-        className="press block w-full space-y-1.5 text-left"
+        className="press block w-full space-y-3 text-left"
       >
         <span className="flex items-start justify-between gap-2">
           <span className="min-w-0 break-words text-sm font-medium">
@@ -129,9 +130,20 @@ function MilestoneRow({
             </span>
           )}
         </span>
+        <span className="tabular flex items-baseline justify-between gap-3">
+          <span className="text-base font-semibold">
+            {formatINR(s.spentNow)}
+            <span className="ml-1 text-xs font-normal text-muted-foreground">
+              of {formatINR(s.target)}
+            </span>
+          </span>
+          <span className="text-xs font-medium text-primary">
+            {Math.round(s.progress * 100)}%
+          </span>
+        </span>
         <Progress
           value={s.progress * 100}
-          className="h-1.5"
+          className="h-2"
           tone={tone}
           label={`${s.name} progress`}
         />
@@ -172,7 +184,7 @@ function MilestoneRow({
             ? `, leaving out ${formatINR(emi)} of loan EMI a bill`
             : ""}
           {s.period === "card_year" && noCardYear
-            ? ". Using Jan to Dec; set the card year in About this card."
+            ? ". Using Jan to Dec; set the card year in Edit card."
             : "."}
         </p>
       )}
@@ -616,6 +628,7 @@ export function CardList({
           </Button>
         )}
       </header>
+      <CardStrategy cards={cards} />
       {cards.length === 0 ? (
         <div className="space-y-2 rounded-2xl border bg-card p-6 text-center">
           <CreditCard className="mx-auto size-8 text-primary" aria-hidden />
@@ -636,7 +649,7 @@ export function CardList({
           </Button>
         </div>
       ) : (
-        <ul className="space-y-3">
+        <ul className="space-y-5">
           {cardsForMilestones(cards, today).map((c) => {
             const states = c.milestones.map((m) => milestoneState(m, today, c));
             const allReached =
@@ -650,16 +663,16 @@ export function CardList({
                 key={c.id}
                 data-card-id={c.id}
                 className={cn(
-                  "overflow-hidden rounded-2xl border border-border/70 bg-card",
-                  isOpen && "border-primary",
+                  "overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm",
+                  isOpen && "border-primary/40",
                 )}
               >
                 {/* The whole header opens the card (the name's button covers it). */}
-                <div className="relative p-4">
+                <div className="relative bg-gradient-to-br from-primary-soft/40 to-card p-5">
                   <div className="flex items-start gap-3">
                     <span
                       className={cn(
-                        "inline-flex size-8 shrink-0 items-center justify-center rounded-xl",
+                        "inline-flex size-10 shrink-0 items-center justify-center rounded-2xl",
                         allReached
                           ? "bg-success-soft text-success"
                           : "bg-primary-soft text-primary",
@@ -677,7 +690,7 @@ export function CardList({
                         type="button"
                         aria-expanded={isOpen}
                         onClick={() => setOpen(isOpen ? null : c.id)}
-                        className="block w-full break-words text-left font-semibold leading-snug after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-primary"
+                        className="block w-full break-words text-left text-base font-semibold leading-snug after:absolute after:inset-0 after:rounded-2xl focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:outline-primary"
                       >
                         {c.label}
                       </button>
@@ -709,9 +722,9 @@ export function CardList({
                     )}
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
-                      className="relative z-10 min-h-11 shrink-0"
+                      className="relative z-10 min-h-11 shrink-0 text-primary"
                       aria-label={`Log a ${c.label} bill`}
                       onClick={() =>
                         setSheet({ kind: "bill", card: c, bill: null })
@@ -727,7 +740,7 @@ export function CardList({
                 {(!allReached || isOpen) && (
                   <section
                     aria-label={`${c.label} milestones`}
-                    className="border-t px-4 pb-3"
+                    className="border-t border-border/50 px-5 py-1"
                   >
                     {states.length > 0 ? (
                       <ul className="divide-y">
