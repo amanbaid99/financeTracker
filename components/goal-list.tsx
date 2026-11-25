@@ -2,6 +2,7 @@
 
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
+import NextLink from "next/link";
 import {
   DeleteGoalButton,
   EditGoalButton,
@@ -207,6 +208,7 @@ export function GoalList({
                 <div className="flex justify-end">
                   <EditGoalButton goal={g} today={today} />
                 </div>
+                <PlannedSip goal={g} />
                 <GoalInvestments
                   goal={g}
                   investments={investments}
@@ -280,5 +282,38 @@ export function GoalList({
         </section>
       )}
     </div>
+  );
+}
+
+/** What your SIPs on Budget put into this goal each month, against its need. */
+function PlannedSip({ goal: g }: { goal: TrackedGoal }) {
+  if (g.plannedMonthly === undefined) return null;
+  const need = g.billsFund
+    ? Math.ceil(g.billsFund.monthlyNeed)
+    : Math.ceil(g.monthlySip + g.extraSipNeeded);
+  const planned = g.plannedMonthly;
+  const short = Math.max(0, need - planned);
+  return (
+    <NextLink
+      href="/goals/budget#sips"
+      className="flex items-center justify-between gap-3 rounded-xl bg-muted/50 px-3 py-2 text-sm"
+    >
+      <span>
+        <span className="tabular font-medium">{formatINR(planned)}</span> a
+        month from your SIPs
+      </span>
+      <span
+        className={cn(
+          "shrink-0 text-xs",
+          need === 0 || short === 0 ? "text-success" : "text-warning",
+        )}
+      >
+        {need === 0
+          ? "Nothing more needed"
+          : short === 0
+            ? "Enough to be on time"
+            : `${formatINR(short)} more needed`}
+      </span>
+    </NextLink>
   );
 }

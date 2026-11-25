@@ -71,7 +71,7 @@ export function NextStep({
       key: `steps-${plan.monthlyTotal}-${steps}`,
       title: `Set up ${steps} ${steps === 1 ? "SIP" : "SIPs"} this month`,
       text: "Review the monthly amounts by goal, then set up SIPs with your provider.",
-      action: { label: "Review SIPs", href: "/goals/sip" },
+      action: { label: "Review SIPs", href: "/goals/budget#sips" },
     });
   if (!plan && budget.income <= 0)
     options.push({

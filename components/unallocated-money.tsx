@@ -28,7 +28,7 @@ export function UnallocatedMoney({investments,links,goals,today}:{investments:In
   <ul className="divide-y">{rows.map(r=>{const i=r.investment;const accessible=ASSUME_HOLDINGS_WITHDRAWABLE||(!i.availability||i.availability==="available")&&(!i.accessibleOn||i.accessibleOn<=today);const canWithdraw=accessible&&withdrawalEligible(i);return <li key={i.id} className="space-y-2 py-3">
    <div className="flex items-start justify-between gap-3 text-sm"><span className="min-w-0 break-words font-medium">{holdingLabel(i)}</span><b className="tabular shrink-0">{formatINR(r.value)}</b></div>
    <p className="text-xs text-muted-foreground">{r.freePercent}% unassigned · Holding total {formatINR(i.value)}{!accessible?" · Access restricted":""}</p>
-   <div className="flex flex-wrap gap-2">{canAssign?<Button variant="outline" size="sm" onClick={()=>setSelected(i.id)}>Assign to a goal</Button>:<Link href="/goals/sip" className={buttonVariants({variant:"outline",size:"sm"})}>Review goal coverage first</Link>}
+   <div className="flex flex-wrap gap-2">{canAssign?<Button variant="outline" size="sm" onClick={()=>setSelected(i.id)}>Assign to a goal</Button>:<Link href="/goals/budget#sips" className={buttonVariants({variant:"outline",size:"sm"})}>Review goal coverage first</Link>}
     {canWithdraw?<Link className={buttonVariants({variant:"ghost",size:"sm"})} href={`/assets/withdraw?holding=${i.id}&amount=${Math.min(1e9,r.value)}`}>Plan a withdrawal</Link>:<span className="self-center text-xs text-muted-foreground">Withdrawal access needs checking</span>}
    </div>
   </li>;})}</ul>

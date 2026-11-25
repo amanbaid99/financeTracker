@@ -18,7 +18,7 @@ export default async function GoalsPage({
   searchParams: Promise<{ open?: string; do?: string }>;
 }) {
   const { open, do: action } = await searchParams;
-  if(action==="plan")redirect("/goals/sip");
+  if(action==="plan")redirect("/goals/budget#sips");
   const {
     goals,
     investments,

@@ -1,3 +1,4 @@
+import { budgetSheetSchema } from "./budget-sheet";
 import { loadHybridContext } from "./hybrid-data";
 import { readGoalPlanning, readHoldingPlanning } from "./hybrid-settings";
 import { hybridMoneyPlan } from "./hybrid-plan";
@@ -30,6 +31,7 @@ import {
   type TrackedGoal,
 } from "@/lib/tracker";
 import { loadSipMinimums } from "./sip-minimums-data";
+import { sipsByGoal } from "@/lib/budget-sips";
 import { autoAllocate, type AutoAllocation } from "@/lib/auto-allocate";
 
 /**
@@ -359,10 +361,16 @@ export async function readGoals(): Promise<GoalsData> {
       ),
     };
   }
+  // Monthly SIPs you set on Budget, per goal.
+  const plannedSips = await loadSavedSheet()
+    .then((raw) => sipsByGoal(budgetSheetSchema.safeParse(raw).data?.sips ?? []))
+    .catch(() => new Map<string, number>());
+  const hasSipPlan = plannedSips.size > 0;
   const tracked = inputs.map((g) => {
     const c = allocation.covers[g.id];
     return {
       ...trackGoal(g, investments, links, today),
+      plannedMonthly: hasSipPlan ? (plannedSips.get(g.id) ?? 0) : undefined,
       confirmedMapping: useSaved,
       cover: c && { taken: c.taken, short: c.short, why: c.why },
     };

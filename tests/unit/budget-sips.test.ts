@@ -1,0 +1,91 @@
+import { describe, expect, it } from "vitest";
+import { budgetSheetSchema } from "@/lib/budget-sheet";
+import {
+  scaleSips,
+  sipStatus,
+  sipsByGoal,
+  sipTotal,
+  type SipRow,
+} from "@/lib/budget-sips";
+
+const G1 = "00000000-0000-4000-8000-000000000001";
+const G2 = "00000000-0000-4000-8000-000000000002";
+const row = (
+  id: string,
+  amount: number,
+  goalId: string | null = G1,
+  locked = false,
+): SipRow => ({
+  id,
+  investmentId: null,
+  label: id,
+  amount,
+  goalId,
+  ...(locked ? { locked } : {}),
+});
+
+describe("scaleSips", () => {
+  it("scales unlocked rows in proportion and keeps locked ones", () => {
+    const out = scaleSips(
+      [row("a", 30000), row("b", 10000), row("nps", 500, G2, true)],
+      60500,
+    );
+    expect(out.find((r) => r.id === "nps")!.amount).toBe(500);
+    expect(out.find((r) => r.id === "a")!.amount).toBe(45000);
+    expect(out.find((r) => r.id === "b")!.amount).toBe(15000);
+    expect(sipTotal(out)).toBe(60500);
+  });
+
+  it("adds up exactly after rounding", () => {
+    const out = scaleSips([row("a", 1), row("b", 1), row("c", 1)], 10000);
+    expect(sipTotal(out)).toBe(10000);
+  });
+
+  it("drops unlocked rows to zero when locked ones use it all", () => {
+    const out = scaleSips([row("a", 5000), row("lock", 8000, G2, true)], 6000);
+    expect(out.map((r) => r.amount)).toEqual([0, 8000]);
+  });
+});
+
+describe("sipStatus and sipsByGoal", () => {
+  it("says what's left or over", () => {
+    expect(sipStatus([row("a", 40000)], 50000)).toEqual({
+      assigned: 40000,
+      left: 10000,
+      over: 0,
+    });
+    expect(sipStatus([row("a", 60000)], 50000).over).toBe(10000);
+  });
+  it("totals amounts per goal", () => {
+    expect(
+      sipsByGoal([
+        row("a", 1000),
+        row("b", 2000),
+        row("c", 500, G2),
+        row("d", 300, null),
+      ]),
+    ).toEqual(
+      new Map([
+        [G1, 3000],
+        [G2, 500],
+      ]),
+    );
+  });
+});
+
+it("saves SIP rows inside the budget", () => {
+  const plan = {
+    version: 2 as const,
+    salary: 100000,
+    rows: [],
+    excludedLoanIds: [],
+    sips: [row("a", 5000)],
+  };
+  expect(budgetSheetSchema.parse(plan).sips).toHaveLength(1);
+  expect(
+    budgetSheetSchema.safeParse({
+      ...plan,
+      sips: [{ ...row("a", 5000), label: "" }],
+    }).success,
+  ).toBe(false);
+});

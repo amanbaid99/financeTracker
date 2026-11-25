@@ -1,5 +1,12 @@
 # Status
 
+
+## SIPs on Budget, set by hand, 25 Nov 2026
+
+The owner asked for manual SIPs under Budget instead of the automatic planner. SIP rows (`sips` in the budget sheet JSON, lib/budget-sips.ts: fund/holding, label, amount, goal, locked) are edited in components/budget-sips.tsx on the Budget page and saved with the budget (no migration). When Save & invest changes, `persist` in budget-experience scales unlocked rows with `scaleSips`. "Suggest amounts" fills rows once from `suggestSipRows` (lib/sip-suggest.ts, the existing safety_deadline engine with budget essentials). `readGoals` sets `plannedMonthly` per goal from the rows; Goals shows "₹X a month from your SIPs" against the goal's monthly need. /goals/sip redirects to /goals/budget#sips; quick-add, money plan, next step, Ask and unallocated-money links point there. Removed the standalone planner, saved-plan summary, reset button and lib/budget-sip.ts. Existing confirmed hybrid plans and goal_allocations stay untouched and still drive coverage.
+
+Verification: npm run check (859 unit tests, 40 Python) and the full e2e pass; the e2e now adds a SIP on Budget and checks Goals shows it.
+
 ## Removed Home goal-date reminder, 24 Nov 2026
 
 Home no longer generates the Add dates to plan your goals card or includes it in the monthly task count. This removes its Review goals and Remind me tomorrow controls. Other monthly reminders and goal date fields remain unchanged. No financial calculations or stored records changed. Verification: lint, TypeScript, 876 unit tests, 40 Python tests and production build pass. Home passes no goal-planning cues to the reminder list; the empty list renders no card.

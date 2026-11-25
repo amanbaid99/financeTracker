@@ -119,6 +119,8 @@ export interface TrackedGoal extends GoalInput {
   foreclosureFee: number;
   /** Loans: interest saved minus the foreclosure charge. */
   netSaving: number;
+  /** Monthly SIPs you set on Budget for this goal; undefined with no SIP rows. */
+  plannedMonthly?: number;
   /** Set by the automatic split: why it got this money (lib/auto-allocate.ts). */
   cover?: { taken: number; short: number; why: string };
 }

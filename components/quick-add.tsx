@@ -23,7 +23,7 @@ export function useQuickAction(action: string, fn: () => void) {
 
 const ACTIONS = [
   {href:"/assets/withdraw",label:"Plan a withdrawal",hint:"See which holdings you could use and the effect on goals",icon:Wallet},
-  { href:"/goals/sip", label:"SIP plan", hint:"Plan monthly contributions across your goals", icon:CalendarDays },
+  { href:"/goals/budget#sips", label:"SIPs", hint:"Set your monthly SIPs and the goal each is for", icon:CalendarDays },
   { href:"/goals?do=extra", label:"I have extra money", hint:"See where a bonus or spare cash helps most", icon:Coins },
   {
     href: "/goals/new",

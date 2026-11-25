@@ -1,5 +1,5 @@
 "use client";
-import { useState, useTransition, type ReactNode } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   ChevronRight,
@@ -9,6 +9,9 @@ import {
   Pencil,
 } from "lucide-react";
 import { rebalanceBudgetEdit } from "@/lib/budget-rebalance";
+import { BudgetSips } from "@/components/budget-sips";
+import { scaleSips, type SipRow } from "@/lib/budget-sips";
+import { budgetSipAmount } from "@/lib/budget-sip-amount";
 import { BudgetGuide } from "@/components/budget-guide";
 import { Sheet } from "@/components/sheet";
 import { Field } from "@/components/forms/field";
@@ -61,7 +64,9 @@ export function BudgetExperience({
   knownCosts,
   sips,
   loadError,
-  sipSummary,
+  holdings = [],
+  goals = [],
+  sipSuggestion = [],
 }: {
   initial: BudgetSheet | null;
   saved: boolean;
@@ -71,7 +76,11 @@ export function BudgetExperience({
   /** Monthly SIPs already going in. */
   sips: number;
   loadError: string | null;
-  sipSummary?: ReactNode;
+  /** Your holdings and goals, for the SIP rows. */
+  holdings?: { id: string; label: string }[];
+  goals?: { id: string; label: string }[];
+  /** Suggested SIP rows for "Suggest amounts". */
+  sipSuggestion?: SipRow[];
 }) {
   const [plan, setPlan] = useState<BudgetSheet | null>(
     hasSaved && initial ? groupPersonalCosts(initial) : null,
@@ -91,7 +100,12 @@ export function BudgetExperience({
 
   /** Saves a changed budget straight away: tapping Save is the confirmation. */
   function persist(next: BudgetSheet, note = "Saved.") {
-    const normalised = plan ? rebalanceBudgetEdit(plan, next) : applyBudgetRules(next);
+    let normalised = plan ? rebalanceBudgetEdit(plan, next) : applyBudgetRules(next);
+    // When Save & invest changes, unlocked SIPs change with it.
+    const before = plan ? budgetSipAmount(plan) : null;
+    const after = budgetSipAmount(normalised);
+    if (normalised.sips?.length && before !== null && after !== null && before !== after)
+      normalised = { ...normalised, sips: scaleSips(normalised.sips, after) };
     setError("");
     start(async () => {
       try {
@@ -158,7 +172,9 @@ export function BudgetExperience({
             Nothing is saved until you confirm.
           </p>
         </div>
-        {sipSummary}
+        <p className="text-xs text-muted-foreground">
+          Your SIPs live in your budget. Create one to plan them.
+        </p>
         {message && (
           <p role="status" className="text-sm text-primary">
             {message}
@@ -310,7 +326,16 @@ export function BudgetExperience({
           )}
         </div>
       </div>
-      {sipSummary}
+      <BudgetSips
+        rows={plan.sips ?? []}
+        budgetMonthly={budgetSipAmount(plan)}
+        holdings={holdings}
+        goals={goals}
+        suggestion={sipSuggestion}
+        pending={pending}
+        error={editing ? "" : error}
+        onSave={(sips, note) => persist({ ...plan, sips }, note)}
+      />
       <div className="surface-card rounded-2xl border bg-card p-4">
         <div className="mb-2 flex items-center justify-between gap-3">
           <div>

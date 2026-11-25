@@ -60,7 +60,7 @@ function PlanForm({
       if (!res.ok) return setError(res.error);
       onClose();
       // Review monthly amounts in the SIP planner.
-      if (input) router.push("/goals/sip");
+      if (input) router.push("/goals/budget#sips");
       router.refresh();
     });
 
@@ -403,7 +403,7 @@ export function MoneyPlanCard({
   }, []);
   useQuickAction(
     "plan",
-    useCallback(() => {if(variant==="form")router.push("/goals/sip");else setOpen(true);}, [variant,router]),
+    useCallback(() => {if(variant==="form")router.push("/goals/budget#sips");else setOpen(true);}, [variant,router]),
   );
   const form = open && (
     <PlanForm
@@ -476,7 +476,7 @@ export function MoneyPlanCard({
         <button
           type="button"
           aria-label="Edit money plan"
-          onClick={() => concise?router.push("/goals/sip"):setOpen(true)}
+          onClick={() => concise?router.push("/goals/budget#sips"):setOpen(true)}
           className="-mr-1 -mt-2 min-h-11 rounded-lg px-2 text-sm text-primary hover:bg-primary-soft"
         >
           Edit plan

@@ -33,7 +33,7 @@ interface Message {
 
 /** Adds an answer's split to the money plan, so This month shows the steps. */
 function AddToPlan({plan}:{plan:NonNullable<Message["plan"]>}){
- return <Link href={plan.frequency==="monthly"?`/goals/sip?monthly=${plan.amount}`:"/goals?do=extra"} className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary">Review in planner</Link>;
+ return <Link href={plan.frequency==="monthly"?"/goals/budget#sips":"/goals?do=extra"} className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary">Review in planner</Link>;
 }
 
 /** **bold** inside a line. */

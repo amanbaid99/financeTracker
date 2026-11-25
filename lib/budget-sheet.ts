@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { sipRowSchema } from "./budget-sips";
 import { ratioPlanSchema, splitRupees } from "./budget-ratios";
 
 export const BUDGET_CATEGORIES = {
@@ -37,6 +38,8 @@ export const budgetSheetSchema = z.object({
   personalGrouping: z.boolean().optional(),
   /** Between jobs: no take-home income, so the budget is just monthly costs. */
   noSalary: z.boolean().optional(),
+  /** Your monthly SIPs: fund, amount and the goal each is for. */
+  sips: z.array(sipRowSchema).max(50).optional(),
 }).superRefine((plan, ctx) => {
   if (plan.salary <= 0 && !plan.noSalary) ctx.addIssue({ code: "custom", message: "Enter your monthly take-home income." });
   if (new TextEncoder().encode(JSON.stringify(plan)).byteLength > 50000) ctx.addIssue({ code: "custom", message: "This budget is too large. Shorten item names or remove some rows." });

@@ -342,25 +342,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     page.getByRole("button", { name: "Edit Index SIP" }),
   ).toBeVisible();
 
-  // SIP plan: no budget is saved yet, so the user declares available monthly savings.
+  // SIPs live on Budget now: old planner links land there.
   await page.goto("/goals?do=plan");
-  await expect(page).toHaveURL(/\/goals\/sip$/);
-  // No saved budget is required: enter an explicit available monthly amount.
-  await expect(page.getByRole("heading",{name:"Your monthly SIPs"})).toBeVisible();
-  await page.getByLabel("How much can you invest each month?",{exact:true}).fill("50000");
-  const houseSip=page.locator("section[data-goal-id]").filter({has:page.getByRole("heading",{name:"House",exact:true})});
-  await expect(houseSip.getByRole("textbox").first()).toBeVisible();
-  await expect(page.getByLabel("Bank FD a month")).toHaveCount(0);
-  await houseSip.getByRole("textbox").first().fill("12000");
-  await expect(houseSip.getByRole("textbox").first()).toHaveValue("12,000");
-  await page.screenshot({path:"test-results/sip-plan-375.png",fullPage:true});
-  await page.getByRole("button",{name:"Save this plan",exact:true}).click();
-  await expect(page).toHaveURL(/\/goals\/budget$/);
-  await expect(page.getByRole("region",{name:"Saved SIP plan"})).toBeVisible();
-  await expect(page.getByText("SIP plan saved.",{exact:true})).toBeVisible();
-
-  await expect(page.getByRole("checkbox")).toHaveCount(0);
-  await page.screenshot({path:"test-results/plan-375.png",fullPage:true});
+  await expect(page).toHaveURL(/\/goals\/budget/);
+  await page.goto("/goals/sip");
+  await expect(page).toHaveURL(/\/goals\/budget/);
   await page.getByRole("link",{name:"Goals",exact:true}).first().click();
   await page.getByRole("button",{name:/^House/}).click();
   await page.getByRole("button",{name:"Edit Index SIP"}).click();
@@ -381,9 +367,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   // Coverage is a goal detail, not a separate approval inbox.
   await page.goto("/goals");
   await expect(page.getByRole("region", {name:"Suggestions"})).toHaveCount(0);
-  await page.goto("/goals/sip");
-  await page.getByRole("button",{name:"Save this plan",exact:true}).click();
-  await expect(page).toHaveURL(/\/goals\/budget$/);
   // Extra money: where a one-time amount would go, without saving anything.
   await page.getByRole("link", { name: "Goals", exact: true }).first().click();
   await page.goto("/goals?do=extra");
@@ -437,14 +420,11 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
     .getByRole("button", { name: "Add investment" })
     .click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await page.goto("/goals/sip");
-  await page.getByRole("button",{name:"Save this plan",exact:true}).click();
-  await expect(page).toHaveURL(/\/goals\/budget$/);
   await page.goto("/goals");
   await billsCard.click();
   // Nothing is folded away: a covered bills fund stays in the one list.
   await expect(page.locator("main details summary", { hasText: "Covered at your current pace" })).toHaveCount(0);
-  await expect(billsCard).toContainText("₹30,000 of ₹48,000");
+  await expect(billsCard).toContainText("Covered");
   await expect(billsCard).toContainText(/Next: Gym, \d+ \w{3}/);
   await expect(page.getByRole("button", { name: "Edit Bills liquid fund" })).toBeVisible();
   o = await page.evaluate(
@@ -969,7 +949,24 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByRole("button", { name: "Edit Groceries" })).toContainText("₹15,000");
   await expect(page.getByRole("link", { name: /^Use ₹[\d,]+ for Your plan$/ })).toHaveCount(0);
+  // SIPs on Budget: a fund, a monthly amount and the goal it's for.
+  const sipCard = page.getByRole("region", { name: "Your SIPs" });
+  await expect(sipCard).toBeVisible();
+  await sipCard.getByRole("button", { name: "Add SIP" }).click();
+  await page.getByLabel("Fund or account").selectOption({ label: "Index SIP" });
+  await page.getByLabel("Monthly amount").fill("12000");
+  await page.getByLabel("For goal").selectOption({ label: "House" });
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(sipCard.getByRole("button", { name: "Edit Index SIP SIP" })).toContainText("₹12,000");
+  await expect(sipCard.getByRole("button", { name: "Edit Index SIP SIP" })).toContainText("For: House");
+  await expect(sipCard.getByText(/left to assign|assigned|more than your budget/)).toBeVisible();
   await page.screenshot({ path: "test-results/budget-375.png", fullPage: true });
+  // Goals shows what the SIPs put into each goal.
+  await page.goto("/goals");
+  await page.getByRole("button", { name: /^House/ }).click();
+  await expect(page.getByText(/^₹12,000$/).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /a month from your SIPs/ })).toBeVisible();
+  await page.goto("/goals/budget");
   // Between jobs: no salary makes the budget just monthly costs.
   await page.getByRole("button", { name: "Edit income" }).click();
   await page.getByText("No salary right now").click();

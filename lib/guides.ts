@@ -93,6 +93,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Choose how much to keep for yourself. No automatic transport or day-to-day rows are added.",
       "Review allocation shows Fixed spending, Personal spending and Save & invest. Go back to edit or save once. No SIP-plan prompt.",
       "After saving, use View and edit to change details. Your recorded investments and SIPs stay unchanged.",
+      "Your SIPs sits under your budget: add each SIP with its fund, amount and goal. When Save & invest changes, unlocked SIPs change with it. Suggest amounts fills a starting split.",
     ],
   },
   ask: {
@@ -131,6 +132,11 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+  { date: "2026-11-25", title: "SIPs on your Budget", items: [
+    { title: "Set them by hand", text: "Your SIPs sits under your budget: each SIP has a fund, a monthly amount and the goal it's for. It shows what's left to assign." },
+    { title: "Follows Save & invest", text: "Change Save & invest and unlocked SIPs change with it. Lock one to keep its amount." },
+    { title: "Goals see it", text: "Each goal shows its monthly amount from your SIPs and whether that's enough to be on time." },
+  ] },
  {date:"2026-11-24",title:"Fewer Home reminders",items:[{title:"Goal date prompt removed",text:"Removed the Add dates to plan your goals reminder from Home."}]},
  {date:"2026-11-24",title:"Budget edits and a real fresh start",items:[{title:"Income changes update saving",text:"Income and fixed-cost edits keep your personal spending amount and update Save & invest. Reset budget clears monthly SIP planning too. Reset SIP plan is available separately, with confirmation."}]},
  {date:"2026-11-24",title:"Budget and SIP amounts together",items:[{title:"One starting amount",text:"Save & invest sets the SIP starting amount. Budget shows the same available total and any amount awaiting allocation. Review and save to confirm updated goal amounts."}]},
