@@ -6,7 +6,7 @@ import { z } from "zod";
 import { userMayPay } from "@/lib/ai/budget";
 import { openRouterSettings } from "@/lib/ai/openrouter";
 import { sharedRouter } from "@/lib/ai/router";
-import { loadBudget, loadGoals } from "@/lib/data";
+import { loadBudget, loadGoals, loadCards } from "@/lib/data";
 import { AI_CONSENT_VERSION } from "@/lib/legal";
 import { createClient } from "@/lib/supabase/server";
 import { formatINR } from "@/lib/format";
@@ -84,7 +84,8 @@ export async function askQuestion(history: AskTurn[]): Promise<AskResult> {
   const { supabase, userId } = await session();
 
   // "Where should ₹10,000 go?": the app's planner answers; the AI explains.
-  const question = amountQuestion(parsed.data.at(-1)!.content);
+  const cardQuestion = /\b(card|cards|cashback|lounge|lounges|reward|rewards)\b|\[C\d+\]/i.test(parsed.data.at(-1)!.content);
+  const question = cardQuestion ? null : amountQuestion(parsed.data.at(-1)!.content);
   const withdrawing=withdrawalAmount(parsed.data.at(-1)!.content);
   if (withdrawing===null&&question?.frequency === "unknown") {
     const text = `Is ${formatINR(question.amount)} a one-time amount, or every month? The answer is different for each.`;
@@ -126,14 +127,15 @@ export async function askQuestion(history: AskTurn[]): Promise<AskResult> {
     };
   }
 
-  const [{ goals, investments, links, plan, today }, { budget: b }] =
-    await Promise.all([loadGoals(), loadBudget()]);
+  const [{ goals, investments, links, plan, today }, { budget: b }, {cards}] =
+    await Promise.all([loadGoals(), loadBudget(), loadCards()]);
   const ctx = buildAskContext({
     goals,
     investments,
     links,
     plan,
     todayISO: today,
+    cards,
   });
   const { names } = ctx;
   let facts = ctx.facts;

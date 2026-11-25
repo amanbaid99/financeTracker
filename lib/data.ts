@@ -1,3 +1,4 @@
+import { readCardBenefits } from "./card-benefits";
 import { budgetSheetSchema } from "./budget-sheet";
 import { loadHybridContext } from "./hybrid-data";
 import { readGoalPlanning, readHoldingPlanning } from "./hybrid-settings";
@@ -400,7 +401,13 @@ export const loadGoals = cache(readGoals);
 /** The user's credit cards with their milestones. */
 export const loadCards = cache(
   async (): Promise<{ cards: Card[]; today: string }> => {
-    const snap = await loadSnapshot();
+    const [snap, {supabase, user}] = await Promise.all([loadSnapshot(), requireUser()]);
+    const [features, visits] = await Promise.all([
+      supabase.from("credit_cards").select("id,feature_details").eq("user_id",user.id),
+      supabase.from("card_lounge_visits").select("id,card_id,rule_id,visited_on,visits").eq("user_id",user.id).order("visited_on",{ascending:false}),
+    ]);
+    const details = new Map(check(features).map(c=>[c.id, readCardBenefits(c.feature_details)]));
+    const logs = check(visits);
     const cards = { data: snap.cards, error: null };
     const milestones = { data: snap.card_milestones, error: null };
     const bills = { data: snap.card_bills, error: null };
@@ -411,6 +418,8 @@ export const loadCards = cache(
       cards: check(cards).map((c) => ({
         id: c.id,
         label: c.label,
+        featureDetails: details.get(c.id) ?? null,
+        loungeVisits: logs.filter(v=>v.card_id===c.id).map(v=>({id:v.id,ruleId:v.rule_id,date:v.visited_on,visits:v.visits})),
         annualFee: c.annual_fee,
         statementDay: c.statement_day,
         yearStart: c.year_start,

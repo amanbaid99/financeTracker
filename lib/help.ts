@@ -246,6 +246,17 @@ export const HELP: HelpTopic[] = [
     ],
     tags: "import pdf mutual funds update values",
   },
+  {
+    id: "card-benefits",
+    section: "Cards and loans",
+    q: "How do card recommendations and lounge visits work?",
+    a: [
+      "In Cards, Which card? compares published cashback rules for a spending category and amount. It uses only terms you have checked and saved. Caps already used, merchant eligibility and points values are not tracked, so amounts are up to estimates, not guaranteed earnings. Cards without reviewed terms are not ranked.",
+      "Open Your card terms, Review terms, then Read a brochure. No PDF is needed: Paste features accepts typed terms or an AI-researched answer. Copy AI research prompt asks your chosen AI tool for official links, quotes, exact card variant, caps and lounge conditions. Replace its card placeholder, paste the result here and check the official sources. Research is not automatically verified. Review the extracted cashback, lounge counts, reset periods and conditions. Tick that you checked the brochure and save. You can also enter terms by hand. The PDF is discarded; confirmed terms and supporting quotes are stored. Other benefits stay in expandable details and Ask can explain them using coded card names. AI does not calculate rewards.",
+      "Lounges shows visits left from your manual visit log. Open Visit log to record a real visit or remove a mistaken entry. Allowances reset by the reviewed month, calendar quarter, calendar year or card year. Set a card-year start date in Edit card when needed. Remaining visits do not prove eligibility: check spend conditions, participating lounges and guest charges. Shared or guest quotas should stay in details unless they have an independent allowance.",
+    ],
+    tags: "credit card brochure cashback rewards lounge airport benefits points",
+  },
   // Cards and loans
   {
     id: "loans",

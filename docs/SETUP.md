@@ -1,5 +1,9 @@
 # Setup
 
+## Card benefits and lounge visits
+
+Apply 20261125115736_card_benefits_lounges before deploying the reviewed-benefits UI. Installed on sbkpirchaaljlwzgntrf. Adds nullable credit_cards.feature_details and private card_lounge_visits with owner and parent checks. No financial records are migrated or seeded, and no new environment variables are needed. The CLI migration generator cannot write telemetry in this cloud filesystem; the migration was created manually, tested in PGlite and aligned with the hosted version.
+
 ## Monthly planning reset
 
 Apply 20261124162721_reset_monthly_planning before deploying the new reset actions. Installed on sbkpirchaaljlwzgntrf. The authenticated invoker RPC clears monthly preferences and appends a reset marker, optionally deleting Budget in the same transaction. Existing data tables, RLS and goal ownership are unchanged. No new environment variables.

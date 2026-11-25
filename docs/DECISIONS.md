@@ -1,5 +1,9 @@
 # Product decisions
 
+## Human-reviewed card benefits, 25 Nov 2026
+
+Reuse the brochure reader for PDFs, typed terms and external AI research. A generic copyable prompt asks for official sources and supporting quotes; external research is never automatically verified. The owner explicitly confirms structured terms before saving. Compare published cashback rules only, with visible conditions and known category exclusions. Do not infer point redemption values, track reward-cap usage or claim merchant eligibility. Lounge visits are a manual log against independently reviewed quotas; remaining allowance is not proof of eligibility. Detailed terms stay collapsed and can inform Ask through coded card names. No provider transactions or automatic benefit changes.
+
 ## Consistent edits and reset, 24 Nov 2026
 
 Income and fixed-cost edits preserve the personal spending choice and make Save & invest the remainder. Explicit saving edits can still change the remaining personal amount. Reset Budget now explicitly resets active monthly SIP planning too; SIP-only reset retains Budget. Resets append a marker and preserve historical plans, goal coverage and actual provider/investment records. Reset state outranks legacy profile defaults. After a reset, enter a new amount or use the current budget to build fresh recommendations.

@@ -1,3 +1,4 @@
+import type { CardBenefits, LoungeVisit } from "./card-benefits";
 // Credit card milestones: which period counts now, how much is spent in it,
 // and the pace needed to hit the target. Pure functions; "today" is passed in.
 //
@@ -40,6 +41,8 @@ export interface Bill {
 }
 
 export interface Card {
+  featureDetails?: CardBenefits | null;
+  loungeVisits?: LoungeVisit[];
   id: string;
   label: string;
   annualFee: number | null;

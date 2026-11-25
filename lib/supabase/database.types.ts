@@ -152,6 +152,44 @@ export type Database = {
         };
         Relationships: [];
       };
+      card_lounge_visits: {
+        Row: {
+          id: string;
+          user_id: string;
+          card_id: string;
+          rule_id: string;
+          visited_on: string;
+          visits: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          card_id: string;
+          rule_id: string;
+          visited_on: string;
+          visits?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          card_id?: string;
+          rule_id?: string;
+          visited_on?: string;
+          visits?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "card_lounge_visits_card_id_fkey";
+            columns: ["card_id"];
+            isOneToOne: false;
+            referencedRelation: "credit_cards";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       card_bills: {
         Row: {
           amount: number;
@@ -270,6 +308,7 @@ export type Database = {
       credit_cards: {
         Row: {
           annual_fee: number | null;
+          feature_details: Json | null;
           benefits: string[];
           best_for: string[];
           created_at: string;
@@ -286,6 +325,7 @@ export type Database = {
         };
         Insert: {
           annual_fee?: number | null;
+          feature_details?: Json | null;
           benefits?: string[];
           best_for?: string[];
           created_at?: string;
@@ -302,6 +342,7 @@ export type Database = {
         };
         Update: {
           annual_fee?: number | null;
+          feature_details?: Json | null;
           benefits?: string[];
           best_for?: string[];
           created_at?: string;
@@ -1258,8 +1299,14 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      reset_monthly_planning: { Args: { p_reset_budget?: boolean }; Returns: undefined };
-      save_goal_coverage: { Args: {p_goal: string; p_rows: Json}; Returns: undefined };
+      reset_monthly_planning: {
+        Args: { p_reset_budget?: boolean };
+        Returns: undefined;
+      };
+      save_goal_coverage: {
+        Args: { p_goal: string; p_rows: Json };
+        Returns: undefined;
+      };
       add_invite: {
         Args: { p_email: string; p_note?: string };
         Returns: undefined;

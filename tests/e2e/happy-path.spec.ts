@@ -818,9 +818,9 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   if (!(await page.getByRole("button", { name: "Read features" }).isVisible()))
     await page.getByRole("button", { name: "About this card" }).click();
   await page.getByRole("button", { name: "Read features" }).click();
-  await page.getByRole("tab", { name: "Describe it" }).click();
+  await page.getByRole("tab", { name: "Paste features" }).click();
   await page
-    .getByLabel("What does your card give you?")
+    .getByLabel("Card features or researched answer")
     .fill(
       "Regalia Gold, my card 4111 1111 1111 1111. Annual fee Rs 2,500 waived on spends of Rs 4 lakh in a card year. 4 reward points per Rs 150 spent. 12 complimentary lounge visits a year. Spend Rs 8 lakh in a card year for 10,000 bonus points.",
     );
@@ -828,7 +828,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText("Allow AI to read this?")).toBeVisible();
   await page.getByRole("button", { name: "Allow and read" }).click();
   const found = page.getByRole("dialog", { name: "Check what was found" });
-  await expect(found).toContainText("confirmed");
+  await expect(found).toContainText("document matches");
   const sentCard = JSON.stringify(
     await (await fetch("http://127.0.0.1:5329/last-card")).json(),
   );

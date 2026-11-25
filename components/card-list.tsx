@@ -1,5 +1,7 @@
 "use client";
 
+import { CardBenefitsHub } from "@/components/card-benefits";
+
 import {
   Check,
   ChevronDown,
@@ -879,6 +881,7 @@ export function CardList({
   return (
     <div className="space-y-4">
       <header className="flex items-center justify-between gap-3"><div className="flex items-center gap-1"><h1 className="text-2xl font-semibold tracking-tight">Cards</h1><GuideButton id="cards" /></div>{cards.length>0&&<Button variant="outline" size="sm" className="min-h-11" onClick={()=>setSheet({kind:"card",card:null})}><Plus className="size-4" />Add a card</Button>}</header>
+      <CardBenefitsHub cards={cards} today={today} />
       {cards.length === 0 ? (
         <div className="space-y-2 rounded-2xl border bg-card p-6 text-center">
           <CreditCard className="mx-auto size-8 text-primary" aria-hidden />

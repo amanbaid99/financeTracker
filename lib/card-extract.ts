@@ -1,3 +1,4 @@
+import { benefitDraftSchema, type BenefitDraft } from "./card-benefits";
 // Reads card features out of a document with AI, then checks the result.
 // Each fact is "confirmed" only when at least two AI readings agree on it
 // and it can be found in the document itself. Everything else is shown for
@@ -22,6 +23,7 @@ export interface MilestoneDraft {
 }
 
 export interface Extracted {
+  featureDraft?: BenefitDraft;
   cardName: string | null;
   annualFee: number | null;
   rewards: string | null;
@@ -40,7 +42,10 @@ Reply with JSON only:
  "milestones": [{"name": string, "target": number, "period": "card_year"|"calendar_year"|"quarter"|"month"|"once", "reward": string}],
  "best_for": string[]}       // only from: ${SPEND_CATEGORY_KEYS.join(", ")}
 A fee waived after spending an amount in a year is a milestone named "Annual fee waiver" with reward "Annual fee waived".
-Write amounts as plain numbers of rupees: 8 lakh is 800000.`;
+Write amounts as plain numbers of rupees: 8 lakh is 800000.
+Also include optional "feature_draft": {"source":"Card brochure","validThrough":null,"details":"Detailed reward points, redemption, exclusions, caps, eligibility, fee and lounge terms, only from the document", "rewardRules":[{"id":"cashback-1","category":"general" or a best_for key,"cashbackBps":integer,"excludedCategories":[best_for keys explicitly excluded],"cap":integer rupees or null,"conditions":"exact cap period, merchants, spend thresholds and exclusions; say Unknown if absent","evidence":"verbatim supporting quote"}], "lounges":[{"id":"lounge-1","name":"Domestic or international cardholder visits","visits":integer,"period":"month"|"quarter"|"calendar_year"|"card_year","conditions":"spend eligibility, guest rules, network and access terms","evidence":"verbatim supporting quote"}]}.
+Keep supplied official source links, effective dates and supporting quotes in details. Set source to the supplied official source title or URL when available. Do not claim pasted AI research is independently verified.
+Only extract explicitly stated cashback percentages into rewardRules. 1% = 100 basis points. Never convert points to cashback or infer reward rates. Points and redemption values belong in details. cap is a documented rupee reward limit, not a spend threshold. Different merchant rules stay separate with their conditions. Never add rates together. Include lounge quotas only when both count and reset period are explicit. Use quarter only for a stated calendar quarter; an unclear issuer quarter belongs in details until clarified. Separate guest/shared quotas must be described in details, not treated as independent allowances. Use distinct IDs for distinct benefits.`;
 
 // ---------------------------------------------------------------------------
 // Reading the AI's JSON
@@ -71,7 +76,9 @@ export function parseExtraction(reply: string): Extracted | null {
   }
   if (!raw || typeof raw !== "object") return null;
   const list = (v: unknown) => (Array.isArray(v) ? v : []);
+  const draft = benefitDraftSchema.safeParse(raw.feature_draft);
   return {
+    ...(draft.success ? { featureDraft: draft.data } : {}),
     cardName: str(raw.card_name, 40),
     annualFee: rupees(raw.annual_fee),
     rewards: str(raw.rewards, 200),
@@ -163,6 +170,7 @@ export interface Item<T> {
   why: string;
 }
 export interface Review {
+  featureDraft?: BenefitDraft;
   cardName: Item<string> | null;
   annualFee: Item<number> | null;
   rewards: Item<string> | null;
@@ -250,6 +258,9 @@ export function combine(readings: Extracted[], doc: string): Review {
   }
 
   return {
+    ...(readings.find((r) => r.featureDraft)?.featureDraft
+      ? { featureDraft: readings.find((r) => r.featureDraft)!.featureDraft }
+      : {}),
     readings: n,
     cardName: scalar(
       (e) => e.cardName,

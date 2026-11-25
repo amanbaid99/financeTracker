@@ -1,5 +1,7 @@
 "use server";
 
+import { benefitDraftSchema, readCardBenefits } from "@/lib/card-benefits";
+import { todayIST } from "@/lib/dates";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -10,9 +12,9 @@ type Result = { ok: true; id?: string } | { ok: false; error: string };
 
 async function session() {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) redirect("/login");
-  return { supabase, userId: data.user.id };
+  const { data } = await supabase.auth.getClaims();
+  if (!data?.claims?.sub) redirect("/login");
+  return { supabase, userId: data.claims.sub };
 }
 
 function fail(e: unknown): Result {
@@ -46,6 +48,8 @@ const cardSchema = z.object({
   yearStart: isoDate.nullable(),
   rewards: z.string().trim().max(200).nullable(),
   benefits: z.array(z.string().trim().min(1).max(120)).max(30),
+  reviewedBenefits: benefitDraftSchema.optional(),
+  humanConfirmed: z.literal(true).optional(),
   bestFor: z.array(z.enum(SPEND_CATEGORY_KEYS)).max(8).optional(),
 });
 
@@ -54,8 +58,19 @@ export async function saveCard(
 ): Promise<Result> {
   try {
     const v = cardSchema.parse(input);
+    if (v.reviewedBenefits && !v.humanConfirmed)
+      throw new Error("Check the brochure terms before saving.");
     const { supabase, userId } = await session();
     const row = {
+      ...(v.reviewedBenefits
+        ? {
+            feature_details: {
+              ...v.reviewedBenefits,
+              version: 1,
+              reviewedAt: new Date().toISOString(),
+            },
+          }
+        : {}),
       label: v.label,
       annual_fee: v.annualFee,
       ...(v.statementDay !== undefined
@@ -244,6 +259,66 @@ export async function deleteBill(id: string): Promise<Result> {
       .eq("id", z.string().uuid().parse(id))
       .eq("user_id", userId);
     if (error) throw new Error(error.message);
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+
+/** A confirmed visit log, not an automatic bank feed or eligibility check. */
+export async function logLoungeVisit(input: {
+  cardId: string;
+  ruleId: string;
+  date: string;
+  visits: number;
+}): Promise<Result> {
+  try {
+    const v = z
+      .object({
+        cardId: z.string().uuid(),
+        ruleId: z.string().min(1).max(80),
+        date: z.string().date(),
+        visits: z.number().int().min(1).max(99),
+      })
+      .parse(input);
+    if (v.date > todayIST()) throw new Error("Use today or a past visit date.");
+    const { supabase, userId } = await session();
+    const card = await supabase
+      .from("credit_cards")
+      .select("feature_details")
+      .eq("id", v.cardId)
+      .eq("user_id", userId)
+      .single();
+    if (card.error) throw new Error("Card not found.");
+    const b = readCardBenefits(card.data.feature_details);
+    if (!b?.lounges.some((r) => r.id === v.ruleId))
+      throw new Error("Review this lounge benefit first.");
+    const res = await supabase
+      .from("card_lounge_visits")
+      .insert({
+        user_id: userId,
+        card_id: v.cardId,
+        rule_id: v.ruleId,
+        visited_on: v.date,
+        visits: v.visits,
+      });
+    if (res.error) throw new Error(res.error.message);
+    return done();
+  } catch (e) {
+    return fail(e);
+  }
+}
+export async function deleteLoungeVisit(id: string): Promise<Result> {
+  try {
+    const { supabase, userId } = await session();
+    const res = await supabase
+      .from("card_lounge_visits")
+      .delete()
+      .eq("id", z.string().uuid().parse(id))
+      .eq("user_id", userId)
+      .select("id")
+      .single();
+    if (res.error) throw new Error("Couldn't remove the visit. Try again.");
     return done();
   } catch (e) {
     return fail(e);

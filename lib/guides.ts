@@ -76,12 +76,13 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro:
       "Your credit cards and how close you are to fee waivers and bonus points. Nothing here counts as money you owe.",
     steps: [
+      "Which card? compares reviewed cashback rules by category and amount. Lounges tracks visits from your manual log, with conditions shown beside the allowance.",
       "Each card shows its milestone target, amount left and deadline straight away. Cards with every milestone reached sit below the others. A new milestone period moves a card back up automatically.",
       "Add a card with its annual fee, the date its card year starts, rewards and benefits. Never enter the card number.",
       "Add milestones like a fee waiver or bonus points, with the spend target and when it resets.",
       "Log each monthly statement: the month and the amount. Tap +, then Log card spend, or Log bill on a card. Statements only count toward milestones.",
       "When a new card year or quarter starts, progress counts the statements in that new period.",
-      "Read features fills in a card from its features PDF or your description. You tick what to keep.",
+      "Your card terms lets you review a brochure, paste features or copy a research prompt for your AI tool. Check the official terms and confirm before saving. Detailed benefits stay collapsed.",
       "Loans, including EMIs on a card, are goals: add one with New goal, then Close my loan.",
     ],
   },
@@ -132,6 +133,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-25",title:"Card benefits, checked by you",items:[{title:"Which card and lounge visits",text:"Read a brochure, check the extracted terms and save. Compare published cashback by category and track lounge visits with a simple manual log. Detailed conditions stay tucked away and are available to Ask."}]},
  {date:"2026-11-25",title:"A small SIP requirement hint",items:[{title:"Required a month",text:"Each goal in Budget shows its required monthly SIP in small text. No extra analysis or action buttons."}]},
  {date:"2026-11-25",title:"Adjust each goal’s fund split",items:[{title:"Keep the total, choose the funds",text:"Adjust split opens a sheet with the goal total fixed. Change a fund amount and the others adjust. Save split keeps the preference and updates the investment mix. No extra amount boxes on the Budget summary."}]},
  {date:"2026-11-25",title:"A clearer Budget page",items:[{title:"Review first, edit when needed",text:"Saved SIPs are a read-only summary with the allocation gap at the top. Edit SIPs opens a draft with visible Save and Cancel. Budget edits preview their impact, setup costs can be left blank, and reset choices are clearly separated."}]},

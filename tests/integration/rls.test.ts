@@ -265,6 +265,7 @@ describe("row level security", () => {
         target: 100000,
         period: "card_year",
       });
+    await a.from("card_lounge_visits").insert({user_id:idA,card_id:cardA,rule_id:"domestic",visited_on:"2026-11-25",visits:1});
     await a.from("card_bills").insert({
       user_id: idA,
       card_id: cardA,
@@ -334,6 +335,7 @@ describe("row level security", () => {
     "credit_cards",
     "card_milestones",
     "card_bills",
+    "card_lounge_visits",
     "planned_expenses",
     "bill_status",
     "month_bills",
@@ -486,6 +488,14 @@ describe("row level security", () => {
     expect(forge.error).not.toBeNull();
     const call = await b.rpc("record_net_worth" as never, { uid: idA } as never);
     expect(call.error).not.toBeNull();
+  });
+
+  it("lounge visits cannot be logged on someone else's card or reassigned",async()=>{
+    const own=await a.from("card_lounge_visits").select("id").single();
+    expect(own.error).toBeNull();
+    expect((await b.from("card_lounge_visits").insert({user_id:idB,card_id:cardA,rule_id:"domestic",visited_on:"2026-11-25"})).error).toBeTruthy();
+    expect((await b.from("card_lounge_visits").delete().eq("id",own.data!.id).select("id")).data).toEqual([]);
+    expect((await a.from("card_lounge_visits").update({user_id:idB}).eq("id",own.data!.id)).error).toBeTruthy();
   });
 
   it("user B cannot log a bill on user A's card", async () => {

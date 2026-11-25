@@ -1,5 +1,12 @@
 "use client";
 
+import { BenefitEditor } from "@/components/card-benefit-editor";
+import {
+  emptyBenefits,
+  preserveLoungeIds,
+  type BenefitDraft,
+} from "@/lib/card-benefits";
+import { CARD_RESEARCH_PROMPT } from "@/lib/card-research";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -63,7 +70,7 @@ function Badge({ check, why }: { check: Check; why: string }) {
       ) : (
         <CircleAlert className="size-3" aria-hidden />
       )}
-      {check === "confirmed" ? "Confirmed" : "Check this"}
+      {check === "confirmed" ? "Document match" : "Check this"}
     </span>
   );
 }
@@ -122,6 +129,14 @@ function ReviewStep({
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState("");
+  const [featureDraft, setFeatureDraft] = useState<BenefitDraft>(() =>
+    review.featureDraft
+      ? preserveLoungeIds(review.featureDraft, card?.featureDetails, () =>
+          crypto.randomUUID(),
+        )
+      : (card?.featureDetails ?? emptyBenefits()),
+  );
+  const [humanConfirmed, setHumanConfirmed] = useState(false);
   const ok = (i: Item<unknown> | null) => i?.check === "confirmed";
 
   const [label, setLabel] = useState(
@@ -175,46 +190,57 @@ function ReviewStep({
   const save = () =>
     start(async () => {
       setError("");
-      const pickedBenefits = review.benefits
-        .filter((_, i) => benefits[i])
-        .map((b) => b.value);
-      const allBenefits = [...(card?.benefits ?? [])];
-      for (const b of pickedBenefits)
-        if (!allBenefits.some((x) => x.toLowerCase() === b.toLowerCase()))
-          allBenefits.push(b);
-      const res = await saveCard({
-        id: card?.id ?? null,
-        label: label.trim(),
-        annualFee: useFee ? fee : (card?.annualFee ?? null),
-        yearStart: card?.yearStart ?? null,
-        rewards: useRewards ? rewards.trim() || null : (card?.rewards ?? null),
-        benefits: allBenefits.slice(0, 30),
-        bestFor: [...bestFor],
-      });
-      if (!res.ok || !res.id)
-        return setError(res.ok ? "Couldn't save the card." : res.error);
-      for (const [i, m] of review.milestones.entries()) {
-        if (!milestones[i]) continue;
-        const r = await saveMilestone({
-          id: null,
-          cardId: res.id,
-          name: m.value.name,
-          target: m.value.target,
-          period: m.value.period,
-          deadline: null,
-          reward: m.value.reward,
+      try {
+        const pickedBenefits = review.benefits
+          .filter((_, i) => benefits[i])
+          .map((b) => b.value);
+        const allBenefits = [...(card?.benefits ?? [])];
+        for (const b of pickedBenefits)
+          if (!allBenefits.some((x) => x.toLowerCase() === b.toLowerCase()))
+            allBenefits.push(b);
+        const res = await saveCard({
+          id: card?.id ?? null,
+          label: label.trim(),
+          annualFee: useFee ? fee : (card?.annualFee ?? null),
+          yearStart: card?.yearStart ?? null,
+          rewards: useRewards
+            ? rewards.trim() || null
+            : (card?.rewards ?? null),
+          benefits: allBenefits.slice(0, 30),
+          bestFor: [...bestFor],
+          ...(humanConfirmed
+            ? { reviewedBenefits: featureDraft, humanConfirmed: true as const }
+            : {}),
         });
-        if (!r.ok) return setError(r.error);
+        if (!res.ok || !res.id)
+          return setError(res.ok ? "Couldn't save the card." : res.error);
+        for (const [i, m] of review.milestones.entries()) {
+          if (!milestones[i]) continue;
+          const r = await saveMilestone({
+            id: null,
+            cardId: res.id,
+            name: m.value.name,
+            target: m.value.target,
+            period: m.value.period,
+            deadline: null,
+            reward: m.value.reward,
+          });
+          if (!r.ok) return setError(r.error);
+        }
+        router.refresh();
+        onDone();
+      } catch {
+        setError(
+          "Couldn't finish saving. Your review is still here. Check the card before retrying.",
+        );
       }
-      router.refresh();
-      onDone();
     });
 
   return (
-    <div className="space-y-4">
+    <fieldset disabled={pending} className="min-w-0 space-y-4">
       <p className="text-sm text-muted-foreground">
         {review.readings > 1
-          ? `Read ${review.readings} times and checked against your document: ${confirmed} confirmed, ${toCheck} to check.`
+          ? `Read ${review.readings} times and checked against your document: ${confirmed} document matches, ${toCheck} to check.`
           : "Only one reading came back, so check each item."}{" "}
         Tick what you want to keep. Nothing is saved until you tap Save.
       </p>
@@ -384,6 +410,26 @@ function ReviewStep({
         </section>
       )}
 
+      <BenefitEditor
+        value={featureDraft}
+        onChange={(v) => {
+          setFeatureDraft(v);
+          setHumanConfirmed(false);
+        }}
+      />
+      <label className="flex gap-3 text-sm">
+        <Checkbox
+          checked={humanConfirmed}
+          onChange={(e) => setHumanConfirmed(e.target.checked)}
+        />
+        I reviewed the reward and lounge terms. Save these for comparisons and
+        answers.
+      </label>
+      <p className="text-xs text-muted-foreground">
+        Unchecked terms are not saved for comparisons. Saving replaces the
+        previously reviewed terms.
+      </p>
+
       {error && (
         <p
           role="alert"
@@ -400,7 +446,7 @@ function ReviewStep({
       >
         {pending ? "Saving…" : card ? "Save to card" : "Add card"}
       </Button>
-    </div>
+    </fieldset>
   );
 }
 
@@ -413,6 +459,19 @@ export function CardFeaturesSheet({
   onClose: () => void;
 }) {
   const [mode, setMode] = useState<"pdf" | "text">("pdf");
+  const [copyStatus, setCopyStatus] = useState("");
+  const copyPrompt = async () => {
+    try {
+      await navigator.clipboard.writeText(CARD_RESEARCH_PROMPT);
+      setCopyStatus(
+        "Prompt copied. Replace the card placeholder in your AI tool.",
+      );
+    } catch {
+      setCopyStatus(
+        "Copy unavailable. Open the prompt below and select the text.",
+      );
+    }
+  };
   const [file, setFile] = useState<File | null>(null);
   const [password, setPassword] = useState("");
   const [askPassword, setAskPassword] = useState(false);
@@ -452,11 +511,18 @@ export function CardFeaturesSheet({
         !res.review.annualFee &&
         !res.review.rewards &&
         !res.review.benefits.length &&
-        !res.review.milestones.length
+        !res.review.milestones.length &&
+        !res.review.featureDraft
       )
         return setError(
           "No card features found in this. Try the card's key facts or benefits document.",
         );
+      if (res.review.featureDraft?.source === "Card brochure") {
+        res.review.featureDraft.source =
+          mode === "pdf"
+            ? file?.name.slice(0, 200) || "Card brochure"
+            : "Typed or pasted features";
+      }
       setReview(res.review);
     });
 
@@ -483,7 +549,7 @@ export function CardFeaturesSheet({
             {(
               [
                 ["pdf", "Upload PDF"],
-                ["text", "Describe it"],
+                ["text", "Paste features"],
               ] as const
             ).map(([v, l]) => (
               <button
@@ -493,7 +559,7 @@ export function CardFeaturesSheet({
                 aria-selected={mode === v}
                 onClick={() => setMode(v)}
                 className={cn(
-                  "rounded-md px-2 py-1.5 text-sm",
+                  "min-h-11 rounded-md px-2 py-1.5 text-sm",
                   mode === v
                     ? "bg-card font-medium shadow-sm"
                     : "text-muted-foreground",
@@ -530,25 +596,60 @@ export function CardFeaturesSheet({
               )}
             </div>
           ) : (
-            <Field label="What does your card give you?" htmlFor="f-text">
-              <textarea
-                id="f-text"
-                rows={7}
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                maxLength={8000}
-                placeholder={
-                  "e.g. Annual fee 4,999, waived on 8 lakh spend in a card year. 4 points per 100 on travel. 10,000 bonus points at 12 lakh. 6 domestic lounge visits a year."
-                }
-                className="w-full rounded-lg border border-input bg-card px-3 py-2 text-base sm:text-sm"
-              />
-            </Field>
+            <div className="space-y-3" role="tabpanel">
+              <p className="text-sm text-muted-foreground">
+                No document? Type the features you know or paste information
+                from your preferred AI tool. Check it against official sources
+                before saving.
+              </p>
+              <Field
+                label="Card features or researched answer"
+                htmlFor="f-text"
+                hint="Public card terms only. Leave out personal details and card numbers."
+              >
+                <textarea
+                  id="f-text"
+                  rows={7}
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  maxLength={40000}
+                  placeholder="Paste rewards, caps, exclusions and lounge benefits, with official links if available."
+                  className="w-full rounded-lg border border-input bg-card px-3 py-2 text-base sm:text-sm"
+                />
+              </Field>
+              <Button
+                type="button"
+                variant="outline"
+                className="min-h-11 w-full"
+                onClick={copyPrompt}
+              >
+                Copy AI research prompt
+              </Button>
+              {copyStatus && (
+                <p role="status" className="text-xs text-muted-foreground">
+                  {copyStatus}
+                </p>
+              )}
+              <details className="text-sm">
+                <summary className="min-h-11 cursor-pointer py-3 text-primary">
+                  View prompt
+                </summary>
+                <textarea
+                  aria-label="AI research prompt"
+                  readOnly
+                  value={CARD_RESEARCH_PROMPT}
+                  rows={9}
+                  onFocus={(e) => e.target.select()}
+                  className="w-full rounded-lg border bg-card p-3 text-sm"
+                />
+              </details>
+            </div>
           )}
 
           <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
             AI reads this twice and every fact is checked against your text.
-            Card numbers, emails and phone numbers are masked first. The file
-            isn&apos;t kept, and nothing is saved until you choose what to keep.
+            Card numbers, emails and phone numbers are masked first. The PDF
+            isn&apos;t kept. Reviewed terms are saved only after you confirm.
           </p>
           {error && (
             <p

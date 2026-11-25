@@ -38,9 +38,9 @@ export async function extractCardFeatures(input: {
     return { ok: false, error: "Reading card features isn't set up yet." };
 
   const supabase = await createClient();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) redirect("/login");
-  const userId = auth.user.id;
+  const { data: auth } = await supabase.auth.getClaims();
+  if (!auth?.claims?.sub) redirect("/login");
+  const userId = auth.claims.sub;
 
   // AI must be on, and agreed to under the wording that covers card documents.
   const [profile, consent] = await Promise.all([
