@@ -19,26 +19,6 @@ import { goalStatus, goalSubline, type GoalStatus } from "@/lib/goal-status";
 import type { Investment, Link, TrackedGoal } from "@/lib/tracker";
 import { cn } from "@/lib/utils";
 
-const PILL: Record<GoalStatus["tone"], string> = {
-  success: "bg-success-soft text-success",
-  warning: "bg-warning-soft text-warning",
-  danger: "bg-danger-soft text-danger",
-  muted: "bg-muted text-muted-foreground",
-};
-
-export function StatusPill({ status }: { status: GoalStatus }) {
-  return (
-    <span
-      className={cn(
-        "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
-        PILL[status.tone],
-      )}
-    >
-      {status.label}
-    </span>
-  );
-}
-
 /** A loan's repayment: what's repaid of what you withdrew, or what's left. */
 function LoanRepaid({ g }: { g: TrackedGoal }) {
   const st = g.loanState!;
@@ -120,7 +100,6 @@ export function GoalList({
   const renderGoals = (items: TrackedGoal[]) => (
     <ul className="space-y-3">
       {items.map((g) => {
-        const st = goalStatus(g, today, between);
         const sub = g.loanState
           ? g.targetDate
             ? `Close by ${monthYear(g.targetDate)}`
@@ -151,7 +130,6 @@ export function GoalList({
                   <span className="min-w-0 break-words text-base font-semibold leading-snug">
                     {g.name}
                   </span>
-                  <StatusPill status={st} />
                 </div>
                 {(sub || g.niceToHave) && (
                   <span className="block text-xs text-muted-foreground">

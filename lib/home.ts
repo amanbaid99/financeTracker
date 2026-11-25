@@ -118,7 +118,7 @@ export function homeStatus({
       tone: s.tone,
       text:
         amount > 0
-          ? `${g.name} is ${formatINR(amount)} short${when ? ` by ${shortDate(when)}` : ""}.`
+          ? `${g.name} is ${formatINR(amount)} short${when ? ` by ${formatDate(when)}` : ""}.`
           : `${g.name} is behind. Open it to see what helps.`,
     };
   }

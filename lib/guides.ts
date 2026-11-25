@@ -134,6 +134,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-25",title:"Clearer Home deadlines",items:[{title:"See the year",text:"Goal and bill shortfalls on Home now include the year in their deadline. Goal cards keep their progress bars without status tags."}]},
  {date:"2026-11-25",title:"A simpler card comparison",items:[{title:"Store, payment method, best card",text:"One compact purchase form replaces nested comparison sections. Store and payment method qualify partner rates; specific rewards replace the base rate. Limits stay tucked away, and lounge choices remain conditional."}]},
  {date:"2026-11-25",title:"Simpler cards and better answers",items:[{title:"A few answers, then save",text:"Set up cashback or points, caps, lounge access and milestones in a short guide. A PDF or pasted text can fill in the same questions."},{title:"Which card for this spend?",text:"Compare saved reward rates, see a category guide and ask about cards. Confirmed point values count; unknowns stay unknown. Common card answers are calculated locally."}]},
  {date:"2026-11-25",title:"A clearer card reader",items:[{title:"See what is happening",text:"An animated reading screen shows PDF extraction, feature checking and the review step. Nothing is saved until you confirm."}]},

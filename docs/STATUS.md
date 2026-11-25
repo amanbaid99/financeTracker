@@ -1,5 +1,9 @@
 # Status
 
+## Home shortfall deadlines, 25 Nov 2026
+
+Home shortfall messages now show the full deadline including its year, for both goal targets and upcoming bills. Reuses the existing date formatter. Goal cards on Goals and Home no longer show status tags; amounts and progress bars remain.
+
 ## Compact Cards and confirmed card terms, 25 Nov 2026
 
 Simplifies the benefits hub to one purchase form, a leading estimate, short alternatives and collapsed limits. A single Edit benefits chooser replaces the repeated terms list and category grid. Comparisons now accept store/app and payment method, keep merchant/app-specific rates from applying to unrelated purchases, and choose the most specific applicable bucket before calculating its cap. Multi-category rules share one stated cap group without stacking base rewards or switching to base after a cap. Insurance, gift cards and common excluded spend types are explicit categories. Ask detects payment context and avoids reading a card nickname as its payment method. Lounge rules can retain a separate annual limit with an unknown reset, and conditional voucher-or-lounge choices are not shown as unconditional visits available. No new schema.

@@ -11,7 +11,6 @@ import {
 import { signedINR } from "@/components/net-worth-card";
 import { Progress } from "@/components/ui/progress";
 import { formatINRCompact } from "@/lib/format";
-import { goalStatus } from "@/lib/goal-status";
 import { focusGoals, type HomeTone } from "@/lib/home";
 import type { TrackedGoal } from "@/lib/tracker";
 import { cn } from "@/lib/utils";
@@ -95,7 +94,6 @@ export function CardBillNudge({
 export function HomeGoals({
   goals,
   today,
-  between,
   emergencyMonths,
 }: {
   goals: TrackedGoal[];
@@ -151,12 +149,6 @@ export function HomeGoals({
       </Link>
       <ul className="divide-y px-4">
         {focus.map((g) => {
-          const s = goalStatus(g, today, between);
-          const short = g.cover?.short ?? 0;
-          const right =
-            s.tone === "success" || s.tone === "muted" || short <= 0
-              ? s.label
-              : `${formatINRCompact(short)} short`;
           const detail =
             g.type === "emergency_fund" && emergencyMonths !== null
               ? `Covers ${emergencyMonths} ${emergencyMonths === 1 ? "month" : "months"} of costs`
@@ -171,20 +163,6 @@ export function HomeGoals({
                   <h3 className="min-w-0 break-words text-sm font-medium">
                     {g.name}
                   </h3>
-                  <span
-                    className={cn(
-                      "shrink-0 text-xs",
-                      s.tone === "danger"
-                        ? "text-danger"
-                        : s.tone === "warning"
-                          ? "text-warning"
-                          : s.tone === "success"
-                            ? "text-success"
-                            : "text-muted-foreground",
-                    )}
-                  >
-                    {right}
-                  </span>
                 </div>
                 <Progress
                   value={g.progress * 100}
