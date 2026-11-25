@@ -108,12 +108,12 @@ function MilestoneRow({
       ? ` · about ${formatINR(s.neededPerMonth)} a month`
       : "";
   return (
-    <li className="py-4">
+    <li className="py-3">
       <button
         type="button"
         onClick={onEdit}
         aria-label={`Edit milestone ${s.name}`}
-        className="press block w-full space-y-3 text-left"
+        className="press block w-full space-y-2 text-left"
       >
         <span className="flex items-start justify-between gap-2">
           <span className="min-w-0 break-words text-sm font-medium">
@@ -649,7 +649,7 @@ export function CardList({
           </Button>
         </div>
       ) : (
-        <ul className="space-y-5">
+        <ul className="space-y-3">
           {cardsForMilestones(cards, today).map((c) => {
             const states = c.milestones.map((m) => milestoneState(m, today, c));
             const allReached =
@@ -668,11 +668,11 @@ export function CardList({
                 )}
               >
                 {/* The whole header opens the card (the name's button covers it). */}
-                <div className="relative bg-gradient-to-br from-primary-soft/40 to-card p-5">
+                <div className="relative bg-gradient-to-br from-primary-soft/40 to-card p-4">
                   <div className="flex items-start gap-3">
                     <span
                       className={cn(
-                        "inline-flex size-10 shrink-0 items-center justify-center rounded-2xl",
+                        "inline-flex size-9 shrink-0 items-center justify-center rounded-2xl",
                         allReached
                           ? "bg-success-soft text-success"
                           : "bg-primary-soft text-primary",
@@ -710,7 +710,7 @@ export function CardList({
                       aria-hidden
                     />
                   </div>
-                  <div className="mt-2 flex items-center justify-between gap-3">
+                  <div className="mt-1 flex items-center justify-between gap-3">
                     {!isOpen ? (
                       <p className="min-w-0 text-xs text-muted-foreground">
                         {latest
@@ -740,7 +740,7 @@ export function CardList({
                 {((states.length > 0 && !allReached) || isOpen) && (
                   <section
                     aria-label={`${c.label} milestones`}
-                    className="border-t border-border/50 px-5 py-1"
+                    className="border-t border-border/50 px-4 py-1"
                   >
                     {states.length > 0 ? (
                       <ul className="divide-y">

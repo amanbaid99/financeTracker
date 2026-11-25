@@ -5,6 +5,8 @@ import {
   Receipt,
   Utensils,
   Plane,
+  CreditCard,
+  Smartphone,
 } from "lucide-react";
 import type { Card } from "@/lib/cards";
 import { cardSpendGuide } from "@/lib/card-strategy";
@@ -13,6 +15,8 @@ const ICONS = {
   bills: Receipt,
   food: Utensils,
   travel: Plane,
+  offline: CreditCard,
+  upi: Smartphone,
 };
 
 export function CardStrategy({ cards }: { cards: Card[] }) {
@@ -24,9 +28,9 @@ export function CardStrategy({ cards }: { cards: Card[] }) {
       className="overflow-hidden rounded-3xl border border-primary/15 bg-card shadow-sm"
     >
       <details className="group">
-        <summary className="flex min-h-24 cursor-pointer list-none items-center gap-3 bg-gradient-to-br from-primary-soft/70 to-card p-5 [&::-webkit-details-marker]:hidden">
-          <span className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-            <Compass className="size-6" aria-hidden />
+        <summary className="flex min-h-20 cursor-pointer list-none items-center gap-3 bg-gradient-to-br from-primary-soft/70 to-card p-4 [&::-webkit-details-marker]:hidden">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+            <Compass className="size-5" aria-hidden />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-base font-semibold">
@@ -41,16 +45,16 @@ export function CardStrategy({ cards }: { cards: Card[] }) {
             aria-hidden
           />
         </summary>
-        <div className="divide-y divide-border/60 px-5">
+        <div className="divide-y divide-border/60 px-4">
           {groups.map((group) => {
             const Icon = ICONS[group.id as keyof typeof ICONS];
             return (
-              <section key={group.id} aria-label={group.title} className="py-4">
-                <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+              <section key={group.id} aria-label={group.title} className="py-3">
+                <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">
                   <Icon className="size-4 text-primary" aria-hidden />
                   {group.title}
                 </h3>
-                <ul className="space-y-3">
+                <ul className="space-y-2">
                   {group.rows.map((row) => (
                     <li
                       key={row.label}
@@ -74,9 +78,10 @@ export function CardStrategy({ cards }: { cards: Card[] }) {
             );
           })}
         </div>
-        <details className="mx-5 border-t border-border/60 pb-2">
+        <details className="mx-4 border-t border-border/60 pb-2">
           <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1 py-3 text-xs text-muted-foreground [&::-webkit-details-marker]:hidden">
-            <ChevronDown className="size-3" aria-hidden />Limits to remember
+            <ChevronDown className="size-3" aria-hidden />
+            Limits to remember
           </summary>
           <ul className="space-y-2 pb-3 text-xs leading-relaxed text-muted-foreground">
             {groups

@@ -1,5 +1,9 @@
 # Status
 
+## Compact card reference additions, 25 Nov 2026
+
+Adds owner-requested HSBC offline/big-purchase and SBI PhonePe merchant-UPI reminders when matching saved reward buckets exist. HSBC travel displays estimated 7.2% redemption value and base spends 3.6%, based on 4/2 points per ₹100 at the owner-selected ₹1.80 per Accor point. Labels distinguish redemption value from cashback; conditions retain caps, exclusions and forex-charge caveats. Tightens strategy and card-panel padding, gaps and milestone spacing, preserving touch controls. No data changes. Verification: 10 targeted unit tests, lint, TypeScript and production build pass; browser checks confirm six groups, seven choices, HSBC percentages and no overflow at 320/375/768px.
+
 ## Spend-type card reference, 25 Nov 2026
 
 Replaces the long per-card strategy notes and editor with four intentional spend groups: online shopping (Amazon and other online), utilities/recharges, food delivery, and travel/forex. Each use has one matching confirmed card and a brief reward line. Caps/conditions stay under one collapsed details section. Unsupported categories such as fuel are omitted. Retains saved personal notes and existing storage without modifying hosted records. No live comparisons, AI or transaction tracking. Verification: 16 targeted unit tests, lint, TypeScript and production build pass; real-component browser checks cover four groups, five choices, collapsed caps and no overflow at 320/375/768px.

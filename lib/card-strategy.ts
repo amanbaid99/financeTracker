@@ -185,11 +185,53 @@ export function cardSpendGuide(cards: Card[]): SpendGuideGroup[] {
             row(
               hsbc,
               "Flights & foreign spends",
-              "4 points / ₹100",
-              "Eligible travel/forex; accelerated cap 50,000 points/month. Your Accor value: ₹1.80/point. Compare booking prices and forex charges.",
+              "≈7.2% at Accor",
+              "Eligible travel/forex; accelerated cap 50,000 points/month. Estimated redemption value at ₹1.80/point for Accor, not cashback. Compare booking prices and forex charges.",
             ),
           ]
         : [],
+    },
+    {
+      id: "offline",
+      title: "Offline & big purchases",
+      rows:
+        hsbc &&
+        hsbc.featureDetails?.rewardRules.some(
+          (r) =>
+            r.points?.perSpend === 2 &&
+            r.points.spend === 100 &&
+            r.points.valuePaise === 180,
+        )
+          ? [
+              row(
+                hsbc,
+                "Other eligible spends",
+                "≈3.6% at Accor",
+                "Estimated redemption value at ₹1.80 per point for Accor hotels, not cashback. Eligible base spends earn 2 points per ₹100. Exclusions apply; purchases remain within your budget.",
+              ),
+            ]
+          : [],
+    },
+    {
+      id: "upi",
+      title: "UPI",
+      rows:
+        sbi &&
+        sbi.featureDetails?.rewardRules.some(
+          (r) =>
+            r.cashbackBps === 100 &&
+            r.cap === 2000 &&
+            (r.category === "upi" || r.eligibleCategories?.includes("upi")),
+        )
+          ? [
+              row(
+                sbi,
+                "Merchant Scan & Pay",
+                "1% back",
+                "Eligible merchant payments, including PhonePe Scan & Pay: shared ₹2,000/month cap. Person-to-person transfers are not included.",
+              ),
+            ]
+          : [],
     },
   ];
   return groups.filter((g) => g.rows.length);
