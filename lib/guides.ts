@@ -93,7 +93,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Choose how much to keep for yourself. No automatic transport or day-to-day rows are added.",
       "Review allocation shows Fixed spending, Personal spending and Save & invest. Go back to edit or save once. No SIP-plan prompt.",
       "After saving, use View and edit to change details. Your recorded investments and SIPs stay unchanged.",
-      "Your SIPs sits under your budget: add each SIP with its fund, amount and goal. When Save & invest changes, unlocked SIPs change with it. Suggest amounts fills a starting split.",
+      "Your SIPs sits under Fixed spending: type a monthly amount for each goal and tap Save SIPs. When Save & invest changes, your SIPs change with it.",
     ],
   },
   ask: {
@@ -133,8 +133,8 @@ export interface Release {
 
 export const RELEASES: Release[] = [
   { date: "2026-11-25", title: "SIPs on your Budget", items: [
-    { title: "Set them by hand", text: "Your SIPs sits under your budget: each SIP has a fund, a monthly amount and the goal it's for. It shows what's left to assign." },
-    { title: "Follows Save & invest", text: "Change Save & invest and unlocked SIPs change with it. Lock one to keep its amount." },
+    { title: "Set them by hand", text: "Your SIPs sits under Fixed spending: one amount box per goal. It shows what's left to assign." },
+    { title: "Follows Save & invest", text: "Change Save & invest and your SIPs change with it." },
     { title: "Goals see it", text: "Each goal shows its monthly amount from your SIPs and whether that's enough to be on time." },
   ] },
  {date:"2026-11-24",title:"Fewer Home reminders",items:[{title:"Goal date prompt removed",text:"Removed the Add dates to plan your goals reminder from Home."}]},

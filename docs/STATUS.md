@@ -3,6 +3,11 @@
 
 
 
+
+## SIPs: one amount box per goal, 25 Nov 2026
+
+Per the owner, removed Suggest amounts, Reset to suggested amounts, Clear all, the fund picker and locks. components/budget-sips.tsx now lists active goals (Goals order) with an empty MoneyInput each, under Fixed spending; Save SIPs writes one row per goal (`goal-<id>`, no holding) into the budget sheet; Undo restores saved values. Older rows are shown summed per goal. lib/sip-suggest.ts removed. Scaling with Save & invest stays.
+
 ## Emergency fund paced to its date, 25 Nov 2026
 
 The owner's 6-month emergency goal (₹4.5L by Jun 2028, ₹10,046 saved, fixed costs ₹68,015) was getting ₹48,322 a month instead of about ₹23,000. Two causes: `prepareSafetyStages` (lib/goal-sip-policy.ts) raised the requirement to the whole 3-months-of-costs gap, and the engine used a 1-in-3 plus 3-in-6 pace and then topped the fund up with leftover money. Now the emergency fund gets max(date pace, 1 month of essentials within 3 months), capped there in every pass, so leftovers go to other goals or stay unassigned. Real case now suggests ₹23,156. Existing SIP rows don't change by themselves; Reset to suggested amounts picks up the new split.

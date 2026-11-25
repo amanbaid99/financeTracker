@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { rebalanceBudgetEdit } from "@/lib/budget-rebalance";
 import { BudgetSips } from "@/components/budget-sips";
-import { scaleSips, type SipRow } from "@/lib/budget-sips";
+import { scaleSips } from "@/lib/budget-sips";
 import { budgetSipAmount } from "@/lib/budget-sip-amount";
 import { BudgetGuide } from "@/components/budget-guide";
 import { Sheet } from "@/components/sheet";
@@ -64,9 +64,7 @@ export function BudgetExperience({
   knownCosts,
   sips,
   loadError,
-  holdings = [],
   goals = [],
-  sipSuggestion = [],
 }: {
   initial: BudgetSheet | null;
   saved: boolean;
@@ -76,11 +74,8 @@ export function BudgetExperience({
   /** Monthly SIPs already going in. */
   sips: number;
   loadError: string | null;
-  /** Your holdings and goals, for the SIP rows. */
-  holdings?: { id: string; label: string }[];
+  /** Your goals, one SIP line each. */
   goals?: { id: string; label: string }[];
-  /** Suggested SIP rows for "Suggest amounts". */
-  sipSuggestion?: SipRow[];
 }) {
   const [plan, setPlan] = useState<BudgetSheet | null>(
     hasSaved && initial ? groupPersonalCosts(initial) : null,
@@ -326,16 +321,6 @@ export function BudgetExperience({
           )}
         </div>
       </div>
-      <BudgetSips
-        rows={plan.sips ?? []}
-        budgetMonthly={budgetSipAmount(plan)}
-        holdings={holdings}
-        goals={goals}
-        suggestion={sipSuggestion}
-        pending={pending}
-        error={editing ? "" : error}
-        onSave={(sips, note) => persist({ ...plan, sips }, note)}
-      />
       <div className="surface-card rounded-2xl border bg-card p-4">
         <div className="mb-2 flex items-center justify-between gap-3">
           <div>
@@ -408,6 +393,15 @@ export function BudgetExperience({
           </p>
         )}
       </div>
+      <BudgetSips
+        key={JSON.stringify(plan.sips ?? [])}
+        rows={plan.sips ?? []}
+        budgetMonthly={budgetSipAmount(plan)}
+        goals={goals}
+        pending={pending}
+        error={editing ? "" : error}
+        onSave={(sips, note) => persist({ ...plan, sips }, note)}
+      />
       {rowsIn("personal").some(
         (r) => !isRuleRow(r) && r.id !== "setup-personal",
       ) && (

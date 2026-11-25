@@ -949,16 +949,15 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Save", exact: true }).click();
   await expect(page.getByRole("button", { name: "Edit Groceries" })).toContainText("₹15,000");
   await expect(page.getByRole("link", { name: /^Use ₹[\d,]+ for Your plan$/ })).toHaveCount(0);
-  // SIPs on Budget: a fund, a monthly amount and the goal it's for.
+  // SIPs on Budget: one amount box per goal, empty until you type.
   const sipCard = page.getByRole("region", { name: "Your SIPs" });
   await expect(sipCard).toBeVisible();
-  await sipCard.getByRole("button", { name: "Add SIP" }).click();
-  await page.getByLabel("Fund or account").selectOption({ label: "Index SIP" });
-  await page.getByLabel("Monthly amount").fill("12000");
-  await page.getByLabel("For goal").selectOption({ label: "House" });
-  await page.getByRole("button", { name: "Save", exact: true }).click();
-  await expect(sipCard.getByRole("button", { name: "Edit Index SIP SIP" })).toContainText("₹12,000");
-  await expect(sipCard.getByRole("button", { name: "Edit Index SIP SIP" })).toContainText("For: House");
+  await expect(sipCard.getByRole("button", { name: /Suggest|Reset to suggested/ })).toHaveCount(0);
+  await expect(sipCard.getByLabel("House SIP a month")).toHaveValue("");
+  await sipCard.getByLabel("House SIP a month").fill("12000");
+  await sipCard.getByRole("button", { name: "Save SIPs" }).click();
+  await expect(page.getByText("SIPs saved.")).toBeVisible();
+  await expect(sipCard.getByLabel("House SIP a month")).toHaveValue("12,000");
   await expect(sipCard.getByText(/left to assign|assigned|more than your budget/)).toBeVisible();
   await page.screenshot({ path: "test-results/budget-375.png", fullPage: true });
   // Goals shows what the SIPs put into each goal.
@@ -967,14 +966,6 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText(/^₹12,000$/).first()).toBeVisible();
   await expect(page.getByRole("link", { name: /a month from your SIPs/ })).toBeVisible();
   await page.goto("/goals/budget");
-  // Reset to suggestions, then clear everything to start again.
-  const sips = page.getByRole("region", { name: "Your SIPs" });
-  await sips.getByRole("button", { name: "Reset to suggested amounts" }).click();
-  await page.getByRole("button", { name: "Reset", exact: true }).click();
-  await expect(page.getByText("Suggested amounts filled in. Change any row.")).toBeVisible();
-  await sips.getByRole("button", { name: "Clear all SIPs" }).click();
-  await page.getByRole("dialog").getByRole("button", { name: "Clear all SIPs" }).click();
-  await expect(sips.getByText(/^Add the SIPs you run/)).toBeVisible();
   // Between jobs: no salary makes the budget just monthly costs.
   await page.getByRole("button", { name: "Edit income" }).click();
   await page.getByText("No salary right now").click();
