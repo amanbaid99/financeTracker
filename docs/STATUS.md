@@ -1,5 +1,11 @@
 # Status
 
+## Budget UI and editing flow, 25 Nov 2026
+
+Implemented the agreed review: Your SIPs starts with allocated/available totals and the exact remaining or over-budget amount. Saved goal/fund amounts are read-only; Edit SIPs opens a keyboard-aware sheet with a draft, unsaved indication and sticky Save/Cancel controls. Cancel discards edits and failed saves keep the draft. All goals and positive fund breakdowns remain visible. Existing manual amounts, equal fund split, asset mix and proportional budget scaling are unchanged.
+
+Budget options is beside the heading, with distinct Clear SIP amounts and Reset entire budget confirmations. SIP-only clearing saves an empty sips array while retaining Budget; full reset reuses the existing atomic RPC. Summary and expense edit controls now use consistent Edit labels, with tighter rows and padding. Income, personal, saving and cost edits preview resulting saving/SIP totals using prepareBudgetEdit, extracted from the existing save path to keep calculations identical. Setup has always-visible optional blank cost fields instead of inclusion checkboxes, and explains missing required input before Review allocation. No new schema or hosted financial records changed. Verification: lint, TypeScript, 866 unit tests, 40 Python tests and production build pass. Real-component checks at 320/375/768px cover all eight changes, confirmation/cancellation, preview-to-save totals, both reset scopes, setup validation and no horizontal overflow. A keyboard-sized viewport keeps Save/Cancel visible while scrolling fields. Pending-save/error/retry checks verify locked fields and retained drafts. Full signed-in E2E remains unverified; its selectors were updated for the editor sheet.
+
 
 
 

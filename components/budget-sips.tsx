@@ -2,200 +2,47 @@
 import { useState } from "react";
 import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
+import { Sheet } from "@/components/sheet";
+import { SheetActions } from "@/components/forms/sheet-actions";
 import { formatINR } from "@/lib/format";
 import { CompactAllocation } from "@/components/allocation-bar";
 import { ASSET_CLASSES } from "@/lib/portfolio";
-import {
-  equalSplit,
-  sipMix,
-  sipStatus,
-  sipsByGoal,
-  type SipRow,
-} from "@/lib/budget-sips";
+import { equalSplit, sipMix, sipStatus, sipsByGoal, type SipRow } from "@/lib/budget-sips";
 import { cn } from "@/lib/utils";
-
-type GoalOption = {
-  id: string;
-  label: string;
-  /** Funds covering this goal that can take monthly money. */
-  vehicles?: { label: string; assetClass: string }[];
-};
-
-/**
- * Your SIPs: one line per goal with an amount box. Leave a box empty for ₹0.
- * Nothing is suggested or filled in for you; Save keeps what you typed.
- */
-export function BudgetSips({
-  rows,
-  budgetMonthly,
-  goals,
-  pending,
-  error,
-  onSave,
-}: {
-  rows: SipRow[];
-  /** Save & invest a month from the budget, or null with no salary. */
-  budgetMonthly: number | null;
-  goals: GoalOption[];
-  pending: boolean;
-  error: string;
-  onSave: (rows: SipRow[], note: string) => void;
-}) {
-  const saved = sipsByGoal(rows);
-  const start = () =>
-    Object.fromEntries(goals.map((g) => [g.id, saved.get(g.id) ?? null]));
-  const [amounts, setAmounts] = useState<Record<string, number | null>>(start);
-  const draft: SipRow[] = goals
-    .filter((g) => (amounts[g.id] ?? 0) > 0)
-    .map((g) => ({
-      id: `goal-${g.id}`,
-      investmentId: null,
-      label: g.label.slice(0, 80),
-      amount: amounts[g.id] ?? 0,
-      goalId: g.id,
-    }));
-  const status = sipStatus(draft, budgetMonthly);
-  const mix = sipMix(
-    goals.map((g) => ({
-      amount: amounts[g.id] ?? 0,
-      classes: (g.vehicles ?? []).map((v) => v.assetClass),
-    })),
-  );
-  const changed = goals.some(
-    (g) => (amounts[g.id] ?? 0) !== (saved.get(g.id) ?? 0),
-  );
-
-  return (
-    <section
-      id="sips"
-      aria-label="Your SIPs"
-      className="surface-card space-y-3 rounded-2xl border bg-card p-4"
-    >
-      <h3 className="font-semibold">Your SIPs</h3>
-      {status.assigned > 0 && (
-        <div>
-          <p className="text-sm">
-            <span className="tabular font-semibold">
-              {formatINR(status.assigned)}
-            </span>{" "}
-            a month into investments
-            {budgetMonthly ? (
-              <span className="text-muted-foreground">
-                {" "}
-                · {Math.round((status.assigned / budgetMonthly) * 100)}% of what
-                you save
-              </span>
-            ) : null}
-          </p>
-          <CompactAllocation
-            label="Where your SIPs go"
-            items={mix.map((m) => {
-              const c = ASSET_CLASSES.find((x) => x.key === m.key);
-              return {
-                key: m.key,
-                label: c?.label ?? "No fund yet",
-                value: m.value,
-                share: m.share,
-                slot: c?.slot ?? 7,
-              };
-            })}
-          />
-        </div>
-      )}
-
-      {goals.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Add a goal first, then set a monthly SIP for it here.
-        </p>
-      ) : (
-        <ul className="divide-y">
-          {goals.map((g) => (
-            <li key={g.id} className="py-2">
-              <div className="flex items-center justify-between gap-3">
-                <label
-                  htmlFor={`sip-${g.id}`}
-                  className="min-w-0 break-words text-sm"
-                >
-                  {g.label}
-                </label>
-                <div className="w-32 shrink-0">
-                  <MoneyInput
-                    id={`sip-${g.id}`}
-                    aria-label={`${g.label} SIP a month`}
-                    value={amounts[g.id] ?? null}
-                    onChange={(v) => setAmounts((a) => ({ ...a, [g.id]: v }))}
-                  />
-                </div>
-              </div>
-              {(amounts[g.id] ?? 0) > 0 && (g.vehicles?.length ?? 0) > 0 && (
-                <ul
-                  aria-label={`${g.label} split`}
-                  className="mt-2 space-y-1 border-l-2 border-border pl-3"
-                >
-                  {equalSplit(amounts[g.id] ?? 0, g.vehicles!.length).map(
-                    (n, i) => (
-                      <li
-                        key={i}
-                        className="flex items-baseline justify-between gap-3 text-xs text-muted-foreground"
-                      >
-                        <span className="min-w-0 break-words">
-                          {g.vehicles![i].label}
-                        </span>
-                        <span className="tabular shrink-0">{formatINR(n)}</span>
-                      </li>
-                    ),
-                  )}
-                </ul>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {budgetMonthly !== null && status.assigned > 0 && (
-        <p
-          className={cn(
-            "text-sm",
-            status.over > 0
-              ? "text-danger"
-              : status.left > 0
-                ? "text-warning"
-                : "text-success",
-          )}
-        >
-          {status.over > 0
-            ? `${formatINR(status.over)} more than your budget sets aside.`
-            : status.left > 0
-              ? `${formatINR(status.left)} left to assign.`
-              : `All ${formatINR(budgetMonthly)} assigned.`}
-        </p>
-      )}
-      {error && (
-        <p role="alert" className="text-sm text-danger">
-          {error}
-        </p>
-      )}
-      {changed && (
-        <div className="flex gap-2">
-          <Button
-            className="flex-1"
-            disabled={pending}
-            onClick={() => onSave(draft, "SIPs saved.")}
-          >
-            {pending ? "Saving…" : "Save SIPs"}
-          </Button>
-          <Button
-            variant="ghost"
-            disabled={pending}
-            onClick={() => setAmounts(start())}
-          >
-            Undo
-          </Button>
-        </div>
-      )}
-      <p className="text-xs text-muted-foreground">
-        Plans only. Set up SIPs with your provider.
-      </p>
-    </section>
-  );
+type GoalOption={id:string;label:string;vehicles?:{label:string;assetClass:string}[]};
+export function BudgetSips({rows,budgetMonthly,goals,pending,error,onSave}:{rows:SipRow[];budgetMonthly:number|null;goals:GoalOption[];pending:boolean;error:string;onSave:(rows:SipRow[],note:string)=>void}){
+  const saved=sipsByGoal(rows);
+  const start=()=>Object.fromEntries(goals.map(g=>[g.id,saved.get(g.id)??null]));
+  const [editing,setEditing]=useState(false);
+  const revision=JSON.stringify(rows);
+  const [editRevision,setEditRevision]=useState(revision);
+  const isEditing=editing && editRevision===revision;
+  const [amounts,setAmounts]=useState<Record<string,number|null>>(start);
+  const values=isEditing?amounts:start();
+  const draft:SipRow[]=goals.filter(g=>(values[g.id]??0)>0).map(g=>({id:`goal-${g.id}`,investmentId:null,label:g.label.slice(0,80),amount:values[g.id]??0,goalId:g.id}));
+  const status=sipStatus(draft,budgetMonthly);
+  const savedStatus=sipStatus(rows.filter(r=>goals.some(g=>g.id===r.goalId)),budgetMonthly);
+  const changed=goals.some(g=>(amounts[g.id]??0)!==(saved.get(g.id)??0));
+  const mix=sipMix(goals.map(g=>({amount:saved.get(g.id)??0,classes:(g.vehicles??[]).map(v=>v.assetClass)})));
+  const cancel=()=>{if(pending)return;setAmounts(start());setEditing(false);};
+  const summary=(status:ReturnType<typeof sipStatus>)=><div aria-live="polite" className="space-y-1">
+    <p className="tabular text-sm font-semibold">{formatINR(status.assigned)}{budgetMonthly!==null?` of ${formatINR(budgetMonthly)}`:""} allocated / month</p>
+    {budgetMonthly!==null&&<p className={cn("text-sm",status.over>0?"text-danger":status.left>0?"text-warning":"text-success")}>{status.over>0?`${formatINR(status.over)} over budget`:status.left>0?`${formatINR(status.left)} remaining to allocate`:"All saving allocated"}</p>}
+  </div>;
+  const list=(editable:boolean)=>{const shown=editable?values:start();return <ul className="divide-y">{goals.map(g=><li key={g.id} className="py-2">
+    <div className="flex min-h-10 items-center justify-between gap-3">
+      {editable?<label htmlFor={`sip-${g.id}`} className="min-w-0 break-words text-sm font-medium">{g.label}</label>:<p className="min-w-0 break-words text-sm font-medium">{g.label}</p>}
+      {editable?<div className="w-32 shrink-0"><MoneyInput id={`sip-${g.id}`} aria-label={`${g.label} SIP a month`} value={shown[g.id]??null} onChange={v=>setAmounts(a=>({...a,[g.id]:v}))}/></div>:<p className="tabular shrink-0 text-sm font-semibold">{formatINR(shown[g.id]??0)}</p>}
+    </div>
+    {(shown[g.id]??0)>0&&(g.vehicles?.length??0)>0&&<ul aria-label={`${g.label} split`} className="space-y-1 border-l-2 border-border pl-3">{equalSplit(shown[g.id]??0,g.vehicles!.length).map((n,i)=><li key={`${g.id}-${i}`} className="flex items-baseline justify-between gap-3 text-xs text-muted-foreground"><span className="min-w-0 break-words">{g.vehicles![i].label}</span><span className="tabular shrink-0">{formatINR(n)}</span></li>)}</ul>}
+  </li>)}</ul>;};
+  return <section id="sips" aria-label="Your SIPs" className="surface-card space-y-3 rounded-2xl border bg-card p-4">
+    <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">Your SIPs</h3><Button variant="outline" size="sm" disabled={pending||!goals.length} onClick={()=>{setAmounts(start());setEditRevision(revision);setEditing(true);}}>Edit SIPs</Button></div>
+    {summary(savedStatus)}
+    {savedStatus.assigned>0&&<CompactAllocation label="Investment mix" items={mix.map(m=>{const c=ASSET_CLASSES.find(x=>x.key===m.key);return {key:m.key,label:c?.label??"No fund yet",value:m.value,share:m.share,slot:c?.slot??7};})}/>}
+    {!goals.length?<p className="text-sm text-muted-foreground">Add a goal first, then set a monthly SIP for it here.</p>:list(false)}
+    {!isEditing&&error&&<p role="alert" className="text-sm text-danger">{error}</p>}
+    <p className="text-xs text-muted-foreground">Plans only. Set up SIPs with your provider.</p>
+    {isEditing&&<Sheet title="Edit SIPs" onClose={cancel}><div className="space-y-3">{summary(status)}<p className="text-xs text-muted-foreground">{changed?"Unsaved changes":"Enter the monthly amount for each goal. Blank means ₹0."}</p><fieldset disabled={pending} className="min-w-0">{list(true)}</fieldset>{error&&<p role="alert" className="text-sm text-danger">{error}</p>}<SheetActions pending={pending} disabled={!changed} label="Save SIPs" onCancel={cancel} onSave={()=>onSave(draft,"SIPs saved.")}/></div></Sheet>}
+  </section>;
 }

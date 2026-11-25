@@ -155,11 +155,11 @@ export const HELP: HelpTopic[] = [
     q: "How does the budget work?",
     a: [
       "Tap Create budget. Two screens: enter income, fixed costs and personal spending together, then review the allocation and save.",
-      "Known fixed costs and EMIs come from your records. Rent and Utilities stay blank when unknown. Transport and day-to-day spending are not added automatically; choose one Personal spending amount instead. Untick anything you don't pay, fix amounts, or add an expense by name and amount.",
+      "Known fixed costs and EMIs come from your records. Rent and Utilities stay blank when unknown. Transport and day-to-day spending are not added automatically; choose one Personal spending amount instead. Leave costs you don't pay blank, fix amounts, or add an expense by name and amount.",
       "With a salary, choose how much to keep for Personal spending, including your day-to-day costs and personal costs already listed. Save & invest is exactly what remains after essentials and that personal amount. Existing SIPs count inside Save & invest. If this is less than your running SIPs, review them with your provider; the app does not change them.",
       "With no salary right now, the budget is just your monthly costs. Covered till salary uses it to show how long your money lasts.",
-      "After saving, tap Personal or Save & invest in the summary to edit that amount. Fixed costs stay visible below: tap a row to edit or remove it, or use Add cost. Personal details appear only if you have named personal costs. Tap Edit beside income to change it. Changing income or fixed costs keeps your personal spending amount and recalculates Save & invest from what remains. Each change saves only when you tap Save.",
-      "Budget options has Run setup again and Reset budget. No actual spending is tracked.",
+      "After saving, tap Personal or Save & invest in the summary to edit that amount. Fixed costs stay visible below: tap a row to edit or remove it, or use Add cost. Personal details appear only if you have named personal costs. Tap Edit beside income to change it. Changing income or fixed costs keeps your personal spending amount and recalculates Save & invest from what remains. Each change previews the new Save & invest and planned SIP total before you tap Save.",
+      "Budget options is beside the page heading. It has Run setup again, Clear SIP amounts and Reset entire budget. No actual spending is tracked.",
     ],
     tags: "income costs expenses budget free to invest plan",
   },
@@ -168,7 +168,7 @@ export const HELP: HelpTopic[] = [
     section: "Budget",
     q: "How do I reset my budget and start over?",
     a: [
-      "Below the saved budget, open Budget options, choose Reset budget, then Reset and start over. Run setup again goes through the three steps without deleting first. Keep my budget or closing the panel cancels without deleting anything.",
+      "Open Budget options beside the heading. Clear SIP amounts keeps your budget, while Reset entire budget clears both the budget and SIP amounts after confirmation. Run setup again goes through the two steps without deleting first. Keep my budget or closing the panel cancels without deleting anything.",
       "Reset budget clears your budget and active monthly SIP plan together, so an old amount cannot reappear. Plan history is retained. Your loans, holdings, actual provider SIPs, income records, goals and cards stay as they are. If the reset fails, both saved plans remain unchanged.",
     ],
     tags: "delete clear budget start over reset",
@@ -187,7 +187,7 @@ export const HELP: HelpTopic[] = [
     section: "Budget",
     q: "How do I plan my monthly SIPs?",
     a: [
-      "On Budget, under Fixed spending, Your SIPs lists each of your goals with an amount box. Type how much you'll put towards each goal a month, leave a box empty for ₹0, then tap Save SIPs. Undo puts back what you saved. Nothing is suggested or filled in for you.",
+      "Your SIPs shows the saved total, remaining budget and goal/fund breakdown. Tap Edit SIPs for one amount box per goal. Blank means ₹0. Save SIPs and Cancel stay visible as you scroll; Cancel discards the draft. Nothing is saved while typing.",
       "If a goal is covered by more than one fund or account, a short list under its box splits the amount equally between them, for example ₹6,000 each for two funds. Fixed deposits and EPF are left out, since they don't take a monthly SIP. So is any holding marked Not adding new money: open it on Net worth, tick that box and save.",
       "At the top, once you've entered an amount, you see your SIP total, its share of what you save, and a bar of where it goes: equity, debt, hybrid, gold, cash and so on. Each goal's amount is split equally across its funds and added up by type. A goal with no fund shows as No fund yet. Below the goals, the card compares your total with Save & invest: all assigned, ₹X left to assign, or ₹X more than your budget sets aside. When Save & invest changes later, your SIP amounts change in the same proportion.",
       "Goals shows each goal's monthly amount from your SIPs, and whether it's enough to be on time. These are plans only. Set up SIPs with your provider.",

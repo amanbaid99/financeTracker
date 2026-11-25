@@ -170,45 +170,9 @@ export function BudgetGuide({
                 <ul className="divide-y">
                   {items.map((item) => (
                     <li key={item.row.id} className="space-y-2 py-3">
-                      <label className="flex items-start gap-3 text-sm">
-                        <input
-                          type="checkbox"
-                          className="mt-1 size-4 accent-primary"
-                          checked={item.included}
-                          onChange={(e) =>
-                            setItems((list) =>
-                              list.map((i) =>
-                                i.row.id === item.row.id
-                                  ? { ...i, included: e.target.checked }
-                                  : i,
-                              ),
-                            )
-                          }
-                        />
-                        <span className="min-w-0 break-words">
-                          {item.row.name}
-                          {item.row.category === "personal" && (
-                            <span className="block text-xs text-muted-foreground">
-                              Included in Personal spending below
-                            </span>
-                          )}
-                        </span>
-                      </label>
-                      {item.included && (
-                        <MoneyInput
-                          aria-label={`${item.row.name} monthly amount`}
-                          value={item.row.value || null}
-                          onChange={(v) =>
-                            setItems((list) =>
-                              list.map((i) =>
-                                i.row.id === item.row.id
-                                  ? { ...i, row: { ...i.row, value: v ?? 0 } }
-                                  : i,
-                              ),
-                            )
-                          }
-                        />
-                      )}
+                      <label htmlFor={`guide-cost-${item.row.id}`} className="block text-sm">{item.row.name}</label>
+                      {item.row.category === "personal" && <p className="text-xs text-muted-foreground">Included in Personal spending below</p>}
+                      <MoneyInput id={`guide-cost-${item.row.id}`} aria-label={`${item.row.name} monthly amount`} placeholder="Optional" value={item.included ? item.row.value || null : null} onChange={v=>setItems(list=>list.map(i=>i.row.id===item.row.id?{...i,included:(v??0)>0,row:{...i.row,value:v??0}}:i))} />
                     </li>
                   ))}
                 </ul>
@@ -270,6 +234,7 @@ export function BudgetGuide({
               >
                 <MoneyInput
                   id="guide-personal"
+                  placeholder="Enter an amount"
                   value={personal}
                   onChange={setPersonal}
                 />
@@ -282,7 +247,9 @@ export function BudgetGuide({
                       : (split.error ?? "Enter a whole-rupee personal amount.")}
                   </p>
                 )}
+              {!valid && <p id="budget-setup-needed" className="text-xs text-muted-foreground">{!noSalary && salary<=0 ? "Enter your monthly take-home income." : !noSalary && personal===null ? "Enter personal spending, or type 0 if none." : "Check the amounts above before continuing."}</p>}
               <Button
+                aria-describedby={!valid ? "budget-setup-needed" : undefined}
                 className="w-full"
                 disabled={!valid}
                 onClick={() => setStep(1)}

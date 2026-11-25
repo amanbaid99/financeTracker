@@ -953,11 +953,14 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   const sipCard = page.getByRole("region", { name: "Your SIPs" });
   await expect(sipCard).toBeVisible();
   await expect(sipCard.getByRole("button", { name: /Suggest|Reset to suggested/ })).toHaveCount(0);
-  await expect(sipCard.getByLabel("House SIP a month")).toHaveValue("");
-  await sipCard.getByLabel("House SIP a month").fill("12000");
-  await sipCard.getByRole("button", { name: "Save SIPs" }).click();
+  await sipCard.getByRole("button",{name:"Edit SIPs",exact:true}).click();
+  const sipEditor=page.getByRole("dialog",{name:"Edit SIPs"});
+  await expect(sipEditor.getByLabel("House SIP a month")).toHaveValue("");
+  await sipEditor.getByLabel("House SIP a month").fill("12000");
+  await sipEditor.getByRole("button", { name: "Save SIPs" }).click();
   await expect(page.getByText("SIPs saved.")).toBeVisible();
-  await expect(sipCard.getByLabel("House SIP a month")).toHaveValue("12,000");
+  await expect(sipEditor).toHaveCount(0);
+  await expect(sipCard.getByText("₹12,000",{exact:true}).first()).toBeVisible();
   // The SIP total and a bar of where it goes by asset type.
   await expect(sipCard.getByText("a month into investments")).toBeVisible();
   await expect(sipCard.getByRole("group", { name: "Where your SIPs go" })).toBeVisible();

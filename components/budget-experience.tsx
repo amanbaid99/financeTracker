@@ -1,16 +1,16 @@
 "use client";
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import {
-  ChevronRight,
   MoreHorizontal,
   Plus,
   Sparkles,
   Pencil,
 } from "lucide-react";
-import { rebalanceBudgetEdit } from "@/lib/budget-rebalance";
+import { prepareBudgetEdit } from "@/lib/budget-edit-preview";
+import { SheetActions } from "@/components/forms/sheet-actions";
 import { BudgetSips } from "@/components/budget-sips";
-import { scaleSips } from "@/lib/budget-sips";
+import { sipTotal } from "@/lib/budget-sips";
 import { budgetSipAmount } from "@/lib/budget-sip-amount";
 import { BudgetGuide } from "@/components/budget-guide";
 import { Sheet } from "@/components/sheet";
@@ -23,7 +23,6 @@ import { saveBudgetSheet, resetBudgetSheet } from "@/lib/budget-ratio-actions";
 import { personalBudget } from "@/lib/budget-guide";
 import { formatINR, formatINRCompact } from "@/lib/format";
 import {
-  applyBudgetRules,
   emptyBudgetSheet,
   isRuleRow,
   rowAmount,
@@ -65,6 +64,7 @@ export function BudgetExperience({
   sips,
   loadError,
   goals = [],
+  heading,
 }: {
   initial: BudgetSheet | null;
   saved: boolean;
@@ -74,6 +74,7 @@ export function BudgetExperience({
   /** Monthly SIPs already going in. */
   sips: number;
   loadError: string | null;
+  heading?: ReactNode;
   /** Your goals, one SIP line each. */
   goals?: { id: string; label: string; vehicles?: { label: string; assetClass: string }[] }[];
 }) {
@@ -83,7 +84,7 @@ export function BudgetExperience({
   const [guide, setGuide] = useState(false);
   const [editing, setEditing] = useState<Editing>(null);
   const [options, setOptions] = useState(false);
-  const [reset, setReset] = useState(false);
+  const [reset, setReset] = useState<"budget" | "sips" | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [pending, start] = useTransition();
@@ -95,12 +96,7 @@ export function BudgetExperience({
 
   /** Saves a changed budget straight away: tapping Save is the confirmation. */
   function persist(next: BudgetSheet, note = "Saved.") {
-    let normalised = plan ? rebalanceBudgetEdit(plan, next) : applyBudgetRules(next);
-    // When Save & invest changes, unlocked SIPs change with it.
-    const before = plan ? budgetSipAmount(plan) : null;
-    const after = budgetSipAmount(normalised);
-    if (normalised.sips?.length && before !== null && after !== null && before !== after)
-      normalised = { ...normalised, sips: scaleSips(normalised.sips, after) };
+    const normalised = prepareBudgetEdit(plan, next);
     setError("");
     start(async () => {
       try {
@@ -118,6 +114,8 @@ export function BudgetExperience({
 
   if (guide && !loadError)
     return (
+      <>
+      {heading}
       <BudgetGuide
         initial={plan ?? emptyBudgetSheet(salary)}
         costs={knownCosts}
@@ -132,6 +130,7 @@ export function BudgetExperience({
           router.refresh();
         }}
       />
+      </>
     );
 
   if (!plan)
@@ -141,7 +140,9 @@ export function BudgetExperience({
         data-guide="budget-sheet"
         className="space-y-4"
       >
-        {loadError && (
+        {heading}
+
+      {loadError && (
           <p
             role="alert"
             className="rounded-xl bg-danger-soft p-3 text-sm text-danger"
@@ -194,12 +195,30 @@ export function BudgetExperience({
     .reduce((s, b) => s + b.amount, 0);
   const over = noSalary ? 0 : -sheetTotals(plan).remaining;
 
+  const preview = (next: BudgetSheet) => {
+    const result = prepareBudgetEdit(plan,next);
+    const available = budgetSipAmount(result);
+    return <div aria-label="After saving" className="space-y-1 rounded-xl bg-primary/5 p-3 text-sm"><p className="mb-2 text-xs text-muted-foreground">After saving</p><p className="flex justify-between gap-3"><span>Save &amp; invest</span><b className="tabular">{formatINR(available ?? 0)}</b></p><p className="flex justify-between gap-3"><span>SIP total</span><b className="tabular">{formatINR(sipTotal(result.sips ?? []))}</b></p></div>;
+  };
   return (
     <section
       aria-label="Your budget"
       data-guide="budget-sheet"
       className="space-y-4"
     >
+      <div className="flex items-center justify-between gap-3">{heading}<div className="ml-auto">      <Button
+        variant="ghost"
+        size="sm"
+        disabled={!!loadError}
+        className="text-muted-foreground"
+        onClick={() => {
+          setOptions(true);
+          setError("");
+        }}
+      >
+        <MoreHorizontal className="size-4" aria-hidden />
+        Budget options
+      </Button></div></div>
       {loadError && (
         <p
           role="alert"
@@ -209,7 +228,7 @@ export function BudgetExperience({
         </p>
       )}
       <div className="surface-card overflow-hidden rounded-3xl border border-primary/15 bg-card">
-        <div className="space-y-3 bg-gradient-to-br from-primary/5 to-transparent p-5">
+        <div className="space-y-3 bg-gradient-to-br from-primary/5 to-transparent p-4">
           <button
             type="button"
             aria-label="Edit income"
@@ -280,13 +299,13 @@ export function BudgetExperience({
                   </span>
                   <span className="flex justify-end">
                     {b.id !== "essentials" && (
-                      <Pencil className="size-3.5 text-primary" aria-hidden />
+                      <span className="text-xs text-primary">Edit</span>
                     )}
                   </span>
                 </>
               );
               const rowClass =
-                cn("grid min-h-12 w-full items-center gap-2 py-3 text-left", noSalary ? "grid-cols-[minmax(0,1fr)_auto_0px_1rem]" : "grid-cols-[minmax(0,1fr)_5.5rem_2.25rem_1rem]");
+                cn("grid min-h-11 w-full items-center gap-1.5 py-2 text-left", noSalary ? "grid-cols-[minmax(0,1fr)_auto_0px_2rem]" : "grid-cols-[minmax(0,1fr)_auto_2rem_2rem]");
               return b.id === "essentials" ? (
                 <div key={b.id} className={rowClass}>
                   {content}
@@ -364,7 +383,7 @@ export function BudgetExperience({
                   aria-label={`Edit ${r.name}`}
                   disabled={!!loadError}
                   onClick={() => edit({ kind: "row", row: r, isNew: false })}
-                  className="press flex min-h-12 w-full items-center justify-between gap-3 py-3 text-left text-sm"
+                  className="press flex min-h-11 w-full items-center justify-between gap-3 py-2 text-left text-sm"
                 >
                   <span className="min-w-0 break-words">
                     {r.name}
@@ -378,10 +397,7 @@ export function BudgetExperience({
                     <span className="tabular font-medium">
                       {formatINR(amountOf(r))}
                     </span>
-                    <ChevronRight
-                      className="size-4 text-muted-foreground"
-                      aria-hidden
-                    />
+                    <span className="text-xs text-primary">Edit</span>
                   </span>
                 </button>
               </li>
@@ -394,7 +410,6 @@ export function BudgetExperience({
         )}
       </div>
       <BudgetSips
-        key={JSON.stringify(plan.sips ?? [])}
         rows={plan.sips ?? []}
         budgetMonthly={budgetSipAmount(plan)}
         goals={goals}
@@ -437,19 +452,7 @@ export function BudgetExperience({
           {message}
         </p>
       )}
-      <Button
-        variant="ghost"
-        size="sm"
-        disabled={!!loadError}
-        className="text-muted-foreground"
-        onClick={() => {
-          setOptions(true);
-          setError("");
-        }}
-      >
-        <MoreHorizontal className="size-4" aria-hidden />
-        Budget options
-      </Button>
+
 
       {editing?.kind === "row" && (
         <RowSheet
@@ -459,6 +462,7 @@ export function BudgetExperience({
           pending={pending}
           error={error}
           onClose={() => !pending && edit(null)}
+          preview={(row) => preview({...plan,rows: editing.isNew ? [...plan.rows.filter(r=>!isRuleRow(r)),row] : plan.rows.map(r=>r.id===row.id?row:r)})}
           onSave={(row) =>
             persist({
               ...plan,
@@ -483,6 +487,12 @@ export function BudgetExperience({
       )}
       {editing?.kind === "personal" && (
         <AmountSheet
+          preview={(amount)=>{
+            const rows=plan.rows.filter(r=>!isRuleRow(r)&&r.id!=="setup-personal");
+            if(noSalary)return preview({...plan,rows:[...rows,{id:"setup-personal",name:"Personal spending",category:"personal",mode:"amount",value:Math.max(0,amount-rows.filter(r=>r.category==="personal").reduce((n,r)=>n+amountOf(r),0)),loanId:null}]});
+            const split=personalBudget(plan.salary,rows,amount);if(!split.valid)return null;
+            return preview({...plan,rows,rules:{savings:{mode:"amount",value:0},investing:{mode:"amount",value:0},future:{mode:"amount",value:split.future}}});
+          }}
           title="Personal spending"
           label="Personal spending a month"
           hint="Keep this for your everyday and guilt-free spending. Save & invest adjusts to what remains."
@@ -539,6 +549,7 @@ export function BudgetExperience({
       )}
       {editing?.kind === "future" && (
         <AmountSheet
+          preview={amount=>preview({...plan,rows:plan.rows.filter(r=>r.id!=="setup-personal"&&!isRuleRow(r)),rules:{savings:{mode:"amount",value:0},investing:{mode:"amount",value:0},future:{mode:"amount",value:amount}}})}
           title="Save & invest"
           label="Save & invest a month"
           hint={
@@ -565,6 +576,7 @@ export function BudgetExperience({
       )}
       {editing?.kind === "income" && (
         <IncomeSheet
+          preview={(amount,none)=>preview({...plan,salary:none?0:amount,noSalary:none||undefined,rules:none?{savings:{mode:"amount",value:0},investing:{mode:"amount",value:0},future:{mode:"amount",value:0}}:plan.rules})}
           salary={plan.salary}
           noSalary={noSalary}
           pending={pending}
@@ -599,29 +611,29 @@ export function BudgetExperience({
             >
               Run setup again
             </Button>
+            <Button variant="ghost" className="w-full text-danger" disabled={pending || !plan.sips?.length} onClick={()=>{setOptions(false);setReset("sips");setError("");}}>Clear SIP amounts</Button>
             <Button
               variant="ghost"
               className="w-full text-danger"
               onClick={() => {
                 setOptions(false);
-                setReset(true);
+                setReset("budget");
                 setError("");
               }}
             >
-              Reset budget
+              Reset entire budget
             </Button>
           </div>
         </Sheet>
       )}
       {reset && (
         <Sheet
-          title="Reset budget?"
-          onClose={() => !pending && setReset(false)}
+          title={reset === "sips" ? "Clear SIP amounts?" : "Reset entire budget?"}
+          onClose={() => !pending && setReset(null)}
         >
           <div className="space-y-4">
             <p className="text-sm">
-              This resets your budget and saved SIP plan so you can start fresh. Your
-              goals, investments, loan records and provider SIPs stay as they are.
+              {reset === "sips" ? "This clears the monthly amounts entered for your goals. Your budget and provider SIPs stay unchanged." : "This resets your budget and saved SIP plan so you can start fresh. Your goals, investments, loan records and provider SIPs stay as they are."}
             </p>
             {error && (
               <p role="alert" className="text-sm text-danger">
@@ -636,10 +648,16 @@ export function BudgetExperience({
                 setError("");
                 start(async () => {
                   try {
+                    if (reset === "sips") {
+                      const next = {...plan,sips:[]};
+                      const result = await saveBudgetSheet(next);
+                      if (!result.ok) return setError(result.error);
+                      setPlan(next);setReset(null);setMessage("SIP amounts cleared. Your budget is unchanged.");router.refresh();return;
+                    }
                     const result = await resetBudgetSheet("RESET_BUDGET");
                     if (!result.ok) return setError(result.error);
                     setPlan(null);
-                    setReset(false);
+                    setReset(null);
                     setMessage(
                       "Budget and SIP plan reset. Start fresh when you're ready.",
                     );
@@ -650,15 +668,15 @@ export function BudgetExperience({
                 });
               }}
             >
-              Reset and start over
+              {reset === "sips" ? "Clear SIP amounts" : "Reset and start over"}
             </Button>
             <Button
               variant="outline"
               className="w-full"
               disabled={pending}
-              onClick={() => setReset(false)}
+              onClick={() => setReset(null)}
             >
-              Keep my budget
+              {reset === "sips" ? "Keep my SIPs" : "Keep my budget"}
             </Button>
           </div>
         </Sheet>
@@ -676,6 +694,7 @@ function RowSheet({
   onClose,
   onSave,
   onRemove,
+  preview,
 }: {
   row: BudgetSheetRow;
   isNew: boolean;
@@ -685,6 +704,7 @@ function RowSheet({
   onClose: () => void;
   onSave: (row: BudgetSheetRow) => void;
   onRemove: () => void;
+  preview?: (row: BudgetSheetRow) => ReactNode;
 }) {
   const [name, setName] = useState(row.name);
   const [amount, setAmount] = useState<number | null>(
@@ -743,13 +763,7 @@ function RowSheet({
               {error}
             </p>
           )}
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={!name.trim() || amount === null}
-          >
-            {pending ? "Saving…" : "Save"}
-          </Button>
+          {amount!==null&&preview?.({...row,name:name.trim(),mode:"amount",value:amount,category:row.loanId?row.category:category as "fixed"|"personal"})}
           {!isNew && (
             <Button
               type="button"
@@ -760,6 +774,7 @@ function RowSheet({
               Remove from budget
             </Button>
           )}
+          <SheetActions pending={pending} disabled={!name.trim()||amount===null} onCancel={onClose} />
         </fieldset>
       </form>
     </Sheet>
@@ -775,6 +790,7 @@ function AmountSheet({
   error,
   onClose,
   onSave,
+  preview,
 }: {
   title: string;
   label: string;
@@ -784,6 +800,7 @@ function AmountSheet({
   error: string;
   onClose: () => void;
   onSave: (amount: number) => void;
+  preview?: (amount: number) => ReactNode;
 }) {
   const [amount, setAmount] = useState<number | null>(initial);
   return (
@@ -804,9 +821,8 @@ function AmountSheet({
               {error}
             </p>
           )}
-          <Button type="submit" className="w-full">
-            {pending ? "Saving…" : "Save"}
-          </Button>
+          {amount!==null&&preview?.(amount)}
+          <SheetActions pending={pending} onCancel={onClose} />
         </fieldset>
       </form>
     </Sheet>
@@ -820,6 +836,7 @@ function IncomeSheet({
   error,
   onClose,
   onSave,
+  preview,
 }: {
   salary: number;
   noSalary: boolean;
@@ -827,6 +844,7 @@ function IncomeSheet({
   error: string;
   onClose: () => void;
   onSave: (salary: number, noSalary: boolean) => void;
+  preview?: (salary: number, noSalary: boolean) => ReactNode;
 }) {
   const [amount, setAmount] = useState<number | null>(salary || null);
   const [none, setNone] = useState(noSalary);
@@ -863,9 +881,8 @@ function IncomeSheet({
               {error}
             </p>
           )}
-          <Button type="submit" className="w-full" disabled={!none && !amount}>
-            {pending ? "Saving…" : "Save"}
-          </Button>
+          {(none||amount!==null)&&preview?.(amount??0,none)}
+          <SheetActions pending={pending} disabled={!none&&!amount} onCancel={onClose} />
         </fieldset>
       </form>
     </Sheet>

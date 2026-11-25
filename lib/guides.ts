@@ -87,13 +87,13 @@ export const GUIDES: Record<GuideId, Guide> = {
   },
   budget: {
     title: "Your monthly budget",
-    intro: "Three quick steps, then tap any row to change it.",
+    intro: "Two setup steps, then a clear saved summary.",
     steps: [
       "Create budget puts income, known EMIs, fixed costs and Personal spending on one screen. Unknown Rent and Utilities are blank.",
       "Choose how much to keep for yourself. No automatic transport or day-to-day rows are added.",
       "Review allocation shows Fixed spending, Personal spending and Save & invest. Go back to edit or save once. No SIP-plan prompt.",
-      "After saving, use View and edit to change details. Your recorded investments and SIPs stay unchanged.",
-      "Your SIPs sits under Fixed spending: type a monthly amount for each goal and tap Save SIPs. When Save & invest changes, your SIPs change with it.",
+      "Use the Edit controls to change amounts. Each sheet previews the resulting saving and planned SIP totals before Save.",
+      "Your SIPs shows saved amounts and the remaining budget at the top. Tap Edit SIPs to change them, then Save SIPs or Cancel. Budget options beside the heading has separate SIP-only and full reset choices.",
     ],
   },
   ask: {
@@ -132,6 +132,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-25",title:"A clearer Budget page",items:[{title:"Review first, edit when needed",text:"Saved SIPs are a read-only summary with the allocation gap at the top. Edit SIPs opens a draft with visible Save and Cancel. Budget edits preview their impact, setup costs can be left blank, and reset choices are clearly separated."}]},
   { date: "2026-11-25", title: "Saving and investing at a glance", items: [
     { title: "Stop new money into a holding", text: "Tick Not adding new money on a holding you're keeping but not adding to. It stays in your net worth and goals, and your SIPs skip it." },
     { title: "Where your SIPs go", text: "Your SIPs on Budget now shows your monthly total and a bar of how it splits across equity, debt, gold, cash and more." },
