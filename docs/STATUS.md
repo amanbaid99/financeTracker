@@ -1,5 +1,9 @@
 # Status
 
+## Collapsible card cheat sheet, 25 Nov 2026
+
+The compact cheat sheet now starts collapsed behind a keyboard-accessible disclosure. Uses owner-requested tag colours: ICICI black, HSBC dark grey, SBI navy and Millennia light blue, with contrasting text. No reward, persistence or ordering changes.
+
 ## One-view card cheat sheet, 25 Nov 2026
 
 Replaces repeated spend-group headings and descriptions with an always-visible seven-row Spend / Card / Value table. Short card labels have consistent colour badges and accessible full names. HSBC redemption context appears once under the rows; caps remain collapsed. Reward choices and calculations are unchanged. Lint, TypeScript and production build pass. Real-component browser checks at 320/375/768px confirm all seven rows fit within a 520px-tall panel, no horizontal overflow, accessible labels and expandable conditions.
