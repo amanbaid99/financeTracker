@@ -9,8 +9,6 @@ import {
   investmentSub,
   investmentTitle,
 } from "@/components/investment-sheet";
-import { GoalMappingControl } from "./goal-suggestions";
-import { holdingLabel } from "@/lib/goal-suggestions";
 import { Sheet } from "@/components/sheet";
 import { Button } from "@/components/ui/button";
 import { deleteGoal } from "@/lib/actions";
@@ -79,7 +77,7 @@ export function InvestmentRow({
         type="button"
         onClick={onClick}
         aria-label={`Edit ${title}`}
-        className="flex w-full items-center gap-3 py-3 text-left"
+        className="flex w-full items-center gap-3 py-2 text-left"
       >
         <span className="min-w-0 flex-1">
           <span className="block truncate text-sm font-medium">{title}</span>
@@ -171,10 +169,21 @@ export function GoalInvestments({
       : null;
   const close = useCallback(() => setOpen(null), []);
   return (
-    <section className="space-y-2" aria-labelledby="inv-h">
-      <h2 id="inv-h" className="text-sm font-semibold">
-        Covered by
-      </h2>
+    <section className="space-y-1" aria-labelledby="inv-h">
+      <div className="flex items-center justify-between gap-3">
+        <h2 id="inv-h" className="text-sm font-semibold">
+          Covered by
+        </h2>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="-mr-2 text-primary"
+          onClick={() => setOpen({ investment: null, percent: null })}
+        >
+          <Plus /> Add investment
+        </Button>
+      </div>
       {!simple && goal.cover?.why && (
         <p className="text-xs text-muted-foreground">{goal.cover.why}</p>
       )}
@@ -218,16 +227,6 @@ export function GoalInvestments({
           ))}
         </ul>
       )}
-      <Button
-        type="button"
-        variant="outline"
-        className="w-full"
-        onClick={() => setOpen({ investment: null, percent: null })}
-      >
-        <Plus /> Add investment
-      </Button>
-      <GoalMappingControl goalId={goal.id} goalName={goal.name} links={links}
-        holdings={investments.map(i=>({id:i.id,label:holdingLabel(i),value:i.value}))} />
       {open && (
         <InvestmentSheet
           goalId={goal.id}
@@ -251,7 +250,7 @@ export function DeleteGoalButton({ id, loanId }: { id: string; loanId?: string |
   const [confirm, setConfirm] = useState(false);
   const [pending, start] = useTransition();
   return (
-    <div className="space-y-1 text-center">
+    <div className="space-y-1">
       <Button
         type="button"
         variant={confirm ? "destructive" : "ghost"}

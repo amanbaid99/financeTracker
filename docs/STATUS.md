@@ -4,6 +4,11 @@
 
 
 
+
+## Tighter goal details, 25 Nov 2026
+
+Open goal on Goals: "Covered by" header carries a small Add investment action (replacing the full-width button); holdings rows are tighter; Delete goal and Edit share one footer row; less spacing. Removed "Change what covers this goal" (GoalMappingControl) and the now-unused components/goal-suggestions.tsx.
+
 ## SIPs: one amount box per goal, 25 Nov 2026
 
 Per the owner, removed Suggest amounts, Reset to suggested amounts, Clear all, the fund picker and locks. components/budget-sips.tsx now lists active goals (Goals order) with an empty MoneyInput each, under Fixed spending; Save SIPs writes one row per goal (`goal-<id>`, no holding) into the budget sheet; Undo restores saved values. Older rows are shown summed per goal. lib/sip-suggest.ts removed. Scaling with Save & invest stays.

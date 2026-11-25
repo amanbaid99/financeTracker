@@ -54,7 +54,7 @@ export const GUIDES: Record<GuideId, Guide> = {
       "Loans can have payoff goals. Manage any loan in Net worth, even if its goal was deleted. Each shows what's left, the EMI and when it ends. Confirm the outstanding amount from your lender each month. Once confirmed, it stays until your next update. Older schedule-based balances and future payoff figures are estimates.",
       "Tap +, then Update amounts to enter new amounts, or Import statement to update funds from a CAS.",
       "Open +, then SIP plan to review goal amounts and their investment vehicles. Saving returns to Goals.",
-      "Open a goal to see what covers it and its remaining gap. Change what covers this goal is optional and never reduces another goal's share.",
+      "Open a goal to see what covers it and its remaining gap.",
       "Essential goals come first. Other goals use priority, deadline and need, with no automatic contribution to every goal.",
       "Saving a SIP plan never starts a SIP or changes investment balances.",
     ],

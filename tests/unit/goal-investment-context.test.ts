@@ -5,7 +5,6 @@ const state=vi.hoisted(()=>({open:null as unknown,sheet:vi.fn()}));
 vi.mock("react",async(importOriginal)=>({...await importOriginal<typeof import("react")>(),useState:()=>[state.open,vi.fn()]}));
 vi.mock("next/navigation",()=>({useRouter:()=>({refresh:vi.fn()})}));
 vi.mock("@/components/goal-form",()=>({GoalForm:()=>null}));
-vi.mock("@/components/goal-suggestions",()=>({GoalMappingControl:()=>null}));
 vi.mock("@/components/quick-add",()=>({QUICK_ACTION:"tracker:quick-action"}));
 vi.mock("@/lib/actions",()=>({deleteGoal:vi.fn()}));
 vi.mock("@/components/investment-sheet",()=>({InvestmentSheet:(props:unknown)=>{state.sheet(props);return null},investmentTitle:()=>"Savings",investmentSub:()=>"Savings account"}));

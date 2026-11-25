@@ -203,11 +203,8 @@ export function GoalList({
             {isOpen && (
               <div
                 id={panelId}
-                className="expand-in space-y-5 border-t px-4 pb-4 pt-4"
+                className="expand-in space-y-3 border-t px-4 pb-3 pt-3"
               >
-                <div className="flex justify-end">
-                  <EditGoalButton goal={g} today={today} />
-                </div>
                 <PlannedSip goal={g} />
                 <GoalInvestments
                   goal={g}
@@ -238,7 +235,10 @@ export function GoalList({
                     </ul>
                   </section>
                 )}
-                <DeleteGoalButton id={g.id} loanId={g.loanId} />
+                <div className="flex items-start justify-between gap-3 border-t pt-3">
+                  <DeleteGoalButton id={g.id} loanId={g.loanId} />
+                  <EditGoalButton goal={g} today={today} />
+                </div>
               </div>
             )}
           </li>
