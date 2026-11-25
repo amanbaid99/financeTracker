@@ -1,5 +1,9 @@
 # Status
 
+## No-milestone card ordering, 25 Nov 2026
+
+Cards without milestones now appear after unfinished and fully reached milestone cards. Empty milestone panels and add prompts stay hidden until opened; bill logging, settings and lounges remain available. No manual no-milestone flag or data changes.
+
 ## Card strategy and visual refresh, 25 Nov 2026
 
 Adds an expandable personal-reference panel with editable per-card reminders and starting notes for recognized, matching saved terms. No purchase comparison, AI, transaction sync or cap-usage calculation. Saves only optional strategy JSON within existing feature_details with owner checks and a stale-write guard, preserving issuer review timestamps, benefit IDs, logs and milestone data. An empty saved heading intentionally hides a card. Card panels have softer headers, more space, explicit spend/target totals and lighter Log bill actions. No schema or hosted data changes. Verification includes unit checks for scoped persistence, concurrent-change rejection, custom notes and hiding, plus real-component mobile checks at 320/375/768px covering defaults, editing, failed-save retention and hiding. Targeted 48 unit tests, lint, TypeScript and production build pass.

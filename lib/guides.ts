@@ -78,7 +78,7 @@ export const GUIDES: Record<GuideId, Guide> = {
     steps: [
       "Card strategy is a personal reference. Open it for reminders, then Edit to change or hide one. It does not compare purchases or track reward caps.",
       "Open a card to track lounge visits and check its access conditions.",
-      "Each card shows its milestone target, amount left and deadline straight away. Cards with every milestone reached sit below the others. A new milestone period moves a card back up automatically.",
+      "Each card shows its milestone target, amount left and deadline straight away. Cards with every milestone reached sit below unfinished cards. Cards without milestones come last. A new milestone period moves a card back up automatically.",
       "Add a card with its name, annual fee, card-year start and optional lounge allowances. Add spend milestones separately. Never enter the card number.",
       "Add milestones like a fee waiver or bonus points, with the spend target and when it resets.",
       "Log each monthly statement: the month and the amount. Tap +, then Log card spend, or Log bill on a card. Statements only count toward milestones.",
@@ -135,6 +135,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-25",title:"Milestone cards first",items:[{title:"A simpler card order",text:"Cards without milestones now sit at the bottom automatically, with no empty milestone panel until opened."}]},
  {date:"2026-11-25",title:"Your card strategy, kept simple",items:[{title:"A quick reference",text:"A compact Card strategy section holds editable reminders for where to use each card. Refreshed card panels make spend progress, milestones and Log bill easier to scan."}]},
  {date:"2026-11-25",title:"Just the card essentials",items:[{title:"Milestones, bills and lounges",text:"Cards now focuses on spend targets, fee waivers, statement logs and lounge visits. One short form replaces reward setup and comparisons."}]},
  {date:"2026-11-25",title:"Clearer Home deadlines",items:[{title:"See the year",text:"Goal and bill shortfalls on Home now include the year in their deadline. Goal cards keep their progress bars without status tags."}]},

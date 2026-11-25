@@ -737,7 +737,7 @@ export function CardList({
                 </div>
 
                 {/* A card with every milestone reached stays short until opened. */}
-                {(!allReached || isOpen) && (
+                {((states.length > 0 && !allReached) || isOpen) && (
                   <section
                     aria-label={`${c.label} milestones`}
                     className="border-t border-border/50 px-5 py-1"
@@ -772,24 +772,7 @@ export function CardList({
                         No milestones yet. Add one to track a reward.
                       </p>
                     )}
-                    {!isOpen && states.length === 0 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="min-h-11 w-full"
-                        onClick={() =>
-                          setSheet({
-                            kind: "milestone",
-                            cardId: c.id,
-                            milestone: null,
-                          })
-                        }
-                      >
-                        <Plus />
-                        Add milestone
-                      </Button>
-                    )}
+
                   </section>
                 )}
 

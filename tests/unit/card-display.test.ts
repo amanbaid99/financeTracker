@@ -47,7 +47,7 @@ describe("milestone-first card ordering", () => {
     ]);
     expect(JSON.stringify(cards)).toBe(before);
   });
-  it("keeps cards without milestones, mixed milestones and expired unmet milestones above fully reached cards", () => {
+  it("places no-milestone cards last, after unfinished and fully reached cards", () => {
     const done = card("done");
     const none = { ...card("none"), milestones: [] };
     const mixed = {
@@ -62,7 +62,7 @@ describe("milestone-first card ordering", () => {
     };
     expect(
       cardsForMilestones([done, none, mixed, missed], today).map((c) => c.id),
-    ).toEqual(["none", "mixed", "missed", "done"]);
+    ).toEqual(["mixed", "missed", "done", "none"]);
   });
   it("moves a completed monthly card back up when its period resets", () => {
     const monthly = {

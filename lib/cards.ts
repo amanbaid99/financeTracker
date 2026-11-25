@@ -290,7 +290,7 @@ export function cardsForReview(cards: Card[], today: string): Card[] {
   return rows.map((row) => row.card);
 }
 
-/** Active cards keep their order; cards with every milestone reached move last.
+/** Unfinished milestone cards first, reached cards next, no-milestone cards last.
  * States are recomputed for today's period, so reset milestones move back up.
  * Statement payment metadata does not affect this milestone-only view.
  */
@@ -305,7 +305,10 @@ export function cardsForMilestones(cards: Card[], today: string): Card[] {
           (m) => milestoneState(m, today, card).status === "achieved",
         ),
     }))
-    .sort((a, b) => Number(a.reached) - Number(b.reached) || a.index - b.index)
+    .sort((a, b) => {
+      const rank = (row: typeof a) => !row.card.milestones.length ? 2 : row.reached ? 1 : 0;
+      return rank(a) - rank(b) || a.index - b.index;
+    })
     .map((row) => row.card);
 }
 
