@@ -58,7 +58,11 @@ export function prepareSafetyStages(
       .toDecimalPlaces(0, D.ROUND_FLOOR)
       .toNumber();
     const coverage = Math.min(target, accessible + row.oneTimeAllocated);
-    const gap = Math.max(0, Math.min(target, monthlyEssentials * 3) - coverage);
+    // Reach 1 month of essentials within 3 months at the least; otherwise the
+    // goal's own date sets the pace.
+    const gap = Math.ceil(
+      Math.max(0, Math.min(target, monthlyEssentials) - coverage) / 3,
+    );
     // Never add contributions to an already funded goal or exceed its unfilled target.
     const cap =
       row.status === "fully_funded"
@@ -76,7 +80,7 @@ export function prepareSafetyStages(
     };
     row.explanation =
       monthlyEssentials > 0
-        ? "Build one month of emergency cover, then three months, before funding goals by deadline. This is an accelerated safety contribution, not an extra goal."
+        ? "Builds toward its date, and at least one month of costs within three months, before funding goals by deadline."
         : "The emergency goal’s monthly requirement comes first, followed by upcoming payments and goals in deadline order.";
     if (
       !ASSUME_HOLDINGS_WITHDRAWABLE &&

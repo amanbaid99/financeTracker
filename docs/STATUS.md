@@ -2,6 +2,11 @@
 
 
 
+
+## Emergency fund paced to its date, 25 Nov 2026
+
+The owner's 6-month emergency goal (₹4.5L by Jun 2028, ₹10,046 saved, fixed costs ₹68,015) was getting ₹48,322 a month instead of about ₹23,000. Two causes: `prepareSafetyStages` (lib/goal-sip-policy.ts) raised the requirement to the whole 3-months-of-costs gap, and the engine used a 1-in-3 plus 3-in-6 pace and then topped the fund up with leftover money. Now the emergency fund gets max(date pace, 1 month of essentials within 3 months), capped there in every pass, so leftovers go to other goals or stay unassigned. Real case now suggests ₹23,156. Existing SIP rows don't change by themselves; Reset to suggested amounts picks up the new split.
+
 ## Reset and clear SIPs, 25 Nov 2026
 
 On Your SIPs, the suggestion button reads "Reset to suggested amounts" once rows exist, and "Clear all SIPs" removes every row. Both confirm first and save to the budget. The e2e test covers both.

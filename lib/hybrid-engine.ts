@@ -827,28 +827,24 @@ export function calculateHybrid(input: HybridInput): HybridResult {
     if (!(input.monthlyEssentials ?? 0))
       for (const stage of safety.stages)
         if (adjustable(stage.row)) give(stage.row, stage.row.requiredMonthly);
-    // Emergency pace: 1 month of essentials within 3 months, then 3 months
-    // within 6. Each month funds a third of the first gap and a sixth of the
-    // next, even when that's faster than the fund's own date would need.
+    // Emergency pace: what's missing spread over the months to its date (12
+    // months without one), but never slower than reaching 1 month of
+    // essentials within 3 months. It never takes more than that pace, so
+    // spare money goes to other goals instead of piling up here.
     const essentials = input.monthlyEssentials ?? 0;
+    const emergencyCap = new Map<HybridGoal, number>();
     if (essentials > 0) {
       const oneMonth = Math.min(safety.target, essentials);
-      const threeMonths = Math.min(safety.target, essentials * 3);
-      const firstGap = Math.max(0, oneMonth - safety.coverage);
-      const nextGap = Math.max(
-        0,
-        threeMonths - Math.max(safety.coverage, oneMonth),
-      );
-      let need = Math.max(
-        0,
-        Math.ceil(firstGap / 3 + nextGap / 6) -
-          safety.stages.reduce((sum, s) => sum + s.row.recommendedMonthly, 0),
-      );
+      let floor = Math.ceil(Math.max(0, oneMonth - safety.coverage) / 3);
+      let missing = Math.max(0, safety.target - safety.coverage);
       for (const stage of safety.stages) {
-        if (!adjustable(stage.row)) continue;
-        const before = stage.row.recommendedMonthly;
-        give(stage.row, Math.min(stage.row.recommendedMonthly + need, stage.cap));
-        need -= stage.row.recommendedMonthly - before;
+        const months = Math.max(1, stage.row.months ?? 12);
+        const pace = Math.ceil(Math.min(missing, stage.cap) / months);
+        const cap = Math.min(stage.cap, Math.max(pace, floor));
+        emergencyCap.set(stage.row, cap);
+        if (adjustable(stage.row)) give(stage.row, cap);
+        floor = Math.max(0, floor - stage.row.recommendedMonthly);
+        missing = Math.max(0, missing - stage.cap);
       }
     }
     const isBills = (row: HybridGoal) =>
@@ -879,7 +875,8 @@ export function calculateHybrid(input: HybridInput): HybridResult {
           goalSipDeadline(source.find((g) => g.id === b.goalId)!, input.today),
         ) || a.goalId.localeCompare(b.goalId),
     )) {
-      if (adjustable(row)) give(row, row.requiredMonthly);
+      if (adjustable(row))
+        give(row, emergencyCap.get(row) ?? row.requiredMonthly);
       if (!safety.stages.some((s) => s.row === row))
         row.explanation = row.needsDate
           ? "Add a deadline to place this goal after emergency cover."

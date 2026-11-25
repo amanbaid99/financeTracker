@@ -9,16 +9,18 @@ const far:GoalInput={id:"far",name:"Retirement",type:"retirement",target:1200000
 const cash=(value:number):Investment=>({id:"cash",name:"Safety account",kind:"savings",category:"savings_account",value,monthlySip:0,returnPct:0,valuationDate:today});
 const input=(coverage=0,monthlySavings=40000):HybridPlanInput=>({today,goals:[far,safety,near],investments:[cash(coverage)],links:[{investmentId:"cash",goalId:"safety",percent:100}],monthlySavings,monthlyEssentials:10000,allocationMode:"safety_deadline"});
 const amount=(r:ReturnType<typeof hybridPlan>,id:string)=>r.goals.find(g=>g.goalId===id)!.recommendedMonthly;
-it("paces cover (a third of month one, a sixth of months two and three), then ₹500 each, then nearest first",()=>{
+it("paces the emergency fund to its date (12 months without one), never past that, then goals by deadline",()=>{
  const result=hybridPlan(input());
+ // ₹1,20,000 over 12 months; spare money isn't piled onto the emergency fund.
+ expect(amount(result,"safety")).toBe(10000);
  expect(amount(result,"near")).toBe(10000);
  expect(amount(result,"far")).toBe(10000);
- expect(amount(result,"safety")).toBe(20000);
- expect(result.totalMonthlyAllocated).toBe(40000);
- const tight=hybridPlan(input(0,8000));
- expect(amount(tight,"safety")).toBeGreaterThanOrEqual(6667);
- expect(amount(tight,"near")).toBeGreaterThanOrEqual(500);
- expect(amount(tight,"far")).toBeGreaterThanOrEqual(500);
+ expect(amount(hybridPlan(input(0,8000)),"safety")).toBe(8000);
+});
+it("never goes slower than 1 month of costs within 3 months",()=>{
+ const data=input(0,40000);data.goals=data.goals.map(g=>g.id==="safety"?{...g,targetDate:"2031-11-23"}:g);
+ // 60 months would be ₹2,000; the floor is ₹10,000 / 3.
+ expect(amount(hybridPlan(data),"safety")).toBe(3334);
 });
 it("puts a small surplus entirely into the missing first month",()=>{
  const result=hybridPlan(input(3000,5000));
@@ -28,9 +30,9 @@ it("puts a small surplus entirely into the missing first month",()=>{
 it("uses existing cover once and funds dates rather than legacy ranks",()=>{
  const data=input(20000,25000);data.goals=data.goals.map(g=>({...g,planRank:g.id==="far"?1:99}));
  const result=hybridPlan(data);
- expect(amount(result,"safety")).toBe(5000);
+ expect(amount(result,"safety")).toBe(8334);
  expect(amount(result,"near")).toBe(10000);
- expect(amount(result,"far")).toBe(10000);
+ expect(amount(result,"far")).toBe(6666);
  expect(result).toEqual(hybridPlan({...data,goals:[...data.goals].reverse(),investments:[...data.investments].reverse()}));
 });
 it("prioritizes a scheduled bill before a later goal after the safety floor",()=>{
@@ -66,7 +68,7 @@ it("does not mutate a previous calculation after a balance change",()=>{
 
 it("keeps overrides exact and rejects a total beyond the available monthly amount",()=>{
  const data=input(0,40000);const r=hybridPlan({...data,overrides:{near:5000}});
- expect(amount(r,"near")).toBe(5000);expect(amount(r,"safety")).toBe(25000);expect(r.totalMonthlyAllocated).toBe(40000);
+ expect(amount(r,"near")).toBe(5000);expect(amount(r,"safety")).toBe(10000);expect(amount(r,"far")).toBe(10000);
  expect(()=>hybridPlan({...data,overrides:{near:10000,far:10000,safety:30000}})).toThrow(/exceed/);
 });
 it("uses current equity value without adding projected growth under the availability assumption",()=>{

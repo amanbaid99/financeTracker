@@ -85,7 +85,8 @@ it("keeps a vehicle exact while its goal and the remaining vehicles update", () 
   expect(
     s.result.goals.find((g) => g.goalId === "retirement")!.recommendedMonthly,
   ).toBe(6800);
-  expect(s.result.totalMonthlyAllocated).toBe(46000);
+  // Spare money isn't piled onto the emergency fund once goals are covered.
+  expect(s.result.totalMonthlyAllocated).toBeLessThanOrEqual(46000);
   expect(
     s.result.goals.find((g) => g.goalId === "travel")!.recommendedMonthly,
   ).toBe(10000);

@@ -113,7 +113,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "How does the plan decide where money goes?",
     a: [
-      "Suggest amounts (Your SIPs on Budget) paces the emergency fund from your budget's fixed costs (Essentials, EMIs included): each month it puts in a third of what's missing for 1 month of costs, plus a sixth of what's missing for 3 months. So you reach 1 month within 3 months and 3 months within 6. Without a saved budget it uses the fund's own pace. Then come bills funds, then ₹500 for every other goal (if the amount stretches to all of them), then the nearest deadline first. Anything left tops up the emergency fund.",
+      "Suggest amounts (Your SIPs on Budget) gives the emergency fund what's missing spread over the months to its date (12 months if it has none), but never slower than reaching 1 month of your fixed costs within 3 months. It never gets more than that, so spare money goes to other goals. Then come bills funds, then ₹500 for every other goal (if the amount stretches to all of them), then the nearest deadline first.",
       "Each goal's monthly amount goes into one suitable holding, or two when it's ₹5,000 or more, so your money isn't spread thin. Other linked holdings stay listed at ₹0 for you to change. Unneeded money stays unallocated.",
       "Any saved extra cash buffer reduces available savings. Existing SIPs are displayed separately, and no recommendation can exceed the budget. A zero surplus produces no new monthly allocation.",
     ],
