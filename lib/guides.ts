@@ -132,6 +132,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-25",title:"Adjust each goal’s fund split",items:[{title:"Keep the total, choose the funds",text:"Adjust split opens a sheet with the goal total fixed. Change a fund amount and the others adjust. Save split keeps the preference and updates the investment mix. No extra amount boxes on the Budget summary."}]},
  {date:"2026-11-25",title:"A clearer Budget page",items:[{title:"Review first, edit when needed",text:"Saved SIPs are a read-only summary with the allocation gap at the top. Edit SIPs opens a draft with visible Save and Cancel. Budget edits preview their impact, setup costs can be left blank, and reset choices are clearly separated."}]},
   { date: "2026-11-25", title: "Saving and investing at a glance", items: [
     { title: "Stop new money into a holding", text: "Tick Not adding new money on a holding you're keeping but not adding to. It stays in your net worth and goals, and your SIPs skip it." },

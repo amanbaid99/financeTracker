@@ -49,6 +49,7 @@ export default async function BudgetPage() {
                 !l.investment.noNewMoney,
             )
             .map((l) => ({
+              id: l.investment.id,
               label: holdingLabel(l.investment),
               assetClass: assetClassOf(l.investment),
             })),

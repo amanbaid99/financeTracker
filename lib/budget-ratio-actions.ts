@@ -30,6 +30,17 @@ export async function saveBudgetSheet(input: unknown) {
   const normalised = budgetSheetSchema.safeParse(applyBudgetRules(parsed.data));
   if (!normalised.success || budgetRuleGaps(parsed.data).length > 0) return { ok: false as const, error: "Check your targets and named allocations before saving." };
   const { supabase, user } = await requireUser();
+  const splitRows=(normalised.data.sips??[]).filter(r=>Object.keys(r.vehicleAmounts??{}).length>0);
+  if(splitRows.length){
+    const holdingIds=[...new Set(splitRows.flatMap(r=>Object.keys(r.vehicleAmounts??{})))];
+    const goalIds=[...new Set(splitRows.flatMap(r=>r.goalId?[r.goalId]:[]))];
+    if(splitRows.some(r=>!r.goalId))return {ok:false as const,error:"Choose a goal for each saved fund split."};
+    const [holdings,goals]=await Promise.all([
+      supabase.from("holdings").select("id").eq("user_id",user.id).in("id",holdingIds),
+      supabase.from("goals").select("id").eq("user_id",user.id).in("id",goalIds),
+    ]);
+    if(holdings.error||goals.error||holdings.data?.length!==holdingIds.length||goals.data?.length!==goalIds.length)return {ok:false as const,error:"A goal or investment in this split is no longer available. Review the split before saving."};
+  }
   const loanIds = normalised.data.rows.flatMap((r) => r.loanId ? [r.loanId] : []);
   if (loanIds.length) {
     const { data, error } = await supabase.from("loans").select("id").eq("user_id", user.id).in("id", loanIds);

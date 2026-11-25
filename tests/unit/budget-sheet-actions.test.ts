@@ -48,3 +48,15 @@ it("persists a combined target without splitting or duplicating existing allocat
  const saved=upsert.mock.calls[0][0].plan;
  expect(saved.rules.future).toEqual({mode:"amount",value:40000});expect(saved.rows.map((r:{value:number})=>r.value)).toEqual([15000,25000,60000]);
 });
+it("validates ownership of saved vehicle choices and their goal before writing",async()=>{
+ const id="00000000-0000-4000-8000-000000000001";
+ const plan={...emptyBudgetSheet(100000),sips:[{id:"goal",goalId:id,investmentId:null,label:"Goal",amount:6000,vehicleAmounts:{[id]:500}}]};
+ const filter=vi.fn().mockReturnThis();from.mockReturnValue({select:filter,eq:filter,in:vi.fn().mockResolvedValue({data:[],error:null})});
+ expect((await saveBudgetSheet(plan)).ok).toBe(false);expect(filter).toHaveBeenCalledWith("user_id","owner");expect(upsert).not.toHaveBeenCalled();
+});
+it("persists valid owner-scoped splits without changing holdings",async()=>{
+ const id="00000000-0000-4000-8000-000000000001";
+ const plan={...emptyBudgetSheet(100000),sips:[{id:"goal",goalId:id,investmentId:null,label:"Goal",amount:6000,vehicleAmounts:{[id]:500}}]};
+ const filter=vi.fn().mockReturnThis();from.mockImplementation((table:string)=>table==="budget_ratio_plans"?{upsert}:{select:filter,eq:filter,in:vi.fn().mockResolvedValue({data:[{id}],error:null})});
+ expect((await saveBudgetSheet(plan)).ok).toBe(true);expect(upsert.mock.calls[0][0].plan.sips[0].vehicleAmounts).toEqual({[id]:500});expect(from).not.toHaveBeenCalledWith("goal_allocations");
+});

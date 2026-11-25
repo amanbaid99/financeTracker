@@ -7,23 +7,34 @@ import { SheetActions } from "@/components/forms/sheet-actions";
 import { formatINR } from "@/lib/format";
 import { CompactAllocation } from "@/components/allocation-bar";
 import { ASSET_CLASSES } from "@/lib/portfolio";
-import { equalSplit, sipMix, sipStatus, sipsByGoal, type SipRow } from "@/lib/budget-sips";
+import { SipSplitSheet } from "./sip-split-sheet";
+import { goalVehicleAmounts, vehicleSplit, withGoalVehicleAmounts } from "@/lib/sip-vehicle-split";
+import { sipMix, sipStatus, sipsByGoal, type SipRow } from "@/lib/budget-sips";
 import { cn } from "@/lib/utils";
-type GoalOption={id:string;label:string;vehicles?:{label:string;assetClass:string}[]};
+type GoalOption={id:string;label:string;vehicles?:{id:string;label:string;assetClass:string}[]};
 export function BudgetSips({rows,budgetMonthly,goals,pending,error,onSave}:{rows:SipRow[];budgetMonthly:number|null;goals:GoalOption[];pending:boolean;error:string;onSave:(rows:SipRow[],note:string)=>void}){
   const saved=sipsByGoal(rows);
   const start=()=>Object.fromEntries(goals.map(g=>[g.id,saved.get(g.id)??null]));
   const [editing,setEditing]=useState(false);
+  const [splitGoal,setSplitGoal]=useState<string|null>(null);
   const revision=JSON.stringify(rows);
   const [editRevision,setEditRevision]=useState(revision);
   const isEditing=editing && editRevision===revision;
   const [amounts,setAmounts]=useState<Record<string,number|null>>(start);
   const values=isEditing?amounts:start();
-  const draft:SipRow[]=goals.filter(g=>(values[g.id]??0)>0).map(g=>({id:`goal-${g.id}`,investmentId:null,label:g.label.slice(0,80),amount:values[g.id]??0,goalId:g.id}));
+  const draft:SipRow[]=goals.filter(g=>(values[g.id]??0)>0).map(g=>{
+    const total=values[g.id]??0,eligible=new Set((g.vehicles??[]).map(v=>v.id));
+    const pins=Object.fromEntries(Object.entries(goalVehicleAmounts(rows,g.id,total)).filter(([id])=>eligible.has(id)));
+    return {id:`goal-${g.id}`,investmentId:null,label:g.label.slice(0,80),amount:total,goalId:g.id,...(Object.keys(pins).length?{vehicleAmounts:pins}:{})};
+  });
   const status=sipStatus(draft,budgetMonthly);
   const savedStatus=sipStatus(rows.filter(r=>goals.some(g=>g.id===r.goalId)),budgetMonthly);
   const changed=goals.some(g=>(amounts[g.id]??0)!==(saved.get(g.id)??0));
-  const mix=sipMix(goals.map(g=>({amount:saved.get(g.id)??0,classes:(g.vehicles??[]).map(v=>v.assetClass)})));
+  const resolved=(g:GoalOption,total:number)=>vehicleSplit(total,(g.vehicles??[]).map((v,i)=>v.id??String(i)),goalVehicleAmounts(rows,g.id,total));
+  const mix=sipMix(goals.map(g=>{const total=saved.get(g.id)??0,split=resolved(g,total);return {amount:total,classes:split.error?[]:(g.vehicles??[]).map(v=>v.assetClass),allocations:split.error||!g.vehicles?.length?undefined:g.vehicles.map((v,i)=>split.amounts[v.id??String(i)]??0)};}));
+  const selected=goals.find(g=>g.id===splitGoal);
+  const isSplitOpen=!!selected && !isEditing && editRevision===revision;
+
   const cancel=()=>{if(pending)return;setAmounts(start());setEditing(false);};
   const summary=(status:ReturnType<typeof sipStatus>)=><div aria-live="polite" className="space-y-1">
     <p className="tabular text-sm font-semibold">{formatINR(status.assigned)}{budgetMonthly!==null?` of ${formatINR(budgetMonthly)}`:""} allocated / month</p>
@@ -34,15 +45,19 @@ export function BudgetSips({rows,budgetMonthly,goals,pending,error,onSave}:{rows
       {editable?<label htmlFor={`sip-${g.id}`} className="min-w-0 break-words text-sm font-medium">{g.label}</label>:<p className="min-w-0 break-words text-sm font-medium">{g.label}</p>}
       {editable?<div className="w-32 shrink-0"><MoneyInput id={`sip-${g.id}`} aria-label={`${g.label} SIP a month`} value={shown[g.id]??null} onChange={v=>setAmounts(a=>({...a,[g.id]:v}))}/></div>:<p className="tabular shrink-0 text-sm font-semibold">{formatINR(shown[g.id]??0)}</p>}
     </div>
-    {(shown[g.id]??0)>0&&(g.vehicles?.length??0)>0&&<ul aria-label={`${g.label} split`} className="space-y-1 border-l-2 border-border pl-3">{equalSplit(shown[g.id]??0,g.vehicles!.length).map((n,i)=><li key={`${g.id}-${i}`} className="flex items-baseline justify-between gap-3 text-xs text-muted-foreground"><span className="min-w-0 break-words">{g.vehicles![i].label}</span><span className="tabular shrink-0">{formatINR(n)}</span></li>)}</ul>}
+    {(shown[g.id]??0)>0&&(g.vehicles?.length??0)>0&&<>
+      {resolved(g,shown[g.id]??0).error ? <p className="text-xs text-warning">Review this split: an investment or goal amount changed.</p> : <ul aria-label={`${g.label} split`} className="space-y-1 border-l-2 border-border pl-3">{g.vehicles!.map((v,i)=><li key={v.id??i} className="flex items-baseline justify-between gap-3 text-xs text-muted-foreground"><span className="min-w-0 break-words">{v.label}</span><span className="tabular shrink-0">{formatINR(resolved(g,shown[g.id]??0).amounts[v.id??String(i)]??0)}</span></li>)}</ul>}
+      {!editable && g.vehicles!.every(v=>v.id) && (g.vehicles!.length>1 || !!resolved(g,shown[g.id]??0).error) && <button type="button" disabled={pending} className="min-h-9 text-xs text-primary underline decoration-dotted underline-offset-4" onClick={()=>{setEditing(false);setEditRevision(revision);setSplitGoal(g.id);}}>Adjust split<span className="sr-only"> for {g.label}</span></button>}
+    </>}
   </li>)}</ul>;};
   return <section id="sips" aria-label="Your SIPs" className="surface-card space-y-3 rounded-2xl border bg-card p-4">
-    <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">Your SIPs</h3><Button variant="outline" size="sm" disabled={pending||!goals.length} onClick={()=>{setAmounts(start());setEditRevision(revision);setEditing(true);}}>Edit SIPs</Button></div>
+    <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">Your SIPs</h3><Button variant="outline" size="sm" disabled={pending||!goals.length} onClick={()=>{setSplitGoal(null);setAmounts(start());setEditRevision(revision);setEditing(true);}}>Edit SIPs</Button></div>
     {summary(savedStatus)}
     {savedStatus.assigned>0&&<CompactAllocation label="Investment mix" items={mix.map(m=>{const c=ASSET_CLASSES.find(x=>x.key===m.key);return {key:m.key,label:c?.label??"No fund yet",value:m.value,share:m.share,slot:c?.slot??7};})}/>}
     {!goals.length?<p className="text-sm text-muted-foreground">Add a goal first, then set a monthly SIP for it here.</p>:list(false)}
-    {!isEditing&&error&&<p role="alert" className="text-sm text-danger">{error}</p>}
+    {!isEditing&&!isSplitOpen&&error&&<p role="alert" className="text-sm text-danger">{error}</p>}
     <p className="text-xs text-muted-foreground">Plans only. Set up SIPs with your provider.</p>
+    {isSplitOpen&&selected&&<SipSplitSheet name={selected.label} total={saved.get(selected.id)??0} vehicles={selected.vehicles??[]} saved={goalVehicleAmounts(rows,selected.id,saved.get(selected.id)??0)} pending={pending} error={error} onClose={()=>{if(!pending)setSplitGoal(null);}} onSave={pins=>onSave(withGoalVehicleAmounts(rows,selected.id,selected.label,pins),"Split saved.")} />}
     {isEditing&&<Sheet title="Edit SIPs" onClose={cancel}><div className="space-y-3">{summary(status)}<p className="text-xs text-muted-foreground">{changed?"Unsaved changes":"Enter the monthly amount for each goal. Blank means ₹0."}</p><fieldset disabled={pending} className="min-w-0">{list(true)}</fieldset>{error&&<p role="alert" className="text-sm text-danger">{error}</p>}<SheetActions pending={pending} disabled={!changed} label="Save SIPs" onCancel={cancel} onSave={()=>onSave(draft,"SIPs saved.")}/></div></Sheet>}
   </section>;
 }

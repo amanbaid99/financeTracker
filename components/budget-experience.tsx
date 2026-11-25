@@ -76,7 +76,7 @@ export function BudgetExperience({
   loadError: string | null;
   heading?: ReactNode;
   /** Your goals, one SIP line each. */
-  goals?: { id: string; label: string; vehicles?: { label: string; assetClass: string }[] }[];
+  goals?: { id: string; label: string; vehicles?: { id: string; label: string; assetClass: string }[] }[];
 }) {
   const [plan, setPlan] = useState<BudgetSheet | null>(
     hasSaved && initial ? groupPersonalCosts(initial) : null,

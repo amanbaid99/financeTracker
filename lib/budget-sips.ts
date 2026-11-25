@@ -2,6 +2,7 @@
 // account, a monthly amount and the goal it's for. Rows live in the saved
 // budget. When Save & invest changes, unlocked rows scale with it. Pure.
 
+import { scaleVehicleAmounts } from "./sip-vehicle-split";
 import { z } from "zod";
 
 export const sipRowSchema = z.object({
@@ -13,7 +14,9 @@ export const sipRowSchema = z.object({
   goalId: z.string().uuid().nullable(),
   /** Keeps its amount when Save & invest changes. */
   locked: z.boolean().optional(),
-});
+  /** Exact chosen fund amounts; untouched funds share the remainder. */
+  vehicleAmounts: z.record(z.string().uuid(),z.number().int().min(0).max(1e9)).refine(v=>Object.keys(v).length<=50,"Too many funds in one split.").optional(),
+}).refine(r=>Object.values(r.vehicleAmounts??{}).reduce((s,n)=>s+n,0)<=r.amount,"Chosen fund amounts exceed the goal total.");
 export type SipRow = z.infer<typeof sipRowSchema>;
 
 export const sipTotal = (rows: SipRow[]) =>
@@ -45,7 +48,7 @@ export function scaleSips(rows: SipRow[], total: number): SipRow[] {
   for (let i = 0; rest > 0 && order.length; i = (i + 1) % order.length, rest--)
     scaled.set(order[i].id, (scaled.get(order[i].id) ?? 0) + 1);
   return rows.map((r) =>
-    r.locked ? { ...r } : { ...r, amount: scaled.get(r.id) ?? 0 },
+    r.locked ? { ...r } : { ...r, amount: scaled.get(r.id) ?? 0, ...(r.vehicleAmounts ? {vehicleAmounts:scaleVehicleAmounts(r.vehicleAmounts,r.amount,scaled.get(r.id)??0)} : {}) },
   );
 }
 
@@ -78,20 +81,20 @@ export function equalSplit(amount: number, count: number): number[] {
 }
 
 /**
- * Where your SIPs go by asset type: each goal's amount is split equally
- * across its funds, then added up per type. A goal with no fund counts
+ * Where your SIPs go by asset type: use resolved custom allocations when
+ * supplied, otherwise equal shares. A goal with no fund counts
  * under "none". Biggest first.
  */
 export function sipMix(
-  goals: { amount: number; classes: string[] }[],
+  goals: { amount: number; classes: string[]; allocations?: number[] }[],
 ): { key: string; value: number; share: number }[] {
   const totals = new Map<string, number>();
   for (const g of goals) {
     if (g.amount <= 0) continue;
     const keys = g.classes.length ? g.classes : ["none"];
-    equalSplit(g.amount, keys.length).forEach((n, i) =>
-      totals.set(keys[i], (totals.get(keys[i]) ?? 0) + n),
-    );
+    (g.allocations ?? equalSplit(g.amount, keys.length)).forEach((n, i) => {
+      if (n > 0) totals.set(keys[i], (totals.get(keys[i]) ?? 0) + n);
+    });
   }
   const total = [...totals.values()].reduce((a, b) => a + b, 0);
   return [...totals]

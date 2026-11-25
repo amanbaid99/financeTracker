@@ -1,5 +1,11 @@
 # Status
 
+## Custom per-goal SIP vehicle splits, 25 Nov 2026
+
+Added underlined Adjust split to saved multi-fund goal breakdowns. A single sheet shows the fixed goal total, vehicle amount fields and sticky Save split/Cancel. Changed amounts stay exact within the sheet; untouched funds share the remainder, with deterministic integer rounding. Oversubscribed or all-fixed incomplete splits cannot be saved and never create negative automatic amounts. Cancel and failed saves retain confirmed data. Goal totals and all other goal rows stay unchanged.
+
+Optional vehicleAmounts on existing SIP rows stores only explicit choices in the current budget JSON. No new table or migration. Goal-total and budget changes scale the saved choices proportionally, preserving existing scaling behaviour; equal split remains the default. The asset mix uses resolved custom amounts. Holding IDs are supplied from current goal vehicles, and confirmation verifies ownership of both goals and holdings. Stale vehicles require review. No goal ownership, actual contributions, balances or provider SIPs are changed. Verification: lint, TypeScript, 880 unit tests, 40 Python tests and production build pass. Cases cover the ₹6,000/₹500/₹2,750 example, sequential choices, exact zero, oversubscription, stale IDs, retrieval-order stability, large integer rounding, proportional scaling, ownership rejection and custom asset mix. Browser checks at 320/375/768px verify unchanged goal/other-goal totals, cancel/save/reopen, goal-total scaling, invalid split blocking, no duplicate dialogs, pending/error/retry handling, keyboard-sized controls and no overflow. Full signed-in E2E remains unverified; no hosted financial records changed for tests.
+
 ## Budget UI and editing flow, 25 Nov 2026
 
 Implemented the agreed review: Your SIPs starts with allocated/available totals and the exact remaining or over-budget amount. Saved goal/fund amounts are read-only; Edit SIPs opens a keyboard-aware sheet with a draft, unsaved indication and sticky Save/Cancel controls. Cancel discards edits and failed saves keep the draft. All goals and positive fund breakdowns remain visible. Existing manual amounts, equal fund split, asset mix and proportional budget scaling are unchanged.
