@@ -1,22 +1,13 @@
 "use client";
 
-import { rewardLabel } from "@/lib/card-benefits";
-import { CardSetupSheet } from "@/components/card-setup";
-import { CardBenefitsHub } from "@/components/card-benefits";
+import { SimpleCardSheet } from "@/components/simple-card-sheet";
+import { CardLounges } from "@/components/card-lounges";
 
-import {
-  Check,
-  ChevronDown,
-  CreditCard,
-  FileText,
-  Pencil,
-  Plus,
-} from "lucide-react";
+import { Check, ChevronDown, CreditCard, Pencil, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useState, useTransition } from "react";
 import { useDayRefresh } from "@/components/use-day-refresh";
 import { GuideButton } from "@/components/guides";
-import { CardFeaturesSheet } from "@/components/card-features";
 import { Field } from "@/components/forms/field";
 import { MoneyInput } from "@/components/money-input";
 import { Sheet } from "@/components/sheet";
@@ -27,7 +18,6 @@ import {
   cardsForMilestones,
   milestoneState,
   PERIOD_LABELS,
-  periodBounds,
   type Bill,
   type Card,
   type MilestoneState,
@@ -39,7 +29,6 @@ import {
   saveBill,
   saveMilestone,
 } from "@/lib/cards-actions";
-import { SPEND_CATEGORIES, type SpendCategory } from "@/lib/card-advisor";
 import { milestoneLabel } from "@/lib/milestone-label";
 import { formatDate, formatINR } from "@/lib/format";
 import { clearParam } from "@/lib/clear-param";
@@ -147,11 +136,33 @@ function MilestoneRow({
           label={`${s.name} progress`}
         />
         <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-xs">
-          <span className={cn("tabular font-medium",s.status==="achieved"?"text-success":s.status==="missed"?"text-danger":"text-foreground")}>{s.status==="achieved"?`✓ Target of ${formatINR(s.target)} reached`:`${formatINR(s.remaining)} to go`}</span>
-          {s.end&&s.status!=="achieved"&&<span className="text-muted-foreground">{s.status==="missed"?"Ended":"By"} {formatDate(s.end)}</span>}
+          <span
+            className={cn(
+              "tabular font-medium",
+              s.status === "achieved"
+                ? "text-success"
+                : s.status === "missed"
+                  ? "text-danger"
+                  : "text-foreground",
+            )}
+          >
+            {s.status === "achieved"
+              ? `✓ Target of ${formatINR(s.target)} reached`
+              : `${formatINR(s.remaining)} to go`}
+          </span>
+          {s.end && s.status !== "achieved" && (
+            <span className="text-muted-foreground">
+              {s.status === "missed" ? "Ended" : "By"} {formatDate(s.end)}
+            </span>
+          )}
         </span>
       </button>
-      {showDetails && <p className="tabular mt-1 text-xs text-muted-foreground">{formatINR(s.spentNow)} of {formatINR(s.target)} eligible spending{pace}</p>}
+      {showDetails && (
+        <p className="tabular mt-1 text-xs text-muted-foreground">
+          {formatINR(s.spentNow)} of {formatINR(s.target)} eligible spending
+          {pace}
+        </p>
+      )}
       {showDetails && (
         <p className="mt-1 text-xs text-muted-foreground">
           {s.billCount > 0
@@ -494,7 +505,6 @@ function BillsSection({
     <section className="space-y-1" aria-label={`${card.label} bills`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold">Statements</h3>
-
       </div>
       {card.bills.length === 0 ? (
         <p className="text-sm text-muted-foreground">
@@ -522,109 +532,10 @@ function BillsSection({
   );
 }
 
-function AboutCard({
-  card,
-  today,
-  onFeatures,
-}: {
-  card: Card;
-  today: string;
-  onFeatures: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const rewardsSummary=card.featureDetails?card.featureDetails.rewardRules.map(rewardLabel).join("; "):card.rewards;
-  const year = card.yearStart
-    ? periodBounds("card_year", today, card.yearStart, null)
-    : null;
-  return (
-    <section aria-label={`About ${card.label}`} className="border-t pt-3">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
-        className="flex min-h-11 w-full items-center justify-between text-sm font-semibold"
-      >
-        About this card
-        <ChevronDown
-          className={cn(
-            "size-4 text-muted-foreground transition-transform",
-            open && "rotate-180",
-          )}
-          aria-hidden
-        />
-      </button>
-      {open && (
-        <div className="mt-3 space-y-3 text-sm">
-          <dl className="space-y-1">
-            <div>
-              <dt className="inline text-muted-foreground">Annual fee: </dt>
-              <dd className="inline">
-                {card.annualFee===null?"Not set":formatINR(card.annualFee)}
-              </dd>
-            </div>
-            <div>
-              <dt className="inline text-muted-foreground">Card year: </dt>
-              <dd className="inline">
-                {year
-                  ? `${formatDate(year.start)} to ${formatDate(year.end)}`
-                  : "Not set (Jan to Dec is used)"}
-              </dd>
-            </div>
-            {rewardsSummary && (
-              <div>
-                <dt className="inline text-muted-foreground">Rewards: </dt>
-                <dd className="inline">{rewardsSummary}</dd>
-              </div>
-            )}
-          </dl>
-          {!card.featureDetails && card.bestFor.length > 0 && (
-            <div
-              className="flex flex-wrap gap-1.5"
-              aria-label={`${card.label} is best for`}
-            >
-              {card.bestFor.map((b) => (
-                <span
-                  key={b}
-                  className="rounded-full bg-primary-soft px-2.5 py-0.5 text-xs text-primary"
-                >
-                  {SPEND_CATEGORIES[b as SpendCategory] ?? b}
-                </span>
-              ))}
-            </div>
-          )}
-          {!card.featureDetails && card.benefits.length > 0 && (
-            <ul
-              className="list-disc space-y-0.5 pl-5"
-              aria-label={`${card.label} benefits`}
-            >
-              {card.benefits.map((b) => (
-                <li key={b}>{b}</li>
-              ))}
-            </ul>
-          )}
-          <div>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="min-h-11"
-              onClick={onFeatures}
-            >
-              <FileText /> Read features
-            </Button>
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
 type SheetState =
   | { kind: "card"; card: Card | null }
   | { kind: "milestone"; cardId: string; milestone: MilestoneState | null }
   | { kind: "bill"; card: Card; bill: Bill | null; month?: string }
-  | { kind: "features"; card: Card | null }
   | { kind: "pick" }
   | null;
 
@@ -688,20 +599,41 @@ export function CardList({
 
   return (
     <div className="space-y-4">
-      <header className="flex items-center justify-between gap-3"><div className="flex items-center gap-1"><h1 className="text-2xl font-semibold tracking-tight">Cards</h1><GuideButton id="cards" /></div>{cards.length>0&&<Button variant="outline" size="sm" className="min-h-11" onClick={()=>setSheet({kind:"card",card:null})}><Plus className="size-4" />Add a card</Button>}</header>
-      <CardBenefitsHub cards={cards} today={today} />
+      <header className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Cards</h1>
+          <GuideButton id="cards" />
+        </div>
+        {cards.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="min-h-11"
+            onClick={() => setSheet({ kind: "card", card: null })}
+          >
+            <Plus className="size-4" />
+            Add a card
+          </Button>
+        )}
+      </header>
       {cards.length === 0 ? (
         <div className="space-y-2 rounded-2xl border bg-card p-6 text-center">
           <CreditCard className="mx-auto size-8 text-primary" aria-hidden />
           <p className="font-semibold">
-            Track your cards&apos; benefits and milestones
+            Track milestones, fee waivers and lounge visits
           </p>
           <p className="text-sm text-muted-foreground">
             Add a card, log its monthly bills, and see how close you are to fee
             waivers and bonus points.
           </p>
-          <Button type="button" className="min-h-11 w-full" onClick={()=>setSheet({kind:"card",card:null})}><Plus />Add a card</Button>
-
+          <Button
+            type="button"
+            className="min-h-11 w-full"
+            onClick={() => setSheet({ kind: "card", card: null })}
+          >
+            <Plus />
+            Add a card
+          </Button>
         </div>
       ) : (
         <ul className="space-y-3">
@@ -765,7 +697,30 @@ export function CardList({
                       aria-hidden
                     />
                   </div>
-                  <div className="mt-2 flex items-center justify-between gap-3">{!isOpen?<p className="min-w-0 text-xs text-muted-foreground">{latest?`Last statement: ${monthLabel(latest.month)}`:"No statements logged"}</p>:<span/>}<Button type="button" variant="outline" size="sm" className="relative z-10 min-h-11 shrink-0" aria-label={`Log a ${c.label} bill`} onClick={()=>setSheet({kind:"bill",card:c,bill:null})}><Plus className="size-4" />Log bill</Button></div>
+                  <div className="mt-2 flex items-center justify-between gap-3">
+                    {!isOpen ? (
+                      <p className="min-w-0 text-xs text-muted-foreground">
+                        {latest
+                          ? `Last statement: ${monthLabel(latest.month)}`
+                          : "No statements logged"}
+                      </p>
+                    ) : (
+                      <span />
+                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="relative z-10 min-h-11 shrink-0"
+                      aria-label={`Log a ${c.label} bill`}
+                      onClick={() =>
+                        setSheet({ kind: "bill", card: c, bill: null })
+                      }
+                    >
+                      <Plus className="size-4" />
+                      Log bill
+                    </Button>
+                  </div>
                 </div>
 
                 {/* A card with every milestone reached stays short until opened. */}
@@ -804,7 +759,7 @@ export function CardList({
                         No milestones yet. Add one to track a reward.
                       </p>
                     )}
-                    {(!isOpen && states.length === 0) && (
+                    {!isOpen && states.length === 0 && (
                       <Button
                         type="button"
                         variant="ghost"
@@ -827,7 +782,32 @@ export function CardList({
 
                 {isOpen && (
                   <div className="expand-in space-y-4 border-t px-4 pb-4 pt-2">
-                    <div className="grid grid-cols-2 gap-2"><Button variant="outline" size="sm" className="min-h-11" onClick={()=>setSheet({kind:"milestone",cardId:c.id,milestone:null})}><Plus className="size-4" />Add milestone</Button><Button variant="outline" size="sm" className="min-h-11" onClick={()=>setSheet({kind:"card",card:c})}><Pencil className="size-4" />Edit card</Button></div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="min-h-11"
+                        onClick={() =>
+                          setSheet({
+                            kind: "milestone",
+                            cardId: c.id,
+                            milestone: null,
+                          })
+                        }
+                      >
+                        <Plus className="size-4" />
+                        Add milestone
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="min-h-11"
+                        onClick={() => setSheet({ kind: "card", card: c })}
+                      >
+                        <Pencil className="size-4" />
+                        Edit card
+                      </Button>
+                    </div>
 
                     <BillsSection
                       card={c}
@@ -836,13 +816,7 @@ export function CardList({
                       }
                     />
 
-
-
-                    <AboutCard
-                      card={c}
-                      today={today}
-                      onFeatures={() => setSheet({ kind: "features", card: c })}
-                    />
+                    <CardLounges card={c} today={today} />
                   </div>
                 )}
               </li>
@@ -851,13 +825,11 @@ export function CardList({
         </ul>
       )}
 
-
       {sheet?.kind === "card" && (
-        <CardSetupSheet
+        <SimpleCardSheet
           card={sheet.card}
           onClose={close}
           onSaved={(id) => id && setOpen(id)}
-          onRead={() => setSheet({ kind: "features", card: sheet.card })}
         />
       )}
       {sheet?.kind === "milestone" && (
@@ -895,9 +867,7 @@ export function CardList({
           </ul>
         </Sheet>
       )}
-      {sheet?.kind === "features" && (
-        <CardFeaturesSheet card={sheet.card} onClose={close} />
-      )}
+
       {sheet?.kind === "bill" && (
         <BillSheet
           card={sheet.card}

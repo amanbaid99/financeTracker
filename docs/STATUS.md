@@ -1,5 +1,9 @@
 # Status
 
+## Cards essentials, 25 Nov 2026
+
+Cards now shows only milestones, fee-waiver spend progress, bill logging and lounge allowances with visit logs. Replaces the reward wizard with a short card/settings form. Existing reward data is retained but no longer surfaced on Cards; existing milestones, bills and lounge log IDs are preserved. No database migration. Verification: lint, TypeScript, 923 unit tests, 40 Python tests and production build pass. Real-component mobile checks at 320/375/768px cover lounge logging, settings and preservation of existing reward fields. A repeated database-unit run hit its five-second timeout; isolated rerun with a longer runner timeout passed. Full signed-in E2E remains unavailable because the local database stack could not be installed in this workspace.
+
 ## Home shortfall deadlines, 25 Nov 2026
 
 Home shortfall messages now show the full deadline including its year, for both goal targets and upcoming bills. Reuses the existing date formatter. Goal cards on Goals and Home no longer show status tags; amounts and progress bars remain.
