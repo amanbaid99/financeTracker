@@ -11,7 +11,7 @@ import { SipSplitSheet } from "./sip-split-sheet";
 import { goalVehicleAmounts, vehicleSplit, withGoalVehicleAmounts } from "@/lib/sip-vehicle-split";
 import { sipMix, sipStatus, sipsByGoal, type SipRow } from "@/lib/budget-sips";
 import { cn } from "@/lib/utils";
-type GoalOption={id:string;label:string;vehicles?:{id:string;label:string;assetClass:string}[]};
+type GoalOption={id:string;label:string;requiredMonthly?:number|null;vehicles?:{id:string;label:string;assetClass:string}[]};
 export function BudgetSips({rows,budgetMonthly,goals,pending,error,onSave}:{rows:SipRow[];budgetMonthly:number|null;goals:GoalOption[];pending:boolean;error:string;onSave:(rows:SipRow[],note:string)=>void}){
   const saved=sipsByGoal(rows);
   const start=()=>Object.fromEntries(goals.map(g=>[g.id,saved.get(g.id)??null]));
@@ -45,6 +45,7 @@ export function BudgetSips({rows,budgetMonthly,goals,pending,error,onSave}:{rows
       {editable?<label htmlFor={`sip-${g.id}`} className="min-w-0 break-words text-sm font-medium">{g.label}</label>:<p className="min-w-0 break-words text-sm font-medium">{g.label}</p>}
       {editable?<div className="w-32 shrink-0"><MoneyInput id={`sip-${g.id}`} aria-label={`${g.label} SIP a month`} value={shown[g.id]??null} onChange={v=>setAmounts(a=>({...a,[g.id]:v}))}/></div>:<p className="tabular shrink-0 text-sm font-semibold">{formatINR(shown[g.id]??0)}</p>}
     </div>
+    {g.requiredMonthly!=null&&<p className="mb-1 text-xs text-muted-foreground">Required: {formatINR(g.requiredMonthly)}/month</p>}
     {(shown[g.id]??0)>0&&(g.vehicles?.length??0)>0&&<>
       {resolved(g,shown[g.id]??0).error ? <p className="text-xs text-warning">Review this split: an investment or goal amount changed.</p> : <ul aria-label={`${g.label} split`} className="space-y-1 border-l-2 border-border pl-3">{g.vehicles!.map((v,i)=><li key={v.id??i} className="flex items-baseline justify-between gap-3 text-xs text-muted-foreground"><span className="min-w-0 break-words">{v.label}</span><span className="tabular shrink-0">{formatINR(resolved(g,shown[g.id]??0).amounts[v.id??String(i)]??0)}</span></li>)}</ul>}
       {!editable && g.vehicles!.every(v=>v.id) && (g.vehicles!.length>1 || !!resolved(g,shown[g.id]??0).error) && <button type="button" disabled={pending} className="min-h-9 text-xs text-primary underline decoration-dotted underline-offset-4" onClick={()=>{setEditing(false);setEditRevision(revision);setSplitGoal(g.id);}}>Adjust split<span className="sr-only"> for {g.label}</span></button>}

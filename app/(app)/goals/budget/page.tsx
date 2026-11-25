@@ -3,6 +3,7 @@ import { BudgetExperience } from "@/components/budget-experience";
 import { GuideButton } from "@/components/guides";
 import { loadBudgetSheet } from "@/lib/budget-ratio-data";
 import { loadBudget, loadGoals } from "@/lib/data";
+import { goalRequiredSip } from "@/lib/goal-required-sip";
 import { orderGoals } from "@/lib/goal-order";
 import { holdingLabel } from "@/lib/goal-suggestions";
 import { assetClassOf } from "@/lib/portfolio";
@@ -40,6 +41,7 @@ export default async function BudgetPage() {
         goals={active.map((x) => ({
           id: x.id,
           label: x.name,
+          requiredMonthly: goalRequiredSip(x),
           // Funds covering the goal that can take monthly money.
           vehicles: x.lines
             .filter(

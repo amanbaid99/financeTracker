@@ -1,5 +1,9 @@
 # Status
 
+## Small required-SIP labels, 25 Nov 2026
+
+Budget now passes a goal’s total required monthly SIP to Your SIPs and shows one muted Required: ₹X/month line under the goal. Reuses requiredSip with existing target, corpus, return and horizon; bills use their existing monthlyNeed. Missing or elapsed deadlines omit the estimate rather than displaying a misleading zero. No extra analysis or controls. Planned amounts, custom splits and financial records are unchanged. Verification: lint, TypeScript, 883 unit tests, 40 Python tests and production build pass. Regression cases verify total versus extra funding, existing corpus, bills, funded goals and missing/elapsed dates. Mobile checks at 320/375/768px verify one muted 12px line in saved/edit views, omission when unavailable and no extra controls or overflow.
+
 ## Custom per-goal SIP vehicle splits, 25 Nov 2026
 
 Added underlined Adjust split to saved multi-fund goal breakdowns. A single sheet shows the fixed goal total, vehicle amount fields and sticky Save split/Cancel. Changed amounts stay exact within the sheet; untouched funds share the remainder, with deterministic integer rounding. Oversubscribed or all-fixed incomplete splits cannot be saved and never create negative automatic amounts. Cancel and failed saves retain confirmed data. Goal totals and all other goal rows stay unchanged.
