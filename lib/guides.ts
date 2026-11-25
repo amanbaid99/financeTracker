@@ -76,13 +76,13 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro:
       "Your credit cards and how close you are to fee waivers and bonus points. Nothing here counts as money you owe.",
     steps: [
-      "Which card? compares saved cashback and points rates by category and amount. The category guide shows where each card helps. Ask about my cards opens useful questions. Lounges tracks manually logged visits, with access conditions shown beside the allowance.",
+      "Which card? compares saved cashback and points rates by category and amount. Store and payment method qualify partner rates. Ask about my cards opens useful questions. Lounges tracks manually logged visits, with access conditions shown beside the allowance.",
       "Each card shows its milestone target, amount left and deadline straight away. Cards with every milestone reached sit below the others. A new milestone period moves a card back up automatically.",
       "Add a card with four short steps: basics, reward rates, optional benefits and milestones, then review and save. Unknown details can stay blank. Never enter the card number.",
       "Add milestones like a fee waiver or bonus points, with the spend target and when it resets.",
       "Log each monthly statement: the month and the amount. Tap +, then Log card spend, or Log bill on a card. Statements only count toward milestones.",
       "When a new card year or quarter starts, progress counts the statements in that new period.",
-      "Your card terms lets you review a brochure, paste features or copy a research prompt for your AI tool. Check the official terms and confirm before saving. Detailed benefits stay collapsed.",
+      "Edit benefits lets you choose a card, review a brochure, paste features or copy a research prompt for your AI tool. Check the official terms and confirm before saving. Detailed benefits stay collapsed.",
       "Loans, including EMIs on a card, are goals: add one with New goal, then Close my loan.",
     ],
   },
@@ -134,6 +134,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-25",title:"A simpler card comparison",items:[{title:"Store, payment method, best card",text:"One compact purchase form replaces nested comparison sections. Store and payment method qualify partner rates; specific rewards replace the base rate. Limits stay tucked away, and lounge choices remain conditional."}]},
  {date:"2026-11-25",title:"Simpler cards and better answers",items:[{title:"A few answers, then save",text:"Set up cashback or points, caps, lounge access and milestones in a short guide. A PDF or pasted text can fill in the same questions."},{title:"Which card for this spend?",text:"Compare saved reward rates, see a category guide and ask about cards. Confirmed point values count; unknowns stay unknown. Common card answers are calculated locally."}]},
  {date:"2026-11-25",title:"A clearer card reader",items:[{title:"See what is happening",text:"An animated reading screen shows PDF extraction, feature checking and the review step. Nothing is saved until you confirm."}]},
  {date:"2026-11-25",title:"Card benefits, checked by you",items:[{title:"Which card and lounge visits",text:"Read a brochure, check the extracted terms and save. Compare published cashback by category and track lounge visits with a simple manual log. Detailed conditions stay tucked away and are available to Ask."}]},

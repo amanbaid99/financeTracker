@@ -12,6 +12,7 @@ import {
   benefitDraftSchema,
   rewardLabel,
   rewardValueLabel,
+  PAYMENT_CHANNELS,
   type RewardRule,
   type LoungeRule,
 } from "@/lib/card-benefits";
@@ -59,6 +60,36 @@ function NumberEntry({
     />
   );
 }
+function MerchantListInput({
+  value,
+  onChange,
+  label,
+}: {
+  value: string[] | undefined;
+  onChange: (v: string[] | undefined) => void;
+  label: string;
+}) {
+  const [draft, setDraft] = useState<string | null>(null);
+  return (
+    <Input
+      aria-label={label}
+      value={draft ?? value?.join(", ") ?? ""}
+      onFocus={() => setDraft(value?.join(", ") ?? "")}
+      onBlur={() => setDraft(null)}
+      onChange={(e) => {
+        setDraft(e.target.value);
+        onChange(
+          e.target.value
+            ? e.target.value
+                .split(",")
+                .map((v) => v.trim())
+                .filter(Boolean)
+            : undefined,
+        );
+      }}
+    />
+  );
+}
 export function CardSetupForm({
   card,
   initialReview,
@@ -77,6 +108,11 @@ export function CardSetupForm({
   const router = useRouter();
   const [draft, setDraft] = useState(() =>
     cardSetupDraft(card, initialReview, () => crypto.randomUUID()),
+  );
+  const [editingRule, setEditingRule] = useState<string | null>(() =>
+    draft.features.rewardRules.length === 1
+      ? draft.features.rewardRules[0].id
+      : null,
   );
   const [step, setStep] = useState<number>(initialStep);
   const [error, setError] = useState("");
@@ -107,12 +143,14 @@ export function CardSetupForm({
         n === i ? { ...m, ...v } : m,
       ),
     });
-  const addRule = (points = false) =>
+  const addRule = (points = false) => {
+    const id = crypto.randomUUID();
+    setEditingRule(id);
     features({
       rewardRules: [
         ...draft.features.rewardRules,
         {
-          id: crypto.randomUUID(),
+          id,
           category: draft.features.rewardRules.length ? "online" : "general",
           cashbackBps: 0,
           cap: null,
@@ -132,6 +170,7 @@ export function CardSetupForm({
         },
       ],
     });
+  };
   const validate = () => {
     if (!draft.label.trim()) return "Enter the card name.";
     if (
@@ -394,247 +433,350 @@ export function CardSetupForm({
                 className="space-y-3 rounded-xl border p-3"
                 aria-label={`Reward rule ${i + 1}`}
               >
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label="Spending category">
-                    <Select
-                      aria-label={`Reward category ${i + 1}`}
-                      value={r.category}
-                      onChange={(e) =>
-                        updateRule(i, {
-                          category: e.target.value as RewardRule["category"],
-                        })
-                      }
-                    >
-                      <option value="general">General spending</option>
-                      {Object.entries(SPEND_CATEGORIES).map(([k, v]) => (
-                        <option key={k} value={k}>
-                          {v}
-                        </option>
-                      ))}
-                    </Select>
-                  </Field>
-                  <Field label="Reward type">
-                    <Select
-                      aria-label={`Reward type ${i + 1}`}
-                      value={r.points ? "points" : "cashback"}
-                      onChange={(e) =>
-                        updateRule(
-                          i,
-                          e.target.value === "points"
-                            ? {
-                                cashbackBps: 0,
-                                cap: null,
-                                points: {
-                                  perSpend: 0,
-                                  spend: 0,
-                                  valuePaise: null,
-                                  cap: null,
-                                  redemption: "",
-                                },
-                              }
-                            : { points: undefined, cashbackBps: 0, cap: null },
-                        )
-                      }
-                    >
-                      <option value="cashback">Cashback</option>
-                      <option value="points">Points</option>
-                    </Select>
-                  </Field>
-                </div>
-                {r.points ? (
-                  <>
+                <button
+                  type="button"
+                  aria-label={`Edit reward rate ${i + 1}`}
+                  aria-expanded={editingRule === r.id}
+                  className="flex min-h-11 w-full items-start justify-between gap-3 text-left"
+                  onClick={() =>
+                    setEditingRule(editingRule === r.id ? null : r.id)
+                  }
+                >
+                  <span className="min-w-0">
+                    <span className="block font-semibold">
+                      {r.points
+                        ? r.points.perSpend
+                          ? rewardLabel(r)
+                          : "Points rate"
+                        : r.cashbackBps
+                          ? rewardLabel(r)
+                          : "Cashback rate"}
+                    </span>
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      {r.merchants?.length
+                        ? "Partner stores"
+                        : r.channel
+                          ? PAYMENT_CHANNELS[r.channel]
+                          : r.category !== "general"
+                            ? SPEND_CATEGORIES[r.category]
+                            : "General eligible spending"}
+                      {r.eligibleCategories?.length &&
+                      r.eligibleCategories.length <= 2
+                        ? ` · ${r.eligibleCategories.map((c) => SPEND_CATEGORIES[c]).join(", ")}`
+                        : ""}
+                      {r.cap !== null ? ` · cap ${formatINR(r.cap)}` : ""}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-sm text-primary">
+                    {editingRule === r.id ? "Done" : "Edit"}
+                  </span>
+                </button>
+                {editingRule === r.id && (
+                  <div className="space-y-3 border-t pt-3">
                     <div className="grid grid-cols-2 gap-3">
-                      <Field label="Points earned">
-                        <NumberEntry
-                          label={`Points earned ${i + 1}`}
-                          value={r.points.perSpend || null}
-                          onChange={(v) =>
+                      <Field label="Spending category">
+                        <Select
+                          aria-label={`Reward category ${i + 1}`}
+                          value={r.category}
+                          onChange={(e) =>
                             updateRule(i, {
-                              points: { ...r.points!, perSpend: v ?? 0 },
+                              category: e.target
+                                .value as RewardRule["category"],
+                              eligibleCategories: undefined,
                             })
                           }
-                        />
+                        >
+                          <option value="general">General spending</option>
+                          {Object.entries(SPEND_CATEGORIES).map(([k, v]) => (
+                            <option key={k} value={k}>
+                              {v}
+                            </option>
+                          ))}
+                        </Select>
                       </Field>
-                      <Field label="For every ₹ spent">
-                        <MoneyInput
-                          aria-label={`Points spend step ${i + 1}`}
-                          value={r.points.spend || null}
-                          onChange={(v) =>
-                            updateRule(i, {
-                              points: { ...r.points!, spend: v ?? 0 },
-                            })
+                      <Field label="Reward type">
+                        <Select
+                          aria-label={`Reward type ${i + 1}`}
+                          value={r.points ? "points" : "cashback"}
+                          onChange={(e) =>
+                            updateRule(
+                              i,
+                              e.target.value === "points"
+                                ? {
+                                    cashbackBps: 0,
+                                    cap: null,
+                                    points: {
+                                      perSpend: 0,
+                                      spend: 0,
+                                      valuePaise: null,
+                                      cap: null,
+                                      redemption: "",
+                                    },
+                                  }
+                                : {
+                                    points: undefined,
+                                    cashbackBps: 0,
+                                    cap: null,
+                                  },
+                            )
                           }
-                        />
+                        >
+                          <option value="cashback">Cashback</option>
+                          <option value="points">Points</option>
+                        </Select>
                       </Field>
                     </div>
-                    <Field
-                      label="1 point is worth ₹"
-                      hint="Leave blank if unknown. We won't guess its value."
-                    >
-                      <NumberEntry
-                        decimal
-                        label={`Point value ${i + 1}`}
-                        value={
-                          r.points.valuePaise === null
-                            ? null
-                            : r.points.valuePaise / 100
-                        }
-                        onChange={(v) =>
-                          updateRule(i, {
-                            points: {
-                              ...r.points!,
-                              valuePaise:
-                                v === null ? null : Math.round(v * 100),
-                            },
-                          })
-                        }
-                      />
-                    </Field>
-                    <Field
-                      label="When redeemed for"
-                      hint="For example, statement credit or a specific travel redemption."
-                    >
-                      <Input
-                        aria-label={`Point redemption ${i + 1}`}
-                        maxLength={200}
-                        value={r.points.redemption}
-                        onChange={(e) =>
-                          updateRule(i, {
-                            points: {
-                              ...r.points!,
-                              redemption: e.target.value,
-                            },
-                          })
-                        }
-                      />
-                    </Field>
-                    <Field label="Maximum points earned (optional)">
-                      <NumberEntry
-                        label={`Points cap ${i + 1}`}
-                        value={r.points.cap}
-                        onChange={(v) =>
-                          updateRule(i, { points: { ...r.points!, cap: v } })
-                        }
-                      />
-                    </Field>
-                  </>
-                ) : (
-                  <div className="grid grid-cols-2 gap-3">
-                    <Field label="Cashback %">
-                      <NumberEntry
-                        decimal
-                        label={`Cashback percent ${i + 1}`}
-                        value={r.cashbackBps ? r.cashbackBps / 100 : null}
-                        onChange={(v) =>
-                          updateRule(i, {
-                            cashbackBps: Math.round((v ?? 0) * 100),
-                          })
-                        }
-                      />
-                    </Field>
-                    <Field label="Maximum cashback ₹" hint="Optional">
-                      <MoneyInput
-                        aria-label={`Reward cap ${i + 1}`}
-                        value={r.cap}
-                        onChange={(v) => updateRule(i, { cap: v })}
-                      />
-                    </Field>
-                  </div>
-                )}
-                {(r.cap !== null ||
-                  (r.points?.cap !== null && r.points?.cap !== undefined)) && (
-                  <Field label="Cap resets">
-                    <Select
-                      aria-label={`Reward cap period ${i + 1}`}
-                      value={r.capPeriod ?? ""}
-                      onChange={(e) =>
-                        updateRule(i, {
-                          capPeriod: (e.target.value ||
-                            undefined) as RewardRule["capPeriod"],
-                        })
-                      }
-                    >
-                      <option value="">Not sure yet</option>
-                      {["month", "quarter", "calendar_year", "card_year"].map(
-                        (k) => (
-                          <option key={k} value={k}>
-                            {PERIOD_LABELS[k as keyof typeof PERIOD_LABELS]}
-                          </option>
-                        ),
-                      )}
-                    </Select>
-                  </Field>
-                )}
-                <details>
-                  <summary className="cursor-pointer py-2 text-sm text-primary">
-                    Conditions & excluded spends
-                  </summary>
-                  <div className="space-y-3 pt-2">
-                    {r.points && (
-                      <Field
-                        label="Cash redemption cap ₹ (optional)"
-                        hint="Only if the issuer limits the cash value, separately from the points earned."
-                      >
-                        <MoneyInput
-                          aria-label={`Points cash-value cap ${i + 1}`}
-                          value={r.cap}
-                          onChange={(v) => updateRule(i, { cap: v })}
-                        />
+                    {r.points ? (
+                      <>
+                        <div className="grid grid-cols-2 gap-3">
+                          <Field label="Points earned">
+                            <NumberEntry
+                              label={`Points earned ${i + 1}`}
+                              value={r.points.perSpend || null}
+                              onChange={(v) =>
+                                updateRule(i, {
+                                  points: { ...r.points!, perSpend: v ?? 0 },
+                                })
+                              }
+                            />
+                          </Field>
+                          <Field label="For every ₹ spent">
+                            <MoneyInput
+                              aria-label={`Points spend step ${i + 1}`}
+                              value={r.points.spend || null}
+                              onChange={(v) =>
+                                updateRule(i, {
+                                  points: { ...r.points!, spend: v ?? 0 },
+                                })
+                              }
+                            />
+                          </Field>
+                        </div>
+                        <Field
+                          label="1 point is worth ₹"
+                          hint="Leave blank if unknown. We won't guess its value."
+                        >
+                          <NumberEntry
+                            decimal
+                            label={`Point value ${i + 1}`}
+                            value={
+                              r.points.valuePaise === null
+                                ? null
+                                : r.points.valuePaise / 100
+                            }
+                            onChange={(v) =>
+                              updateRule(i, {
+                                points: {
+                                  ...r.points!,
+                                  valuePaise:
+                                    v === null ? null : Math.round(v * 100),
+                                },
+                              })
+                            }
+                          />
+                        </Field>
+                        <Field
+                          label="When redeemed for"
+                          hint="For example, statement credit or a specific travel redemption."
+                        >
+                          <Input
+                            aria-label={`Point redemption ${i + 1}`}
+                            maxLength={200}
+                            value={r.points.redemption}
+                            onChange={(e) =>
+                              updateRule(i, {
+                                points: {
+                                  ...r.points!,
+                                  redemption: e.target.value,
+                                },
+                              })
+                            }
+                          />
+                        </Field>
+                        <Field label="Maximum points earned (optional)">
+                          <NumberEntry
+                            label={`Points cap ${i + 1}`}
+                            value={r.points.cap}
+                            onChange={(v) =>
+                              updateRule(i, {
+                                points: { ...r.points!, cap: v },
+                              })
+                            }
+                          />
+                        </Field>
+                      </>
+                    ) : (
+                      <div className="grid grid-cols-2 gap-3">
+                        <Field label="Cashback %">
+                          <NumberEntry
+                            decimal
+                            label={`Cashback percent ${i + 1}`}
+                            value={r.cashbackBps ? r.cashbackBps / 100 : null}
+                            onChange={(v) =>
+                              updateRule(i, {
+                                cashbackBps: Math.round((v ?? 0) * 100),
+                              })
+                            }
+                          />
+                        </Field>
+                        <Field label="Maximum cashback ₹" hint="Optional">
+                          <MoneyInput
+                            aria-label={`Reward cap ${i + 1}`}
+                            value={r.cap}
+                            onChange={(v) => updateRule(i, { cap: v })}
+                          />
+                        </Field>
+                      </div>
+                    )}
+                    {(r.cap !== null ||
+                      (r.points?.cap !== null &&
+                        r.points?.cap !== undefined)) && (
+                      <Field label="Cap resets">
+                        <Select
+                          aria-label={`Reward cap period ${i + 1}`}
+                          value={r.capPeriod ?? ""}
+                          onChange={(e) =>
+                            updateRule(i, {
+                              capPeriod: (e.target.value ||
+                                undefined) as RewardRule["capPeriod"],
+                            })
+                          }
+                        >
+                          <option value="">Not sure yet</option>
+                          {[
+                            "month",
+                            "quarter",
+                            "calendar_year",
+                            "card_year",
+                          ].map((k) => (
+                            <option key={k} value={k}>
+                              {PERIOD_LABELS[k as keyof typeof PERIOD_LABELS]}
+                            </option>
+                          ))}
+                        </Select>
                       </Field>
                     )}
-                    <Input
-                      aria-label={`Reward conditions ${i + 1}`}
-                      value={r.conditions}
-                      maxLength={1200}
-                      placeholder="Eligible merchants, minimum spend, exclusions…"
-                      onChange={(e) =>
-                        updateRule(i, { conditions: e.target.value })
-                      }
-                    />
-                    <div className="flex flex-wrap gap-2">
-                      {Object.entries(SPEND_CATEGORIES).map(([k, label]) => {
-                        const key = k as SpendCategory,
-                          on = r.excludedCategories?.includes(key);
-                        return (
-                          <button
-                            key={key}
-                            type="button"
-                            aria-label={`Exclude ${label} from rule ${i + 1}`}
-                            aria-pressed={!!on}
-                            className={`min-h-11 rounded-full border px-3 text-xs ${on ? "bg-danger-soft text-danger" : "text-muted-foreground"}`}
-                            onClick={() =>
+                    <details className="text-sm">
+                      <summary className="min-h-11 cursor-pointer py-3 text-primary">
+                        Where this rate applies
+                      </summary>
+                      <div className="space-y-3 pt-2">
+                        <Field label="Payment method">
+                          <Select
+                            aria-label={`Reward payment method ${i + 1}`}
+                            value={r.channel ?? ""}
+                            onChange={(e) =>
                               updateRule(i, {
-                                excludedCategories: on
-                                  ? r.excludedCategories?.filter(
-                                      (c) => c !== key,
-                                    )
-                                  : [...(r.excludedCategories ?? []), key],
+                                channel: (e.target.value ||
+                                  undefined) as RewardRule["channel"],
                               })
                             }
                           >
-                            {label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Tap categories that do not earn this reward.
-                    </p>
+                            <option value="">Any eligible method</option>
+                            {Object.entries(PAYMENT_CHANNELS).map(([k, v]) => (
+                              <option key={k} value={k}>
+                                {v}
+                              </option>
+                            ))}
+                          </Select>
+                        </Field>
+                        <Field
+                          label="Only these stores / apps"
+                          hint="Comma-separated. Leave blank for any eligible store."
+                        >
+                          <MerchantListInput
+                            label={`Reward merchants ${i + 1}`}
+                            value={r.merchants}
+                            onChange={(v) => updateRule(i, { merchants: v })}
+                          />
+                        </Field>
+                        {!!r.eligibleCategories?.length && (
+                          <p className="text-xs text-muted-foreground">
+                            Shared rate and cap for:{" "}
+                            {r.eligibleCategories
+                              .map((c) => SPEND_CATEGORIES[c])
+                              .join(", ")}
+                          </p>
+                        )}
+                      </div>
+                    </details>
+                    <details>
+                      <summary className="cursor-pointer py-2 text-sm text-primary">
+                        Conditions & excluded spends
+                      </summary>
+                      <div className="space-y-3 pt-2">
+                        {r.points && (
+                          <Field
+                            label="Cash redemption cap ₹ (optional)"
+                            hint="Only if the issuer limits the cash value, separately from the points earned."
+                          >
+                            <MoneyInput
+                              aria-label={`Points cash-value cap ${i + 1}`}
+                              value={r.cap}
+                              onChange={(v) => updateRule(i, { cap: v })}
+                            />
+                          </Field>
+                        )}
+                        <Input
+                          aria-label={`Reward conditions ${i + 1}`}
+                          value={r.conditions}
+                          maxLength={1200}
+                          placeholder="Eligible merchants, minimum spend, exclusions…"
+                          onChange={(e) =>
+                            updateRule(i, { conditions: e.target.value })
+                          }
+                        />
+                        <div className="flex flex-wrap gap-2">
+                          {Object.entries(SPEND_CATEGORIES).map(
+                            ([k, label]) => {
+                              const key = k as SpendCategory,
+                                on = r.excludedCategories?.includes(key);
+                              return (
+                                <button
+                                  key={key}
+                                  type="button"
+                                  aria-label={`Exclude ${label} from rule ${i + 1}`}
+                                  aria-pressed={!!on}
+                                  className={`min-h-11 rounded-full border px-3 text-xs ${on ? "bg-danger-soft text-danger" : "text-muted-foreground"}`}
+                                  onClick={() =>
+                                    updateRule(i, {
+                                      excludedCategories: on
+                                        ? r.excludedCategories?.filter(
+                                            (c) => c !== key,
+                                          )
+                                        : [
+                                            ...(r.excludedCategories ?? []),
+                                            key,
+                                          ],
+                                    })
+                                  }
+                                >
+                                  {label}
+                                </button>
+                              );
+                            },
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Tap categories that do not earn this reward.
+                        </p>
+                      </div>
+                    </details>
+                    <button
+                      type="button"
+                      className="min-h-11 text-xs text-danger"
+                      onClick={() =>
+                        features({
+                          rewardRules: draft.features.rewardRules.filter(
+                            (_, n) => n !== i,
+                          ),
+                        })
+                      }
+                    >
+                      Remove this rate
+                    </button>
                   </div>
-                </details>
-                <button
-                  type="button"
-                  className="min-h-11 text-xs text-danger"
-                  onClick={() =>
-                    features({
-                      rewardRules: draft.features.rewardRules.filter(
-                        (_, n) => n !== i,
-                      ),
-                    })
-                  }
-                >
-                  Remove this rate
-                </button>
+                )}
               </section>
             ))}
             {draft.features.rewardRules.length > 0 &&
@@ -693,6 +835,37 @@ export function CardSetupForm({
                       </Select>
                     </Field>
                   </div>
+                  {r.annualLimit && (
+                    <Field
+                      label={`Annual limit: ${r.annualLimit.visits} visits`}
+                    >
+                      <Select
+                        aria-label={`Lounge annual reset ${i + 1}`}
+                        value={r.annualLimit.period}
+                        onChange={(e) =>
+                          updateLounge(i, {
+                            annualLimit: {
+                              ...r.annualLimit!,
+                              period: e.target.value as
+                                "calendar_year" | "card_year" | "unknown",
+                            },
+                          })
+                        }
+                      >
+                        <option value="unknown">
+                          Year reset not confirmed
+                        </option>
+                        <option value="calendar_year">Calendar year</option>
+                        <option value="card_year">Card year</option>
+                      </Select>
+                    </Field>
+                  )}
+                  {r.conditional && (
+                    <p className="text-xs text-muted-foreground">
+                      Conditional benefit. Choose lounge access after meeting
+                      the spend requirement.
+                    </p>
+                  )}
                   <Field
                     label="Access conditions"
                     hint="Spend threshold, eligible lounges, guest charges, activation…"

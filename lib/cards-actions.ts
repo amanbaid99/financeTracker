@@ -51,7 +51,7 @@ const cardSchema = z.object({
   benefits: z.array(z.string().trim().min(1).max(120)).max(30),
   reviewedBenefits: benefitDraftSchema.optional(),
   humanConfirmed: z.literal(true).optional(),
-  bestFor: z.array(z.enum(SPEND_CATEGORY_KEYS)).max(8).optional(),
+  bestFor: z.array(z.enum(SPEND_CATEGORY_KEYS)).max(20).optional(),
 });
 
 export async function saveCard(

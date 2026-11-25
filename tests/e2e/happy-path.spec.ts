@@ -846,7 +846,7 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(found).toHaveCount(0);
   await expect(page.getByText("Free golf every month")).toHaveCount(0);
   await expect(page.getByRole("progressbar", { name: "Milestone bonus progress" })).toBeVisible();
-  await expect(page.getByText("Which card for each category?",{exact:true})).toBeVisible();
+  await expect(page.getByLabel("Payment method",{exact:true})).toBeVisible();
 
   await page.screenshot({ path: "test-results/cards-375.png", fullPage: true });
 

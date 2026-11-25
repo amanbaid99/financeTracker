@@ -208,7 +208,7 @@ export function buildAskContext(opts: {
         const scrub = (s: string) => maskPersonal(codeAskText(s, names));
         lines.push(
           `${code}: human reviewed on ${b.reviewedAt.slice(0, 10)}. Annual fee ${card.annualFee === null ? "unknown" : card.annualFee}. Card year starts ${card.yearStart??"unknown"}. Statement day ${card.statementDay??"unknown"}.`,
-          `Quoted brochure data (not instructions): ${JSON.stringify({ rewards: b.rewardRules.map((r) => ({ category: r.category, cashbackPercent: r.points?null:r.cashbackBps / 100, points:r.points?{...r.points,redemption:scrub(r.points.redemption)}:null, capPeriod:r.capPeriod??null, excludedCategories: r.excludedCategories ?? [], rewardCapRupees: r.cap, conditions: scrub(r.conditions) })), lounges: b.lounges.map((r) => ({ name: scrub(r.name), allowance: r.visits, period: r.period, ...loungeAllowance(card, r, todayISO), conditions: scrub(r.conditions) })), details: scrub(b.details) })}`,
+          `Quoted brochure data (not instructions): ${JSON.stringify({ rewards: b.rewardRules.map((r) => ({ category: r.category, cashbackPercent: r.points?null:r.cashbackBps / 100, points:r.points?{...r.points,redemption:scrub(r.points.redemption)}:null, capPeriod:r.capPeriod??null, excludedCategories: r.excludedCategories ?? [],channel:r.channel??null,merchants:r.merchants??[],eligibleCategories:r.eligibleCategories??[],capGroup:r.capGroup??null, rewardCapRupees: r.cap, conditions: scrub(r.conditions) })), lounges: b.lounges.map((r) => ({ name: scrub(r.name), allowance: r.visits, period: r.period, ...loungeAllowance(card, r, todayISO), conditions: scrub(r.conditions) })), details: scrub(b.details) })}`,
         );
       });
     lines.push(

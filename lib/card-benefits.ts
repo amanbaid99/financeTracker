@@ -2,6 +2,17 @@ import { z } from "zod";
 import { SPEND_CATEGORY_KEYS, type SpendCategory } from "./card-advisor";
 import { periodBounds, type Card } from "./cards";
 
+export const PAYMENT_CHANNELS = {
+  online: "Online",
+  offline: "In store",
+  phonepe: "PhonePe in-app",
+  amazon_pay: "Amazon Pay (eligible partner)",
+  upi: "UPI / Scan & Pay",
+} as const;
+export type SpendContext = {
+  merchant?: string;
+  channel?: keyof typeof PAYMENT_CHANNELS;
+};
 const text = z.string().trim().max(1200);
 export const benefitPeriod = z.enum([
   "month",
@@ -25,7 +36,13 @@ export const rewardRuleSchema = z
       })
       .optional(),
     capPeriod: benefitPeriod.optional(),
-    excludedCategories: z.array(z.enum(SPEND_CATEGORY_KEYS)).max(8).optional(),
+    channel: z
+      .enum(["online", "offline", "phonepe", "amazon_pay", "upi"])
+      .optional(),
+    merchants: z.array(z.string().trim().min(1).max(80)).max(30).optional(),
+    eligibleCategories: z.array(z.enum(SPEND_CATEGORY_KEYS)).max(20).optional(),
+    capGroup: z.string().trim().max(80).optional(),
+    excludedCategories: z.array(z.enum(SPEND_CATEGORY_KEYS)).max(20).optional(),
     cap: z.number().int().min(0).max(1e9).nullable(),
     conditions: text,
     evidence: text.min(1),
@@ -48,6 +65,13 @@ export const loungeRuleSchema = z.object({
   period: benefitPeriod,
   conditions: text,
   evidence: text.min(1),
+  conditional: z.boolean().optional(),
+  annualLimit: z
+    .object({
+      visits: z.number().int().min(1).max(999),
+      period: z.enum(["calendar_year", "card_year", "unknown"]),
+    })
+    .optional(),
 });
 export const benefitDraftSchema = z
   .object({
@@ -146,42 +170,91 @@ export const EXPLICIT_REWARD_CATEGORIES: SpendCategory[] = [
   "bills",
   "upi",
   "international",
+  "insurance",
+  "gift_cards",
+  "rent",
+  "gold",
+  "wallet",
+  "emi",
 ];
-/** Conditional published rewards. Cap usage and merchant eligibility are not inferred. */
+/** Specific merchant/app rules replace the base rate; they never stack or fall back after a cap. */
+export function applicableRewardRules(
+  rules: RewardRule[],
+  category: SpendCategory,
+  context: SpendContext = {},
+) {
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const candidates = rules.filter((r) => {
+    if (r.excludedCategories?.includes(category)) return false;
+    if (
+      r.eligibleCategories?.length &&
+      !r.eligibleCategories.includes(category)
+    )
+      return false;
+    if (
+      r.category !== category &&
+      !(
+        r.category === "general" &&
+        (!EXPLICIT_REWARD_CATEGORIES.includes(category) ||
+          r.eligibleCategories?.includes(category))
+      )
+    )
+      return false;
+    if (
+      r.channel &&
+      !(
+        r.channel === context.channel ||
+        (r.channel === "online" &&
+          ["online", "phonepe", "amazon_pay"].includes(context.channel ?? ""))
+      )
+    )
+      return false;
+    if (
+      r.merchants?.length &&
+      (!context.merchant ||
+        !r.merchants.some((m) => norm(m) === norm(context.merchant!)))
+    )
+      return false;
+    return true;
+  });
+  const score = (r: RewardRule) =>
+    (r.merchants?.length ? 10000 : 0) +
+    (r.channel ? (r.channel === "online" ? 500 : 1000) : 0) +
+    (r.category !== "general"
+      ? 200
+      : r.eligibleCategories?.length
+        ? 100 - r.eligibleCategories.length
+        : 0);
+  const highest = Math.max(-1, ...candidates.map(score));
+  return candidates.filter((r) => score(r) === highest);
+}
 export function compareCardRewards(
   cards: Card[],
   category: SpendCategory,
   amount: number,
   today: string,
+  context: SpendContext = {},
 ) {
   return cards
     .flatMap((card) => {
       const b = card.featureDetails;
       if (!b || !benefitsCurrent(b, today)) return [];
-      const rules = b.rewardRules.filter(
-        (r) =>
-          (r.category === category ||
-            (r.category === "general" &&
-              !EXPLICIT_REWARD_CATEGORIES.includes(category))) &&
-          !r.excludedCategories?.includes(category),
+      return applicableRewardRules(b.rewardRules, category, context).flatMap(
+        (rule) => {
+          const upperReward = rewardForSpend(rule, amount);
+          return upperReward === null
+            ? []
+            : [
+                {
+                  cardId: card.id,
+                  label: card.label,
+                  rule,
+                  upperReward,
+                  rewardPaise: rewardPaiseForSpend(rule, amount)!,
+                },
+              ];
+        },
       );
-      const applicable = rules.some((r) => r.category === category)
-        ? rules.filter((r) => r.category === category)
-        : rules;
-      return applicable.flatMap((rule) => {
-        const upperReward = rewardForSpend(rule, amount);
-        return upperReward === null
-          ? []
-          : [
-              {
-                cardId: card.id,
-                label: card.label,
-                rule,
-                upperReward,
-                rewardPaise: rewardPaiseForSpend(rule, amount)!,
-              },
-            ];
-      });
     })
     .sort(
       (a, b) =>
@@ -199,10 +272,12 @@ export function bestCardPerCategory(
   cards: Card[],
   amount: number,
   today: string,
+  context: SpendContext = {},
 ) {
   return SPEND_CATEGORY_KEYS.map((category) => ({
     category,
-    best: compareCardRewards(cards, category, amount, today)[0] ?? null,
+    best:
+      compareCardRewards(cards, category, amount, today, context)[0] ?? null,
   }));
 }
 export function loungeAllowance(card: Card, rule: LoungeRule, today: string) {
@@ -218,7 +293,56 @@ export function loungeAllowance(card: Card, rule: LoungeRule, today: string) {
         v.date <= today,
     )
     .reduce((s, v) => s + v.visits, 0);
-  return { used, remaining: Math.max(0, rule.visits - used), start, end };
+  const remaining = Math.max(0, rule.visits - used);
+  if (rule.conditional)
+    return {
+      used,
+      remaining: null,
+      start,
+      end,
+      conditional: true,
+      periodRemaining: remaining,
+    };
+  if (rule.annualLimit) {
+    if (
+      rule.annualLimit.period === "unknown" ||
+      (rule.annualLimit.period === "card_year" && !card.yearStart)
+    )
+      return {
+        used,
+        remaining: remaining === 0 ? 0 : null,
+        start,
+        end,
+        annualUnverified: true,
+        periodRemaining: remaining,
+      };
+    const bounds = periodBounds(
+      rule.annualLimit.period,
+      today,
+      card.yearStart,
+      null,
+    );
+    const annualUsed = (card.loungeVisits ?? [])
+      .filter(
+        (v) =>
+          v.ruleId === rule.id &&
+          v.date >= bounds.start! &&
+          v.date <= bounds.end! &&
+          v.date <= today,
+      )
+      .reduce((s, v) => s + v.visits, 0);
+    return {
+      used,
+      remaining: Math.min(
+        remaining,
+        Math.max(0, rule.annualLimit.visits - annualUsed),
+      ),
+      start,
+      end,
+      annualUsed,
+    };
+  }
+  return { used, remaining, start, end };
 }
 
 /** Brochure rereads keep logs attached to the same allowance, never to a new pool with a reused AI ID. */

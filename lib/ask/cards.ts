@@ -6,21 +6,59 @@ import {
   loungeAllowance,
   rewardLabel,
   rewardValueLabel,
+  type SpendContext,
 } from "@/lib/card-benefits";
 import { SPEND_CATEGORIES, type SpendCategory } from "@/lib/card-advisor";
 import { formatINR } from "@/lib/format";
-import { restoreNames } from "./context";
+import { restoreNames, codeAskText } from "./context";
 
 const categories: [SpendCategory, RegExp][] = [
+  ["rent", /\brent\b/i],
+  ["gold", /\b(gold|jewellery|jewelry)\b/i],
+  ["wallet", /\bwallet\b/i],
+  ["emi", /\bemi\b/i],
+  ["insurance", /\binsurance\b/i],
+  ["gift_cards", /\bgift\s*cards?\b/i],
   ["international", /\b(international|overseas|forex|foreign)\b/i],
   ["groceries", /\b(grocer\w*|supermarket\w*)\b/i],
   ["dining", /\b(dining|restaurants?|food|eating out)\b/i],
   ["fuel", /\b(fuel|petrol|diesel)\b/i],
-  ["online", /\b(online|shopping)\b/i],
   ["bills", /\b(bills?|utilities|electricity|recharge)\b/i],
-  ["upi", /\bupi\b/i],
+  ["upi", /\b(upi|scan.*pay)\b/i],
   ["travel", /\b(travel|flights?|hotels?|booking)\b/i],
+  ["online", /\b(online|shopping)\b/i],
 ];
+export function cardSpendContext(text: string, cards: Card[]): SpendContext {
+  const context: SpendContext = {};
+  context.channel = /\bupi\b|scan.*pay/i.test(text)
+    ? "upi"
+    : /phonepe/i.test(text)
+      ? "phonepe"
+      : /amazon\s*pay/i.test(text)
+        ? "amazon_pay"
+        : /\b(offline|in.store)\b/i.test(text)
+          ? "offline"
+          : /\bonline\b/i.test(text)
+            ? "online"
+            : undefined;
+  const storeText = text.replace(/amazon\s*pay/gi, "").replace(/phonepe/gi, "");
+  const merchants = [
+    ...new Set(
+      cards.flatMap(
+        (c) =>
+          c.featureDetails?.rewardRules.flatMap((r) => r.merchants ?? []) ?? [],
+      ),
+    ),
+  ].sort((a, b) => b.length - a.length);
+  context.merchant = merchants.find((m) =>
+    new RegExp(
+      `(?<![a-z0-9])${m.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?![a-z0-9])`,
+      "i",
+    ).test(storeText),
+  );
+  if (context.merchant && !context.channel) context.channel = "online";
+  return context;
+}
 export function cardSpendCategory(text: string): SpendCategory | null {
   return categories.find(([, re]) => re.test(text))?.[0] ?? null;
 }
@@ -109,7 +147,11 @@ export function answerCardQuestion(
       question.toLowerCase().includes(c.label.toLowerCase()) ||
       question.includes(code.get(c.id)!),
   );
-  const selected = mentioned.length ? mentioned : sorted;
+  const selected = /which card|best card|compare.*card/i.test(question)
+    ? sorted
+    : mentioned.length
+      ? mentioned
+      : sorted;
   const current = selected.filter(
     (c) => c.featureDetails && benefitsCurrent(c.featureDetails, today),
   );
@@ -117,7 +159,7 @@ export function answerCardQuestion(
     const lines = current.flatMap((c) =>
       c.featureDetails!.lounges.map((r) => {
         const a = loungeAllowance(c, r, today);
-        return `- ${code.get(c.id)}: ${r.name}, ${a.remaining === null ? "set the card-year start to count visits" : `${a.remaining} of ${r.visits} visits left`}. ${PERIOD_LABELS[r.period]}. ${r.conditions || "Access conditions are not recorded; check with your issuer."}`;
+        return `- ${code.get(c.id)}: ${r.name}, ${a.conditional ? "conditional benefit, select after qualifying spend" : a.annualUnverified ? `${a.periodRemaining} this quarter; annual year reset not confirmed` : a.remaining === null ? "set the card-year start to count visits" : `${a.remaining} of ${r.visits} visits left`}. ${PERIOD_LABELS[r.period]}. ${r.conditions || "Access conditions are not recorded; check with your issuer."}`;
       }),
     );
     return result(
@@ -171,8 +213,8 @@ export function answerCardQuestion(
     );
   }
   const category =
-    cardSpendCategory(question) ??
-    (followup ? cardSpendCategory(previous) : null);
+    cardSpendCategory(codeAskText(question, names)) ??
+    (followup ? cardSpendCategory(codeAskText(previous, names)) : null);
   if (!category && !/which card|best card|cashback|reward|earn/i.test(question))
     return null;
   if (!category)
@@ -193,7 +235,34 @@ export function answerCardQuestion(
           `Which card for ${formatINR(n)} on ${SPEND_CATEGORIES[category].toLowerCase()}?`,
       ),
     );
-  const matches = compareCardRewards(selected, category, amount, today);
+  const context = cardSpendContext(
+    codeAskText(followup ? `${previous} ${question}` : question, names),
+    selected,
+  );
+  if (
+    !context.channel &&
+    !context.merchant &&
+    selected.some((c) =>
+      c.featureDetails?.rewardRules.some(
+        (r) => r.channel || r.merchants?.length,
+      ),
+    )
+  )
+    return result(
+      "How are you paying? App and store-specific rates can change the answer.",
+      [
+        `Which card for ${formatINR(amount)} on ${SPEND_CATEGORIES[category].toLowerCase()} online?`,
+        `Which card for ${formatINR(amount)} on ${SPEND_CATEGORIES[category].toLowerCase()} using PhonePe?`,
+        `Which card for ${formatINR(amount)} on ${SPEND_CATEGORIES[category].toLowerCase()} in store?`,
+      ],
+    );
+  const matches = compareCardRewards(
+    selected,
+    category,
+    amount,
+    today,
+    context,
+  );
   const unique = matches.filter(
     (m, i) => matches.findIndex((x) => x.cardId === m.cardId) === i,
   );

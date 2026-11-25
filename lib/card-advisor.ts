@@ -14,10 +14,16 @@ export const SPEND_CATEGORIES = {
   dining: "Dining",
   groceries: "Groceries",
   fuel: "Fuel",
-  online: "Online shopping",
+  online: "Shopping",
   bills: "Bills and utilities",
   upi: "UPI",
   international: "International",
+  insurance: "Insurance",
+  gift_cards: "Gift cards",
+  rent: "Rent",
+  gold: "Gold",
+  wallet: "Wallet loading",
+  emi: "EMI payments",
 } as const;
 export type SpendCategory = keyof typeof SPEND_CATEGORIES;
 export const SPEND_CATEGORY_KEYS = Object.keys(
