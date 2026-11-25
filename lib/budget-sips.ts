@@ -76,3 +76,25 @@ export function equalSplit(amount: number, count: number): number[] {
   const extra = amount - base * count;
   return Array.from({ length: count }, (_, i) => base + (i < extra ? 1 : 0));
 }
+
+/**
+ * Where your SIPs go by asset type: each goal's amount is split equally
+ * across its funds, then added up per type. A goal with no fund counts
+ * under "none". Biggest first.
+ */
+export function sipMix(
+  goals: { amount: number; classes: string[] }[],
+): { key: string; value: number; share: number }[] {
+  const totals = new Map<string, number>();
+  for (const g of goals) {
+    if (g.amount <= 0) continue;
+    const keys = g.classes.length ? g.classes : ["none"];
+    equalSplit(g.amount, keys.length).forEach((n, i) =>
+      totals.set(keys[i], (totals.get(keys[i]) ?? 0) + n),
+    );
+  }
+  const total = [...totals.values()].reduce((a, b) => a + b, 0);
+  return [...totals]
+    .map(([key, value]) => ({ key, value, share: total ? value / total : 0 }))
+    .sort((a, b) => b.value - a.value);
+}

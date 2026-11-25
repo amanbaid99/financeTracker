@@ -3,8 +3,11 @@ import { useState } from "react";
 import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
 import { formatINR } from "@/lib/format";
+import { CompactAllocation } from "@/components/allocation-bar";
+import { ASSET_CLASSES } from "@/lib/portfolio";
 import {
   equalSplit,
+  sipMix,
   sipStatus,
   sipsByGoal,
   type SipRow,
@@ -15,7 +18,7 @@ type GoalOption = {
   id: string;
   label: string;
   /** Funds covering this goal that can take monthly money. */
-  vehicles?: string[];
+  vehicles?: { label: string; assetClass: string }[];
 };
 
 /**
@@ -25,7 +28,6 @@ type GoalOption = {
 export function BudgetSips({
   rows,
   budgetMonthly,
-  salary = 0,
   goals,
   pending,
   error,
@@ -34,8 +36,6 @@ export function BudgetSips({
   rows: SipRow[];
   /** Save & invest a month from the budget, or null with no salary. */
   budgetMonthly: number | null;
-  /** Take-home a month, for the saving rate; 0 with no salary. */
-  salary?: number;
   goals: GoalOption[];
   pending: boolean;
   error: string;
@@ -55,6 +55,12 @@ export function BudgetSips({
       goalId: g.id,
     }));
   const status = sipStatus(draft, budgetMonthly);
+  const mix = sipMix(
+    goals.map((g) => ({
+      amount: amounts[g.id] ?? 0,
+      classes: (g.vehicles ?? []).map((v) => v.assetClass),
+    })),
+  );
   const changed = goals.some(
     (g) => (amounts[g.id] ?? 0) !== (saved.get(g.id) ?? 0),
   );
@@ -66,35 +72,36 @@ export function BudgetSips({
       className="surface-card space-y-3 rounded-2xl border bg-card p-4"
     >
       <h3 className="font-semibold">Your SIPs</h3>
-      <div
-        aria-label="Each month"
-        role="group"
-        className="grid grid-cols-2 gap-2"
-      >
-        <div className="rounded-xl bg-muted/60 p-3">
-          <p className="text-xs text-muted-foreground">Saved a month</p>
-          <p className="tabular mt-0.5 text-lg font-semibold">
-            {budgetMonthly !== null ? formatINR(budgetMonthly) : "No salary"}
+      {status.assigned > 0 && (
+        <div>
+          <p className="text-sm">
+            <span className="tabular font-semibold">
+              {formatINR(status.assigned)}
+            </span>{" "}
+            a month into investments
+            {budgetMonthly ? (
+              <span className="text-muted-foreground">
+                {" "}
+                · {Math.round((status.assigned / budgetMonthly) * 100)}% of what
+                you save
+              </span>
+            ) : null}
           </p>
-          {budgetMonthly !== null && salary > 0 && (
-            <p className="text-xs text-muted-foreground">
-              {Math.round((budgetMonthly / salary) * 100)}% of take-home
-            </p>
-          )}
+          <CompactAllocation
+            label="Where your SIPs go"
+            items={mix.map((m) => {
+              const c = ASSET_CLASSES.find((x) => x.key === m.key);
+              return {
+                key: m.key,
+                label: c?.label ?? "No fund yet",
+                value: m.value,
+                share: m.share,
+                slot: c?.slot ?? 7,
+              };
+            })}
+          />
         </div>
-        <div className="rounded-xl bg-muted/60 p-3">
-          <p className="text-xs text-muted-foreground">Into investments</p>
-          <p className="tabular mt-0.5 text-lg font-semibold">
-            {formatINR(status.assigned)}
-          </p>
-          {budgetMonthly !== null && budgetMonthly > 0 && (
-            <p className="text-xs text-muted-foreground">
-              {Math.round((status.assigned / budgetMonthly) * 100)}% of what you
-              save
-            </p>
-          )}
-        </div>
-      </div>
+      )}
 
       {goals.length === 0 ? (
         <p className="text-sm text-muted-foreground">
@@ -132,7 +139,7 @@ export function BudgetSips({
                         className="flex items-baseline justify-between gap-3 text-xs text-muted-foreground"
                       >
                         <span className="min-w-0 break-words">
-                          {g.vehicles![i]}
+                          {g.vehicles![i].label}
                         </span>
                         <span className="tabular shrink-0">{formatINR(n)}</span>
                       </li>

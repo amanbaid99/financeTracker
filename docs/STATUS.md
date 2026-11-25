@@ -9,6 +9,14 @@
 
 Holdings can be marked "Not adding new money" (checkbox in components/investment-sheet.tsx, stored as `noNewMoney` in `holdings.planning_details`, no migration). Such holdings are left out of the Budget SIP split and the SIP vehicle candidates in lib/sip-plan.ts, but still count in net worth and goal coverage. The form now always sends planning details, keeping existing availability fields. The split under each goal on Your SIPs is now a small list (name left, amount right).
 
+## Where your SIPs go, 25 Nov 2026
+
+The owner wanted a single bar of the SIP total by asset type, not stat tiles (tiles were tried on Net worth, then on Your SIPs, and removed). Your SIPs (components/budget-sips.tsx) now opens with "₹X a month into investments · Y% of what you save" and a CompactAllocation bar with legend. `sipMix` (lib/budget-sips.ts) splits each goal's live amount equally across its funds (asset type from `assetClassOf`) and sums by type; goals with no fund count as "No fund yet". Net worth is unchanged.
+
+## Not adding new money, and the SIP split as a list, 25 Nov 2026
+
+Holdings can be marked "Not adding new money" (checkbox in components/investment-sheet.tsx, stored as `noNewMoney` in `holdings.planning_details`, no migration). Such holdings are left out of the Budget SIP split and the SIP vehicle candidates in lib/sip-plan.ts, but still count in net worth and goal coverage. The form now always sends planning details, keeping existing availability fields. The split under each goal on Your SIPs is now a small list (name left, amount right).
+
 ## Saving and investing stats on Your SIPs, 25 Nov 2026
 
 The owner wanted these by the SIP section, not on Net worth (first placed there, then removed). Your SIPs on Budget (components/budget-sips.tsx) opens with two tiles: Saved a month (Save & invest, % of take-home) and Into investments (the live SIP total, % of what you save). They replace the old header line and total.

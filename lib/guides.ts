@@ -134,7 +134,7 @@ export interface Release {
 export const RELEASES: Release[] = [
   { date: "2026-11-25", title: "Saving and investing at a glance", items: [
     { title: "Stop new money into a holding", text: "Tick Not adding new money on a holding you're keeping but not adding to. It stays in your net worth and goals, and your SIPs skip it." },
-    { title: "On Your SIPs", text: "Your SIPs on Budget now opens with what you save a month and how much of it goes into investments." },
+    { title: "Where your SIPs go", text: "Your SIPs on Budget now shows your monthly total and a bar of how it splits across equity, debt, gold, cash and more." },
   ] },
   { date: "2026-11-25", title: "SIPs on your Budget", items: [
     { title: "Set them by hand", text: "Your SIPs sits under Fixed spending: one amount box per goal. It shows what's left to assign." },

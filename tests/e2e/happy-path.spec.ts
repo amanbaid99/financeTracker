@@ -958,10 +958,10 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await sipCard.getByRole("button", { name: "Save SIPs" }).click();
   await expect(page.getByText("SIPs saved.")).toBeVisible();
   await expect(sipCard.getByLabel("House SIP a month")).toHaveValue("12,000");
-  // Saved a month and Into investments sit at the top of Your SIPs.
-  const flow = sipCard.getByRole("group", { name: "Each month" });
-  await expect(flow.getByText("Saved a month")).toBeVisible();
-  await expect(flow.getByText("₹12,000", { exact: true })).toBeVisible();
+  // The SIP total and a bar of where it goes by asset type.
+  await expect(sipCard.getByText("a month into investments")).toBeVisible();
+  await expect(sipCard.getByRole("group", { name: "Where your SIPs go" })).toBeVisible();
+  await expect(sipCard.getByRole("list", { name: "Where your SIPs go legend" })).toContainText("Equity");
   // Each goal's amount is split equally across the funds covering it.
   const houseSplit = sipCard.getByRole("list", { name: "House split" });
   await expect(houseSplit.getByRole("listitem").first()).toContainText("Index SIP");

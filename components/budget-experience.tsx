@@ -75,7 +75,7 @@ export function BudgetExperience({
   sips: number;
   loadError: string | null;
   /** Your goals, one SIP line each. */
-  goals?: { id: string; label: string; vehicles?: string[] }[];
+  goals?: { id: string; label: string; vehicles?: { label: string; assetClass: string }[] }[];
 }) {
   const [plan, setPlan] = useState<BudgetSheet | null>(
     hasSaved && initial ? groupPersonalCosts(initial) : null,
@@ -397,7 +397,6 @@ export function BudgetExperience({
         key={JSON.stringify(plan.sips ?? [])}
         rows={plan.sips ?? []}
         budgetMonthly={budgetSipAmount(plan)}
-        salary={plan.noSalary ? 0 : plan.salary}
         goals={goals}
         pending={pending}
         error={editing ? "" : error}

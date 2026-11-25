@@ -5,6 +5,7 @@ import { loadBudgetSheet } from "@/lib/budget-ratio-data";
 import { loadBudget, loadGoals } from "@/lib/data";
 import { orderGoals } from "@/lib/goal-order";
 import { holdingLabel } from "@/lib/goal-suggestions";
+import { assetClassOf } from "@/lib/portfolio";
 
 export const metadata: Metadata = { title: "Budget" };
 
@@ -47,7 +48,10 @@ export default async function BudgetPage() {
                 l.investment.kind !== "epf" &&
                 !l.investment.noNewMoney,
             )
-            .map((l) => holdingLabel(l.investment)),
+            .map((l) => ({
+              label: holdingLabel(l.investment),
+              assetClass: assetClassOf(l.investment),
+            })),
         }))}
       />
     </main>

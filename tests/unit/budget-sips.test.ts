@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { budgetSheetSchema } from "@/lib/budget-sheet";
 import {
   equalSplit,
+  sipMix,
   scaleSips,
   sipStatus,
   sipsByGoal,
@@ -98,5 +99,22 @@ describe("equalSplit", () => {
     expect(equalSplit(500, 1)).toEqual([500]);
     expect(equalSplit(0, 2)).toEqual([]);
     expect(equalSplit(1000, 0)).toEqual([]);
+  });
+});
+
+describe("sipMix", () => {
+  it("adds up each goal's equal split by asset type", () => {
+    const mix = sipMix([
+      { amount: 10000, classes: ["equity", "gold"] },
+      { amount: 6000, classes: ["equity"] },
+      { amount: 4000, classes: [] },
+      { amount: 0, classes: ["debt"] },
+    ]);
+    expect(mix).toEqual([
+      { key: "equity", value: 11000, share: 0.55 },
+      { key: "gold", value: 5000, share: 0.25 },
+      { key: "none", value: 4000, share: 0.2 },
+    ]);
+    expect(sipMix([])).toEqual([]);
   });
 });
