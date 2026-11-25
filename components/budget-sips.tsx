@@ -42,6 +42,7 @@ export function BudgetSips({
     isNew: boolean;
   } | null>(null);
   const [confirmSuggest, setConfirmSuggest] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
   const status = sipStatus(rows, budgetMonthly);
   const goalName = (id: string | null) =>
     goals.find((g) => g.id === id)?.label ?? "No goal";
@@ -159,7 +160,19 @@ export function BudgetSips({
               rows.length ? setConfirmSuggest(true) : applySuggestion()
             }
           >
-            <Sparkles className="size-4" aria-hidden /> Suggest amounts
+            <Sparkles className="size-4" aria-hidden />{" "}
+            {rows.length ? "Reset to suggested amounts" : "Suggest amounts"}
+          </Button>
+        )}
+        {rows.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-danger"
+            disabled={pending}
+            onClick={() => setConfirmClear(true)}
+          >
+            Clear all SIPs
           </Button>
         )}
       </div>
@@ -202,7 +215,7 @@ export function BudgetSips({
       )}
       {confirmSuggest && (
         <Sheet
-          title="Replace with suggested amounts?"
+          title="Reset to suggested amounts?"
           onClose={() => setConfirmSuggest(false)}
         >
           <div className="space-y-4">
@@ -219,7 +232,7 @@ export function BudgetSips({
                 applySuggestion();
               }}
             >
-              Replace
+              Reset
             </Button>
             <Button
               variant="outline"
@@ -227,6 +240,34 @@ export function BudgetSips({
               onClick={() => setConfirmSuggest(false)}
             >
               Keep mine
+            </Button>
+          </div>
+        </Sheet>
+      )}
+      {confirmClear && (
+        <Sheet title="Clear all SIPs?" onClose={() => setConfirmClear(false)}>
+          <div className="space-y-4">
+            <p className="text-sm">
+              Removes every SIP row from your budget so you can start again.
+              Your budget, goals and holdings stay as they are.
+            </p>
+            <Button
+              variant="destructive"
+              className="w-full"
+              disabled={pending}
+              onClick={() => {
+                setConfirmClear(false);
+                onSave([], "All SIPs cleared.");
+              }}
+            >
+              Clear all SIPs
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setConfirmClear(false)}
+            >
+              Keep them
             </Button>
           </div>
         </Sheet>

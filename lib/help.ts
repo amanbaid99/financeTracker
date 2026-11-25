@@ -190,7 +190,7 @@ export const HELP: HelpTopic[] = [
     a: [
       "On Budget, under your budget, Your SIPs lists each SIP: a fund or account, a monthly amount and the goal it's for. Tap Add SIP, or tap a row to change its fund, amount or goal, or remove it. Each change saves when you tap Save.",
       "The card compares your SIPs with Save & invest: all assigned, ₹X left to assign, or ₹X more than your budget sets aside. When Save & invest changes, unlocked SIPs change in the same proportion. Lock a SIP (Keep this amount) to hold it, like a small NPS amount.",
-      "Suggest amounts fills the rows once: the emergency fund first at its pace, then bills, ₹500 for every other goal, then the nearest goal, using one or two of your holdings per goal. You can change everything afterwards; it never changes rows by itself again.",
+      "Suggest amounts fills the rows once: the emergency fund first at its pace, then bills, ₹500 for every other goal, then the nearest goal, using one or two of your holdings per goal. You can change everything afterwards; it never changes rows by itself again. Once you have SIPs, the button reads Reset to suggested amounts. Clear all SIPs removes every row so you can start again. Both ask first.",
       "Goals shows each goal's monthly amount from your SIPs, and whether it's enough to be on time. These are plans only. Set up SIPs with your provider.",
     ],
     tags: "budget sip save invest monthly allocation plan",

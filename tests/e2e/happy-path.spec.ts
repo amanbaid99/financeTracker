@@ -967,6 +967,14 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await expect(page.getByText(/^₹12,000$/).first()).toBeVisible();
   await expect(page.getByRole("link", { name: /a month from your SIPs/ })).toBeVisible();
   await page.goto("/goals/budget");
+  // Reset to suggestions, then clear everything to start again.
+  const sips = page.getByRole("region", { name: "Your SIPs" });
+  await sips.getByRole("button", { name: "Reset to suggested amounts" }).click();
+  await page.getByRole("button", { name: "Reset", exact: true }).click();
+  await expect(page.getByText("Suggested amounts filled in. Change any row.")).toBeVisible();
+  await sips.getByRole("button", { name: "Clear all SIPs" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Clear all SIPs" }).click();
+  await expect(sips.getByText(/^Add the SIPs you run/)).toBeVisible();
   // Between jobs: no salary makes the budget just monthly costs.
   await page.getByRole("button", { name: "Edit income" }).click();
   await page.getByText("No salary right now").click();
