@@ -5,18 +5,21 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  askQuestion,
-  setAskEnabled,
-  type AskTurn,
-} from "@/lib/ask/actions";
+import { askQuestion, setAskEnabled, type AskTurn } from "@/lib/ask/actions";
 import { cn } from "@/lib/utils";
 
 const STARTERS = [
-  "I need ₹50,000 for a skin treatment next month. Where should it come from?",
+  "Where could I withdraw ₹10,000 from?",
   "Am I on track for my goals?",
   "Should I prepay my loan or invest more?",
   "Where should my next ₹10,000 go?",
+];
+
+const CARD_STARTERS = [
+  "Which card should I use for ₹5,000 on groceries?",
+  "How many lounge visits do I have left?",
+  "What are my annual card fees?",
+  "How do my card points and caps work?",
 ];
 
 interface Message {
@@ -32,8 +35,17 @@ interface Message {
 }
 
 /** Adds an answer's split to the money plan, so This month shows the steps. */
-function AddToPlan({plan}:{plan:NonNullable<Message["plan"]>}){
- return <Link href={plan.frequency==="monthly"?"/goals/budget#sips":"/goals?do=extra"} className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary">Review in planner</Link>;
+function AddToPlan({ plan }: { plan: NonNullable<Message["plan"]> }) {
+  return (
+    <Link
+      href={
+        plan.frequency === "monthly" ? "/goals/budget#sips" : "/goals?do=extra"
+      }
+      className="mt-2 inline-flex min-h-11 items-center text-sm font-medium text-primary"
+    >
+      Review in planner
+    </Link>
+  );
 }
 
 /** **bold** inside a line. */
@@ -88,7 +100,14 @@ function Answer({ text }: { text: string }) {
   );
 }
 
-export function AskChat() {
+export function AskChat({
+  initialTopic = "money",
+  localOnly = false,
+}: {
+  initialTopic?: "money" | "cards";
+  localOnly?: boolean;
+}) {
+  const [topic, setTopic] = useState(initialTopic);
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
@@ -102,7 +121,9 @@ export function AskChat() {
   function send(text: string) {
     const q = text.trim();
     if (!q || pending) return;
-    const next: Message[] = [...messages, { role: "user", coded: q, shown: q }];
+    const base =
+      messages.at(-1)?.role === "user" ? messages.slice(0, -1) : messages;
+    const next: Message[] = [...base, { role: "user", coded: q, shown: q }];
     setMessages(next);
     setDraft("");
     setError("");
@@ -111,37 +132,93 @@ export function AskChat() {
         role: m.role,
         content: m.coded,
       }));
-      const res = await askQuestion(history);
-      if (!res.ok) {
-        setError(res.error);
-        return;
+      try {
+        const res = await askQuestion(history);
+        if (!res.ok) {
+          setError(res.error);
+          setDraft(q);
+          return;
+        }
+        setMessages((m) => [
+          ...m,
+          {
+            role: "assistant",
+            coded: res.coded,
+            shown: res.shown,
+            choices: res.choices,
+            plan: res.plan,
+            unchecked: res.unchecked,
+            withdrawalHref: res.withdrawalHref,
+          },
+        ]);
+      } catch {
+        setError(
+          "Couldn't get an answer. Your question is still here. Try again.",
+        );
+        setDraft(q);
       }
-      setMessages((m) => [
-        ...m,
-        {
-          role: "assistant",
-          coded: res.coded,
-          shown: res.shown,
-          choices: res.choices,
-          plan: res.plan,
-          unchecked: res.unchecked,
-          withdrawalHref: res.withdrawalHref,
-        },
-      ]);
     });
   }
 
   return (
     <div className="space-y-4 pb-36">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex gap-1 rounded-full bg-muted p-1">
+          {(
+            [
+              ["money", "My money"],
+              ["cards", "My cards"],
+            ] as const
+          )
+            .filter(([key]) => !localOnly || key === "cards")
+            .map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={topic === key}
+                onClick={() => setTopic(key)}
+                className={cn(
+                  "min-h-11 rounded-full px-4 text-sm",
+                  topic === key
+                    ? "bg-card font-medium shadow-sm"
+                    : "text-muted-foreground",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+        </div>
+        {messages.length > 0 && (
+          <button
+            type="button"
+            className="min-h-11 text-sm text-primary"
+            disabled={pending}
+            onClick={() => {
+              setMessages([]);
+              setDraft("");
+              setError("");
+            }}
+          >
+            New chat
+          </button>
+        )}
+      </div>
+      {localOnly && (
+        <p className="text-xs text-muted-foreground">
+          Card comparisons and lounge counts use your saved terms. No AI is
+          needed.
+        </p>
+      )}
       {messages.length === 0 && (
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">
-            Ask anything about your goals and investments. If it needs more to
-            go on, it&apos;ll ask you.
+            {topic === "cards"
+              ? "Compare your cards, check lounge visits or understand a reward cap. Answers use your saved terms, and ask when something is missing."
+              : "Ask about your goals, budget or investments. Calculations come from your data."}
           </p>
           <p className="text-xs font-medium text-muted-foreground">Try one</p>
           <div className="flex flex-col gap-2">
-            {STARTERS.map((s) => (
+            {(topic === "cards" ? CARD_STARTERS : STARTERS).map((s) => (
               <button
                 key={s}
                 type="button"
@@ -180,7 +257,14 @@ export function AskChat() {
                   care.
                 </p>
               )}
-              {m.withdrawalHref&&<Link href={m.withdrawalHref} className="mt-2 inline-flex min-h-11 items-center font-medium text-primary underline">Review withdrawal</Link>}
+              {m.withdrawalHref && (
+                <Link
+                  href={m.withdrawalHref}
+                  className="mt-2 inline-flex min-h-11 items-center font-medium text-primary underline"
+                >
+                  Review withdrawal
+                </Link>
+              )}
               {m.plan && <AddToPlan plan={m.plan} />}
               {m.choices && i === messages.length - 1 && (
                 <div className="mt-2 flex flex-wrap gap-2">
@@ -202,7 +286,7 @@ export function AskChat() {
         {pending && (
           <li className="flex justify-start" aria-live="polite">
             <div className="rounded-2xl border bg-card px-4 py-3 text-sm text-muted-foreground">
-              Thinking…
+              Checking your saved information…
             </div>
           </li>
         )}
@@ -238,7 +322,11 @@ export function AskChat() {
             }}
             rows={1}
             maxLength={1000}
-            placeholder="Ask about your money…"
+            placeholder={
+              topic === "cards"
+                ? "Which card for this spend?"
+                : "Ask about your money…"
+            }
             className="max-h-32 min-h-10 flex-1 resize-none rounded-lg border border-input bg-card px-3 py-2 text-base sm:text-sm"
           />
           <Button

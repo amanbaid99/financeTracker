@@ -41,6 +41,7 @@ const money = z.number().int().min(0).max(1e12);
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "pick a date");
 
 const cardSchema = z.object({
+  createId: z.string().uuid().optional(),
   id: z.string().uuid().nullable(),
   label: z.string().trim().min(1, "name the card").max(40),
   annualFee: money.nullable(),
@@ -91,7 +92,11 @@ export async function saveCard(
           .single()
       : await supabase
           .from("credit_cards")
-          .insert({ ...row, user_id: userId })
+          [v.createId ? "upsert" : "insert"]({
+            ...row,
+            user_id: userId,
+            ...(v.createId ? { id: v.createId } : {}),
+          })
           .select("id")
           .single();
     if (res.error) throw new Error(res.error.message);
@@ -118,6 +123,7 @@ export async function deleteCard(id: string): Promise<Result> {
 
 const milestoneSchema = z
   .object({
+    createId: z.string().uuid().optional(),
     id: z.string().uuid().nullable(),
     cardId: z.string().uuid(),
     name: z.string().trim().min(1, "name the milestone").max(80),
@@ -155,7 +161,11 @@ export async function saveMilestone(
           .single()
       : await supabase
           .from("card_milestones")
-          .insert({ ...row, user_id: userId })
+          [v.createId ? "upsert" : "insert"]({
+            ...row,
+            user_id: userId,
+            ...(v.createId ? { id: v.createId } : {}),
+          })
           .select("id")
           .single();
     if (res.error) throw new Error(res.error.message);
@@ -293,15 +303,13 @@ export async function logLoungeVisit(input: {
     const b = readCardBenefits(card.data.feature_details);
     if (!b?.lounges.some((r) => r.id === v.ruleId))
       throw new Error("Review this lounge benefit first.");
-    const res = await supabase
-      .from("card_lounge_visits")
-      .insert({
-        user_id: userId,
-        card_id: v.cardId,
-        rule_id: v.ruleId,
-        visited_on: v.date,
-        visits: v.visits,
-      });
+    const res = await supabase.from("card_lounge_visits").insert({
+      user_id: userId,
+      card_id: v.cardId,
+      rule_id: v.ruleId,
+      visited_on: v.date,
+      visits: v.visits,
+    });
     if (res.error) throw new Error(res.error.message);
     return done();
   } catch (e) {

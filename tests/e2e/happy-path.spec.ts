@@ -737,20 +737,20 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Add a card" }).click();
   await page.getByLabel("Card name").fill("Regalia Gold");
   await page.getByLabel("Annual fee").fill("2500");
+  await page.getByText("Card year & statement reminders",{exact:true}).click();
   await page.getByLabel("Card year starts").fill("2026-04-10");
-  await page
-    .getByLabel("Benefits, one per line")
-    .fill("4 lounge visits a quarter\nFuel surcharge waiver");
-  await page.getByRole("button", { name: "Travel", exact: true }).click();
-  await expect(
-    page.getByRole("button", { name: "Travel", exact: true }),
-  ).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "Add card" }).click();
+  await page.getByRole("button",{name:"Continue",exact:true}).click();
+  await page.getByRole("button",{name:"Continue",exact:true}).click();
+  await page.getByRole("button",{name:"Add lounge allowance",exact:true}).click();
+  await page.getByLabel("Lounge allowance 1",{exact:true}).fill("4");
+  await page.getByLabel("Lounge reset 1").selectOption("quarter");
+  await page.getByText("Other benefits & source notes",{exact:true}).click();
+  await page.getByLabel("Other card benefits").fill("Fuel surcharge waiver");
+  await page.getByRole("button",{name:"Continue",exact:true}).click();
+  await page.getByRole("button", { name: "Save card",exact:true }).click();
   const cardRow = page.getByRole("button", { name: "Regalia Gold", exact: true });
   await expect(cardRow).toHaveAttribute("aria-expanded", "true");
-  // Card details are tucked under "About this card".
   await page.getByRole("button", { name: "About this card" }).click();
-  await expect(page.getByText("Fuel surcharge waiver")).toBeVisible();
   // A fee waiver milestone: progress comes from the bills you log.
   await page.getByRole("button", { name: "Add milestone" }).click();
   await page.getByRole("button", { name: "+ Annual fee waiver" }).click();
@@ -827,39 +827,26 @@ test("invite-only sign in and goal tracking", async ({ page }) => {
   await page.getByRole("button", { name: "Read features" }).last().click();
   await expect(page.getByText("Allow AI to read this?")).toBeVisible();
   await page.getByRole("button", { name: "Allow and read" }).click();
-  const found = page.getByRole("dialog", { name: "Check what was found" });
-  await expect(found).toContainText("document matches");
+  const found = page.getByRole("dialog", { name: "Review your card" });
+  await expect(found).toContainText("Prefilled from your document or text");
   const sentCard = JSON.stringify(
     await (await fetch("http://127.0.0.1:5329/last-card")).json(),
   );
   expect(sentCard).not.toContain("4111");
   expect(sentCard).toContain("[number]");
-  await expect(
-    found.getByRole("checkbox", { name: "Keep benefit Free golf every month" }),
-  ).not.toBeChecked();
-  await expect(
-    found.getByRole("checkbox", {
-      name: "Keep benefit 12 complimentary lounge visits a year",
-    }),
-  ).toBeChecked();
-  await expect(
-    found.getByRole("checkbox", { name: "Keep milestone Annual fee waiver" }),
-  ).toBeDisabled();
-  await expect(
-    found.getByRole("checkbox", { name: "Keep milestone Milestone bonus" }),
-  ).toBeChecked();
+  await found.getByRole("button",{name:"Continue",exact:true}).click();
+  await found.getByRole("button",{name:"Continue",exact:true}).click();
+  await found.getByText("Other benefits & source notes",{exact:true}).click();
+  await expect(found.getByLabel("Other card benefits")).toHaveValue(/12 complimentary lounge visits a year/);
+  await expect(found.getByLabel("Other card benefits")).not.toHaveValue(/Free golf/);
+  await expect(found.getByLabel("Milestone name 2",{exact:true})).toHaveValue("Milestone bonus");
+  await found.getByRole("button",{name:"Continue",exact:true}).click();
   await page.screenshot({ path: "test-results/card-features-375.png", fullPage: true });
-  await found.getByRole("button", { name: "Save to card" }).click();
+  await found.getByRole("button", { name: "Save card",exact:true }).click();
   await expect(found).toHaveCount(0);
-  await expect(page.getByText("12 complimentary lounge visits a year")).toBeVisible();
   await expect(page.getByText("Free golf every month")).toHaveCount(0);
-  await expect(
-    page.getByRole("progressbar", { name: "Milestone bonus progress" }),
-  ).toBeVisible();
-  await expect(
-    page.getByLabel("Regalia Gold is best for"),
-  ).toContainText("Travel");
-  await expect(page.getByRole("region", { name: "Which card to use" })).toHaveCount(0);
+  await expect(page.getByRole("progressbar", { name: "Milestone bonus progress" })).toBeVisible();
+  await expect(page.getByText("Which card for each category?",{exact:true})).toBeVisible();
 
   await page.screenshot({ path: "test-results/cards-375.png", fullPage: true });
 

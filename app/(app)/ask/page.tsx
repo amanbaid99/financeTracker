@@ -6,7 +6,12 @@ import { loadSnapshot } from "@/lib/data";
 
 export const metadata: Metadata = { title: "Ask" };
 
-export default async function AskPage() {
+export default async function AskPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ topic?: string }>;
+}) {
+  const { topic } = await searchParams;
   const data = (await loadSnapshot()).profile;
   const configured = openRouterSettings() !== null;
 
@@ -16,14 +21,23 @@ export default async function AskPage() {
         <h1 className="text-2xl font-semibold tracking-tight">Ask</h1>
         <GuideButton id="ask" />
       </div>
-      {!configured ? (
-        <p className="rounded-2xl border bg-card p-5 text-sm text-muted-foreground">
-          Ask isn&apos;t set up yet. It needs an OpenRouter key on the server.
-        </p>
-      ) : data?.ai_enabled ? (
-        <AskChat />
-      ) : (
-        <AskConsent />
+      <AskChat
+        initialTopic={
+          !configured || !data?.ai_enabled || topic === "cards"
+            ? "cards"
+            : "money"
+        }
+        localOnly={!configured || !data?.ai_enabled}
+      />
+      {configured && !data?.ai_enabled && (
+        <details className="rounded-2xl border bg-card p-4">
+          <summary className="cursor-pointer text-sm text-primary">
+            Enable AI for broader questions
+          </summary>
+          <div className="mt-4">
+            <AskConsent />
+          </div>
+        </details>
       )}
     </main>
   );

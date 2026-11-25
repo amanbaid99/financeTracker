@@ -76,9 +76,9 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro:
       "Your credit cards and how close you are to fee waivers and bonus points. Nothing here counts as money you owe.",
     steps: [
-      "Which card? compares reviewed cashback rules by category and amount. Lounges tracks visits from your manual log, with conditions shown beside the allowance.",
+      "Which card? compares saved cashback and points rates by category and amount. The category guide shows where each card helps. Ask about my cards opens useful questions. Lounges tracks manually logged visits, with access conditions shown beside the allowance.",
       "Each card shows its milestone target, amount left and deadline straight away. Cards with every milestone reached sit below the others. A new milestone period moves a card back up automatically.",
-      "Add a card with its annual fee, the date its card year starts, rewards and benefits. Never enter the card number.",
+      "Add a card with four short steps: basics, reward rates, optional benefits and milestones, then review and save. Unknown details can stay blank. Never enter the card number.",
       "Add milestones like a fee waiver or bonus points, with the spend target and when it resets.",
       "Log each monthly statement: the month and the amount. Tap +, then Log card spend, or Log bill on a card. Statements only count toward milestones.",
       "When a new card year or quarter starts, progress counts the statements in that new period.",
@@ -102,9 +102,10 @@ export const GUIDES: Record<GuideId, Guide> = {
     intro:
       "Ask plain questions, like where to take money out from for a planned expense.",
     steps: [
+      "My cards offers spending comparisons, lounge counts, fees and caps from your saved terms. Basic card answers work without AI. My money covers broader questions with AI enabled.",
       "Answers use your goals and investments by type and rounded amount. Your name, email and the names you gave goals and funds are never sent.",
       "Answers are general suggestions to help you think, not advice. Check before you act.",
-      "You can turn Ask off any time in Settings.",
+      "You can turn AI off any time in Settings. Basic card calculations remain available. New chat starts a fresh conversation, and failed requests keep your question for retry.",
     ],
   },
   import: {
@@ -133,6 +134,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-25",title:"Simpler cards and better answers",items:[{title:"A few answers, then save",text:"Set up cashback or points, caps, lounge access and milestones in a short guide. A PDF or pasted text can fill in the same questions."},{title:"Which card for this spend?",text:"Compare saved reward rates, see a category guide and ask about cards. Confirmed point values count; unknowns stay unknown. Common card answers are calculated locally."}]},
  {date:"2026-11-25",title:"A clearer card reader",items:[{title:"See what is happening",text:"An animated reading screen shows PDF extraction, feature checking and the review step. Nothing is saved until you confirm."}]},
  {date:"2026-11-25",title:"Card benefits, checked by you",items:[{title:"Which card and lounge visits",text:"Read a brochure, check the extracted terms and save. Compare published cashback by category and track lounge visits with a simple manual log. Detailed conditions stay tucked away and are available to Ask."}]},
  {date:"2026-11-25",title:"A small SIP requirement hint",items:[{title:"Required a month",text:"Each goal in Budget shows its required monthly SIP in small text. No extra analysis or action buttons."}]},

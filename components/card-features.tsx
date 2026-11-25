@@ -1,31 +1,20 @@
 "use client";
 
+import { CardSetupForm } from "@/components/card-setup";
 import {
   CardReadingProgress,
   type CardReadingStage,
 } from "@/components/card-reading-progress";
-import { BenefitEditor } from "@/components/card-benefit-editor";
-import {
-  emptyBenefits,
-  preserveLoungeIds,
-  type BenefitDraft,
-} from "@/lib/card-benefits";
 import { CARD_RESEARCH_PROMPT } from "@/lib/card-research";
-import { CircleAlert, CircleCheck } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Field } from "@/components/forms/field";
-import { MoneyInput } from "@/components/money-input";
 import { Sheet } from "@/components/sheet";
 import { Button } from "@/components/ui/button";
-import { Checkbox, Input } from "@/components/ui/input";
-import { SPEND_CATEGORIES, type SpendCategory } from "@/lib/card-advisor";
-import type { Check, Item, MilestoneDraft, Review } from "@/lib/card-extract";
+import { Input } from "@/components/ui/input";
+import type { Review } from "@/lib/card-extract";
 import { setAskEnabled } from "@/lib/ask/actions";
 import { extractCardFeatures } from "@/lib/card-extract-actions";
-import { PERIOD_LABELS, type Card } from "@/lib/cards";
-import { saveCard, saveMilestone } from "@/lib/cards-actions";
-import { formatINR } from "@/lib/format";
+import type { Card } from "@/lib/cards";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -56,402 +45,6 @@ async function pdfText(file: File, password: string): Promise<string> {
     throw e;
   }
   return body.text;
-}
-
-function Badge({ check, why }: { check: Check; why: string }) {
-  return (
-    <span
-      title={why}
-      className={cn(
-        "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
-        check === "confirmed"
-          ? "bg-success-soft text-success"
-          : "bg-warning-soft text-warning",
-      )}
-    >
-      {check === "confirmed" ? (
-        <CircleCheck className="size-3" aria-hidden />
-      ) : (
-        <CircleAlert className="size-3" aria-hidden />
-      )}
-      {check === "confirmed" ? "Document match" : "Check this"}
-    </span>
-  );
-}
-
-function Row({
-  item,
-  checked,
-  onChange,
-  label,
-  disabled,
-  note,
-  children,
-}: {
-  item: Item<unknown>;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  label: string;
-  disabled?: boolean;
-  note?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <li className="flex gap-3 py-2.5">
-      <Checkbox
-        aria-label={label}
-        checked={checked}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-        className="mt-0.5"
-      />
-      <div className="min-w-0 flex-1 space-y-1 text-sm">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">{children}</div>
-          {!disabled && <Badge check={item.check} why={item.why} />}
-        </div>
-        <p className="text-xs text-muted-foreground">{note ?? item.why}</p>
-      </div>
-    </li>
-  );
-}
-
-const sameMilestone = (
-  a: { target: number; period: string },
-  b: { target: number; period: string },
-) => a.target === b.target && a.period === b.period;
-
-function ReviewStep({
-  card,
-  review,
-  onDone,
-}: {
-  card: Card | null;
-  review: Review;
-  onDone: () => void;
-}) {
-  const router = useRouter();
-  const [pending, start] = useTransition();
-  const [error, setError] = useState("");
-  const [featureDraft, setFeatureDraft] = useState<BenefitDraft>(() =>
-    review.featureDraft
-      ? preserveLoungeIds(review.featureDraft, card?.featureDetails, () =>
-          crypto.randomUUID(),
-        )
-      : (card?.featureDetails ?? emptyBenefits()),
-  );
-  const [humanConfirmed, setHumanConfirmed] = useState(false);
-  const ok = (i: Item<unknown> | null) => i?.check === "confirmed";
-
-  const [label, setLabel] = useState(
-    card?.label ?? review.cardName?.value ?? "",
-  );
-  const [useFee, setUseFee] = useState(
-    ok(review.annualFee) && review.annualFee?.value !== card?.annualFee,
-  );
-  const [fee, setFee] = useState<number | null>(
-    review.annualFee?.value ?? null,
-  );
-  const [useRewards, setUseRewards] = useState(ok(review.rewards));
-  const [rewards, setRewards] = useState(review.rewards?.value ?? "");
-  const existingBenefits = new Set(
-    (card?.benefits ?? []).map((b) => b.toLowerCase()),
-  );
-  const [benefits, setBenefits] = useState(
-    review.benefits.map(
-      (b) => ok(b) && !existingBenefits.has(b.value.toLowerCase()),
-    ),
-  );
-  const onCard = (m: MilestoneDraft) =>
-    (card?.milestones ?? []).some((x) => sameMilestone(x, m));
-  const blocked = (m: MilestoneDraft) => onCard(m) || m.period === "once";
-  const [milestones, setMilestones] = useState(
-    review.milestones.map((m) => ok(m) && !blocked(m.value)),
-  );
-  const [bestFor, setBestFor] = useState<Set<SpendCategory>>(
-    () =>
-      new Set([
-        ...((card?.bestFor ?? []) as SpendCategory[]),
-        ...review.bestFor.filter((b) => ok(b)).map((b) => b.value),
-      ]),
-  );
-
-  const confirmed = [
-    review.annualFee,
-    review.rewards,
-    ...review.benefits,
-    ...review.milestones,
-    ...review.bestFor,
-  ].filter(ok).length;
-  const toCheck = [
-    review.annualFee,
-    review.rewards,
-    ...review.benefits,
-    ...review.milestones,
-    ...review.bestFor,
-  ].filter((i) => i && !ok(i)).length;
-
-  const save = () =>
-    start(async () => {
-      setError("");
-      try {
-        const pickedBenefits = review.benefits
-          .filter((_, i) => benefits[i])
-          .map((b) => b.value);
-        const allBenefits = [...(card?.benefits ?? [])];
-        for (const b of pickedBenefits)
-          if (!allBenefits.some((x) => x.toLowerCase() === b.toLowerCase()))
-            allBenefits.push(b);
-        const res = await saveCard({
-          id: card?.id ?? null,
-          label: label.trim(),
-          annualFee: useFee ? fee : (card?.annualFee ?? null),
-          yearStart: card?.yearStart ?? null,
-          rewards: useRewards
-            ? rewards.trim() || null
-            : (card?.rewards ?? null),
-          benefits: allBenefits.slice(0, 30),
-          bestFor: [...bestFor],
-          ...(humanConfirmed
-            ? { reviewedBenefits: featureDraft, humanConfirmed: true as const }
-            : {}),
-        });
-        if (!res.ok || !res.id)
-          return setError(res.ok ? "Couldn't save the card." : res.error);
-        for (const [i, m] of review.milestones.entries()) {
-          if (!milestones[i]) continue;
-          const r = await saveMilestone({
-            id: null,
-            cardId: res.id,
-            name: m.value.name,
-            target: m.value.target,
-            period: m.value.period,
-            deadline: null,
-            reward: m.value.reward,
-          });
-          if (!r.ok) return setError(r.error);
-        }
-        router.refresh();
-        onDone();
-      } catch {
-        setError(
-          "Couldn't finish saving. Your review is still here. Check the card before retrying.",
-        );
-      }
-    });
-
-  return (
-    <fieldset disabled={pending} className="min-w-0 space-y-4">
-      <p className="text-sm text-muted-foreground">
-        {review.readings > 1
-          ? `Read ${review.readings} times and checked against your document: ${confirmed} document matches, ${toCheck} to check.`
-          : "Only one reading came back, so check each item."}{" "}
-        Tick what you want to keep. Nothing is saved until you tap Save.
-      </p>
-
-      {!card && (
-        <Field
-          label="Card name"
-          htmlFor="f-label"
-          hint="Never enter the card number."
-        >
-          <Input
-            id="f-label"
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            maxLength={40}
-            required
-          />
-        </Field>
-      )}
-
-      {(review.annualFee || review.rewards) && (
-        <section aria-label="Fee and rewards">
-          <h3 className="text-sm font-semibold">Fee and rewards</h3>
-          <ul className="divide-y">
-            {review.annualFee && (
-              <Row
-                item={review.annualFee}
-                checked={useFee}
-                onChange={setUseFee}
-                label="Keep annual fee"
-                note={
-                  card?.annualFee != null &&
-                  card.annualFee !== review.annualFee.value
-                    ? `Now ${formatINR(card.annualFee)} on this card. ${review.annualFee.why}`
-                    : undefined
-                }
-              >
-                <div className="flex items-center gap-2">
-                  <span className="shrink-0">Annual fee</span>
-                  <MoneyInput
-                    aria-label="Annual fee"
-                    value={fee}
-                    onChange={setFee}
-                    className="w-32"
-                  />
-                </div>
-              </Row>
-            )}
-            {review.rewards && (
-              <Row
-                item={review.rewards}
-                checked={useRewards}
-                onChange={setUseRewards}
-                label="Keep rewards"
-              >
-                <Input
-                  aria-label="Rewards"
-                  value={rewards}
-                  onChange={(e) => setRewards(e.target.value)}
-                  maxLength={200}
-                />
-              </Row>
-            )}
-          </ul>
-        </section>
-      )}
-
-      {review.milestones.length > 0 && (
-        <section aria-label="Milestones found">
-          <h3 className="text-sm font-semibold">Milestones</h3>
-          <ul className="divide-y">
-            {review.milestones.map((m, i) => {
-              const dup = blocked(m.value);
-              return (
-                <Row
-                  key={`${m.value.target}-${m.value.period}`}
-                  item={m}
-                  checked={milestones[i]}
-                  disabled={dup}
-                  onChange={(v) =>
-                    setMilestones((s) => s.map((x, j) => (j === i ? v : x)))
-                  }
-                  label={`Keep milestone ${m.value.name}`}
-                  note={
-                    onCard(m.value)
-                      ? "Already on this card."
-                      : dup
-                        ? "Needs an end date. Add it with Add milestone."
-                        : undefined
-                  }
-                >
-                  <p className="font-medium">{m.value.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatINR(m.value.target)} ·{" "}
-                    {PERIOD_LABELS[m.value.period].toLowerCase()}
-                    {m.value.reward ? ` · ${m.value.reward}` : ""}
-                  </p>
-                </Row>
-              );
-            })}
-          </ul>
-        </section>
-      )}
-
-      {review.benefits.length > 0 && (
-        <section aria-label="Benefits found">
-          <h3 className="text-sm font-semibold">Benefits</h3>
-          <ul className="divide-y">
-            {review.benefits.map((b, i) => {
-              const dup = existingBenefits.has(b.value.toLowerCase());
-              return (
-                <Row
-                  key={b.value}
-                  item={b}
-                  checked={benefits[i]}
-                  disabled={dup}
-                  onChange={(v) =>
-                    setBenefits((s) => s.map((x, j) => (j === i ? v : x)))
-                  }
-                  label={`Keep benefit ${b.value}`}
-                  note={dup ? "Already on this card." : undefined}
-                >
-                  {b.value}
-                </Row>
-              );
-            })}
-          </ul>
-        </section>
-      )}
-
-      {review.bestFor.length > 0 && (
-        <section aria-label="Best for" className="space-y-2">
-          <h3 className="text-sm font-semibold">Best for</h3>
-          <p className="text-xs text-muted-foreground">
-            Used to suggest which card to use. Tap to change.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {(Object.keys(SPEND_CATEGORIES) as SpendCategory[]).map((c) => {
-              const on = bestFor.has(c);
-              const found = review.bestFor.find((b) => b.value === c);
-              return (
-                <button
-                  key={c}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() =>
-                    setBestFor((s) => {
-                      const n = new Set(s);
-                      if (on) n.delete(c);
-                      else n.add(c);
-                      return n;
-                    })
-                  }
-                  className={cn(
-                    "rounded-full border px-3 py-1 text-xs",
-                    on
-                      ? "border-primary bg-primary-soft text-primary"
-                      : "text-muted-foreground",
-                    found && !on && "border-dashed",
-                  )}
-                >
-                  {SPEND_CATEGORIES[c]}
-                </button>
-              );
-            })}
-          </div>
-        </section>
-      )}
-
-      <BenefitEditor
-        value={featureDraft}
-        onChange={(v) => {
-          setFeatureDraft(v);
-          setHumanConfirmed(false);
-        }}
-      />
-      <label className="flex gap-3 text-sm">
-        <Checkbox
-          checked={humanConfirmed}
-          onChange={(e) => setHumanConfirmed(e.target.checked)}
-        />
-        I reviewed the reward and lounge terms. Save these for comparisons and
-        answers.
-      </label>
-      <p className="text-xs text-muted-foreground">
-        Unchecked terms are not saved for comparisons. Saving replaces the
-        previously reviewed terms.
-      </p>
-
-      {error && (
-        <p
-          role="alert"
-          className="rounded-lg bg-danger-soft p-2 text-sm text-danger"
-        >
-          {error}
-        </p>
-      )}
-      <Button
-        type="button"
-        className="w-full"
-        disabled={pending || !label.trim()}
-        onClick={save}
-      >
-        {pending ? "Saving…" : card ? "Save to card" : "Add card"}
-      </Button>
-    </fieldset>
-  );
 }
 
 /** Reads a card's features from a PDF or a description, then lets you pick what to keep. */
@@ -547,7 +140,7 @@ export function CardFeaturesSheet({
     <Sheet
       title={
         review
-          ? "Check what was found"
+          ? "Review your card"
           : card
             ? `Read ${card.label} features`
             : "Add a card from its features"
@@ -555,7 +148,12 @@ export function CardFeaturesSheet({
       onClose={onClose}
     >
       {review ? (
-        <ReviewStep card={card} review={review} onDone={onClose} />
+        <CardSetupForm
+          card={card}
+          initialReview={review}
+          onSaved={() => {}}
+          onClose={onClose}
+        />
       ) : (
         <>
           {pending && (
@@ -668,9 +266,10 @@ export function CardFeaturesSheet({
             )}
 
             <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-              AI reads this twice and every fact is checked against your text.
-              Card numbers, emails and phone numbers are masked first. The PDF
-              isn&apos;t kept. Reviewed terms are saved only after you confirm.
+              AI makes a draft from your text. Check the rates, conditions and
+              other benefits before saving. Card numbers, emails and phone
+              numbers are masked first. The PDF isn&apos;t kept. Reviewed terms
+              are saved only after you confirm.
             </p>
             {error && (
               <p

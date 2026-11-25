@@ -1,5 +1,6 @@
 "use server";
 
+import { answerCardQuestion, isCardBenefitQuestion } from "./cards";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -17,7 +18,12 @@ import {
   unsupportedFigures,
 } from "./amount";
 import { withdrawalAmount, withdrawalAnswer } from "./withdrawal";
-import { ASK_INSTRUCTIONS, buildAskContext, restoreNames, codeAskText } from "./context";
+import {
+  ASK_INSTRUCTIONS,
+  buildAskContext,
+  restoreNames,
+  codeAskText,
+} from "./context";
 
 async function session() {
   const supabase = await createClient();
@@ -84,10 +90,14 @@ export async function askQuestion(history: AskTurn[]): Promise<AskResult> {
   const { supabase, userId } = await session();
 
   // "Where should ₹10,000 go?": the app's planner answers; the AI explains.
-  const cardQuestion = /\b(card|cards|cashback|lounge|lounges|reward|rewards)\b|\[C\d+\]/i.test(parsed.data.at(-1)!.content);
-  const question = cardQuestion ? null : amountQuestion(parsed.data.at(-1)!.content);
-  const withdrawing=withdrawalAmount(parsed.data.at(-1)!.content);
-  if (withdrawing===null&&question?.frequency === "unknown") {
+  const cardQuestion = isCardBenefitQuestion(parsed.data);
+  const question = cardQuestion
+    ? null
+    : amountQuestion(parsed.data.at(-1)!.content);
+  const withdrawing = cardQuestion
+    ? null
+    : withdrawalAmount(parsed.data.at(-1)!.content);
+  if (withdrawing === null && question?.frequency === "unknown") {
     const text = `Is ${formatINR(question.amount)} a one-time amount, or every month? The answer is different for each.`;
     return {
       ok: true,
@@ -97,19 +107,47 @@ export async function askQuestion(history: AskTurn[]): Promise<AskResult> {
     };
   }
 
+  const cardData = cardQuestion ? await loadCards() : null;
+  const cardAnswer = cardData
+    ? answerCardQuestion(cardData.cards, cardData.today, parsed.data)
+    : null;
+  if (cardAnswer) return { ok: true, ...cardAnswer };
+
   const profile = await supabase
     .from("profiles")
     .select("ai_enabled")
     .eq("user_id", userId)
     .single();
   if (!profile.data?.ai_enabled)
-    return { ok: false, error: "Turn on Ask first." };
+    return {
+      ok: false,
+      error:
+        "Enable AI for broader questions. Basic card comparisons and lounge counts work without it.",
+    };
 
-  if(withdrawing!==null){
-    const {goals,investments,links,plan,today}=await loadGoals();
-    const ctx=buildAskContext({goals,investments,links,plan,todayISO:today});
-    const coded=withdrawalAnswer({text:parsed.data.at(-1)!.content,amount:withdrawing,goals,investments,today,codeOf:ctx.codeOf});
-    return {ok:true,coded,shown:restoreNames(coded,ctx.names),withdrawalHref:"/assets/withdraw"};
+  if (withdrawing !== null) {
+    const { goals, investments, links, plan, today } = await loadGoals();
+    const ctx = buildAskContext({
+      goals,
+      investments,
+      links,
+      plan,
+      todayISO: today,
+    });
+    const coded = withdrawalAnswer({
+      text: parsed.data.at(-1)!.content,
+      amount: withdrawing,
+      goals,
+      investments,
+      today,
+      codeOf: ctx.codeOf,
+    });
+    return {
+      ok: true,
+      coded,
+      shown: restoreNames(coded, ctx.names),
+      withdrawalHref: "/assets/withdraw",
+    };
   }
   const settings = openRouterSettings();
   if (!settings) return { ok: false, error: "Ask isn't set up yet." };
@@ -127,8 +165,12 @@ export async function askQuestion(history: AskTurn[]): Promise<AskResult> {
     };
   }
 
-  const [{ goals, investments, links, plan, today }, { budget: b }, {cards}] =
-    await Promise.all([loadGoals(), loadBudget(), loadCards()]);
+  const [{ goals, investments, links, plan, today }, { budget: b }, { cards }] =
+    await Promise.all([
+      loadGoals(),
+      loadBudget(),
+      cardData ? Promise.resolve(cardData) : loadCards(),
+    ]);
   const ctx = buildAskContext({
     goals,
     investments,
@@ -157,7 +199,7 @@ export async function askQuestion(history: AskTurn[]): Promise<AskResult> {
       todayISO: today,
       codeOf: ctx.codeOf,
       essentialsMonthly: b.costs + b.emis,
-      availableMonthlySavings:b.planMonthly,
+      availableMonthlySavings: b.planMonthly,
     });
     facts += `\n\n${split.facts}`;
     known.push(...split.numbers);
@@ -172,7 +214,7 @@ export async function askQuestion(history: AskTurn[]): Promise<AskResult> {
     },
     ...parsed.data
       .slice(-10)
-      .map((t) => ({ role: t.role, content: codeAskText(t.content,names) })),
+      .map((t) => ({ role: t.role, content: codeAskText(t.content, names) })),
   ];
   let reply = await router.answer("ask", messages, { userMayPay: mayPay });
   // Every figure in the answer must come from the facts. One retry with
@@ -233,5 +275,9 @@ export async function addToPlan(
   const v = addSchema.safeParse(input);
   if (!v.success) return { ok: false, error: "That amount didn't look right." };
   await session();
-  return {ok:false,error:"Review this amount in the SIP planner and confirm a new plan there. No changes have been saved."};
+  return {
+    ok: false,
+    error:
+      "Review this amount in the SIP planner and confirm a new plan there. No changes have been saved.",
+  };
 }

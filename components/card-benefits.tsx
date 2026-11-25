@@ -1,119 +1,30 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Plane, Sparkles } from "lucide-react";
 import { type Card, PERIOD_LABELS } from "@/lib/cards";
 import {
   benefitsCurrent,
+  bestCardPerCategory,
+  rewardLabel,
+  rewardValueLabel,
   compareCardRewards,
-  emptyBenefits,
   loungeAllowance,
-  type BenefitDraft,
 } from "@/lib/card-benefits";
 import { SPEND_CATEGORIES, type SpendCategory } from "@/lib/card-advisor";
-import {
-  saveCard,
-  logLoungeVisit,
-  deleteLoungeVisit,
-} from "@/lib/cards-actions";
+import { logLoungeVisit, deleteLoungeVisit } from "@/lib/cards-actions";
 import { formatINR, formatDate } from "@/lib/format";
 import { Button } from "@/components/ui/button";
-import { Checkbox, Input, Select } from "@/components/ui/input";
+import { Input, Select } from "@/components/ui/input";
 import { Sheet } from "@/components/sheet";
 import { MoneyInput } from "@/components/money-input";
 import { Field } from "@/components/forms/field";
-import { BenefitEditor } from "@/components/card-benefit-editor";
+import { CardSetupSheet } from "@/components/card-setup";
 import { CardFeaturesSheet } from "@/components/card-features";
 import { cn } from "@/lib/utils";
 
-function EditBenefits({
-  card,
-  onClose,
-  onRead,
-}: {
-  card: Card;
-  onClose: () => void;
-  onRead: () => void;
-}) {
-  const router = useRouter();
-  const [draft, setDraft] = useState<BenefitDraft>(
-    card.featureDetails ?? emptyBenefits(),
-  );
-  const [confirmed, setConfirmed] = useState(false);
-  const [error, setError] = useState("");
-  const [pending, start] = useTransition();
-  const save = () =>
-    start(async () => {
-      setError("");
-      try {
-        const res = await saveCard({
-          id: card.id,
-          label: card.label,
-          annualFee: card.annualFee,
-          yearStart: card.yearStart,
-          rewards: card.rewards,
-          benefits: card.benefits,
-          bestFor: card.bestFor as SpendCategory[],
-          reviewedBenefits: draft,
-          humanConfirmed: true,
-        });
-        if (!res.ok) {
-          setError(res.error);
-          return;
-        }
-        router.refresh();
-        onClose();
-      } catch {
-        setError("Couldn't save the terms. Your draft is still here.");
-      }
-    });
-  return (
-    <Sheet title={`${card.label} benefits`} onClose={onClose}>
-      <fieldset disabled={pending} className="space-y-4 min-w-0">
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full"
-          onClick={onRead}
-        >
-          Read brochure or text
-        </Button>
-        <BenefitEditor
-          value={draft}
-          onChange={(v) => {
-            setDraft(v);
-            setConfirmed(false);
-          }}
-        />
-        <label className="flex gap-3 text-sm">
-          <Checkbox
-            checked={confirmed}
-            onChange={(e) => setConfirmed(e.target.checked)}
-          />
-          I reviewed these terms. Save for comparisons and answers.
-        </label>
-        <p className="text-xs text-muted-foreground">
-          Replaces this card&apos;s reviewed terms. Visit history stays saved.
-          Use separate allowances only for separate quotas.
-        </p>
-        {error && (
-          <p role="alert" className="text-sm text-danger">
-            {error}
-          </p>
-        )}
-        <Button
-          type="button"
-          className="w-full"
-          disabled={!confirmed || pending}
-          onClick={save}
-        >
-          {pending ? "Saving…" : "Save verified terms"}
-        </Button>
-      </fieldset>
-    </Sheet>
-  );
-}
 function LoungeLog({
   card,
   ruleId,
@@ -311,33 +222,37 @@ export function CardBenefitsHub({
           {top && !!amount ? (
             <div className="rounded-xl bg-primary-soft p-4">
               <p className="text-xs text-muted-foreground">
-                Highest published cashback among verified rules
+                Suggested card for this spend
               </p>
               <p className="mt-1 font-semibold">{top.label}</p>
               <p className="mt-1 text-sm">
-                Up to {formatINR(top.upperReward)} ·{" "}
-                {top.rule.cashbackBps / 100}% cashback
+                Up to {formatINR(top.upperReward)} · {rewardLabel(top.rule)}
               </p>
+              {top.rule.points && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {rewardValueLabel(top.rule)}
+                </p>
+              )}
               <p className="mt-2 text-xs text-muted-foreground whitespace-pre-wrap">
                 {top.rule.conditions ||
                   "Check merchant eligibility and exclusions with your issuer."}
               </p>
               <p className="mt-2 text-xs text-muted-foreground">
                 Caps already used and merchant eligibility are not tracked.
-                Points benefits are not ranked.
+                Point values apply to your chosen redemption.
               </p>
             </div>
           ) : (
             <p className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">
               {amount
-                ? "No verified cashback rule for this category yet. Add your brochure or check your card terms below."
+                ? "No comparable reward rate for this category yet. Add the rate, and a point value if needed, in Edit benefits."
                 : "Enter a spending amount to compare."}
             </p>
           )}
           {matches.length > 1 && (
             <details className="text-sm">
               <summary className="min-h-11 cursor-pointer py-3 text-primary">
-                Other published rates
+                Compare other cards
               </summary>
               <ul className="space-y-2">
                 {matches.slice(1).map((m) => (
@@ -346,7 +261,7 @@ export function CardBenefitsHub({
                     className="rounded-lg bg-muted p-3"
                   >
                     <p className="font-medium">
-                      {m.label} · {m.rule.cashbackBps / 100}%
+                      {m.label} · {rewardLabel(m.rule)}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {m.rule.conditions || "Check issuer conditions."}
@@ -414,6 +329,48 @@ export function CardBenefitsHub({
           ))}
         </div>
       )}
+      {tab === "spend" && (
+        <details className="mt-3 border-t pt-1">
+          <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">
+            Which card for each category?
+          </summary>
+          <p className="mb-2 text-xs text-muted-foreground">
+            For a {formatINR(amount ?? 0)} purchase, using your saved rates and
+            caps.
+          </p>
+          <ul className="divide-y">
+            {bestCardPerCategory(cards, amount ?? 0, today).map(
+              ({ category: cat, best }) => (
+                <li key={cat}>
+                  <button
+                    type="button"
+                    className="flex min-h-14 w-full items-center justify-between gap-3 py-2 text-left text-sm"
+                    onClick={() => setCategory(cat)}
+                  >
+                    <span>{SPEND_CATEGORIES[cat]}</span>
+                    <span className="max-w-[60%] text-right">
+                      <span className="block font-medium">
+                        {best?.label ?? "Add reward details"}
+                      </span>
+                      {best && (
+                        <span className="text-xs text-muted-foreground">
+                          Up to {formatINR(best.upperReward)}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                </li>
+              ),
+            )}
+          </ul>
+        </details>
+      )}
+      <Link
+        href="/ask?topic=cards"
+        className="mt-2 inline-flex min-h-11 items-center text-sm text-primary underline decoration-dotted underline-offset-4"
+      >
+        Ask about my cards
+      </Link>
       <details className="mt-3 border-t pt-1">
         <summary className="min-h-11 cursor-pointer py-3 text-sm font-medium">
           Your card terms
@@ -436,7 +393,7 @@ export function CardBenefitsHub({
                   className="min-h-11 shrink-0 text-sm text-primary underline decoration-dotted underline-offset-4"
                   onClick={() => setEdit(card)}
                 >
-                  Review terms
+                  Edit benefits
                 </button>
               </div>
               {card.featureDetails?.details && (
@@ -457,7 +414,9 @@ export function CardBenefitsHub({
         </ul>
       </details>
       {edit && (
-        <EditBenefits
+        <CardSetupSheet
+          initialStep={1}
+          onSaved={() => {}}
           card={edit}
           onClose={() => setEdit(null)}
           onRead={() => {

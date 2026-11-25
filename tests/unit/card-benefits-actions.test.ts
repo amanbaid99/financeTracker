@@ -123,3 +123,21 @@ it("reports missing visit deletes instead of claiming success", async () => {
   expect((await deleteLoungeVisit(id)).ok).toBe(false);
   expect(q.eq).toHaveBeenCalledWith("user_id", id);
 });
+
+it("new card retries reuse the client ID under the authenticated owner", async () => {
+  const upsert = vi.fn();
+  const q = {
+    upsert,
+    select: vi.fn(),
+    single: vi.fn().mockResolvedValue({ data: { id }, error: null }),
+  };
+  upsert.mockReturnValue(q);
+  q.select.mockReturnValue(q);
+  mock.from.mockReturnValue(q);
+  expect((await saveCard({ ...input, id: null, createId: id })).ok).toBe(true);
+  expect((await saveCard({ ...input, id: null, createId: id })).ok).toBe(true);
+  expect(upsert.mock.calls.map((c) => c[0])).toEqual([
+    expect.objectContaining({ id, user_id: id }),
+    expect.objectContaining({ id, user_id: id }),
+  ]);
+});

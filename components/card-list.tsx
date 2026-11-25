@@ -1,5 +1,7 @@
 "use client";
 
+import { rewardLabel } from "@/lib/card-benefits";
+import { CardSetupSheet } from "@/components/card-setup";
 import { CardBenefitsHub } from "@/components/card-benefits";
 
 import {
@@ -33,10 +35,8 @@ import {
 } from "@/lib/cards";
 import {
   deleteBill,
-  deleteCard,
   deleteMilestone,
   saveBill,
-  saveCard,
   saveMilestone,
 } from "@/lib/cards-actions";
 import { SPEND_CATEGORIES, type SpendCategory } from "@/lib/card-advisor";
@@ -166,199 +166,6 @@ function MilestoneRow({
         </p>
       )}
     </li>
-  );
-}
-
-function CardSheet({
-  card,
-  onClose,
-  onSaved,
-  onFeatures,
-}: {
-  card: Card | null;
-  onClose: () => void;
-  onSaved: (id?: string) => void;
-  /** New cards only: switch to filling it in from a features PDF. */
-  onFeatures?: () => void;
-}) {
-  const [label, setLabel] = useState(card?.label ?? "");
-  const [fee, setFee] = useState<number | null>(card?.annualFee ?? null);
-  const [statementDay, setStatementDay] = useState(
-    String(card?.statementDay ?? ""),
-  );
-  const [yearStart, setYearStart] = useState(card?.yearStart ?? "");
-  const [rewards, setRewards] = useState(card?.rewards ?? "");
-  const [benefits, setBenefits] = useState((card?.benefits ?? []).join("\n"));
-  const [bestFor, setBestFor] = useState<SpendCategory[]>(
-    (card?.bestFor ?? []) as SpendCategory[],
-  );
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const { pending, run, errorText } = useRun((id) => {
-    onSaved(id);
-    onClose();
-  });
-
-  return (
-    <Sheet title={card ? "Edit card" : "Add a card"} onClose={onClose}>
-      {!card && onFeatures && (
-        <button
-          type="button"
-          onClick={onFeatures}
-          className="press mb-4 flex w-full items-center gap-3 rounded-xl bg-primary-soft p-3 text-left text-sm text-primary"
-        >
-          <FileText className="size-4 shrink-0" aria-hidden />
-          <span>
-            <span className="block font-medium">
-              Fill it in from its features
-            </span>
-            <span className="block text-xs">
-              Upload the PDF or describe the card
-            </span>
-          </span>
-        </button>
-      )}
-      <form
-        className="space-y-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          run(() =>
-            saveCard({
-              id: card?.id ?? null,
-              label,
-              annualFee: fee,
-              statementDay: statementDay ? Number(statementDay) : null,
-              yearStart: yearStart || null,
-              rewards: rewards.trim() || null,
-              benefits: benefits
-                .split("\n")
-                .map((b) => b.trim())
-                .filter(Boolean),
-              bestFor,
-            }),
-          );
-        }}
-      >
-        <Field
-          label="Card name"
-          htmlFor="c-label"
-          hint="Never enter the card number."
-        >
-          <Input
-            id="c-label"
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            maxLength={40}
-            placeholder="e.g. HDFC Regalia Gold"
-            required
-          />
-        </Field>
-        <div className="grid grid-cols-2 gap-3">
-          <Field label="Annual fee" htmlFor="c-fee">
-            <MoneyInput
-              id="c-fee"
-              value={fee}
-              onChange={setFee}
-              placeholder="0"
-            />
-          </Field>
-          <Field label="Card year starts" htmlFor="c-year">
-            <Input
-              id="c-year"
-              type="date"
-              value={yearStart}
-              onChange={(e) => setYearStart(e.target.value)}
-            />
-          </Field>
-        </div>
-        <Field
-          label="Statement day (optional)"
-          htmlFor="c-statement"
-          hint="Day of the month your statement is generated. Used for reminders, not payment tracking. Leave blank to turn reminders off."
-        >
-          <Input
-            id="c-statement"
-            type="number"
-            min={1}
-            max={31}
-            value={statementDay}
-            onChange={(e) => setStatementDay(e.target.value)}
-            placeholder="e.g. 20"
-          />
-        </Field>
-        <Field label="Rewards (optional)" htmlFor="c-rewards">
-          <Input
-            id="c-rewards"
-            value={rewards}
-            onChange={(e) => setRewards(e.target.value)}
-            maxLength={200}
-            placeholder="e.g. 4 points per ₹150, 1 point = ₹0.50"
-          />
-        </Field>
-        <Field label="Benefits, one per line" htmlFor="c-benefits">
-          <textarea
-            id="c-benefits"
-            value={benefits}
-            onChange={(e) => setBenefits(e.target.value)}
-            rows={4}
-            placeholder={
-              "4 lounge visits a quarter\n5% cashback on travel\nFuel surcharge waiver"
-            }
-            className="w-full rounded-lg border border-input bg-card px-3 py-2 text-base sm:text-sm"
-          />
-        </Field>
-        <fieldset className="space-y-1.5">
-          <legend className="text-sm font-medium">Best for</legend>
-          <div className="flex flex-wrap gap-2">
-            {(Object.keys(SPEND_CATEGORIES) as SpendCategory[]).map((c) => {
-              const on = bestFor.includes(c);
-              return (
-                <button
-                  key={c}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() =>
-                    setBestFor((s) =>
-                      on ? s.filter((x) => x !== c) : [...s, c],
-                    )
-                  }
-                  className={cn(
-                    "min-h-11 rounded-full border px-3 py-1 text-xs",
-                    on
-                      ? "border-primary bg-primary-soft text-primary"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  {SPEND_CATEGORIES[c]}
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Used to suggest which card to use.
-          </p>
-        </fieldset>
-        {errorText}
-        <Button type="submit" className="min-h-11 w-full" disabled={pending}>
-          {pending ? "Saving…" : card ? "Save card" : "Add card"}
-        </Button>
-        {card && (
-          <Button
-            type="button"
-            variant={confirmDelete ? "destructive" : "ghost"}
-            size="sm"
-            className="min-h-11 w-full"
-            disabled={pending}
-            onClick={() =>
-              confirmDelete
-                ? run(() => deleteCard(card.id))
-                : setConfirmDelete(true)
-            }
-          >
-            {confirmDelete ? "Tap again to delete this card" : "Delete card"}
-          </Button>
-        )}
-      </form>
-    </Sheet>
   );
 }
 
@@ -725,6 +532,7 @@ function AboutCard({
   onFeatures: () => void;
 }) {
   const [open, setOpen] = useState(false);
+  const rewardsSummary=card.featureDetails?card.featureDetails.rewardRules.map(rewardLabel).join("; "):card.rewards;
   const year = card.yearStart
     ? periodBounds("card_year", today, card.yearStart, null)
     : null;
@@ -751,7 +559,7 @@ function AboutCard({
             <div>
               <dt className="inline text-muted-foreground">Annual fee: </dt>
               <dd className="inline">
-                {card.annualFee ? formatINR(card.annualFee) : "None"}
+                {card.annualFee===null?"Not set":formatINR(card.annualFee)}
               </dd>
             </div>
             <div>
@@ -762,14 +570,14 @@ function AboutCard({
                   : "Not set (Jan to Dec is used)"}
               </dd>
             </div>
-            {card.rewards && (
+            {rewardsSummary && (
               <div>
                 <dt className="inline text-muted-foreground">Rewards: </dt>
-                <dd className="inline">{card.rewards}</dd>
+                <dd className="inline">{rewardsSummary}</dd>
               </div>
             )}
           </dl>
-          {card.bestFor.length > 0 && (
+          {!card.featureDetails && card.bestFor.length > 0 && (
             <div
               className="flex flex-wrap gap-1.5"
               aria-label={`${card.label} is best for`}
@@ -784,7 +592,7 @@ function AboutCard({
               ))}
             </div>
           )}
-          {card.benefits.length > 0 && (
+          {!card.featureDetails && card.benefits.length > 0 && (
             <ul
               className="list-disc space-y-0.5 pl-5"
               aria-label={`${card.label} benefits`}
@@ -1045,11 +853,11 @@ export function CardList({
 
 
       {sheet?.kind === "card" && (
-        <CardSheet
+        <CardSetupSheet
           card={sheet.card}
           onClose={close}
           onSaved={(id) => id && setOpen(id)}
-          onFeatures={() => setSheet({ kind: "features", card: null })}
+          onRead={() => setSheet({ kind: "features", card: sheet.card })}
         />
       )}
       {sheet?.kind === "milestone" && (

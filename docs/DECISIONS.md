@@ -1,5 +1,9 @@
 # Product decisions
 
+## Guided card setup and local card answers, 25 Nov 2026
+
+Card setup asks basic questions rather than exposing source-review fields. Unknown rates and point values stay unknown. Manual entry and PDF/text prefill share the same final confirmation. Points are ranked only with an explicit redemption value, using documented spend steps and exact paise internally; whole-rupee estimates remain in the UI. Quotas and issuer conditions are separate from actual eligibility. Reuse credit_cards.feature_details and existing milestones and visit logs. Common Ask card questions use deterministic local answers; broader explanations use the existing AI service with coded names. No provider reward synchronization or automatic account updates.
+
 ## Human-reviewed card benefits, 25 Nov 2026
 
 Reuse the brochure reader for PDFs, typed terms and external AI research. A generic copyable prompt asks for official sources and supporting quotes; external research is never automatically verified. The owner explicitly confirms structured terms before saving. Compare published cashback rules only, with visible conditions and known category exclusions. Do not infer point redemption values, track reward-cap usage or claim merchant eligibility. Lounge visits are a manual log against independently reviewed quotas; remaining allowance is not proof of eligibility. Detailed terms stay collapsed and can inform Ask through coded card names. No provider transactions or automatic benefit changes.
