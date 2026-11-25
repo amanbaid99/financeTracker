@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { budgetSheetSchema } from "@/lib/budget-sheet";
 import {
+  equalSplit,
   scaleSips,
   sipStatus,
   sipsByGoal,
@@ -88,4 +89,14 @@ it("saves SIP rows inside the budget", () => {
       sips: [{ ...row("a", 5000), label: "" }],
     }).success,
   ).toBe(false);
+});
+
+describe("equalSplit", () => {
+  it("splits a goal's amount equally across its funds, adding up exactly", () => {
+    expect(equalSplit(12000, 2)).toEqual([6000, 6000]);
+    expect(equalSplit(10000, 3)).toEqual([3334, 3333, 3333]);
+    expect(equalSplit(500, 1)).toEqual([500]);
+    expect(equalSplit(0, 2)).toEqual([]);
+    expect(equalSplit(1000, 0)).toEqual([]);
+  });
 });

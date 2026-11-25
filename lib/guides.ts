@@ -136,6 +136,7 @@ export const RELEASES: Release[] = [
     { title: "Set them by hand", text: "Your SIPs sits under Fixed spending: one amount box per goal. It shows what's left to assign." },
     { title: "Follows Save & invest", text: "Change Save & invest and your SIPs change with it." },
     { title: "Goals see it", text: "Each goal shows its monthly amount from your SIPs and whether that's enough to be on time." },
+    { title: "Split across your funds", text: "When a goal has more than one fund, a small line under its box shows the amount split equally between them." },
   ] },
  {date:"2026-11-24",title:"Fewer Home reminders",items:[{title:"Goal date prompt removed",text:"Removed the Add dates to plan your goals reminder from Home."}]},
  {date:"2026-11-24",title:"Budget edits and a real fresh start",items:[{title:"Income changes update saving",text:"Income and fixed-cost edits keep your personal spending amount and update Save & invest. Reset budget clears monthly SIP planning too. Reset SIP plan is available separately, with confirmation."}]},

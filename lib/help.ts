@@ -113,7 +113,7 @@ export const HELP: HelpTopic[] = [
     section: "Goals",
     q: "How does the plan decide where money goes?",
     a: [
-            "Each goal's monthly amount goes into one suitable holding, or two when it's ₹5,000 or more, so your money isn't spread thin. Other linked holdings stay listed at ₹0 for you to change. Unneeded money stays unallocated.",
+      "Each goal's monthly amount goes into one suitable holding, or two when it's ₹5,000 or more, so your money isn't spread thin. Other linked holdings stay listed at ₹0 for you to change. Unneeded money stays unallocated.",
       "Any saved extra cash buffer reduces available savings. Existing SIPs are displayed separately, and no recommendation can exceed the budget. A zero surplus produces no new monthly allocation.",
     ],
     tags: "money plan priority split sip allocate emergency floor fifth",
@@ -188,14 +188,21 @@ export const HELP: HelpTopic[] = [
     q: "How do I plan my monthly SIPs?",
     a: [
       "On Budget, under Fixed spending, Your SIPs lists each of your goals with an amount box. Type how much you'll put towards each goal a month, leave a box empty for ₹0, then tap Save SIPs. Undo puts back what you saved. Nothing is suggested or filled in for you.",
+      "If a goal is covered by more than one fund or account, a small line under its box splits the amount equally between them, for example ₹6,000 each for two funds. Fixed deposits and EPF are left out, since they don't take a monthly SIP.",
       "The card shows your total and compares it with Save & invest: all assigned, ₹X left to assign, or ₹X more than your budget sets aside. When Save & invest changes later, your SIP amounts change in the same proportion.",
       "Goals shows each goal's monthly amount from your SIPs, and whether it's enough to be on time. These are plans only. Set up SIPs with your provider.",
     ],
     tags: "budget sip save invest monthly allocation plan",
   },
   {
-    id:"combined-safety",section:"Goals",q:"How does Emergency / sinking fund work?",
-    a:["It is one goal and one pool of investment ownership. Its target includes an emergency reserve plus planned bills. Bill amounts and dates stay intact; their funding is calculated in addition to building the reserve.","Edit the goal to change the reserve or its deadline. The reserve is built by the earlier of that deadline and twelve months. A planned withdrawal from this goal protects the reserve unless you select Use the emergency reserve too. Nothing is withdrawn automatically."],tags:"emergency sinking reserve bills combined safety"
+    id: "combined-safety",
+    section: "Goals",
+    q: "How does Emergency / sinking fund work?",
+    a: [
+      "It is one goal and one pool of investment ownership. Its target includes an emergency reserve plus planned bills. Bill amounts and dates stay intact; their funding is calculated in addition to building the reserve.",
+      "Edit the goal to change the reserve or its deadline. The reserve is built by the earlier of that deadline and twelve months. A planned withdrawal from this goal protects the reserve unless you select Use the emergency reserve too. Nothing is withdrawn automatically.",
+    ],
+    tags: "emergency sinking reserve bills combined safety",
   },
   // Assets
   {

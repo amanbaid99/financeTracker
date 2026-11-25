@@ -5,6 +5,10 @@
 
 
 
+## SIP split across a goal's funds, 25 Nov 2026
+
+Your SIPs shows a muted line under each goal with an amount, splitting it equally (whole rupees, `equalSplit` in lib/budget-sips.ts) across the holdings covering that goal, excluding FDs and EPF. The Budget page passes each goal's vehicles from `lines`. Display only: saved rows stay one per goal. Unit test and e2e cover it.
+
 ## Tighter goal details, 25 Nov 2026
 
 Open goal on Goals: "Covered by" header carries a small Add investment action (replacing the full-width button); holdings rows are tighter; Delete goal and Edit share one footer row; less spacing. Removed "Change what covers this goal" (GoalMappingControl) and the now-unused components/goal-suggestions.tsx.

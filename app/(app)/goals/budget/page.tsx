@@ -4,6 +4,7 @@ import { GuideButton } from "@/components/guides";
 import { loadBudgetSheet } from "@/lib/budget-ratio-data";
 import { loadBudget, loadGoals } from "@/lib/data";
 import { orderGoals } from "@/lib/goal-order";
+import { holdingLabel } from "@/lib/goal-suggestions";
 
 export const metadata: Metadata = { title: "Budget" };
 
@@ -14,7 +15,10 @@ export default async function BudgetPage() {
   // A new budget starts at your recorded income; a saved one keeps its own.
   const sheet = await loadBudgetSheet(budget.income || recordIncome, loanEmis);
   const active = orderGoals(g.goals, g.today).filter(
-    (x) => x.status !== "reached" && !x.completed && !(x.loanState && x.emisCloseFirst),
+    (x) =>
+      x.status !== "reached" &&
+      !x.completed &&
+      !(x.loanState && x.emisCloseFirst),
   );
   return (
     <main className="space-y-4">
@@ -32,7 +36,16 @@ export default async function BudgetPage() {
         knownCosts={recordCosts}
         sips={sips}
         loadError={sheet.error}
-        goals={active.map((x) => ({ id: x.id, label: x.name }))}
+        goals={active.map((x) => ({
+          id: x.id,
+          label: x.name,
+          // Funds covering the goal that can take monthly money.
+          vehicles: x.lines
+            .filter(
+              (l) => l.investment.kind !== "fd" && l.investment.kind !== "epf",
+            )
+            .map((l) => holdingLabel(l.investment)),
+        }))}
       />
     </main>
   );

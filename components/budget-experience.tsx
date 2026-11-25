@@ -75,7 +75,7 @@ export function BudgetExperience({
   sips: number;
   loadError: string | null;
   /** Your goals, one SIP line each. */
-  goals?: { id: string; label: string }[];
+  goals?: { id: string; label: string; vehicles?: string[] }[];
 }) {
   const [plan, setPlan] = useState<BudgetSheet | null>(
     hasSaved && initial ? groupPersonalCosts(initial) : null,

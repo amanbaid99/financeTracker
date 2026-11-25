@@ -3,10 +3,20 @@ import { useState } from "react";
 import { MoneyInput } from "@/components/money-input";
 import { Button } from "@/components/ui/button";
 import { formatINR } from "@/lib/format";
-import { sipStatus, sipsByGoal, type SipRow } from "@/lib/budget-sips";
+import {
+  equalSplit,
+  sipStatus,
+  sipsByGoal,
+  type SipRow,
+} from "@/lib/budget-sips";
 import { cn } from "@/lib/utils";
 
-type GoalOption = { id: string; label: string };
+type GoalOption = {
+  id: string;
+  label: string;
+  /** Funds covering this goal that can take monthly money. */
+  vehicles?: string[];
+};
 
 /**
  * Your SIPs: one line per goal with an amount box. Leave a box empty for ₹0.
@@ -76,24 +86,30 @@ export function BudgetSips({
       ) : (
         <ul className="divide-y">
           {goals.map((g) => (
-            <li
-              key={g.id}
-              className="flex items-center justify-between gap-3 py-2"
-            >
-              <label
-                htmlFor={`sip-${g.id}`}
-                className="min-w-0 break-words text-sm"
-              >
-                {g.label}
-              </label>
-              <div className="w-32 shrink-0">
-                <MoneyInput
-                  id={`sip-${g.id}`}
-                  aria-label={`${g.label} SIP a month`}
-                  value={amounts[g.id] ?? null}
-                  onChange={(v) => setAmounts((a) => ({ ...a, [g.id]: v }))}
-                />
+            <li key={g.id} className="py-2">
+              <div className="flex items-center justify-between gap-3">
+                <label
+                  htmlFor={`sip-${g.id}`}
+                  className="min-w-0 break-words text-sm"
+                >
+                  {g.label}
+                </label>
+                <div className="w-32 shrink-0">
+                  <MoneyInput
+                    id={`sip-${g.id}`}
+                    aria-label={`${g.label} SIP a month`}
+                    value={amounts[g.id] ?? null}
+                    onChange={(v) => setAmounts((a) => ({ ...a, [g.id]: v }))}
+                  />
+                </div>
               </div>
+              {(amounts[g.id] ?? 0) > 0 && (g.vehicles?.length ?? 0) > 0 && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {equalSplit(amounts[g.id] ?? 0, g.vehicles!.length)
+                    .map((n, i) => `${g.vehicles![i]} ${formatINR(n)}`)
+                    .join(" · ")}
+                </p>
+              )}
             </li>
           ))}
         </ul>

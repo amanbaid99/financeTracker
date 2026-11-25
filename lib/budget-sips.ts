@@ -68,3 +68,11 @@ export function sipsByGoal(rows: SipRow[]): Map<string, number> {
       out.set(r.goalId, (out.get(r.goalId) ?? 0) + r.amount);
   return out;
 }
+
+/** Splits an amount equally, whole rupees, the first ones taking any remainder. */
+export function equalSplit(amount: number, count: number): number[] {
+  if (count <= 0 || amount <= 0) return [];
+  const base = Math.floor(amount / count);
+  const extra = amount - base * count;
+  return Array.from({ length: count }, (_, i) => base + (i < extra ? 1 : 0));
+}
