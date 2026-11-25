@@ -1,102 +1,117 @@
-import {
-  ChevronDown,
-  Compass,
-  ShoppingBag,
-  Receipt,
-  Utensils,
-  Plane,
-  CreditCard,
-  Smartphone,
-} from "lucide-react";
+import { ChevronDown, Compass } from "lucide-react";
 import type { Card } from "@/lib/cards";
 import { cardSpendGuide } from "@/lib/card-strategy";
-const ICONS = {
-  online: ShoppingBag,
-  bills: Receipt,
-  food: Utensils,
-  travel: Plane,
-  offline: CreditCard,
-  upi: Smartphone,
+
+const SPENDS: Record<string, string> = {
+  Amazon: "Amazon online",
+  "Other online": "Other online",
+  "Pay through PhonePe": "Bills via PhonePe",
+  "Swiggy & Zomato": "Swiggy / Zomato",
+  "Flights & foreign spends": "Travel / forex",
+  "Other eligible spends": "Offline / big buys",
+  "Merchant Scan & Pay": "Merchant UPI",
 };
+function cardBadge(name: string): { name: string; color: string } {
+  const n = name.toLowerCase();
+  if (n.includes("phonepe"))
+    return { name: "SBI PhonePe", color: "bg-primary-soft text-primary" };
+  if (n.includes("amazon"))
+    return { name: "Amazon ICICI", color: "bg-sky-100 text-sky-900" };
+  if (n.includes("millennia"))
+    return { name: "Millennia", color: "bg-violet-100 text-violet-900" };
+  if (n.includes("travelone"))
+    return { name: "HSBC", color: "bg-amber-100 text-amber-900" };
+  return { name, color: "bg-muted text-foreground" };
+}
 
 export function CardStrategy({ cards }: { cards: Card[] }) {
-  const groups = cardSpendGuide(cards);
-  if (!groups.length) return null;
+  const rows = cardSpendGuide(cards).flatMap((g) => g.rows);
+  if (!rows.length) return null;
+  const hasEstimate = rows.some((r) => r.reason.startsWith("≈"));
   return (
     <section
       aria-label="Card strategy"
-      className="overflow-hidden rounded-3xl border border-primary/15 bg-card shadow-sm"
+      className="overflow-hidden rounded-2xl border border-primary/15 bg-card shadow-sm"
     >
-      <details className="group">
-        <summary className="flex min-h-20 cursor-pointer list-none items-center gap-3 bg-gradient-to-br from-primary-soft/70 to-card p-4 [&::-webkit-details-marker]:hidden">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-            <Compass className="size-5" aria-hidden />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-base font-semibold">
-              Which card to use
-            </span>
-            <span className="mt-1 block text-xs text-muted-foreground">
-              A few simple rules to remember
-            </span>
-          </span>
-          <ChevronDown
-            className="size-4 shrink-0 text-primary transition-transform group-open:rotate-180"
-            aria-hidden
-          />
-        </summary>
-        <div className="divide-y divide-border/60 px-4">
-          {groups.map((group) => {
-            const Icon = ICONS[group.id as keyof typeof ICONS];
-            return (
-              <section key={group.id} aria-label={group.title} className="py-3">
-                <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold">
-                  <Icon className="size-4 text-primary" aria-hidden />
-                  {group.title}
-                </h3>
-                <ul className="space-y-2">
-                  {group.rows.map((row) => (
-                    <li
-                      key={row.label}
-                      className="flex items-start justify-between gap-3"
+      <h2 className="flex items-center gap-2 bg-primary-soft/50 px-4 py-3 text-sm font-semibold">
+        <Compass className="size-4 text-primary" aria-hidden />
+        Which card to use
+      </h2>
+      <div className="px-3">
+        <table className="w-full table-fixed text-left text-xs">
+          <caption className="sr-only">Your card choices by spend type</caption>
+          <thead>
+            <tr className="text-[11px] font-normal text-muted-foreground">
+              <th scope="col" className="w-[42%] py-2 pl-1 font-normal">
+                Spend
+              </th>
+              <th scope="col" className="w-[37%] py-2 font-normal">
+                Card
+              </th>
+              <th
+                scope="col"
+                className="w-[21%] py-2 pr-1 text-right font-normal"
+              >
+                Value
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/50">
+            {rows.map((row) => {
+              const badge = cardBadge(row.cardName);
+              const estimate = row.reason.startsWith("≈");
+              const value = row.reason.match(/≈?[\d.]+%/)?.[0] ?? row.reason;
+              return (
+                <tr key={`${row.cardId}-${row.label}`}>
+                  <th
+                    scope="row"
+                    className="py-3 pl-1 pr-2 font-medium leading-snug"
+                  >
+                    {SPENDS[row.label] ?? row.label}
+                  </th>
+                  <td className="py-3 pr-1">
+                    <span
+                      title={row.cardName}
+                      aria-label={row.cardName}
+                      className={`inline-block rounded-md px-1.5 py-1 text-[11px] font-medium leading-snug ${badge.color}`}
                     >
-                      <span className="min-w-0 flex-1 text-xs leading-relaxed text-muted-foreground">
-                        {row.label}
-                      </span>
-                      <span className="min-w-0 flex-1 text-right">
-                        <span className="block break-words text-sm font-medium text-primary">
-                          {row.cardName}
-                        </span>
-                        <span className="mt-0.5 block text-xs text-muted-foreground">
-                          {row.reason}
-                        </span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            );
-          })}
-        </div>
-        <details className="mx-4 border-t border-border/60 pb-2">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1 py-3 text-xs text-muted-foreground [&::-webkit-details-marker]:hidden">
+                      {badge.name}
+                    </span>
+                  </td>
+                  <td
+                    className="tabular py-3 pr-1 text-right font-semibold"
+                    aria-label={row.reason}
+                  >
+                    {value}
+                    {estimate ? "*" : ""}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {hasEstimate && (
+          <p className="border-t border-border/50 py-2 text-[10px] text-muted-foreground">
+            *HSBC: estimated Accor value at ₹1.80/point.
+          </p>
+        )}
+        <details className="border-t border-border/50">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-1 text-[11px] text-muted-foreground [&::-webkit-details-marker]:hidden">
             <ChevronDown className="size-3" aria-hidden />
-            Limits to remember
+            Caps & conditions
           </summary>
           <ul className="space-y-2 pb-3 text-xs leading-relaxed text-muted-foreground">
-            {groups
-              .flatMap((g) => g.rows)
-              .map((r) => (
-                <li key={`${r.cardId}-${r.label}`}>
-                  <span className="font-medium text-foreground">
-                    {r.label}:{" "}
-                  </span>
-                  {r.limit}
-                </li>
-              ))}
+            {rows.map((r) => (
+              <li key={`${r.cardId}-${r.label}`}>
+                <span className="font-medium text-foreground">
+                  {SPENDS[r.label] ?? r.label}:{" "}
+                </span>
+                {r.limit}
+              </li>
+            ))}
           </ul>
         </details>
-      </details>
+      </div>
     </section>
   );
 }

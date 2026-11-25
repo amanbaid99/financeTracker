@@ -1,5 +1,9 @@
 # Status
 
+## One-view card cheat sheet, 25 Nov 2026
+
+Replaces repeated spend-group headings and descriptions with an always-visible seven-row Spend / Card / Value table. Short card labels have consistent colour badges and accessible full names. HSBC redemption context appears once under the rows; caps remain collapsed. Reward choices and calculations are unchanged. Lint, TypeScript and production build pass. Real-component browser checks at 320/375/768px confirm all seven rows fit within a 520px-tall panel, no horizontal overflow, accessible labels and expandable conditions.
+
 ## Compact card reference additions, 25 Nov 2026
 
 Adds owner-requested HSBC offline/big-purchase and SBI PhonePe merchant-UPI reminders when matching saved reward buckets exist. HSBC travel displays estimated 7.2% redemption value and base spends 3.6%, based on 4/2 points per ₹100 at the owner-selected ₹1.80 per Accor point. Labels distinguish redemption value from cashback; conditions retain caps, exclusions and forex-charge caveats. Tightens strategy and card-panel padding, gaps and milestone spacing, preserving touch controls. No data changes. Verification: 10 targeted unit tests, lint, TypeScript and production build pass; browser checks confirm six groups, seven choices, HSBC percentages and no overflow at 320/375/768px.

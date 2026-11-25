@@ -135,6 +135,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-25",title:"Your cards in one view",items:[{title:"A compact cheat sheet",text:"Seven short Spend, Card and Value rows replace repeated headings. Matching card colours make the rules easier to remember. Caps stay tucked away."}]},
  {date:"2026-11-25",title:"A tighter card reference",items:[{title:"Offline and UPI choices",text:"Adds HSBC for offline and big purchases, SBI PhonePe for merchant UPI, and estimated HSBC reward percentages at your saved Accor point value. Spacing across Cards is more compact."}]},
  {date:"2026-11-25",title:"Fewer card decisions",items:[{title:"Choose by spend type",text:"A few useful spend categories replace long card-by-card notes. One card per use, one short reason, and limits tucked away."}]},
  {date:"2026-11-25",title:"Milestone cards first",items:[{title:"A simpler card order",text:"Cards without milestones now sit at the bottom automatically, with no empty milestone panel until opened."}]},
