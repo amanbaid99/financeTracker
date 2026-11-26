@@ -40,6 +40,8 @@ export const budgetSheetSchema = z.object({
   noSalary: z.boolean().optional(),
   /** Your monthly SIPs: fund, amount and the goal each is for. */
   sips: z.array(sipRowSchema).max(50).optional(),
+  /** False keeps monthly SIPs as a draft, outside goal projections. */
+  sipsIncluded: z.boolean().optional(),
 }).superRefine((plan, ctx) => {
   if (plan.salary <= 0 && !plan.noSalary) ctx.addIssue({ code: "custom", message: "Enter your monthly take-home income." });
   if (new TextEncoder().encode(JSON.stringify(plan)).byteLength > 50000) ctx.addIssue({ code: "custom", message: "This budget is too large. Shorten item names or remove some rows." });

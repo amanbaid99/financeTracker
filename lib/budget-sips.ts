@@ -108,3 +108,8 @@ export function sipEditComparison(rows: SipRow[], budget: number | null, saved: 
   const limit = budget ?? (savedTotal > 0 ? savedTotal : null);
   return { ...sipStatus(rows, limit), limit, source: budget !== null ? "budget" as const : limit !== null ? "saved_plan" as const : null };
 }
+
+/** Legacy plans stay included unless the owner explicitly parks them as a draft. */
+export function includedSipRows(plan: {sips?: SipRow[]; sipsIncluded?: boolean} | null | undefined): SipRow[] {
+  return plan?.sipsIncluded === false ? [] : plan?.sips ?? [];
+}

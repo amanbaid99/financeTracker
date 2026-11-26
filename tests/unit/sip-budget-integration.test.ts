@@ -41,3 +41,15 @@ it("retains standalone SIP capacity even when a saved budget has a lower surplus
  vi.mocked(loadHybridContext).mockResolvedValue({plans:[{inputs:{budgetSource:"standalone",declaredMonthlySavings:71000,monthlySavings:71000,allocationMode:"safety_deadline",monthlyEssentials:0}}],goalSettings:[],holdingDetails:[],revision:rev,sourceRevision:rev,riskTolerance:null} as never);
  const p=await loadMoneyPlan();expect(p.plan!.hybrid!.availableMonthlySavings).toBe(71000);expect(p.plan!.hybrid!.monthlyPlanLimit).toBe(71000);
 });
+
+it("excludes draft monthly SIPs from an older confirmed projection and restores them when included",async()=>{
+ const snapshot={goals:[],holdings:[],allocations:[],goal_bills:[],loans:[],loan_payments:[],incomes:[],expenses:[],profile:{plan_monthly:71000,plan_lump_sum:0}};
+ let included=false;
+ const savedRows=[{id:"draft",goalId:null,investmentId:null,label:"Draft contribution",amount:71000}];
+ vi.mocked(createClient).mockResolvedValue({auth:{getClaims:async()=>({data:{claims:{sub:"owner"}}})},rpc:async()=>({data:snapshot,error:null}),from:(table:string)=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:table==="budget_ratio_plans"?{plan:{...sheet,sipsIncluded:included,sips:savedRows}}:{plan_sip_minimums:{}},error:null})})})})} as never);
+ vi.mocked(loadHybridContext).mockResolvedValue({plans:[{inputs:{budgetSource:"standalone",declaredMonthlySavings:71000,monthlySavings:71000}}],goalSettings:[],holdingDetails:[],revision:rev,sourceRevision:rev,riskTolerance:null} as never);
+ const draft=await loadMoneyPlan();expect(draft.sipsIncluded).toBe(false);expect(draft.plan!.hybrid!.monthlyPlanLimit).toBe(0);expect(draft.plan!.hybrid!.availableMonthlySavings).toBe(0);
+ included=true;
+ const active=await loadMoneyPlan();expect(active.sipsIncluded).toBe(true);expect(active.plan!.hybrid!.monthlyPlanLimit).toBe(71000);
+ expect(savedRows[0].amount).toBe(71000);expect(snapshot.holdings).toEqual([]);
+});

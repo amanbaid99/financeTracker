@@ -12,7 +12,7 @@ import { goalVehicleAmounts, vehicleSplit, withGoalVehicleAmounts } from "@/lib/
 import { sipMix, sipStatus, sipEditComparison, sipsByGoal, type SipRow } from "@/lib/budget-sips";
 import { cn } from "@/lib/utils";
 type GoalOption={id:string;label:string;requiredMonthly?:number|null;vehicles?:{id:string;label:string;assetClass:string}[]};
-export function BudgetSips({rows,budgetMonthly,goals,pending,error,onSave}:{rows:SipRow[];budgetMonthly:number|null;goals:GoalOption[];pending:boolean;error:string;onSave:(rows:SipRow[],note:string)=>void}){
+export function BudgetSips({rows,budgetMonthly,goals,pending,error,onSave,included=true,onInclude}:{rows:SipRow[];budgetMonthly:number|null;goals:GoalOption[];pending:boolean;error:string;onSave:(rows:SipRow[],note:string)=>void;included?:boolean;onInclude?:(included:boolean)=>void}){
   const saved=sipsByGoal(rows);
   const start=()=>Object.fromEntries(goals.map(g=>[g.id,saved.get(g.id)??null]));
   const [editing,setEditing]=useState(false);
@@ -62,6 +62,10 @@ export function BudgetSips({rows,budgetMonthly,goals,pending,error,onSave}:{rows
   </li>)}</ul>;};
   return <section id="sips" aria-label="Your SIPs" className="surface-card space-y-3 rounded-2xl border bg-card p-4">
     <div className="flex items-center justify-between gap-3"><h3 className="font-semibold">Your SIPs</h3><Button variant="outline" size="sm" disabled={pending||!goals.length} onClick={()=>{setSplitGoal(null);setAmounts(start());setEditRevision(revision);setEditing(true);}}>Edit SIPs</Button></div>
+    <div className="flex items-center justify-between gap-3 rounded-xl bg-muted/40 px-3 py-2">
+      <div><p id="include-sips-label" className="text-sm font-medium">Include SIPs in goals</p><p id="include-sips-hint" className="mt-0.5 text-xs text-muted-foreground">{included?"Monthly contributions count in projections.":"Draft only. Not counted toward goals."}</p></div>
+      <button type="button" role="switch" aria-labelledby="include-sips-label" aria-describedby="include-sips-hint" aria-checked={included} disabled={pending} onClick={()=>onInclude?.(!included)} className={cn("relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",included?"bg-primary":"bg-border")}><span className={cn("size-5 rounded-full bg-white shadow-sm transition-transform",included?"translate-x-6":"translate-x-1")}/></button>
+    </div>
     {summary(savedStatus)}
     {savedStatus.assigned>0&&<CompactAllocation label="Investment mix" items={mix.map(m=>{const c=ASSET_CLASSES.find(x=>x.key===m.key);return {key:m.key,label:c?.label??"No fund yet",value:m.value,share:m.share,slot:c?.slot??7};})}/>}
     {!goals.length?<p className="text-sm text-muted-foreground">Add a goal first, then set a monthly SIP for it here.</p>:list(false)}

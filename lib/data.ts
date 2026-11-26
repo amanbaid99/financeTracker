@@ -32,7 +32,7 @@ import {
   type TrackedGoal,
 } from "@/lib/tracker";
 import { loadSipMinimums } from "./sip-minimums-data";
-import { sipsByGoal } from "@/lib/budget-sips";
+import { includedSipRows, sipsByGoal } from "@/lib/budget-sips";
 import { autoAllocate, type AutoAllocation } from "@/lib/auto-allocate";
 
 /**
@@ -211,6 +211,7 @@ export const needsPrivacyConsent = cache(async (): Promise<boolean> => {
 
 export interface GoalsData {
   goals: TrackedGoal[];
+  sipsIncluded?: boolean;
   investments: Investment[];
   links: Link[];
   /** How your money is split across goals, worked out automatically. */
@@ -363,9 +364,10 @@ export async function readGoals(): Promise<GoalsData> {
     };
   }
   // Monthly SIPs you set on Budget, per goal.
-  const plannedSips = await loadSavedSheet()
-    .then((raw) => sipsByGoal(budgetSheetSchema.safeParse(raw).data?.sips ?? []))
-    .catch(() => new Map<string, number>());
+  const sheetSips = await loadSavedSheet()
+    .then(raw => {const sheet=budgetSheetSchema.safeParse(raw).data;return {included:sheet?.sipsIncluded!==false,rows:includedSipRows(sheet)};})
+    .catch(() => ({included:true,rows:[]}));
+  const plannedSips=sipsByGoal(sheetSips.rows);
   const hasSipPlan = plannedSips.size > 0;
   const tracked = inputs.map((g) => {
     const c = allocation.covers[g.id];
@@ -378,6 +380,7 @@ export async function readGoals(): Promise<GoalsData> {
   });
   return {
     goals: tracked,
+    sipsIncluded: sheetSips.included,
     investments,
     links,
     allocation,
@@ -618,8 +621,8 @@ export const loadMoneyPlan = cache(async () => {
           input.lump,
           unallocatedLiquidValue(investments, links, today),
         ),
-        monthlySavings: capacity.availableSavings,
-        monthlyPlanLimit: Math.min(input.monthly, capacity.availableSavings),
+        monthlySavings: g.sipsIncluded === false ? 0 : capacity.availableSavings,
+        monthlyPlanLimit: g.sipsIncluded === false ? 0 : Math.min(input.monthly, capacity.availableSavings),
         budgetDeficit: capacity.budgetDeficit,
         today,
         minimums,

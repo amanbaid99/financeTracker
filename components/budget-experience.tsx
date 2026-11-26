@@ -412,6 +412,8 @@ export function BudgetExperience({
       <BudgetSips
         rows={plan.sips ?? []}
         budgetMonthly={budgetSipAmount(plan)}
+        included={plan.sipsIncluded !== false}
+        onInclude={(included) => persist({ ...plan, sipsIncluded: included }, included ? "SIPs included in goals." : "SIPs kept as a draft.")}
         goals={goals}
         pending={pending}
         error={editing ? "" : error}

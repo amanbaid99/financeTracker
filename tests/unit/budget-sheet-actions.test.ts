@@ -60,3 +60,11 @@ it("persists valid owner-scoped splits without changing holdings",async()=>{
  const filter=vi.fn().mockReturnThis();from.mockImplementation((table:string)=>table==="budget_ratio_plans"?{upsert}:{select:filter,eq:filter,in:vi.fn().mockResolvedValue({data:[{id}],error:null})});
  expect((await saveBudgetSheet(plan)).ok).toBe(true);expect(upsert.mock.calls[0][0].plan.sips[0].vehicleAmounts).toEqual({[id]:500});expect(from).not.toHaveBeenCalledWith("goal_allocations");
 });
+
+it("persists the SIP inclusion switch without changing the saved amounts",async()=>{
+ const plan={...emptyBudgetSheet(100000),sipsIncluded:false,sips:[{id:"draft",goalId:null,investmentId:null,label:"Draft goal",amount:20000}]};
+ expect((await saveBudgetSheet(plan)).ok).toBe(true);
+ const saved=upsert.mock.calls[0][0].plan;
+ expect(saved.sipsIncluded).toBe(false);
+ expect(saved.sips).toEqual(plan.sips);
+});

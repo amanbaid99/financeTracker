@@ -6,6 +6,7 @@ import {
   scaleSips,
   sipStatus,
   sipEditComparison,
+  includedSipRows,
   sipsByGoal,
   sipTotal,
   type SipRow,
@@ -127,4 +128,12 @@ it("shows live editing differences against the budget or clearly labelled saved 
  expect(sipEditComparison([row("a",71000)],null,saved)).toMatchObject({left:0,over:0});
  expect(sipEditComparison([row("a",1000)],0,saved)).toMatchObject({limit:0,over:1000,source:"budget"});
  expect(sipEditComparison([],null,[])).toMatchObject({limit:null,source:null,over:0,left:0});
+});
+
+it("keeps parked SIP rows saved but excludes them from goal contributions",()=>{
+ const rows=[row("a",20000)];
+ expect(includedSipRows({sips:rows,sipsIncluded:false})).toEqual([]);
+ expect(includedSipRows({sips:rows,sipsIncluded:true})).toBe(rows);
+ expect(includedSipRows({sips:rows})).toBe(rows);
+ expect(rows[0].amount).toBe(20000);
 });
