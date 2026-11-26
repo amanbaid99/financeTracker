@@ -1,5 +1,9 @@
 # Status
 
+## Live SIP edit balance, 26 Nov 2026
+
+Edit SIPs keeps a live allocated-total and remaining/over-limit summary at the top while goal amounts scroll. Uses Save & invest when available, including an explicitly saved zero; a no-salary budget compares against the saved SIP total with an explicit label. A new plan without either reference says so instead of claiming a budget. No automatic redistribution or persistence changes. Nine unit tests, lint, TypeScript and mobile real-component checks cover under/over/equal/blank input, fallback and cancel preservation.
+
 ## Collapsible card cheat sheet, 25 Nov 2026
 
 The compact cheat sheet now starts collapsed behind a keyboard-accessible disclosure. Uses owner-requested tag colours: ICICI black, HSBC dark grey, SBI navy and Millennia light blue, with contrasting text. No reward, persistence or ordering changes.

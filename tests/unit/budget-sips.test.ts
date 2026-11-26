@@ -5,6 +5,7 @@ import {
   sipMix,
   scaleSips,
   sipStatus,
+  sipEditComparison,
   sipsByGoal,
   sipTotal,
   type SipRow,
@@ -117,4 +118,13 @@ describe("sipMix", () => {
     ]);
     expect(sipMix([])).toEqual([]);
   });
+});
+
+it("shows live editing differences against the budget or clearly labelled saved SIP envelope",()=>{
+ const saved=[row("a",71000)];
+ expect(sipEditComparison([row("a",52550)],null,saved)).toMatchObject({assigned:52550,limit:71000,left:18450,over:0,source:"saved_plan"});
+ expect(sipEditComparison([row("a",75000)],71000,saved)).toMatchObject({left:0,over:4000,source:"budget"});
+ expect(sipEditComparison([row("a",71000)],null,saved)).toMatchObject({left:0,over:0});
+ expect(sipEditComparison([row("a",1000)],0,saved)).toMatchObject({limit:0,over:1000,source:"budget"});
+ expect(sipEditComparison([],null,[])).toMatchObject({limit:null,source:null,over:0,left:0});
 });

@@ -135,6 +135,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-26",title:"See your SIP balance while editing",items:[{title:"Live remaining amount",text:"Edit SIPs shows how much is left to allocate or over budget as you type. Without a salary budget, it clearly compares with your saved SIP total."}]},
  {date:"2026-11-25",title:"Your card reference, tucked away",items:[{title:"Open when needed",text:"The compact cheat sheet is now collapsible, with black ICICI, grey HSBC, navy SBI and light-blue Millennia tags."}]},
  {date:"2026-11-25",title:"Your cards in one view",items:[{title:"A compact cheat sheet",text:"Seven short Spend, Card and Value rows replace repeated headings. Matching card colours make the rules easier to remember. Caps stay tucked away."}]},
  {date:"2026-11-25",title:"A tighter card reference",items:[{title:"Offline and UPI choices",text:"Adds HSBC for offline and big purchases, SBI PhonePe for merchant UPI, and estimated HSBC reward percentages at your saved Accor point value. Spacing across Cards is more compact."}]},

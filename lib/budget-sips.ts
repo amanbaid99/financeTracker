@@ -101,3 +101,10 @@ export function sipMix(
     .map(([key, value]) => ({ key, value, share: total ? value / total : 0 }))
     .sort((a, b) => b.value - a.value);
 }
+
+/** Editing feedback uses the saved SIP envelope when no salary budget applies. */
+export function sipEditComparison(rows: SipRow[], budget: number | null, saved: SipRow[]) {
+  const savedTotal = sipTotal(saved);
+  const limit = budget ?? (savedTotal > 0 ? savedTotal : null);
+  return { ...sipStatus(rows, limit), limit, source: budget !== null ? "budget" as const : limit !== null ? "saved_plan" as const : null };
+}
