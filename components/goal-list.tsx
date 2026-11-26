@@ -12,7 +12,7 @@ import type { SipStrategy } from "@/lib/sip-plan";
 import type { Suggestion } from "@/lib/allocate";
 import { GoalIcon } from "@/components/goal-icon";
 import { Progress } from "@/components/ui/progress";
-import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
+import { formatDate, formatINR, formatINRCompact, pct } from "@/lib/format";
 import { goalRequiredSip } from "@/lib/goal-required-sip";
 import { orderGoals } from "@/lib/goal-order";
 import { monthYear } from "@/lib/goal-summary";
@@ -165,7 +165,7 @@ export function GoalList({
                         </span>
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {Math.round(g.progress * 100)}% saved
+                        {g.progress > 0 && g.progress < 0.0001 ? "<0.01%" : pct(g.progress, g.progress > 0 && g.progress < 0.01 ? 2 : 0)} saved
                       </span>
                     </p>
                     {requiredMonthly !== null && requiredMonthly > 0 && (

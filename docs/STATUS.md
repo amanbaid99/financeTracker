@@ -1,5 +1,9 @@
 # Status
 
+## Small goal progress precision, 26 Nov 2026
+
+Goal cards show positive progress below 1% with two decimal places. Positive values below 0.01% show <0.01% rather than falsely appearing as zero. Zero and progress at or above 1% retain whole percentages. Presentation only, no finance changes.
+
 ## Monthly foreclosure saving on goal cards, 26 Nov 2026
 
 Loan payoff cards now show the quiet Save to foreclose: ₹X/month line for dated early-closure goals. Reuses goalRequiredSip and the existing loan projection: future EMIs reduce the closing balance, configured foreclosure fees/GST are included, and assigned savings reduce the monthly need. This is saving separately from the EMI. Omits the line when ordinary EMIs close the loan first or no target date supports a monthly estimate. No balance or transaction changes.

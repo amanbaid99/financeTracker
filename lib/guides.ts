@@ -135,6 +135,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-26",title:"Small progress still counts",items:[{title:"More precise goal percentages",text:"Progress below 1% shows two decimals, so small savings are visible. Tiny positive amounts show less than 0.01% rather than zero."}]},
  {date:"2026-11-26",title:"Monthly saving to close a loan",items:[{title:"See the amount beside your goal",text:"Early-closure goals show a small monthly saving requirement, after future EMIs and existing savings. Your EMI continues separately."}]},
  {date:"2026-11-26",title:"Monthly goal need at a glance",items:[{title:"One quiet number",text:"Goal cards show a small required-per-month amount below progress, using the same calculation as Budget."}]},
  {date:"2026-11-26",title:"Plan SIPs before starting them",items:[{title:"Choose when they count",text:"Include SIPs in goals can be switched off while you plan. Amounts stay saved and editable; turn it on when you want those monthly contributions included in projections."}]},
