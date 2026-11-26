@@ -106,7 +106,7 @@ export function GoalList({
             ? `Close by ${monthYear(g.targetDate)}`
             : ""
           : goalSubline(g);
-        const requiredMonthly = g.loanState ? null : goalRequiredSip(g);
+        const requiredMonthly = goalRequiredSip(g);
         const isOpen = open === g.id;
         const panelId = `goal-${g.id}`;
         return (
@@ -169,7 +169,7 @@ export function GoalList({
                       </span>
                     </p>
                     {requiredMonthly !== null && requiredMonthly > 0 && (
-                      <p className="tabular text-xs text-muted-foreground">Required: {formatINR(requiredMonthly)}/month</p>
+                      <p className="tabular text-xs text-muted-foreground">{g.loanState ? "Save to foreclose" : "Required"}: {formatINR(requiredMonthly)}/month</p>
                     )}
                   </>
                 )}

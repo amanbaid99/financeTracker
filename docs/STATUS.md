@@ -1,5 +1,9 @@
 # Status
 
+## Monthly foreclosure saving on goal cards, 26 Nov 2026
+
+Loan payoff cards now show the quiet Save to foreclose: ₹X/month line for dated early-closure goals. Reuses goalRequiredSip and the existing loan projection: future EMIs reduce the closing balance, configured foreclosure fees/GST are included, and assigned savings reduce the monthly need. This is saving separately from the EMI. Omits the line when ordinary EMIs close the loan first or no target date supports a monthly estimate. No balance or transaction changes.
+
 ## Quiet monthly goal requirement, 26 Nov 2026
 
 Goal cards show one small muted Required: ₹X/month line beneath the progress figures. Reuses the same goalRequiredSip calculator as Budget, showing total monthly need after existing coverage rather than an additional gap or saved contribution. Omits the line for loan cards, fully funded goals and goals without a viable deadline. No calculation or data changes.
