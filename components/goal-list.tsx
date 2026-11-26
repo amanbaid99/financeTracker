@@ -13,6 +13,7 @@ import type { Suggestion } from "@/lib/allocate";
 import { GoalIcon } from "@/components/goal-icon";
 import { Progress } from "@/components/ui/progress";
 import { formatDate, formatINR, formatINRCompact } from "@/lib/format";
+import { goalRequiredSip } from "@/lib/goal-required-sip";
 import { orderGoals } from "@/lib/goal-order";
 import { monthYear } from "@/lib/goal-summary";
 import { goalStatus, goalSubline, type GoalStatus } from "@/lib/goal-status";
@@ -105,6 +106,7 @@ export function GoalList({
             ? `Close by ${monthYear(g.targetDate)}`
             : ""
           : goalSubline(g);
+        const requiredMonthly = g.loanState ? null : goalRequiredSip(g);
         const isOpen = open === g.id;
         const panelId = `goal-${g.id}`;
         return (
@@ -166,6 +168,9 @@ export function GoalList({
                         {Math.round(g.progress * 100)}% saved
                       </span>
                     </p>
+                    {requiredMonthly !== null && requiredMonthly > 0 && (
+                      <p className="tabular text-xs text-muted-foreground">Required: {formatINR(requiredMonthly)}/month</p>
+                    )}
                   </>
                 )}
               </div>

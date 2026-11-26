@@ -1,5 +1,9 @@
 # Status
 
+## Quiet monthly goal requirement, 26 Nov 2026
+
+Goal cards show one small muted Required: ₹X/month line beneath the progress figures. Reuses the same goalRequiredSip calculator as Budget, showing total monthly need after existing coverage rather than an additional gap or saved contribution. Omits the line for loan cards, fully funded goals and goals without a viable deadline. No calculation or data changes.
+
 ## SIP projection inclusion switch, 26 Nov 2026
 
 Budget SIPs has an Include SIPs in goals switch. Stores optional sipsIncluded in existing budget JSON, with legacy inclusion preserved unless explicitly disabled. Off retains all draft amounts and splits, hides planned contribution figures and gates future monthly allocation in older saved hybrid projections to zero. Existing holdings, actual recorded contributions, one-time allocations and historical plans are unchanged. Saving uses the existing authenticated budget action and layout revalidation. No migration. Verification: 27 targeted unit/action/integration tests, lint, TypeScript and production build pass; real-component checks cover toggle state, draft copy, keyboard access, retained amounts and 320/375/768px layouts.

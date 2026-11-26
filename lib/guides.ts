@@ -135,6 +135,7 @@ export interface Release {
 }
 
 export const RELEASES: Release[] = [
+ {date:"2026-11-26",title:"Monthly goal need at a glance",items:[{title:"One quiet number",text:"Goal cards show a small required-per-month amount below progress, using the same calculation as Budget."}]},
  {date:"2026-11-26",title:"Plan SIPs before starting them",items:[{title:"Choose when they count",text:"Include SIPs in goals can be switched off while you plan. Amounts stay saved and editable; turn it on when you want those monthly contributions included in projections."}]},
  {date:"2026-11-26",title:"See your SIP balance while editing",items:[{title:"Live remaining amount",text:"Edit SIPs shows how much is left to allocate or over budget as you type. Without a salary budget, it clearly compares with your saved SIP total."}]},
  {date:"2026-11-25",title:"Your card reference, tucked away",items:[{title:"Open when needed",text:"The compact cheat sheet is now collapsible, with black ICICI, grey HSBC, navy SBI and light-blue Millennia tags."}]},
