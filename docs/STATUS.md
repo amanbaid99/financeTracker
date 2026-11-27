@@ -1,5 +1,9 @@
 # Status
 
+## Use required SIP amount, 27 Nov 2026
+
+Edit SIPs shows a small dotted-underlined Use required link beside each required-monthly line when its input differs. Fills only that goal’s draft amount, updates live balance feedback and disappears when matched. Unknown requirements have no shortcut; zero remains valid. No auto-save, redistribution or inclusion-switch changes.
+
 ## Emergency milestones and goal review, 27 Nov 2026
 
 Emergency goals show overall saving progress and progress to the next 1/3/6/12/24-month milestone, with all stages visible when opened. Costs come from saved Budget fixed expenses, rounded up to the next ₹10,000. Expense-linked goals store a month count and derive their main amount before goal tracking and allocation, so changing expenses updates both projections and milestone bars without background writes. A stored amount remains a fallback when Budget is unavailable. Six months is the main target; 12/24 are labelled stretch and do not increase allocation needs. Manual emergency goals are preserved.
