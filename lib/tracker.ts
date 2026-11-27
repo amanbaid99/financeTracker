@@ -1,3 +1,4 @@
+import type { EmergencyProgress } from "./emergency-progress";
 import {futureValueDecimal,requiredMonthlyDecimal} from "./funding-math";
 // Goal tracking: how much each goal has, where it's heading and what it needs.
 // Pure functions; callers pass "today" in.
@@ -38,6 +39,8 @@ export interface Investment {
 }
 
 export interface GoalInput {
+  emergencyTargetMonths?: 1 | 3 | 6 | 12 | 24;
+  retirementSpending?: {monthlyToday:number;years:number;inflationPct:number;afterTaxReturnPct:number};
   emergencyReserve?:number;
   emergencyReserveDate?:string|null;
   targetType?: "today"|"future";
@@ -123,6 +126,7 @@ export interface TrackedGoal extends GoalInput {
   netSaving: number;
   /** Monthly SIPs you set on Budget for this goal; undefined with no SIP rows. */
   plannedMonthly?: number;
+  emergencyProgress?: EmergencyProgress | null;
   /** Set by the automatic split: why it got this money (lib/auto-allocate.ts). */
   cover?: { taken: number; short: number; why: string };
 }

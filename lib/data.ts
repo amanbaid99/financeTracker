@@ -1,3 +1,5 @@
+import { emergencyProgress, withEmergencyTarget } from "./emergency-progress";
+import { budgetEssentials } from "./budget-sip-amount";
 import { readCardBenefits } from "./card-benefits";
 import { budgetSheetSchema } from "./budget-sheet";
 import { loadHybridContext } from "./hybrid-data";
@@ -232,7 +234,9 @@ function check<T>(res: {
 }
 
 export async function readGoals(): Promise<GoalsData> {
-  const [snap, loans,hybridContext] = await Promise.all([loadSnapshot(), loadLoans(),loadHybridContext()]);
+  const [snap, loans,hybridContext, rawBudget] = await Promise.all([loadSnapshot(), loadLoans(),loadHybridContext(),loadSavedSheet().catch(()=>null)]);
+  const savedBudget=budgetSheetSchema.safeParse(rawBudget).data;
+  const monthlyFixedCosts=budgetEssentials(savedBudget??null);
   const goals = { data: snap.goals, error: null };
   const holdings = { data: snap.holdings, error: null };
   const allocations = { data: snap.allocations, error: null };
@@ -317,6 +321,7 @@ export async function readGoals(): Promise<GoalsData> {
             }))
         : null,
   }));
+  for(let index=0;index<inputs.length;index++)inputs[index]=withEmergencyTarget(inputs[index],monthlyFixedCosts);
   const bare = inputs.map((g) => trackGoal(g, investments, [], today));
   let allocation = autoAllocate(bare, investments, today);
   // Saved mappings (a confirmed plan, or a suggestion you accepted on Goals)
@@ -371,8 +376,10 @@ export async function readGoals(): Promise<GoalsData> {
   const hasSipPlan = plannedSips.size > 0;
   const tracked = inputs.map((g) => {
     const c = allocation.covers[g.id];
+    const trackedGoal=trackGoal(g, investments, links, today);
     return {
-      ...trackGoal(g, investments, links, today),
+      ...trackedGoal,
+      emergencyProgress: g.type === "emergency_fund" ? emergencyProgress(trackedGoal.current,monthlyFixedCosts) : null,
       plannedMonthly: hasSipPlan ? (plannedSips.get(g.id) ?? 0) : undefined,
       confirmedMapping: useSaved,
       cover: c && { taken: c.taken, short: c.short, why: c.why },

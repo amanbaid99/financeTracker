@@ -53,3 +53,15 @@ it("excludes draft monthly SIPs from an older confirmed projection and restores 
  const active=await loadMoneyPlan();expect(active.sipsIncluded).toBe(true);expect(active.plan!.hybrid!.monthlyPlanLimit).toBe(71000);
  expect(savedRows[0].amount).toBe(71000);expect(snapshot.holdings).toEqual([]);
 });
+
+it("derives a linked emergency target and milestone amounts from changed fixed expenses",async()=>{
+ const id="00000000-0000-4000-8000-000000000009";
+ const snapshot={goals:[{id,name:"Emergency",type:"emergency_fund",target_today:450000,target_date:"2028-09-30",inflation_rate:6,priority:1,loan_id:null}],holdings:[],allocations:[],goal_bills:[],loans:[],loan_payments:[],incomes:[],expenses:[],profile:null};
+ let savedSheet=structuredClone(sheet);
+ vi.mocked(createClient).mockResolvedValue({auth:{getClaims:async()=>({data:{claims:{sub:"owner"}}})},rpc:async()=>({data:snapshot,error:null}),from:(table:string)=>({select:()=>({eq:()=>({maybeSingle:async()=>({data:table==="budget_ratio_plans"?{plan:savedSheet}:{plan_sip_minimums:{}},error:null})})})})} as never);
+ vi.mocked(loadHybridContext).mockResolvedValue({plans:[],goalSettings:[{id,planning_settings:{emergencyTargetMonths:6,targetType:"future"}}],holdingDetails:[],revision:rev,sourceRevision:rev,riskTolerance:null} as never);
+ const first=await loadMoneyPlan();expect(first.goals[0].futureTarget).toBe(420000);expect(first.goals[0].emergencyProgress?.roundedMonthly).toBe(70000);
+ savedSheet={...savedSheet,rows:savedSheet.rows.map(r=>r.id==="rent"?{...r,value:68015}:r)};
+ const changed=await loadMoneyPlan();expect(changed.goals[0].futureTarget).toBe(480000);expect(changed.goals[0].emergencyProgress?.stages[2].target).toBe(480000);
+ expect(snapshot.goals[0].target_today).toBe(450000);
+});

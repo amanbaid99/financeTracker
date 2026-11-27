@@ -168,6 +168,7 @@ export function GoalList({
                         {g.progress > 0 && g.progress < 0.0001 ? "<0.01%" : pct(g.progress, g.progress > 0 && g.progress < 0.01 ? 2 : 0)} saved
                       </span>
                     </p>
+                    {g.emergencyProgress && (()=>{const next=g.emergencyProgress.stages.find(s=>!s.reached);return next ? <div className="space-y-1 pt-1"><p className="tabular text-xs text-muted-foreground">Next: {next.months} {next.months===1?"month":"months"}{next.stretch?" (stretch)":""} · {formatINRCompact(Math.max(0,next.target-g.current))} to go</p><Progress className="h-1" value={next.progress*100} label={`${g.name}: ${next.months}-month milestone`}/></div>:null;})()}
                     {requiredMonthly !== null && requiredMonthly > 0 && (
                       <p className="tabular text-xs text-muted-foreground">{g.loanState ? "Save to foreclose" : "Required"}: {formatINR(requiredMonthly)}/month</p>
                     )}
@@ -188,6 +189,8 @@ export function GoalList({
                 id={panelId}
                 className="expand-in space-y-3 border-t px-4 pb-3 pt-3"
               >
+                {g.emergencyProgress && <section aria-label="Emergency fund milestones" className="space-y-3"><p className="text-xs text-muted-foreground">{formatINR(g.emergencyProgress.monthlyCosts)}/month fixed costs, rounded up to {formatINR(g.emergencyProgress.roundedMonthly)}.</p><ol className="space-y-3">{g.emergencyProgress.stages.map(stage=><li key={stage.months} className="space-y-1"><div className="tabular flex justify-between gap-2 text-xs"><span>{stage.months} {stage.months===1?"month":"months"}{stage.stretch?" · stretch":""}{stage.reached?" · reached":""}</span><span>{formatINRCompact(g.current)} / {formatINRCompact(stage.target)}</span></div><Progress className="h-1.5" value={stage.progress*100} tone={stage.reached?"success":"neutral"} label={`${g.name}: ${stage.months} months of costs`}/></li>)}</ol><p className="text-xs text-muted-foreground">One fund, shown at each milestone. Stretch milestones don’t increase your saved goal target or delay other goals.</p></section>}
+                {g.type === "retirement" && g.retirementSpending && <p className="text-xs text-muted-foreground">Plans for {formatINR(g.retirementSpending.monthlyToday)}/month in today’s buying power for {g.retirementSpending.years} years. Assumes {g.retirementSpending.inflationPct}% inflation and {g.retirementSpending.afterTaxReturnPct}% annual return after tax during retirement. Estimates, not guaranteed income.</p>}
                 <PlannedSip goal={g} />
                 <GoalInvestments
                   goal={g}

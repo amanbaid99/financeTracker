@@ -1,5 +1,13 @@
 # Status
 
+## Emergency milestones and goal review, 27 Nov 2026
+
+Emergency goals show overall saving progress and progress to the next 1/3/6/12/24-month milestone, with all stages visible when opened. Costs come from saved Budget fixed expenses, rounded up to the next ₹10,000. Expense-linked goals store a month count and derive their main amount before goal tracking and allocation, so changing expenses updates both projections and milestone bars without background writes. A stored amount remains a fallback when Budget is unavailable. Six months is the main target; 12/24 are labelled stretch and do not increase allocation needs. Manual emergency goals are preserved.
+
+Owner-confirmed review updates are applied separately after deployment with a private backup and optimistic guards: emergency six-month target and September 2028 deadline, HDFC 1 then HDFC 2 closure in December 2027/2028, Marriage at end-2029, and retirement spending with ₹1 lakh/month in today’s buying power for 20 years. The retirement corpus calculator uses monthly inflation-adjusted withdrawals with 6% inflation and 5% return after tax during retirement: ₹2.6415298 crore today, rounded to a ₹2.7 crore today-value goal. Existing 6% pre-retirement inflation is applied once to 2059. Assumptions are visible and survive goal edits. Travel, SIP draft state, holdings and existing allocations are unchanged.
+
+Verification: 49 targeted unit/integration tests, lint, TypeScript and production build pass. Browser checks cover main/next progress, all five stages, stretch labels and 320/375/768px widths. The exact five-row hosted-data transaction passed an in-memory PostgreSQL check for guarded updates, unchanged Travel and stale reapplication rejection. No hosted writes were used for testing.
+
 ## Small goal progress precision, 26 Nov 2026
 
 Goal cards show positive progress below 1% with two decimal places. Positive values below 0.01% show <0.01% rather than falsely appearing as zero. Zero and progress at or above 1% retain whole percentages. Presentation only, no finance changes.

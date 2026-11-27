@@ -98,6 +98,8 @@ export function GoalForm({
   );
   const [inflate, setInflate] = useState(goal ? goal.targetType !== "future" && !!goal.inflationPct : true);
   const [planning, setPlanning] = useState({
+    retirementSpending: goal?.retirementSpending,
+    emergencyTargetMonths: goal?.emergencyTargetMonths,
     targetType: goal?.targetType ?? "today",
     priorityLevel: goal?.priorityLevel ?? "medium",
     goalCategory:
@@ -319,7 +321,7 @@ export function GoalForm({
         target: isLoan ? (loanInput?.outstanding ?? 0) : (target ?? 0),
         targetDate: isBills || noDate ? null : date || null,
         inflationPct:
-          !isLoan && !isBills && inflate && !noDate
+          !isLoan && !isBills && !(type === "emergency_fund" && planning.emergencyTargetMonths) && inflate && !noDate
             ? (num(inflation) ?? 0)
             : null,
         niceToHave: canRank && planning.priorityLevel === "low",
@@ -607,6 +609,8 @@ export function GoalForm({
         </div>}
         <BillsEditor rows={bills} onChange={setBills} />
         </>
+      ) : type === "emergency_fund" && planning.emergencyTargetMonths ? (
+        <div className="space-y-1"><p className="text-sm font-medium">{planning.emergencyTargetMonths} months of fixed expenses</p><p className="tabular font-semibold">{formatINR(goal?.target ?? target ?? 0)}</p><p className="text-xs text-muted-foreground">Updates automatically from your Budget’s fixed expenses, rounded up to the next ₹10,000 per month.</p></div>
       ) : (
         <Field
           label="How much do you need?"
@@ -659,7 +663,7 @@ export function GoalForm({
         </div>
       )}
 
-      {!isLoan && !isBills && !noDate && (
+      {!isLoan && !isBills && !noDate && !(type === "emergency_fund" && planning.emergencyTargetMonths) && (
         <div className="space-y-2">
           <label className="flex items-center gap-2 text-sm">
             <Checkbox

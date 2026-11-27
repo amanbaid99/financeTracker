@@ -144,7 +144,7 @@ export const HELP: HelpTopic[] = [
     q: "How does Work it out find a goal's amount?",
     a: [
       "Retirement: the money needed to keep today's spending, grown with prices, from when you stop working until the age you plan for, while the rest keeps earning.",
-      "Emergency fund: months of essential costs and EMIs. Home: the down payment plus stamp duty and other buying costs.",
+      "Emergency fund: months of essential costs and EMIs. Linked emergency goals round saved Budget fixed expenses up to the next ₹10,000 and multiply by the selected cover months. The main target and the 1/3/6/12/24-month progress milestones update when expenses change. Twelve and twenty-four months are stretch milestones, not additional pots or mandatory allocations. Retirement goals can retain the monthly spending, duration, inflation and after-tax return assumptions behind their target. Home: the down payment plus stamp duty and other buying costs.",
       "For anything else, AI can suggest a low, typical and high cost from a short description. The app does all the maths, and you check before saving.",
     ],
     tags: "retirement corpus calculator estimate",
